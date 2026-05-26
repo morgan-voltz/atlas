@@ -1,0 +1,28 @@
+                    GNU AFFERO GENERAL PUBLIC LICENSE
+                       Version 3, 19 November 2007
+
+ Copyright (C) 2026 Projet Atlas
+ Tout le code source de ce projet est distribue sous les termes de la
+ GNU Affero General Public License (AGPL) version 3, telle que publiee
+ par la Free Software Foundation.
+
+ Ce programme est un logiciel libre : vous pouvez le redistribuer et/ou
+ le modifier selon les termes de la GNU Affero General Public License
+ telle que publiee par la Free Software Foundation, soit la version 3
+ de la Licence, soit (a votre choix) toute version ulterieure.
+
+ Ce programme est distribue dans l'espoir qu'il sera utile, mais SANS
+ AUCUNE GARANTIE ; sans meme la garantie implicite de COMMERCIALISATION
+ ou D'ADEQUATION A UN USAGE PARTICULIER. Voir la GNU Affero General
+ Public License pour plus de details.
+
+ Vous devriez avoir recu une copie de la GNU Affero General Public
+ License avec ce programme. Sinon, voir <https://www.gnu.org/licenses/>.
+
+ -------------------------------------------------------------------------
+
+ IMPORTANT : Avant la publication publique du repository, ce fichier doit
+ etre remplace par le texte officiel et complet de la licence AGPL v3,
+ disponible a https://www.gnu.org/licenses/agpl-3.0.txt
+
+ Voir docs/05-strategie-repos.md pour la procedure d'ouverture du repo.

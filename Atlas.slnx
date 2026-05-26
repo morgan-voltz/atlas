@@ -1,0 +1,25 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Atlas.Api/Atlas.Api.csproj" />
+    <Project Path="src/Atlas.Application.Premium/Atlas.Application.Premium.csproj" />
+    <Project Path="src/Atlas.Application/Atlas.Application.csproj" />
+    <Project Path="src/Atlas.Domain/Atlas.Domain.csproj" />
+    <Project Path="src/Atlas.Infrastructure.Cache/Atlas.Infrastructure.Cache.csproj" />
+    <Project Path="src/Atlas.Infrastructure.Inpi/Atlas.Infrastructure.Inpi.csproj" />
+    <Project Path="src/Atlas.Infrastructure.Messaging/Atlas.Infrastructure.Messaging.csproj" />
+    <Project Path="src/Atlas.Infrastructure.Persistence/Atlas.Infrastructure.Persistence.csproj" />
+    <Project Path="src/Atlas.Infrastructure.Security/Atlas.Infrastructure.Security.csproj" />
+    <Project Path="src/Atlas.Infrastructure.Storage/Atlas.Infrastructure.Storage.csproj" />
+    <Project Path="src/Atlas.Infrastructure.Veille/Atlas.Infrastructure.Veille.csproj" />
+    <Project Path="src/Atlas.Maui/Atlas.Maui.csproj" />
+    <Project Path="src/Atlas.Shared/Atlas.Shared.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Atlas.Api.IntegrationTests/Atlas.Api.IntegrationTests.csproj" />
+    <Project Path="tests/Atlas.Application.UnitTests/Atlas.Application.UnitTests.csproj" />
+    <Project Path="tests/Atlas.Architecture.Tests/Atlas.Architecture.Tests.csproj" />
+    <Project Path="tests/Atlas.Domain.UnitTests/Atlas.Domain.UnitTests.csproj" />
+    <Project Path="tests/Atlas.Infrastructure.Inpi.IntegrationTests/Atlas.Infrastructure.Inpi.IntegrationTests.csproj" />
+    <Project Path="tests/Atlas.Infrastructure.Persistence.IntegrationTests/Atlas.Infrastructure.Persistence.IntegrationTests.csproj" />
+  </Folder>
+</Solution>
