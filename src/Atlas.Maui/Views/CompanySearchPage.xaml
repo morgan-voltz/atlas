@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage
+    x:Class="Atlas.Maui.Views.CompanySearchPage"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:vm="clr-namespace:Atlas.Maui.ViewModels"
+    xmlns:models="clr-namespace:Atlas.Maui.Models"
+    x:DataType="vm:CompanySearchViewModel"
+    Title="Entreprises">
+
+    <Grid Padding="12" RowSpacing="8" RowDefinitions="Auto,Auto,*">
+        <SearchBar
+            Grid.Row="0"
+            Placeholder="SIREN (9 chiffres) ou dénomination..."
+            Text="{Binding Query}"
+            SearchCommand="{Binding SearchCommand}" />
+
+        <ActivityIndicator Grid.Row="1" IsRunning="{Binding IsBusy}" IsVisible="{Binding IsBusy}" />
+
+        <CollectionView Grid.Row="2" ItemsSource="{Binding Results}">
+            <CollectionView.ItemTemplate>
+                <DataTemplate x:DataType="models:CompanySummaryResponse">
+                    <Grid Padding="8">
+                        <Grid.GestureRecognizers>
+                            <TapGestureRecognizer
+                                Command="{Binding Source={RelativeSource AncestorType={x:Type vm:CompanySearchViewModel}}, Path=OpenCommand}"
+                                CommandParameter="{Binding .}" />
+                        </Grid.GestureRecognizers>
+                        <VerticalStackLayout Spacing="2">
+                            <Label Text="{Binding Denomination}" FontAttributes="Bold" />
+                            <Label Text="{Binding Siren}" FontSize="12" />
+                            <Label Text="{Binding Ville}" FontSize="12" TextColor="Gray" />
+                        </VerticalStackLayout>
+                    </Grid>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+        </CollectionView>
+    </Grid>
+
+</ContentPage>

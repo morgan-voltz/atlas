@@ -1,6 +1,4 @@
-﻿using Microsoft.Extensions.DependencyInjection;
-
-namespace Atlas.Maui;
+﻿namespace Atlas.Maui;
 
 public partial class App : Application
 {

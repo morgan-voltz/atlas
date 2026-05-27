@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage
+    x:Class="Atlas.Maui.Views.SearchHistoryPage"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:vm="clr-namespace:Atlas.Maui.ViewModels"
+    xmlns:models="clr-namespace:Atlas.Maui.Models"
+    x:DataType="vm:SearchHistoryViewModel"
+    Title="Historique">
+
+    <Grid Padding="12" RowDefinitions="Auto,*" RowSpacing="8">
+        <ActivityIndicator Grid.Row="0" IsRunning="{Binding IsBusy}" IsVisible="{Binding IsBusy}" />
+        <CollectionView Grid.Row="1" ItemsSource="{Binding Entries}">
+            <CollectionView.ItemTemplate>
+                <DataTemplate x:DataType="models:SearchHistoryEntryResponse">
+                    <VerticalStackLayout Padding="8" Spacing="2">
+                        <Label Text="{Binding Query}" FontAttributes="Bold" />
+                        <Label Text="{Binding Type}" FontSize="12" TextColor="Gray" />
+                        <Label Text="{Binding CreatedAt}" FontSize="12" TextColor="Gray" />
+                    </VerticalStackLayout>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+        </CollectionView>
+    </Grid>
+
+</ContentPage>
