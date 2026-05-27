@@ -1,0 +1,37 @@
+meta {
+  name: 01 Register fresh
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/auth/register
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "email": "{{flowEmail}}",
+    "password": "{{flowPassword}}"
+  }
+}
+
+script:pre-request {
+  bru.setVar("flowEmail", "flow-" + Date.now() + "@atlas.test");
+  bru.setVar("flowPassword", "Flow!Passw0rd-123");
+}
+
+tests {
+  test("register accepté (200) ou déjà pris (409)", function () {
+    expect([200, 409]).to.include(res.getStatus());
+  });
+}
+
+docs {
+  Parcours complet automatisé (nécessite le endpoint dev /dev/verification-token, dispo en Development).
+}

@@ -1,0 +1,30 @@
+meta {
+  name: 09 Login after delete (401)
+  type: http
+  seq: 9
+}
+
+post {
+  url: {{baseUrl}}/auth/login
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "email": "{{flowEmail}}",
+    "password": "{{flowPassword}}"
+  }
+}
+
+assert {
+  res.status: eq 401
+}
+
+docs {
+  Le compte ayant été supprimé, la connexion échoue (utilisateur introuvable → 401). Confirme l'effacement.
+}

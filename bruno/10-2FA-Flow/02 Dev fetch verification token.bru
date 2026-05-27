@@ -1,0 +1,23 @@
+meta {
+  name: 02 Dev fetch verification token
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/dev/verification-token?email={{tfaEmail}}
+  auth: none
+}
+
+params:query {
+  email: {{tfaEmail}}
+}
+
+vars:post-response {
+  tfaUserId: res.body.userId
+  tfaToken: res.body.token
+}
+
+assert {
+  res.status: eq 200
+}

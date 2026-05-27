@@ -1,0 +1,27 @@
+meta {
+  name: 02 Dev fetch verification token
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/dev/verification-token?email={{flowEmail}}
+  auth: none
+}
+
+params:query {
+  email: {{flowEmail}}
+}
+
+vars:post-response {
+  flowUserId: res.body.userId
+  flowToken: res.body.token
+}
+
+assert {
+  res.status: eq 200
+}
+
+docs {
+  DEV UNIQUEMENT : récupère le token de vérification capturé à l'inscription (sans lire les logs).
+}
