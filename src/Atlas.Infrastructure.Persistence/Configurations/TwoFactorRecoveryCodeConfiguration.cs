@@ -31,6 +31,11 @@ internal sealed class TwoFactorRecoveryCodeConfiguration : IEntityTypeConfigurat
 
         builder.HasIndex(code => new { code.UserId, code.CodeHash });
 
+        builder.HasOne<User>()
+            .WithMany()
+            .HasForeignKey(code => code.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
+
         builder.Ignore(code => code.DomainEvents);
     }
 }

@@ -58,10 +58,12 @@ public sealed class PersistenceRoundTripTests(PostgresFixture fixture)
     [Fact]
     public async Task InpiCredentials_round_trip_keeps_encrypted_values()
     {
-        var credentials = InpiCredentials.Create(UserId.New(), "enc-user", "enc-pass", Now);
+        User user = NewActiveUser(UniqueEmail());
+        var credentials = InpiCredentials.Create(user.Id, "enc-user", "enc-pass", Now);
 
         await using (AtlasDbContext context = fixture.CreateContext())
         {
+            await context.Users.AddAsync(user);
             await context.InpiCredentials.AddAsync(credentials);
             await context.SaveChangesAsync();
         }
@@ -79,11 +81,13 @@ public sealed class PersistenceRoundTripTests(PostgresFixture fixture)
     [Fact]
     public async Task RefreshToken_round_trips_and_is_queryable_by_hash()
     {
+        User user = NewActiveUser(UniqueEmail());
         string hash = "hash-" + Guid.NewGuid().ToString("N");
-        var token = RefreshToken.Issue(RefreshTokenId.New(), UserId.New(), hash, Now, TimeSpan.FromDays(30));
+        var token = RefreshToken.Issue(RefreshTokenId.New(), user.Id, hash, Now, TimeSpan.FromDays(30));
 
         await using (AtlasDbContext context = fixture.CreateContext())
         {
+            await context.Users.AddAsync(user);
             await context.RefreshTokens.AddAsync(token);
             await context.SaveChangesAsync();
         }

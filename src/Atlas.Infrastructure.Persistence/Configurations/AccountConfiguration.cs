@@ -26,6 +26,12 @@ internal sealed class AccountConfiguration : IEntityTypeConfiguration<Account>
 
         builder.Property(account => account.CreatedAt).HasColumnName("created_at");
 
+        // Cascade : la suppression de l'utilisateur supprime son compte (RGPD art. 17).
+        builder.HasOne<User>()
+            .WithMany()
+            .HasForeignKey(account => account.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
+
         builder.Ignore(account => account.DomainEvents);
     }
 }

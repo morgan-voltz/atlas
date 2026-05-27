@@ -34,6 +34,11 @@ internal sealed class RefreshTokenConfiguration : IEntityTypeConfiguration<Refre
         builder.Property(token => token.ExpiresAt).HasColumnName("expires_at");
         builder.Property(token => token.RevokedAt).HasColumnName("revoked_at");
 
+        builder.HasOne<User>()
+            .WithMany()
+            .HasForeignKey(token => token.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
+
         builder.Ignore(token => token.DomainEvents);
     }
 }
