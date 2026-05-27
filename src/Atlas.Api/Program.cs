@@ -1,6 +1,8 @@
+using Atlas.Api.Dev;
 using Atlas.Api.Endpoints;
 using Atlas.Application;
 using Atlas.Application.Common;
+using Atlas.Domain.Notifications;
 using Atlas.Infrastructure.Inpi;
 using Atlas.Infrastructure.Messaging;
 using Atlas.Infrastructure.Persistence;
@@ -20,6 +22,14 @@ builder.Services.AddSecurityInfrastructure(builder.Configuration);
 builder.Services.AddPersistenceInfrastructure(builder.Configuration);
 builder.Services.AddMessagingInfrastructure(builder.Configuration);
 builder.Services.AddInpiInfrastructure(builder.Configuration);
+
+// DEV UNIQUEMENT : capture du token de vérification d'email pour l'automatisation des tests.
+// Remplace l'IEmailSender de dev et expose /dev/verification-token. Jamais actif hors Development.
+if (builder.Environment.IsDevelopment())
+{
+    builder.Services.AddSingleton<DevVerificationTokenStore>();
+    builder.Services.AddSingleton<IEmailSender, CapturingEmailSender>();
+}
 
 // Politique d'authentification (durées de jetons, verrouillage).
 AuthSettings authSettings = builder.Configuration.GetSection("Auth").Get<AuthSettings>() ?? new AuthSettings();
@@ -55,6 +65,7 @@ var app = builder.Build();
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
+    app.MapDevEndpoints();
 }
 
 app.UseHttpsRedirection();
