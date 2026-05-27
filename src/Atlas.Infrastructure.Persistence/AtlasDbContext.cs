@@ -26,6 +26,8 @@ public sealed class AtlasDbContext(DbContextOptions<AtlasDbContext> options)
 
     public DbSet<FeedItem> FeedItems => Set<FeedItem>();
 
+    public DbSet<FeedItemCluster> FeedItemClusters => Set<FeedItemCluster>();
+
     public DbSet<VeilleSubscription> VeilleSubscriptions => Set<VeilleSubscription>();
 
     public DbSet<FeedItemUserState> FeedItemUserStates => Set<FeedItemUserState>();

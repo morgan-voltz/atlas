@@ -26,4 +26,5 @@ public sealed record TimelineItemDto(
     IReadOnlyList<string> Categories,
     bool IsRead,
     bool IsFavorite,
-    bool IsArchived);
+    bool IsArchived,
+    int SourceCount);

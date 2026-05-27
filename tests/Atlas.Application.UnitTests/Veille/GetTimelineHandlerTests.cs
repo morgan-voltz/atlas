@@ -22,7 +22,7 @@ public sealed class GetTimelineHandlerTests
         var sourceId = Guid.NewGuid();
         FeedItem item = FeedItem.Create(
             new FeedSourceId(sourceId), "Titre", "https://x.test/1", "résumé", Now, ["tech", "veille"], Now);
-        var entry = new TimelineEntry(item, IsRead: true, IsFavorite: false, IsArchived: false);
+        var entry = new TimelineEntry(item, IsRead: true, IsFavorite: false, IsArchived: false, SourceCount: 3);
 
         TimelineFilter? captured = null;
         _itemRepo.GetTimelineAsync(Arg.Any<UserId>(), Arg.Do<TimelineFilter>(f => captured = f),
@@ -36,6 +36,7 @@ public sealed class GetTimelineHandlerTests
         TimelineItemDto dto = result.Value!.Items.Should().ContainSingle().Subject;
         dto.Title.Should().Be("Titre");
         dto.IsRead.Should().BeTrue();
+        dto.SourceCount.Should().Be(3);
         dto.Categories.Should().BeEquivalentTo(["tech", "veille"]);
 
         captured.Should().NotBeNull();

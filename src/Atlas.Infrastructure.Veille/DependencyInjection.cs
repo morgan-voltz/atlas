@@ -1,4 +1,5 @@
 using Atlas.Domain.Veille;
+using Atlas.Infrastructure.Veille.Deduplication;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
@@ -16,6 +17,7 @@ public static class DependencyInjection
         services.AddHttpClient<IExternalContentSource, RssFeedProvider>(ConfigureClient);
 
         services.AddSingleton<IFeedSubscriptionPolicy, FeedSubscriptionPolicy>();
+        services.AddSingleton<IDeduplicationPolicy, DeduplicationPolicy>();
 
         return services;
     }

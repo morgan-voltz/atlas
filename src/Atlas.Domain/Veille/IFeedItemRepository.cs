@@ -19,6 +19,9 @@ public interface IFeedItemRepository
 
     Task<bool> ExistsAsync(FeedItemId id, CancellationToken ct = default);
 
+    /// <summary>Items pas encore rattachés à un cluster (F-045), les plus anciens d'abord, plafonnés à <paramref name="max"/>.</summary>
+    Task<IReadOnlyList<FeedItem>> GetUnclusteredAsync(int max, CancellationToken ct = default);
+
     /// <summary>
     /// Timeline d'un utilisateur (F-044) : items des sources auxquelles il est abonné, filtrés et paginés,
     /// avec l'état de lecture/favori/archivage de l'utilisateur.

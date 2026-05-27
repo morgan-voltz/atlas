@@ -23,4 +23,13 @@ public sealed class VeilleOptions
     /// est insensible à la casse sur l'hôte de l'URL fournie par l'utilisateur (F-043, modération).
     /// </summary>
     public IList<string> BlockedHostFragments { get; set; } = [];
+
+    /// <summary>
+    /// Seuil de similarité (0..1) au-delà duquel deux items sont regroupés en un cluster de déduplication (F-045).
+    /// Par défaut 0,8 → distance de Hamming max ≈ 12 bits sur 64.
+    /// </summary>
+    public double DeduplicationThreshold { get; set; } = 0.8;
+
+    /// <summary>Fenêtre temporelle (heures) autour de la publication dans laquelle deux items peuvent être regroupés (F-045).</summary>
+    public int ClusterWindowHours { get; set; } = 72;
 }

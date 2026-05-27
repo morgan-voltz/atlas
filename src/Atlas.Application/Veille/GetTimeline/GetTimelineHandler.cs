@@ -39,5 +39,6 @@ internal sealed class GetTimelineHandler(IFeedItemRepository itemRepository)
         string.IsNullOrEmpty(entry.Item.Categories) ? [] : entry.Item.Categories.Split('\n'),
         entry.IsRead,
         entry.IsFavorite,
-        entry.IsArchived);
+        entry.IsArchived,
+        entry.SourceCount);
 }

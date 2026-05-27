@@ -33,6 +33,14 @@ internal sealed class FeedItemRepository(AtlasDbContext dbContext) : IFeedItemRe
     public async Task<bool> ExistsAsync(FeedItemId id, CancellationToken ct = default) =>
         await dbContext.FeedItems.AnyAsync(item => item.Id == id, ct);
 
+    public async Task<IReadOnlyList<FeedItem>> GetUnclusteredAsync(int max, CancellationToken ct = default) =>
+        await dbContext.FeedItems
+            .Where(item => item.ClusterId == null)
+            .OrderBy(item => item.PublishedAt)
+            .ThenBy(item => item.FetchedAt)
+            .Take(max)
+            .ToListAsync(ct);
+
     public async Task<PagedResult<TimelineEntry>> GetTimelineAsync(
         UserId userId,
         TimelineFilter filter,
@@ -87,6 +95,18 @@ internal sealed class FeedItemRepository(AtlasDbContext dbContext) : IFeedItemRe
             query = query.Where(row => row.state == null || !row.state.IsArchived);
         }
 
+        // Collapse de déduplication (F-045) : on n'affiche qu'un représentant par cluster, l'item le plus récent
+        // PARMI les sources auxquelles l'utilisateur est abonné (un cluster peut contenir des items de sources
+        // non suivies). Départage déterministe sur (PublishedAt, FetchedAt). Les items standalone passent toujours.
+        query = query.Where(row =>
+            row.item.ClusterId == null
+            || !dbContext.FeedItems.Any(sib =>
+                sib.ClusterId == row.item.ClusterId
+                && sib.Id != row.item.Id
+                && dbContext.VeilleSubscriptions.Any(s => s.UserId == userId && s.SourceId == sib.SourceId)
+                && (sib.PublishedAt > row.item.PublishedAt
+                    || (sib.PublishedAt == row.item.PublishedAt && sib.FetchedAt > row.item.FetchedAt))));
+
         long total = await query.LongCountAsync(ct);
 
         var rows = await query
@@ -94,6 +114,18 @@ internal sealed class FeedItemRepository(AtlasDbContext dbContext) : IFeedItemRe
             .ThenByDescending(row => row.item.FetchedAt)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
+            .Select(row => new
+            {
+                row.item,
+                row.state,
+                SourceCount = row.item.ClusterId == null
+                    ? 1
+                    : dbContext.FeedItems
+                        .Where(f => f.ClusterId == row.item.ClusterId)
+                        .Select(f => f.SourceId)
+                        .Distinct()
+                        .Count(),
+            })
             .ToListAsync(ct);
 
         IReadOnlyList<TimelineEntry> entries = rows
@@ -101,7 +133,8 @@ internal sealed class FeedItemRepository(AtlasDbContext dbContext) : IFeedItemRe
                 row.item,
                 row.state != null && row.state.IsRead,
                 row.state != null && row.state.IsFavorite,
-                row.state != null && row.state.IsArchived))
+                row.state != null && row.state.IsArchived,
+                row.SourceCount))
             .ToList();
 
         return new PagedResult<TimelineEntry>(entries, page, pageSize, total);
