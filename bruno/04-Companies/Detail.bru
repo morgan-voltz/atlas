@@ -1,0 +1,23 @@
+meta {
+  name: Detail
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/companies/{{siren}}
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+assert {
+  res.status: eq 200
+}
+
+docs {
+  Fiche entreprise par SIREN (variable `siren`, défaut 552032534 = RENAULT).
+  400 = SIREN invalide, 404 = introuvable, 409 = compte INPI non connecté.
+}

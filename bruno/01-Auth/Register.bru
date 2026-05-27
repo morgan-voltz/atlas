@@ -1,0 +1,36 @@
+meta {
+  name: Register
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/auth/register
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "email": "{{email}}",
+    "password": "{{password}}"
+  }
+}
+
+tests {
+  // Tolérant aux re-runs : 200 (compte créé) ou 409 (email déjà inscrit).
+  test("register accepté (200 ou 409)", function () {
+    expect([200, 409]).to.include(res.getStatus());
+  });
+}
+
+docs {
+  Crée le compte. En dev l'email n'est PAS envoyé (LoggingEmailSender) : le lien de
+  vérification est écrit dans les logs de l'API. Copier la valeur du paramètre
+  `userId=` dans la variable d'env `userId` et celle de `token=` dans
+  `verificationToken`, puis lancer « Verify Email ».
+}

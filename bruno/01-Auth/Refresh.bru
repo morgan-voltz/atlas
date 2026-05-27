@@ -1,0 +1,25 @@
+meta {
+  name: Refresh
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{baseUrl}}/auth/refresh
+  body: none
+  auth: none
+}
+
+vars:post-response {
+  accessToken: res.body.accessToken
+}
+
+assert {
+  res.status: eq 200
+}
+
+docs {
+  Utilise le cookie httpOnly `atlas_refresh` posé par « Login » (le client Bruno gère
+  les cookies automatiquement). Renvoie un nouvel accessToken et fait tourner le
+  refresh token.
+}

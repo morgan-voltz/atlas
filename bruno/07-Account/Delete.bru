@@ -1,0 +1,24 @@
+meta {
+  name: Delete (RGPD)
+  type: http
+  seq: 2
+}
+
+delete {
+  url: {{baseUrl}}/account
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+assert {
+  res.status: eq 204
+}
+
+docs {
+  ⚠️ DESTRUCTIF — droit à l'effacement RGPD : supprime le compte et efface en cascade
+  toutes les données liées (credentials INPI, refresh tokens, historique). À lancer en
+  dernier ; il faudra recréer le compte (« Register ») pour rejouer la collection.
+}

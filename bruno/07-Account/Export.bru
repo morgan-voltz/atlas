@@ -1,0 +1,24 @@
+meta {
+  name: Export (RGPD)
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/account/export
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+assert {
+  res.status: eq 200
+  res.body.email: eq {{email}}
+}
+
+docs {
+  Export RGPD des données personnelles (sans données sensibles : ni mot de passe, ni
+  credentials INPI). Inclut profil, état 2FA, connexion INPI et historique.
+}

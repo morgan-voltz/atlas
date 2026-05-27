@@ -1,0 +1,23 @@
+meta {
+  name: Detail
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/trademarks/{{depositNumber}}
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+assert {
+  res.status: eq 200
+}
+
+docs {
+  Notice d'une marque par numéro de dépôt (variable `depositNumber`). Inclut les
+  classes de Nice et `hasImage`. 404 = introuvable.
+}

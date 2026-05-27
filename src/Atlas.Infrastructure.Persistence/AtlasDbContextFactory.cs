@@ -13,7 +13,7 @@ internal sealed class AtlasDbContextFactory : IDesignTimeDbContextFactory<AtlasD
     public AtlasDbContext CreateDbContext(string[] args)
     {
         DbContextOptions<AtlasDbContext> options = new DbContextOptionsBuilder<AtlasDbContext>()
-            .UseNpgsql("Host=localhost;Port=5432;Database=atlas;Username=atlas;Password=atlas")
+            .UseNpgsql("Host=localhost;Port=5433;Database=atlas;Username=atlas;Password=atlas")
             .Options;
 
         return new AtlasDbContext(options);

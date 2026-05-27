@@ -1,0 +1,37 @@
+meta {
+  name: Connect
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/inpi/connection
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "username": "{{inpiUsername}}",
+    "password": "{{inpiPassword}}"
+  }
+}
+
+assert {
+  res.status: eq 204
+}
+
+docs {
+  Nécessite un compte INPI réel. Renseigner `inpiUsername` et `inpiPassword`
+  (variable secrète) dans l'environnement. L'API teste la connexion à l'INPI puis
+  chiffre les credentials au repos (AES-256-GCM). 400 = identifiants INPI invalides,
+  502 = INPI indisponible.
+}

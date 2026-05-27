@@ -1,0 +1,35 @@
+meta {
+  name: Verify Challenge
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{baseUrl}}/auth/2fa/verify
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "challengeToken": "{{challengeToken}}",
+    "code": "{{totpCode}}"
+  }
+}
+
+vars:post-response {
+  accessToken: res.body.accessToken
+}
+
+assert {
+  res.status: eq 200
+}
+
+docs {
+  Seconde étape de connexion quand le 2FA est actif : échange le `challengeToken`
+  (renvoyé par « Login ») et un code TOTP contre un accessToken.
+}
