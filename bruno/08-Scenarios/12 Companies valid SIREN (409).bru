@@ -1,0 +1,22 @@
+meta {
+  name: 12 Companies valid SIREN (409)
+  type: http
+  seq: 12
+}
+
+get {
+  url: {{baseUrl}}/companies/552032534
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+assert {
+  res.status: eq 409
+}
+
+docs {
+  SIREN valide mais aucune connexion INPI → 409 (inpi.not_connected). Deviendra 200 une fois l'accès INPI actif.
+}

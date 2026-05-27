@@ -1,0 +1,34 @@
+meta {
+  name: 04 Register fresh unverified (200)
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{baseUrl}}/auth/register
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "email": "{{freshEmail}}",
+    "password": "{{freshPassword}}"
+  }
+}
+
+script:pre-request {
+  // Compte frais et unique, laissé NON vérifié pour les deux scénarios suivants.
+  bru.setVar("freshEmail", "fresh-" + Date.now() + "@atlas.test");
+  bru.setVar("freshPassword", "Fresh!Passw0rd-123");
+}
+
+tests {
+  test("register accepté (200) ou déjà pris (409)", function () {
+    expect([200, 409]).to.include(res.getStatus());
+  });
+}

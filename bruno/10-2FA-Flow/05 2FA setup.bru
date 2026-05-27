@@ -1,0 +1,28 @@
+meta {
+  name: 05 2FA setup
+  type: http
+  seq: 5
+}
+
+post {
+  url: {{baseUrl}}/auth/2fa/setup
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+vars:post-response {
+  tfaSecret: res.body.secret
+}
+
+assert {
+  res.status: eq 200
+  res.body.secret: isDefined
+}
+
+docs {
+  Démarre la config 2FA et renvoie le secret Base32 (réutilisé pour calculer les codes TOTP).
+}

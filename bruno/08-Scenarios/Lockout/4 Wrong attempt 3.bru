@@ -1,0 +1,26 @@
+meta {
+  name: 4 Wrong attempt 3
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{baseUrl}}/auth/login
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "email": "{{lockEmail}}",
+    "password": "Definitely-Wrong-999"
+  }
+}
+
+assert {
+  res.status: eq 401
+}

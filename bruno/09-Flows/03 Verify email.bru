@@ -1,0 +1,19 @@
+meta {
+  name: 03 Verify email
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/auth/verify-email?userId={{flowUserId}}&token={{flowToken}}
+  auth: none
+}
+
+params:query {
+  userId: {{flowUserId}}
+  token: {{flowToken}}
+}
+
+assert {
+  res.status: eq 200
+}

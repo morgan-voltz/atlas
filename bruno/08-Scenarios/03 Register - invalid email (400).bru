@@ -1,0 +1,30 @@
+meta {
+  name: 03 Register - invalid email (400)
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{baseUrl}}/auth/register
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "email": "not-an-email",
+    "password": "ValidPassw0rd-123"
+  }
+}
+
+assert {
+  res.status: eq 400
+}
+
+docs {
+  Format d'email invalide → EmailAddress.Create échoue dans le handler (400).
+}

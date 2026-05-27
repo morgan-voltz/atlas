@@ -1,0 +1,60 @@
+meta {
+  name: 06 2FA enable
+  type: http
+  seq: 6
+}
+
+post {
+  url: {{baseUrl}}/auth/2fa/enable
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "code": "{{totpCode}}"
+  }
+}
+
+script:pre-request {
+  function bytesToWA(C, bytes) {
+    const words = [];
+    for (let i = 0; i < bytes.length; i++) words[i >>> 2] |= (bytes[i] & 0xff) << (24 - (i % 4) * 8);
+    return C.lib.WordArray.create(words, bytes.length);
+  }
+  function totpNow(secret) {
+    const C = require('crypto-js');
+    const A = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
+    const clean = String(secret).toUpperCase().replace(/=+$/, '').replace(/[^A-Z2-7]/g, '');
+    let bits = '';
+    for (const ch of clean) bits += A.indexOf(ch).toString(2).padStart(5, '0');
+    const bytes = [];
+    for (let i = 0; i + 8 <= bits.length; i += 8) bytes.push(parseInt(bits.substring(i, i + 8), 2));
+    const counter = Math.floor(Date.now() / 1000 / 30);
+    const msg = C.lib.WordArray.create([Math.floor(counter / 0x100000000), counter >>> 0], 8);
+    const hex = C.HmacSHA1(msg, bytesToWA(C, bytes)).toString(C.enc.Hex);
+    const hb = [];
+    for (let i = 0; i < hex.length; i += 2) hb.push(parseInt(hex.substr(i, 2), 16));
+    const off = hb[19] & 0x0f;
+    const bin = ((hb[off] & 0x7f) << 24) | ((hb[off + 1] & 0xff) << 16) | ((hb[off + 2] & 0xff) << 8) | (hb[off + 3] & 0xff);
+    return (bin % 1000000).toString().padStart(6, '0');
+  }
+  bru.setVar('totpCode', totpNow(bru.getVar('tfaSecret')));
+}
+
+assert {
+  res.status: eq 200
+  res.body.recoveryCodes: isDefined
+}
+
+docs {
+  Active le 2FA avec un code TOTP calculé depuis le secret (crypto-js, RFC 6238 SHA1/6/30s).
+}

@@ -1,0 +1,23 @@
+meta {
+  name: 09 SIREN - invalid format (400)
+  type: http
+  seq: 9
+}
+
+get {
+  url: {{baseUrl}}/companies/123
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+assert {
+  res.status: eq 400
+}
+
+docs {
+  SIREN mal formé (pas 9 chiffres). Siren.Create échoue AVANT le check INPI → 400 (companies.invalid_siren),
+  même sans connexion INPI.
+}

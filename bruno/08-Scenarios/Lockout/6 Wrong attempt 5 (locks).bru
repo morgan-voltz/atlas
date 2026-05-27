@@ -1,0 +1,31 @@
+meta {
+  name: 6 Wrong attempt 5 (locks)
+  type: http
+  seq: 6
+}
+
+post {
+  url: {{baseUrl}}/auth/login
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "email": "{{lockEmail}}",
+    "password": "Definitely-Wrong-999"
+  }
+}
+
+assert {
+  res.status: eq 401
+}
+
+docs {
+  5e échec : RegisterFailedLogin atteint le seuil et pose LockoutEndsAt. Renvoie encore 401
+  (le mot de passe est vérifié avant le verrou).
+}

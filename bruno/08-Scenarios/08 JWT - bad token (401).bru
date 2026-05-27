@@ -1,0 +1,22 @@
+meta {
+  name: 08 JWT - bad token (401)
+  type: http
+  seq: 8
+}
+
+get {
+  url: {{baseUrl}}/search-history
+  auth: none
+}
+
+headers {
+  Authorization: Bearer not.a.valid.jwt
+}
+
+assert {
+  res.status: eq 401
+}
+
+docs {
+  Jeton Bearer invalide (signature/format) → rejeté par le middleware JWT → 401.
+}

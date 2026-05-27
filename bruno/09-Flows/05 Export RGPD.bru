@@ -1,0 +1,27 @@
+meta {
+  name: 05 Export RGPD
+  type: http
+  seq: 5
+}
+
+get {
+  url: {{baseUrl}}/account/export
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+assert {
+  res.status: eq 200
+}
+
+tests {
+  test("export concerne bien ce compte", function () {
+    expect(res.getBody().email).to.equal(bru.getVar("flowEmail"));
+  });
+  test("aucune donnée sensible (pas de hash de mot de passe)", function () {
+    expect(JSON.stringify(res.getBody()).toLowerCase()).to.not.include("passwordhash");
+  });
+}

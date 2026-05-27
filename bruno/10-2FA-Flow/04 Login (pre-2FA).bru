@@ -1,0 +1,31 @@
+meta {
+  name: 04 Login (pre-2FA)
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{baseUrl}}/auth/login
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "email": "{{tfaEmail}}",
+    "password": "{{tfaPassword}}"
+  }
+}
+
+vars:post-response {
+  accessToken: res.body.accessToken
+}
+
+assert {
+  res.status: eq 200
+  res.body.accessToken: isDefined
+}

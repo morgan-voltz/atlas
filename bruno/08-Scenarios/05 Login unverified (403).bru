@@ -1,0 +1,30 @@
+meta {
+  name: 05 Login unverified (403)
+  type: http
+  seq: 5
+}
+
+post {
+  url: {{baseUrl}}/auth/login
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "email": "{{freshEmail}}",
+    "password": "{{freshPassword}}"
+  }
+}
+
+assert {
+  res.status: eq 403
+}
+
+docs {
+  Bon mot de passe mais email non vérifié → EnsureCanAuthenticate renvoie email_not_verified (403).
+}

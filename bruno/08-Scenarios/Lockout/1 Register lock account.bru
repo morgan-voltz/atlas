@@ -1,0 +1,37 @@
+meta {
+  name: 1 Register lock account
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/auth/register
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "email": "{{lockEmail}}",
+    "password": "{{lockPassword}}"
+  }
+}
+
+script:pre-request {
+  bru.setVar("lockEmail", "lock-" + Date.now() + "@atlas.test");
+  bru.setVar("lockPassword", "Lock!Passw0rd-123");
+}
+
+tests {
+  test("register accepté (200) ou déjà pris (409)", function () {
+    expect([200, 409]).to.include(res.getStatus());
+  });
+}
+
+docs {
+  Compte dédié au test de verrouillage (MaxFailedLoginAttempts = 5, LockoutDuration = 15 min).
+}

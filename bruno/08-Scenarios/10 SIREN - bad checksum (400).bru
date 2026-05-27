@@ -1,0 +1,22 @@
+meta {
+  name: 10 SIREN - bad checksum (400)
+  type: http
+  seq: 10
+}
+
+get {
+  url: {{baseUrl}}/companies/552032535
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+assert {
+  res.status: eq 400
+}
+
+docs {
+  9 chiffres mais clé de Luhn invalide (552032534 est valide ; ...535 ne l'est pas) → 400.
+}

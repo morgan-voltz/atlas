@@ -1,0 +1,19 @@
+meta {
+  name: 03 Verify email
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/auth/verify-email?userId={{tfaUserId}}&token={{tfaToken}}
+  auth: none
+}
+
+params:query {
+  userId: {{tfaUserId}}
+  token: {{tfaToken}}
+}
+
+assert {
+  res.status: eq 200
+}

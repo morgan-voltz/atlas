@@ -81,17 +81,49 @@ INPI_PASSWORD='...'   # quotes simples si caractères spéciaux ($ % !)
 Avec le CLI Bruno (`@usebruno/cli`) :
 
 ```bash
-# Jouer toute la collection
-npx @usebruno/cli run --env Local
-
 # Un seul dossier
 npx @usebruno/cli run 01-Auth --env Local
 
+# Scénarios de sécurité / validation / RGPD (ne nécessitent PAS d'accès INPI)
+npx @usebruno/cli run 08-Scenarios --env Local
+npx @usebruno/cli run 08-Scenarios/Lockout --env Local   # verrouillage : 5 échecs → 423
+
 # Injecter des variables (ex. token déjà obtenu) et un rapport JSON
-npx @usebruno/cli run 06-Search\ History --env Local \
+npx @usebruno/cli run "06-Search History" --env Local \
   --env-var accessToken=<JWT> --reporter-json results.json
 ```
+
+> **Flag `-r`** : `bru run <dossier>` ne descend PAS dans les sous-dossiers par défaut.
+> Ajouter `-r` pour inclure les sous-dossiers (ex. `08-Scenarios/Lockout`). Éviter de jouer
+> toute la collection d'un coup avec `-r` : elle contient `07-Account/Delete (RGPD)` (destructif)
+> et `03-INPI/Connect` (qui appelle l'INPI réel).
+
+### Le dossier `08-Scenarios`
+
+Tests négatifs et de sécurité **jouables sans accès INPI** (idéal en attendant l'habilitation) :
+validation (mot de passe faible, email invalide), login non vérifié (403) / mauvais mot de passe
+(401), JWT absent/trafiqué (401), SIREN mal formé ou clé de Luhn invalide (400), blocage INPI
+(`connected:false`, 409), et sous-dossier `Lockout` (verrouillage après 5 échecs → 423). Chaque
+scénario crée ses propres comptes jetables (emails horodatés), sans toucher au compte `e2e`.
 
 > ⚠️ `07-Account/Delete (RGPD)` est **destructif** (supprime le compte de test). Il est
 > exclu d'un run complet automatisé sauf intention explicite : le rejouer impose de
 > recréer le compte via `Register` + `Verify Email`.
+
+### Parcours complets : `09-Flows` et `10-2FA-Flow`
+
+Ces dossiers s'appuient sur un endpoint de **développement** `GET /dev/verification-token?email=…`,
+actif **uniquement en environnement Development** (absent en production), qui renvoie le token de
+vérification d'email — ce qui automatise entièrement un compte vérifié sans lire les logs.
+
+- **`09-Flows`** : parcours de bout en bout sur un compte jetable — register → vérif email → login →
+  export RGPD (assertions : bon compte, aucun hash de mot de passe) → logout → refresh refusé (401) →
+  suppression du compte → login impossible (401). Prouve l'invalidation du refresh au logout et
+  l'effacement RGPD.
+- **`10-2FA-Flow`** : cycle 2FA complet — setup → enable → login renvoie un défi → verify → disable.
+  Les codes **TOTP** sont calculés dans les pré-scripts via `crypto-js` (RFC 6238, SHA1 / 6 chiffres / 30 s).
+
+```bash
+npx @usebruno/cli run 09-Flows --env Local
+npx @usebruno/cli run 10-2FA-Flow --env Local
+```

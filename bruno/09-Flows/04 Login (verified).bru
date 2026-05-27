@@ -1,0 +1,31 @@
+meta {
+  name: 04 Login (verified)
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{baseUrl}}/auth/login
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "email": "{{flowEmail}}",
+    "password": "{{flowPassword}}"
+  }
+}
+
+vars:post-response {
+  accessToken: res.body.accessToken
+}
+
+assert {
+  res.status: eq 200
+  res.body.accessToken: isDefined
+}

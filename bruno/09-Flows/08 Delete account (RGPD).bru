@@ -1,0 +1,23 @@
+meta {
+  name: 08 Delete account (RGPD)
+  type: http
+  seq: 8
+}
+
+delete {
+  url: {{baseUrl}}/account
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+assert {
+  res.status: eq 204
+}
+
+docs {
+  Droit à l'effacement : supprime le compte (jetable) et efface en cascade les données liées.
+  L'accessToken (JWT stateless) reste valide jusqu'à expiration, d'où son usage ici après logout.
+}
