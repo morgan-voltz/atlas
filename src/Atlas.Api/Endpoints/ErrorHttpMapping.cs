@@ -1,0 +1,40 @@
+using Atlas.Application.Common;
+using Atlas.Shared.Result;
+
+namespace Atlas.Api.Endpoints;
+
+/// <summary>
+/// Traduit un <see cref="Error"/> métier en réponse HTTP (ProblemDetails) avec le statut approprié.
+/// </summary>
+internal static class ErrorHttpMapping
+{
+    public static IResult ToProblem(this Error error)
+    {
+        ArgumentNullException.ThrowIfNull(error);
+
+        if (error is ValidationError validation)
+        {
+            Dictionary<string, string[]> errors = validation.Failures
+                .GroupBy(failure => failure.PropertyName)
+                .ToDictionary(
+                    group => group.Key,
+                    group => group.Select(failure => failure.Message).ToArray());
+
+            return Results.ValidationProblem(errors, detail: error.Message, type: error.Code);
+        }
+
+        int status = StatusCodeFor(error.Code);
+        return Results.Problem(detail: error.Message, statusCode: status, title: error.Code);
+    }
+
+    private static int StatusCodeFor(string code) => code switch
+    {
+        "users.email_already_in_use" => StatusCodes.Status409Conflict,
+        "users.invalid_credentials" => StatusCodes.Status401Unauthorized,
+        "users.email_not_verified" => StatusCodes.Status403Forbidden,
+        "users.account_locked" => StatusCodes.Status423Locked,
+        "users.invalid_refresh_token" => StatusCodes.Status401Unauthorized,
+        "users.not_found" => StatusCodes.Status404NotFound,
+        _ => StatusCodes.Status400BadRequest,
+    };
+}

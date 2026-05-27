@@ -255,9 +255,11 @@ Les **value objects** sont des types immuables sans identité propre, qui encaps
 
 | Concept | Nom canonique | Notes |
 |---|---|---|
-| Mot de passe | `Password` (en input), `PasswordHash` (en stockage) | Jamais en clair |
-| Token JWT | `AccessToken` | |
-| Token de rafraîchissement | `RefreshToken` | |
+| Adresse email | `EmailAddress` | Value object validé et normalisé (minuscules, trim). Identifiant de connexion, unique par user |
+| État du compte user | `UserStatus` | Énum : `PendingEmailVerification`, `Active`, `Suspended` |
+| Mot de passe | `Password` (en input), `PasswordHash` (en stockage) | Jamais en clair. Hash Argon2id (ADR-010) |
+| Token JWT | `AccessToken` | Émis en RS256 (ADR-010) |
+| Token de rafraîchissement | `RefreshToken` | Rotatif, révocable, seul le hash est persisté |
 | Code 2FA TOTP | `TotpCode` | |
 | Code de récupération 2FA | `RecoveryCode` | |
 

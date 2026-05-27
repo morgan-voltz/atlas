@@ -1,0 +1,8 @@
+# Règles spécifiques aux projets de tests (héritent du .editorconfig racine).
+
+[*.cs]
+# Les noms de tests utilisent la convention Method_scenario_expectation (underscores assumés).
+dotnet_diagnostic.CA1707.severity = none
+
+# Les assertions et données de test n'ont pas besoin des contraintes de culture/perf de production.
+dotnet_diagnostic.CA1861.severity = none
