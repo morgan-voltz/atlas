@@ -689,6 +689,16 @@ Les **value objects** sont des types immuables sans identité propre, qui encaps
 | Note | On évite `Application` (collision avec la couche `Atlas.Application`) ; « Enrollment » désigne l'acte d'appliquer un pack à un compte. |
 | Cf. | F-042 |
 
+### 9.11 FeedItemUserState
+
+| | |
+|---|---|
+| Nom canonique | `FeedItemUserState` |
+| Type | Entité |
+| Langue | mix |
+| Définition | État d'un `FeedItem` pour un user dans sa timeline : lu/non-lu, favori, archivé. L'absence d'instance vaut « non-lu, non-favori, non-archivé » (créée au premier marquage). |
+| Cf. | F-044 |
+
 ---
 
 ## 10. Notifications et alertes

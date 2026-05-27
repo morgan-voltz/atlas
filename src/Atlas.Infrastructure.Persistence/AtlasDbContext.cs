@@ -28,6 +28,8 @@ public sealed class AtlasDbContext(DbContextOptions<AtlasDbContext> options)
 
     public DbSet<VeilleSubscription> VeilleSubscriptions => Set<VeilleSubscription>();
 
+    public DbSet<FeedItemUserState> FeedItemUserStates => Set<FeedItemUserState>();
+
     public DbSet<VeillePack> VeillePacks => Set<VeillePack>();
 
     public DbSet<VeillePackEnrollment> VeillePackEnrollments => Set<VeillePackEnrollment>();

@@ -18,6 +18,8 @@ public static class VeilleErrors
 
     public static DomainError SubscriptionLimitReached(int max) => new SubscriptionLimitReachedError(max);
 
+    public static readonly DomainError FeedItemNotFound = new FeedItemNotFoundError();
+
     public static DomainError InvalidVeillePack(string reason) => new InvalidVeillePackError(reason);
 
     public static readonly DomainError VeillePackNotFound = new VeillePackNotFoundError();
@@ -44,6 +46,9 @@ public static class VeilleErrors
 
     private sealed record SubscriptionLimitReachedError(int Max)
         : DomainError("veille.subscription_limit_reached", $"Limite d'abonnements atteinte ({Max}).");
+
+    private sealed record FeedItemNotFoundError()
+        : DomainError("veille.feed_item_not_found", "Élément de veille introuvable.");
 
     private sealed record InvalidVeillePackError(string Reason)
         : DomainError("veille.invalid_veille_pack", $"VeillePack invalide : {Reason}");
