@@ -67,6 +67,7 @@ app.MapGet("/", () => Results.Ok(new { name = "Atlas API", status = "ok" }))
 app.MapAuthEndpoints();
 app.MapInpiEndpoints();
 app.MapCompaniesEndpoints();
+app.MapTrademarksEndpoints();
 
 app.Run();
 

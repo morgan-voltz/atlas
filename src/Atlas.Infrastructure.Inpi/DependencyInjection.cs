@@ -1,7 +1,9 @@
 using Atlas.Domain.Companies;
 using Atlas.Domain.Inpi;
+using Atlas.Domain.IntellectualProperty;
 using Atlas.Infrastructure.Inpi.Authentication;
 using Atlas.Infrastructure.Inpi.Common;
+using Atlas.Infrastructure.Inpi.Pi;
 using Atlas.Infrastructure.Inpi.Rne;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -21,6 +23,15 @@ public static class DependencyInjection
         services.AddHttpClient<IInpiAuthenticationProvider, InpiAuthenticationProvider>(ConfigureRneClient);
         services.AddHttpClient<ICompanyDataProvider, RneCompanyProvider>(ConfigureRneClient);
 
+        services
+            .AddHttpClient<IIntellectualPropertyProvider, InpiPiTrademarkProvider>(ConfigurePiClient)
+            .ConfigurePrimaryHttpMessageHandler(static () => new HttpClientHandler
+            {
+                // Multi-tenant : on gère les cookies (access_token / XSRF) manuellement, pas de container partagé.
+                UseCookies = false,
+                AllowAutoRedirect = false,
+            });
+
         return services;
     }
 
@@ -28,6 +39,13 @@ public static class DependencyInjection
     {
         InpiOptions options = provider.GetRequiredService<IOptions<InpiOptions>>().Value;
         client.BaseAddress = new Uri(options.RneBaseUrl);
+        client.Timeout = TimeSpan.FromSeconds(options.TimeoutSeconds);
+    }
+
+    private static void ConfigurePiClient(IServiceProvider provider, HttpClient client)
+    {
+        InpiOptions options = provider.GetRequiredService<IOptions<InpiOptions>>().Value;
+        client.BaseAddress = new Uri(options.PiBaseUrl);
         client.Timeout = TimeSpan.FromSeconds(options.TimeoutSeconds);
     }
 }
