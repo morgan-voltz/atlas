@@ -35,6 +35,12 @@ internal sealed class VeilleSubscriptionConfiguration : IEntityTypeConfiguration
 
         builder.HasIndex(subscription => subscription.SourceId);
 
+        // Cascade RGPD (art. 17) : la suppression de l'utilisateur supprime ses abonnements.
+        builder.HasOne<User>()
+            .WithMany()
+            .HasForeignKey(subscription => subscription.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
+
         builder.Ignore(subscription => subscription.DomainEvents);
     }
 }

@@ -1,6 +1,7 @@
 using Atlas.Domain.Inpi;
 using Atlas.Domain.Search;
 using Atlas.Domain.Users;
+using Atlas.Domain.Veille;
 using Atlas.Infrastructure.Persistence;
 using Atlas.Infrastructure.Persistence.Repositories;
 using FluentAssertions;
@@ -32,6 +33,18 @@ public sealed class UserCascadeDeleteTests(PostgresFixture fixture)
             await context.InpiCredentials.AddAsync(InpiCredentials.Create(user.Id, "enc-u", "enc-p", Now));
             await context.SearchHistory.AddAsync(
                 SearchHistoryEntry.Record(user.Id, SearchType.CompanyBySiren, "552032534", Now));
+
+            // Données de veille (F-041 à F-044) : doivent aussi être effacées (RGPD art. 17).
+            FeedSource source = FeedSource.Create("Src", $"https://x.test/{Guid.NewGuid():N}", FeedSourceType.Rss, TimeSpan.FromMinutes(30), Now).Value!;
+            FeedItem item = FeedItem.Create(source.Id, "Titre", "https://x.test/a", "r", Now, null, Now);
+            VeillePack pack = VeillePack.Create($"pack-{Guid.NewGuid():N}", "Pack", "desc", Now).Value!;
+            await context.FeedSources.AddAsync(source);
+            await context.FeedItems.AddAsync(item);
+            await context.VeillePacks.AddAsync(pack);
+            await context.VeilleSubscriptions.AddAsync(VeilleSubscription.Create(user.Id, source.Id, Now));
+            await context.VeillePackEnrollments.AddAsync(VeillePackEnrollment.Create(user.Id, pack.Id, pack.Version, Now));
+            await context.FeedItemUserStates.AddAsync(FeedItemUserState.Create(user.Id, item.Id, Now));
+
             await context.SaveChangesAsync();
         }
 
@@ -47,6 +60,9 @@ public sealed class UserCascadeDeleteTests(PostgresFixture fixture)
             (await context.RefreshTokens.CountAsync(t => t.UserId == user.Id)).Should().Be(0);
             (await context.InpiCredentials.CountAsync(c => c.UserId == user.Id)).Should().Be(0);
             (await context.SearchHistory.CountAsync(e => e.UserId == user.Id)).Should().Be(0);
+            (await context.VeilleSubscriptions.CountAsync(s => s.UserId == user.Id)).Should().Be(0);
+            (await context.VeillePackEnrollments.CountAsync(en => en.UserId == user.Id)).Should().Be(0);
+            (await context.FeedItemUserStates.CountAsync(st => st.UserId == user.Id)).Should().Be(0);
         }
     }
 }

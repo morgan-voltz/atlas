@@ -29,6 +29,7 @@ public sealed class TimelineQueryTests(PostgresFixture fixture)
 
         await using (AtlasDbContext context = fixture.CreateContext())
         {
+            await context.Users.AddAsync(NewUser(userId));
             await context.FeedSources.AddRangeAsync(subscribed, other);
             await context.FeedItems.AddRangeAsync(a1, a2, a3, b1);
             await context.VeilleSubscriptions.AddAsync(VeilleSubscription.Create(userId, subscribed.Id, Now));
@@ -61,6 +62,7 @@ public sealed class TimelineQueryTests(PostgresFixture fixture)
 
         await using (AtlasDbContext context = fixture.CreateContext())
         {
+            await context.Users.AddAsync(NewUser(userId));
             await context.FeedSources.AddAsync(source);
             await context.FeedItems.AddRangeAsync(read, unread);
             await context.VeilleSubscriptions.AddAsync(VeilleSubscription.Create(userId, source.Id, Now));
@@ -96,4 +98,9 @@ public sealed class TimelineQueryTests(PostgresFixture fixture)
 
     private static FeedItem NewItem(FeedSourceId sourceId, string title, DateTimeOffset publishedAt) =>
         FeedItem.Create(sourceId, title, $"https://feed.test/{Guid.NewGuid()}", "résumé", publishedAt, null, Now);
+
+    // La FK user_id -> users (cascade RGPD) impose une ligne users réelle pour les abonnements/états.
+    private static User NewUser(UserId id) =>
+        User.Register(id, EmailAddress.Create($"timeline-{Guid.NewGuid():N}@example.com").Value!,
+            PasswordHash.FromHash("stored"), "tok", Now, TimeSpan.FromHours(24));
 }
