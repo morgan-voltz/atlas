@@ -18,10 +18,13 @@ public sealed class SearchHistoryPruneTests(PostgresFixture fixture)
     [Fact]
     public async Task Prune_keeps_only_the_most_recent_entries()
     {
-        var userId = UserId.New();
+        EmailAddress email = EmailAddress.Create($"prune-{Guid.NewGuid():N}@example.com").Value!;
+        var user = User.Register(UserId.New(), email, PasswordHash.FromHash("stored"), "tok", Start, TimeSpan.FromHours(24));
+        UserId userId = user.Id;
 
         await using (AtlasDbContext context = fixture.CreateContext())
         {
+            await context.Users.AddAsync(user);
             for (int index = 0; index < 10; index++)
             {
                 await context.SearchHistory.AddAsync(

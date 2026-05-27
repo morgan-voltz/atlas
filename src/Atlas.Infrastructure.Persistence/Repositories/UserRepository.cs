@@ -18,4 +18,7 @@ internal sealed class UserRepository(AtlasDbContext dbContext) : IUserRepository
         await dbContext.Users.AddAsync(user, ct);
 
     public void Update(User user) => dbContext.Users.Update(user);
+
+    public Task DeleteAsync(UserId id, CancellationToken ct = default) =>
+        dbContext.Users.Where(user => user.Id == id).ExecuteDeleteAsync(ct);
 }

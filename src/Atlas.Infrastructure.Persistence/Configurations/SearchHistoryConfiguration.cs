@@ -37,6 +37,11 @@ internal sealed class SearchHistoryConfiguration : IEntityTypeConfiguration<Sear
 
         builder.HasIndex(entry => new { entry.UserId, entry.CreatedAt });
 
+        builder.HasOne<User>()
+            .WithMany()
+            .HasForeignKey(entry => entry.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
+
         builder.Ignore(entry => entry.DomainEvents);
     }
 }

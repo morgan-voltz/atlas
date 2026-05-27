@@ -266,6 +266,8 @@ Pour chaque feature, on documente :
 
 ### F-012 — Conformité RGPD MVP
 
+> **Statut** : 🟡 Backend implémenté (MVP 1, 27 mai 2026). **Export** (art. 20) : `GET /account/export` → JSON structuré sans données sensibles (pas de hash, ni credentials/secret INPI). **Effacement** (art. 17) : `DELETE /account` → suppression de l'utilisateur avec **cascade** EF (FK `ON DELETE CASCADE`) sur compte, refresh tokens, credentials INPI, codes 2FA, historique — validé sur Postgres réel. **Reste à faire (UI/contenu)** : politique de confidentialité, page CGU, bannière cookies (côté MAUI/site, F-009/F-011).
+
 **Description** : politique de confidentialité, page CGU, mécanismes d'export et de suppression du compte utilisateur, bannière cookies.
 
 **Valeur user** : obligation légale, mais aussi gage de sérieux pour les early adopters.

@@ -69,6 +69,7 @@ app.MapInpiEndpoints();
 app.MapCompaniesEndpoints();
 app.MapTrademarksEndpoints();
 app.MapSearchHistoryEndpoints();
+app.MapAccountEndpoints();
 
 app.Run();
 

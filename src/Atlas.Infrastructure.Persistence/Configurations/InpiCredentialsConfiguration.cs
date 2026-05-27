@@ -43,6 +43,11 @@ internal sealed class InpiCredentialsConfiguration : IEntityTypeConfiguration<In
         builder.Property(credentials => credentials.UpdatedAt).HasColumnName("updated_at");
         builder.Property(credentials => credentials.LastTestedAt).HasColumnName("last_tested_at");
 
+        builder.HasOne<User>()
+            .WithMany()
+            .HasForeignKey(credentials => credentials.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
+
         builder.Ignore(credentials => credentials.DomainEvents);
     }
 }
