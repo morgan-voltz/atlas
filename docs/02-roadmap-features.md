@@ -4,7 +4,32 @@
 > Chaque feature est décrite avec sa valeur utilisateur, sa complexité technique, les APIs externes requises et les dépendances vers d'autres features.
 
 **Version** : 1.0
-**Date de dernière mise à jour** : 26 mai 2026
+**Date de dernière mise à jour** : 27 mai 2026
+
+---
+
+## État d'avancement — MVP 1
+
+Légende : ✅ livré & vérifié · 🟡 livré, vérification partielle (cf. statut détaillé de la feature) · ⬜ à faire.
+
+| Feature | Statut |
+|---|:--:|
+| F-001 Inscription / connexion | ✅ |
+| F-002 2FA TOTP | ✅ |
+| F-003 Connexion compte INPI | ✅ |
+| F-004 Recherche entreprise (SIREN) | 🟡 |
+| F-005 Recherche entreprise (nom) | 🟡 |
+| F-006 Recherche marque | 🟡 |
+| F-007 Fiche marque | 🟡 |
+| F-008 Historique de recherches | ✅ |
+| F-009 Client MAUI mobile | 🟡 |
+| F-010 Client MAUI desktop | 🟡 |
+| F-011 Documentation | ✅ |
+| F-012 Conformité RGPD | 🟡 |
+
+Les 🟡 correspondent surtout à : intégrations INPI à confirmer par un appel authentifié réel
+(F-004→F-007), clients MAUI compilés mais non exécutés/QA (F-009/F-010), et contenu légal UI
+restant pour le RGPD (F-012). Le détail figure dans le bloc « Statut » de chaque feature.
 
 ---
 

@@ -1,24 +1,40 @@
 # Atlas
 
-> Atlas est un **SaaS open source** developpe en C#/.NET 10 qui agrege les donnees publiques francaises sur les entreprises (RNE) et la propriete industrielle (marques, brevets, dessins & modeles) accessibles via les APIs INPI, combinees a un moteur de veille (RSS, BODACC, BOPI, actualites sectorielles).
+> Atlas est un **SaaS open source** développé en C#/.NET 10 qui agrège les données publiques françaises
+> sur les entreprises (RNE) et la propriété industrielle (marques, brevets, dessins & modèles) accessibles
+> via les API INPI, combinées à un moteur de veille (RSS, BODACC, BOPI, actualités sectorielles).
 
-**Nom de code :** `Atlas` (provisoire, sera renomme lors d'un refactoring de masse).
+**Nom de code :** `Atlas` (provisoire, sera renommé lors d'un refactoring de masse).
 **Licence :** AGPL v3.
-**Runtime :** .NET 10 LTS — support jusqu'a novembre 2028.
+**Runtime :** .NET 10 LTS — support jusqu'à novembre 2028.
 
 ---
 
-## Demarrage rapide
+## État du projet
+
+**MVP 1 — backend complet, clients et documentation amorcés.** Fonctionnalités livrées : inscription /
+connexion, 2FA, connexion d'un compte INPI, recherche entreprise (SIREN / dénomination), recherche et
+fiche de marques, historique de recherches, RGPD (export / suppression), client MAUI (mobile + desktop),
+site de documentation.
+
+Certaines intégrations INPI sont alignées sur la documentation officielle mais restent à confirmer par un
+appel authentifié réel (cf. statuts 🟡 dans la [roadmap](docs/02-roadmap-features.md)). Détail des
+changements dans [`CHANGELOG.md`](CHANGELOG.md).
+
+## Démarrage rapide
 
 ```bash
-# Restaurer les dependances
+# Restaurer et compiler
 dotnet restore
-
-# Compiler toute la solution
 dotnet build
 
-# Lancer les tests
+# Lancer les tests (Docker requis pour les tests d'intégration)
 dotnet test
+
+# Appliquer les migrations sur une base PostgreSQL configurée
+dotnet ef database update \
+  --project src/Atlas.Infrastructure.Persistence \
+  --startup-project src/Atlas.Api
 
 # Lancer l'API en local
 dotnet run --project src/Atlas.Api
@@ -27,34 +43,43 @@ dotnet run --project src/Atlas.Api
 dotnet build src/Atlas.Maui -f net10.0-android
 ```
 
+Configuration backend (`src/Atlas.Api/appsettings.json` ou variables d'environnement) :
+`ConnectionStrings:Atlas` (PostgreSQL), `Jwt:PrivateKeyPem` (clé RSA), `Crypto:KeyBase64`
+(clé AES-256). En production, fournissez ces clés via un KMS.
+
 ## Structure de la solution
 
-- **src/** — code de production reparti selon l'architecture hexagonale
+- **src/** — code de production réparti selon l'architecture hexagonale
   - `Atlas.Shared` — utilitaires transverses (`Result<T>`, etc.)
-  - `Atlas.Domain` — coeur metier pur (entites, value objects, ports)
-  - `Atlas.Application` — use cases CQRS (commands/queries)
-  - `Atlas.Application.Premium` — use cases premium isoles
+  - `Atlas.Domain` — cœur métier pur (entités, value objects, ports)
+  - `Atlas.Application` — use cases CQRS (commands / queries)
+  - `Atlas.Application.Premium` — use cases premium isolés
   - `Atlas.Infrastructure.*` — adapters (Inpi, Persistence, Veille, Messaging, Security, Cache, Storage)
   - `Atlas.Api` — Web API ASP.NET Core (composition root serveur)
   - `Atlas.Maui` — client multi-plateformes (Android, iOS, Windows, macOS)
-- **tests/** — projets de tests (units, integration, architecture)
-- **docs/** — documentation fondatrice (ADRs, roadmap, vocabulaire, etc.)
+- **tests/** — projets de tests (unitaires, intégration, architecture)
+- **docs/** — documentation fondatrice (ADR, roadmap, vocabulaire, etc.)
+- **website/** — site de documentation utilisateur (MkDocs)
 - **tools/** — scripts utilitaires
 
 ## Documentation
 
-Toute la documentation fondatrice est dans [`docs/`](docs/). Les points d'entree :
+- [`ARCHITECTURE.md`](ARCHITECTURE.md) — vue d'ensemble de l'architecture hexagonale
+- [`CHANGELOG.md`](CHANGELOG.md) — historique des changements
+- [`CONTRIBUTING.md`](CONTRIBUTING.md) — comment contribuer
+- [`CLAUDE.md`](CLAUDE.md) — instructions pour Claude Code et contributeurs (synthèse)
+- [`docs/`](docs/) — documentation fondatrice : [ADR](docs/01-decisions-architecturales.md),
+  [roadmap](docs/02-roadmap-features.md), [architecture détaillée](docs/09-architecture-detaillee.md),
+  [layout solution](docs/10-layout-solution-dotnet.md)
+- [`website/`](website/) — site de documentation utilisateur (installation, premiers pas, FAQ)
 
-- [`CLAUDE.md`](CLAUDE.md) — instructions pour Claude Code et contributeurs (synthese)
-- [`docs/01-decisions-architecturales.md`](docs/01-decisions-architecturales.md) — les ADRs
-- [`docs/02-roadmap-features.md`](docs/02-roadmap-features.md) — backlog et MVPs
-- [`docs/09-architecture-detaillee.md`](docs/09-architecture-detaillee.md) — architecture hexagonale en profondeur
-- [`docs/10-layout-solution-dotnet.md`](docs/10-layout-solution-dotnet.md) — layout de la solution .NET
+## Sécurité
 
-## Securite
-
-Voir [`SECURITY.md`](SECURITY.md) pour la procedure de signalement de vulnerabilites et [`docs/04-securite-rgpd.md`](docs/04-securite-rgpd.md) pour le detail des mesures de securite et conformite RGPD.
+Voir [`SECURITY.md`](SECURITY.md) pour la procédure de signalement de vulnérabilités et
+[`docs/04-securite-rgpd.md`](docs/04-securite-rgpd.md) pour le détail des mesures de sécurité et
+de conformité RGPD.
 
 ## Contribuer
 
-Voir `CONTRIBUTING.md` (a venir) et [`docs/05-strategie-repos.md`](docs/05-strategie-repos.md) pour la strategie git, branches et conventional commits.
+Voir [`CONTRIBUTING.md`](CONTRIBUTING.md) et [`docs/05-strategie-repos.md`](docs/05-strategie-repos.md)
+pour la stratégie git, les branches et les Conventional Commits.
