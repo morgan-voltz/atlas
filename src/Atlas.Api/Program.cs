@@ -1,5 +1,6 @@
 using Atlas.Api.Dev;
 using Atlas.Api.Endpoints;
+using Atlas.Api.Veille;
 using Atlas.Application;
 using Atlas.Application.Common;
 using Atlas.Domain.Notifications;
@@ -8,6 +9,9 @@ using Atlas.Infrastructure.Messaging;
 using Atlas.Infrastructure.Persistence;
 using Atlas.Infrastructure.Security;
 using Atlas.Infrastructure.Security.Jwt;
+using Atlas.Infrastructure.Veille;
+using Hangfire;
+using Hangfire.PostgreSql;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 
@@ -22,6 +26,22 @@ builder.Services.AddSecurityInfrastructure(builder.Configuration);
 builder.Services.AddPersistenceInfrastructure(builder.Configuration);
 builder.Services.AddMessagingInfrastructure(builder.Configuration);
 builder.Services.AddInpiInfrastructure(builder.Configuration);
+builder.Services.AddVeilleInfrastructure(builder.Configuration);
+builder.Services.AddScoped<FeedPollingJob>();
+
+// Jobs en arrière-plan (Hangfire, stockage PostgreSQL). Désactivable via BackgroundJobs:Enabled=false
+// (les tests d'intégration le coupent : ils utilisent une autre base que la chaîne de connexion app).
+bool backgroundJobsEnabled = builder.Configuration.GetValue("BackgroundJobs:Enabled", true);
+if (backgroundJobsEnabled)
+{
+    string? hangfireConnection = builder.Configuration.GetConnectionString("Atlas");
+    builder.Services.AddHangfire(config => config
+        .SetDataCompatibilityLevel(CompatibilityLevel.Version_180)
+        .UseSimpleAssemblyNameTypeSerializer()
+        .UseRecommendedSerializerSettings()
+        .UsePostgreSqlStorage(storage => storage.UseNpgsqlConnection(hangfireConnection)));
+    builder.Services.AddHangfireServer();
+}
 
 // DEV UNIQUEMENT : capture du token de vérification d'email pour l'automatisation des tests.
 // Remplace l'IEmailSender de dev et expose /dev/verification-token. Jamais actif hors Development.
@@ -81,6 +101,23 @@ app.MapCompaniesEndpoints();
 app.MapTrademarksEndpoints();
 app.MapSearchHistoryEndpoints();
 app.MapAccountEndpoints();
+app.MapFeedEndpoints();
+
+if (backgroundJobsEnabled)
+{
+    using (IServiceScope scope = app.Services.CreateScope())
+    {
+        // Amorce les sources de veille (idempotent) puis planifie le polling récurrent (toutes les 30 min).
+        await FeedSourceSeeder.SeedAsync(scope.ServiceProvider);
+        scope.ServiceProvider.GetRequiredService<IRecurringJobManager>()
+            .AddOrUpdate<FeedPollingJob>("feed-polling", job => job.PollAsync(), "*/30 * * * *");
+    }
+
+    if (app.Environment.IsDevelopment())
+    {
+        app.MapHangfireDashboard();
+    }
+}
 
 app.Run();
 

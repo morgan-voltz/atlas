@@ -42,6 +42,10 @@ public sealed class AtlasApiFactory : WebApplicationFactory<Program>, IAsyncLife
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
+        // Hangfire pointe sur la chaîne de connexion de l'app ; en test on utilise un conteneur dédié,
+        // on coupe donc les jobs en arrière-plan pour ne pas perturber le démarrage.
+        builder.UseSetting("BackgroundJobs:Enabled", "false");
+
         builder.ConfigureTestServices(services =>
         {
             services.RemoveAll<DbContextOptions<AtlasDbContext>>();

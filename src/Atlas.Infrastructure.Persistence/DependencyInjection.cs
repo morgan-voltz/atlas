@@ -2,6 +2,7 @@ using Atlas.Domain.Common;
 using Atlas.Domain.Inpi;
 using Atlas.Domain.Search;
 using Atlas.Domain.Users;
+using Atlas.Domain.Veille;
 using Atlas.Infrastructure.Persistence.Repositories;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -26,6 +27,8 @@ public static class DependencyInjection
         services.AddScoped<ITwoFactorRecoveryCodeRepository, TwoFactorRecoveryCodeRepository>();
         services.AddScoped<IInpiCredentialsRepository, InpiCredentialsRepository>();
         services.AddScoped<ISearchHistoryRepository, SearchHistoryRepository>();
+        services.AddScoped<IFeedSourceRepository, FeedSourceRepository>();
+        services.AddScoped<IFeedItemRepository, FeedItemRepository>();
 
         return services;
     }
