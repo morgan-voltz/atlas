@@ -9,3 +9,8 @@ dotnet_diagnostic.CA1861.severity = none
 
 # Convention xunit : les marqueurs de collection se nomment « ...Collection ».
 dotnet_diagnostic.CA1711.severity = none
+
+# Le code de test privilégie des types explicites pour la lisibilité des Arrange
+# (ex. `FeedItemUserState state = FeedItemUserState.Create(...)`). On n'impose pas
+# `var` dans les tests ; la production reste stricte (.editorconfig racine).
+dotnet_diagnostic.IDE0007.severity = none

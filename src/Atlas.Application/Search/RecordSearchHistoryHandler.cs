@@ -16,7 +16,7 @@ internal sealed class RecordSearchHistoryHandler(
     {
         var userId = new UserId(notification.UserId);
 
-        SearchHistoryEntry entry = SearchHistoryEntry.Record(userId, notification.Type, notification.Query, clock.UtcNow);
+        var entry = SearchHistoryEntry.Record(userId, notification.Type, notification.Query, clock.UtcNow);
         await searchHistoryRepository.AddAsync(entry, cancellationToken);
         await unitOfWork.SaveChangesAsync(cancellationToken);
 

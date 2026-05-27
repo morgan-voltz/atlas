@@ -77,7 +77,7 @@ internal sealed class AddUserFeedSourceHandler(
             return Result<VeilleSubscriptionDto>.Fail(VeilleErrors.AlreadySubscribed);
         }
 
-        VeilleSubscription subscription = VeilleSubscription.Create(userId, source.Id, now);
+        var subscription = VeilleSubscription.Create(userId, source.Id, now);
         await subscriptionRepository.AddAsync(subscription, cancellationToken);
 
         await unitOfWork.SaveChangesAsync(cancellationToken);

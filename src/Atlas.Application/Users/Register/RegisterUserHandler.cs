@@ -48,7 +48,7 @@ internal sealed class RegisterUserHandler(
             now,
             settings.EmailVerificationTokenLifetime);
 
-        Account account = Account.Create(AccountId.New(), user.Id, now);
+        var account = Account.Create(AccountId.New(), user.Id, now);
 
         await userRepository.AddAsync(user, cancellationToken);
         await accountRepository.AddAsync(account, cancellationToken);

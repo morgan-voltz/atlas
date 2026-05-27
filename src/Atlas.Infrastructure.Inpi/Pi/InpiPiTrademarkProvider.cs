@@ -96,7 +96,7 @@ internal sealed class InpiPiTrademarkProvider(
             }
 
             PiTrademarkSearchResponse? body = await response.Content.ReadFromJsonAsync<PiTrademarkSearchResponse>(ct);
-            List<TrademarkSummary> items = (body?.Results ?? []).Select(PiTrademarkMapper.Map).ToList();
+            var items = (body?.Results ?? []).Select(PiTrademarkMapper.Map).ToList();
             long total = body?.Total ?? items.Count;
             var page = new PagedResult<TrademarkSummary>(items, query.Page, query.PageSize, total);
             return (Result<PagedResult<TrademarkSummary>>.Ok(page), false);

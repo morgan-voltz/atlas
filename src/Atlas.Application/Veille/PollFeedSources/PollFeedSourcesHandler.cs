@@ -48,7 +48,7 @@ internal sealed class PollFeedSourcesHandler(
                 continue;
             }
 
-            List<FeedItem> items = fetch.Value!
+            var items = fetch.Value!
                 .Select(draft => FeedItem.Create(
                     source.Id, draft.Title, draft.Url, draft.Summary, draft.PublishedAt, draft.Categories, now))
                 .GroupBy(item => item.ContentHash, StringComparer.Ordinal)
@@ -59,9 +59,9 @@ internal sealed class PollFeedSourcesHandler(
                 source.Id,
                 items.Select(item => item.ContentHash).ToList(),
                 cancellationToken);
-            HashSet<string> existingSet = existing.ToHashSet(StringComparer.Ordinal);
+            var existingSet = existing.ToHashSet(StringComparer.Ordinal);
 
-            List<FeedItem> newItems = items.Where(item => !existingSet.Contains(item.ContentHash)).ToList();
+            var newItems = items.Where(item => !existingSet.Contains(item.ContentHash)).ToList();
             if (newItems.Count > 0)
             {
                 await itemRepository.AddRangeAsync(newItems, cancellationToken);
