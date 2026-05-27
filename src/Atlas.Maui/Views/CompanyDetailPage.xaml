@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage
+    x:Class="Atlas.Maui.Views.CompanyDetailPage"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:vm="clr-namespace:Atlas.Maui.ViewModels"
+    xmlns:models="clr-namespace:Atlas.Maui.Models"
+    x:DataType="vm:CompanyDetailViewModel"
+    Title="Fiche entreprise">
+
+    <ScrollView>
+        <VerticalStackLayout Padding="16" Spacing="10">
+            <ActivityIndicator IsRunning="{Binding IsBusy}" IsVisible="{Binding IsBusy}" />
+            <Label Text="{Binding ErrorMessage}" TextColor="Red" />
+
+            <VerticalStackLayout Spacing="6" BindingContext="{Binding Company}" x:DataType="models:CompanyResponse">
+                <Label Text="{Binding Denomination}" FontSize="24" FontAttributes="Bold" />
+                <Label Text="{Binding Siren}" />
+                <Label Text="{Binding FormeJuridique}" />
+                <Label Text="{Binding NafLabel}" />
+                <Label Text="{Binding Adresse.City}" />
+                <Label Text="Dirigeants" FontAttributes="Bold" Margin="0,12,0,0" />
+                <CollectionView ItemsSource="{Binding Dirigeants}">
+                    <CollectionView.ItemTemplate>
+                        <DataTemplate x:DataType="models:DirigeantResponse">
+                            <Label Text="{Binding Nom}" Padding="0,2" />
+                        </DataTemplate>
+                    </CollectionView.ItemTemplate>
+                </CollectionView>
+            </VerticalStackLayout>
+        </VerticalStackLayout>
+    </ScrollView>
+
+</ContentPage>

@@ -213,6 +213,8 @@ Pour chaque feature, on documente :
 
 ### F-009 — Client MAUI mobile (Android/iOS) avec fonctions de base
 
+> **Statut** : 🟡 Slice navigable implémenté (MVP 1, 27 mai 2026), **compilé Android** (non lancé/capturé : pas d'émulateur ici). Fondation : `AtlasApiClient` (seul point d'entrée vers l'API, refresh sur 401), `ITokenStore` via SecureStorage (Keychain/Keystore — aucun credential INPI sur le device), MVVM (CommunityToolkit). Écrans : Login → recherche entreprise (SIREN/nom) → fiche entreprise → historique ; Shell + onglets. **Reste** : écrans marques (F-006/F-007, même patron), auto-login au démarrage, bannière cookies/CGU, et **lancement/QA sur émulateur réel**. Respecte la règle d'archi (Atlas.Maui → Domain + Shared uniquement).
+
 **Description** : application mobile native (Android et iOS via MAUI) permettant les fonctions F-004 à F-008 dans une UX adaptée mobile.
 
 **Valeur user** : un utilisateur peut consulter une fiche entreprise depuis son téléphone en rendez-vous. Valeur métier énorme pour la cible "expert-comptable / avocat en déplacement".
