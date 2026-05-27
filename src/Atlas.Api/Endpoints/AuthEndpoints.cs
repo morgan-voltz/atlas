@@ -16,7 +16,6 @@ internal static class AuthEndpoints
 {
     private const string RefreshCookieName = "atlas_refresh";
     private const string CookiePath = "/auth";
-    private const string SubClaim = "sub";
 
     public static IEndpointRouteBuilder MapAuthEndpoints(this IEndpointRouteBuilder routes)
     {
@@ -129,7 +128,7 @@ internal static class AuthEndpoints
         ISender sender,
         CancellationToken ct)
     {
-        if (!TryGetUserId(principal, out Guid userId))
+        if (!principal.TryGetUserId(out Guid userId))
         {
             return Results.Unauthorized();
         }
@@ -144,7 +143,7 @@ internal static class AuthEndpoints
         ISender sender,
         CancellationToken ct)
     {
-        if (!TryGetUserId(principal, out Guid userId))
+        if (!principal.TryGetUserId(out Guid userId))
         {
             return Results.Unauthorized();
         }
@@ -159,7 +158,7 @@ internal static class AuthEndpoints
         ISender sender,
         CancellationToken ct)
     {
-        if (!TryGetUserId(principal, out Guid userId))
+        if (!principal.TryGetUserId(out Guid userId))
         {
             return Results.Unauthorized();
         }
@@ -185,13 +184,6 @@ internal static class AuthEndpoints
         AuthTokensDto tokens = result.Value!;
         SetRefreshCookie(httpContext, tokens.RefreshToken, settings.RefreshTokenLifetime);
         return Results.Ok(new AccessTokenResponse(tokens.AccessToken, tokens.AccessTokenExpiresAt));
-    }
-
-    private static bool TryGetUserId(ClaimsPrincipal principal, out Guid userId)
-    {
-        userId = Guid.Empty;
-        string? subject = principal.FindFirstValue(SubClaim);
-        return subject is not null && Guid.TryParse(subject, out userId);
     }
 
     private static void SetRefreshCookie(HttpContext httpContext, string token, TimeSpan lifetime)

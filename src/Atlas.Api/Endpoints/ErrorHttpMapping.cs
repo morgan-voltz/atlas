@@ -40,6 +40,9 @@ internal static class ErrorHttpMapping
         "users.two_factor_setup_not_started" => StatusCodes.Status409Conflict,
         "users.invalid_two_factor_code" => StatusCodes.Status401Unauthorized,
         "users.invalid_two_factor_challenge" => StatusCodes.Status401Unauthorized,
+        "inpi.invalid_credentials" => StatusCodes.Status400BadRequest,
+        "inpi.unavailable" => StatusCodes.Status502BadGateway,
+        "inpi.not_connected" => StatusCodes.Status404NotFound,
         _ => StatusCodes.Status400BadRequest,
     };
 }
