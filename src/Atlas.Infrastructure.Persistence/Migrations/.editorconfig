@@ -2,5 +2,9 @@
 # qui ne s'appliquent pas à du code qu'on n'édite pas à la main.
 
 [*.cs]
+# Marque les migrations comme code généré : exclut les analyseurs de style IDE
+# (IDE0161 namespace file-scoped, IDE0007 var, etc.) qui ne s'appliquent pas à
+# du code qu'on n'édite pas à la main.
+generated_code = true
 # CA1861 : EF génère des tableaux constants en argument (ex. index composites).
 dotnet_diagnostic.CA1861.severity = none
