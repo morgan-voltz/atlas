@@ -28,6 +28,10 @@ public sealed class AtlasDbContext(DbContextOptions<AtlasDbContext> options)
 
     public DbSet<VeilleSubscription> VeilleSubscriptions => Set<VeilleSubscription>();
 
+    public DbSet<VeillePack> VeillePacks => Set<VeillePack>();
+
+    public DbSet<VeillePackEnrollment> VeillePackEnrollments => Set<VeillePackEnrollment>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         ArgumentNullException.ThrowIfNull(modelBuilder);

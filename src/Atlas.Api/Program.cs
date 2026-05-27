@@ -102,13 +102,15 @@ app.MapTrademarksEndpoints();
 app.MapSearchHistoryEndpoints();
 app.MapAccountEndpoints();
 app.MapFeedEndpoints();
+app.MapVeillePackEndpoints();
 
 if (backgroundJobsEnabled)
 {
     using (IServiceScope scope = app.Services.CreateScope())
     {
-        // Amorce les sources de veille (idempotent) puis planifie le polling récurrent (toutes les 30 min).
+        // Amorce les sources de veille puis les VeillePacks (idempotents) ; planifie ensuite le polling récurrent.
         await FeedSourceSeeder.SeedAsync(scope.ServiceProvider);
+        await VeillePackSeeder.SeedAsync(scope.ServiceProvider);
         scope.ServiceProvider.GetRequiredService<IRecurringJobManager>()
             .AddOrUpdate<FeedPollingJob>("feed-polling", job => job.PollAsync(), "*/30 * * * *");
     }

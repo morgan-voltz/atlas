@@ -18,6 +18,12 @@ public static class VeilleErrors
 
     public static DomainError SubscriptionLimitReached(int max) => new SubscriptionLimitReachedError(max);
 
+    public static DomainError InvalidVeillePack(string reason) => new InvalidVeillePackError(reason);
+
+    public static readonly DomainError VeillePackNotFound = new VeillePackNotFoundError();
+
+    public static readonly DomainError VeillePackNotEnrolled = new VeillePackNotEnrolledError();
+
     private sealed record InvalidFeedSourceError(string Reason)
         : DomainError("veille.invalid_feed_source", $"Source de veille invalide : {Reason}");
 
@@ -38,4 +44,13 @@ public static class VeilleErrors
 
     private sealed record SubscriptionLimitReachedError(int Max)
         : DomainError("veille.subscription_limit_reached", $"Limite d'abonnements atteinte ({Max}).");
+
+    private sealed record InvalidVeillePackError(string Reason)
+        : DomainError("veille.invalid_veille_pack", $"VeillePack invalide : {Reason}");
+
+    private sealed record VeillePackNotFoundError()
+        : DomainError("veille.veille_pack_not_found", "Pack de veille introuvable.");
+
+    private sealed record VeillePackNotEnrolledError()
+        : DomainError("veille.veille_pack_not_enrolled", "Vous n'avez pas appliqué ce pack de veille.");
 }
