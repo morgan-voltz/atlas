@@ -11,13 +11,6 @@ namespace Atlas.Api.Veille;
 /// </summary>
 internal static class FeedSourceSeeder
 {
-    private static readonly (string Name, string Url, FeedSourceType Type)[] DefaultSources =
-    [
-        (".NET Blog", "https://devblogs.microsoft.com/dotnet/feed/", FeedSourceType.Rss),
-        ("CNIL — Actualités", "https://www.cnil.fr/fr/rss.xml", FeedSourceType.Rss),
-        ("data.gouv.fr — Actualités", "https://www.data.gouv.fr/fr/posts/recent.atom", FeedSourceType.Atom),
-    ];
-
     public static async Task SeedAsync(IServiceProvider services, CancellationToken ct = default)
     {
         IFeedSourceRepository repository = services.GetRequiredService<IFeedSourceRepository>();
@@ -27,9 +20,9 @@ internal static class FeedSourceSeeder
         var interval = TimeSpan.FromMinutes(30);
         bool added = false;
 
-        foreach ((string name, string url, FeedSourceType type) in DefaultSources)
+        foreach (VeilleCatalog.CatalogSource source in VeilleCatalog.AllSources)
         {
-            Result<FeedSource> created = FeedSource.Create(name, url, type, interval, clock.UtcNow);
+            Result<FeedSource> created = FeedSource.Create(source.Name, source.Url, source.Type, interval, clock.UtcNow);
             if (created.IsFailure)
             {
                 continue;
