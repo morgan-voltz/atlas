@@ -39,6 +39,7 @@ public sealed class TimelineCollapseTests(PostgresFixture fixture)
 
         await using (AtlasDbContext context = fixture.CreateContext())
         {
+            await context.Users.AddAsync(NewUser(userId));
             await context.FeedSources.AddRangeAsync(a, b, c);
             await context.FeedItemClusters.AddAsync(cluster);
             await context.FeedItems.AddRangeAsync(itemA, itemB, itemC, standalone);
@@ -69,4 +70,9 @@ public sealed class TimelineCollapseTests(PostgresFixture fixture)
 
     private static FeedItem NewItem(FeedSourceId sourceId, string title, DateTimeOffset publishedAt) =>
         FeedItem.Create(sourceId, title, $"https://feed.test/{Guid.NewGuid()}", "résumé", publishedAt, null, Now);
+
+    // La FK user_id -> users (cascade RGPD, Lot 1) impose une ligne users réelle pour les abonnements.
+    private static User NewUser(UserId id) =>
+        User.Register(id, EmailAddress.Create($"collapse-{Guid.NewGuid():N}@example.com").Value!,
+            PasswordHash.FromHash("stored"), "tok", Now, TimeSpan.FromHours(24));
 }
