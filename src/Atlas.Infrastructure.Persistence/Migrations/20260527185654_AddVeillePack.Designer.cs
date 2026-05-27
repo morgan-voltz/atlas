@@ -3,6 +3,7 @@ using System;
 using Atlas.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Atlas.Infrastructure.Persistence.Migrations
 {
     [DbContext(typeof(AtlasDbContext))]
-    partial class AtlasDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260527185654_AddVeillePack")]
+    partial class AddVeillePack
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -318,48 +321,6 @@ namespace Atlas.Infrastructure.Persistence.Migrations
                     b.ToTable("feed_item", (string)null);
                 });
 
-            modelBuilder.Entity("Atlas.Domain.Veille.FeedItemUserState", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .HasColumnType("uuid")
-                        .HasColumnName("id");
-
-                    b.Property<Guid>("FeedItemId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("feed_item_id");
-
-                    b.Property<bool>("IsArchived")
-                        .HasColumnType("boolean")
-                        .HasColumnName("is_archived");
-
-                    b.Property<bool>("IsFavorite")
-                        .HasColumnType("boolean")
-                        .HasColumnName("is_favorite");
-
-                    b.Property<bool>("IsRead")
-                        .HasColumnType("boolean")
-                        .HasColumnName("is_read");
-
-                    b.Property<DateTimeOffset>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("updated_at");
-
-                    b.Property<Guid>("UserId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("user_id");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("FeedItemId");
-
-                    b.HasIndex("UserId", "FeedItemId")
-                        .IsUnique();
-
-                    b.HasIndex("UserId", "IsArchived");
-
-                    b.ToTable("feed_item_user_state", (string)null);
-                });
-
             modelBuilder.Entity("Atlas.Domain.Veille.FeedSource", b =>
                 {
                     b.Property<Guid>("Id")
@@ -564,15 +525,6 @@ namespace Atlas.Infrastructure.Persistence.Migrations
                     b.HasOne("Atlas.Domain.Veille.FeedSource", null)
                         .WithMany()
                         .HasForeignKey("SourceId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-                });
-
-            modelBuilder.Entity("Atlas.Domain.Veille.FeedItemUserState", b =>
-                {
-                    b.HasOne("Atlas.Domain.Veille.FeedItem", null)
-                        .WithMany()
-                        .HasForeignKey("FeedItemId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });

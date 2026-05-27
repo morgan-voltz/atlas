@@ -668,7 +668,28 @@ Les **value objects** sont des types immuables sans identité propre, qui encaps
 | Définition | Règle définie par un user pour générer des alertes (mots-clés, sources, entreprises favorites). |
 | Cf. | F-046 |
 
-### 9.9 FeedItemUserState
+### 9.9 VeillePackItem
+
+| | |
+|---|---|
+| Nom canonique | `VeillePackItem` |
+| Type | Type possédé (owned) |
+| Langue | mix |
+| Définition | Lien entre un `VeillePack` et une `FeedSource` partagée. Compose l'agrégat `VeillePack`. |
+| Cf. | F-042 |
+
+### 9.10 VeillePackEnrollment
+
+| | |
+|---|---|
+| Nom canonique | `VeillePackEnrollment` |
+| Type | Entité |
+| Langue | mix |
+| Définition | Inscription d'un user à un `VeillePack`, avec la version du pack appliquée. Permet de détecter qu'une nouvelle version est disponible et de re-synchroniser les abonnements. |
+| Note | On évite `Application` (collision avec la couche `Atlas.Application`) ; « Enrollment » désigne l'acte d'appliquer un pack à un compte. |
+| Cf. | F-042 |
+
+### 9.11 FeedItemUserState
 
 | | |
 |---|---|

@@ -20,6 +20,12 @@ public static class VeilleErrors
 
     public static readonly DomainError FeedItemNotFound = new FeedItemNotFoundError();
 
+    public static DomainError InvalidVeillePack(string reason) => new InvalidVeillePackError(reason);
+
+    public static readonly DomainError VeillePackNotFound = new VeillePackNotFoundError();
+
+    public static readonly DomainError VeillePackNotEnrolled = new VeillePackNotEnrolledError();
+
     private sealed record InvalidFeedSourceError(string Reason)
         : DomainError("veille.invalid_feed_source", $"Source de veille invalide : {Reason}");
 
@@ -43,4 +49,13 @@ public static class VeilleErrors
 
     private sealed record FeedItemNotFoundError()
         : DomainError("veille.feed_item_not_found", "Élément de veille introuvable.");
+
+    private sealed record InvalidVeillePackError(string Reason)
+        : DomainError("veille.invalid_veille_pack", $"VeillePack invalide : {Reason}");
+
+    private sealed record VeillePackNotFoundError()
+        : DomainError("veille.veille_pack_not_found", "Pack de veille introuvable.");
+
+    private sealed record VeillePackNotEnrolledError()
+        : DomainError("veille.veille_pack_not_enrolled", "Vous n'avez pas appliqué ce pack de veille.");
 }

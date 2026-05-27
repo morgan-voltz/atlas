@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Atlas.Infrastructure.Persistence.Migrations
 {
     [DbContext(typeof(AtlasDbContext))]
-    [Migration("20260527201452_AddFeedItemUserState")]
+    [Migration("20260527203632_AddFeedItemUserState")]
     partial class AddFeedItemUserState
     {
         /// <inheritdoc />
@@ -411,6 +411,84 @@ namespace Atlas.Infrastructure.Persistence.Migrations
                     b.ToTable("feed_source", (string)null);
                 });
 
+            modelBuilder.Entity("Atlas.Domain.Veille.VeillePack", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("code");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)")
+                        .HasColumnName("description");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_active");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("name");
+
+                    b.Property<int>("Version")
+                        .HasColumnType("integer")
+                        .HasColumnName("version");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Code")
+                        .IsUnique();
+
+                    b.ToTable("veille_pack", (string)null);
+                });
+
+            modelBuilder.Entity("Atlas.Domain.Veille.VeillePackEnrollment", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<int>("AppliedVersion")
+                        .HasColumnType("integer")
+                        .HasColumnName("applied_version");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<Guid>("PackId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("pack_id");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId", "PackId")
+                        .IsUnique();
+
+                    b.ToTable("veille_pack_enrollment", (string)null);
+                });
+
             modelBuilder.Entity("Atlas.Domain.Veille.VeilleSubscription", b =>
                 {
                     b.Property<Guid>("Id")
@@ -500,6 +578,28 @@ namespace Atlas.Infrastructure.Persistence.Migrations
                         .HasForeignKey("FeedItemId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("Atlas.Domain.Veille.VeillePack", b =>
+                {
+                    b.OwnsMany("Atlas.Domain.Veille.VeillePackItem", "Items", b1 =>
+                        {
+                            b1.Property<Guid>("pack_id")
+                                .HasColumnType("uuid");
+
+                            b1.Property<Guid>("SourceId")
+                                .HasColumnType("uuid")
+                                .HasColumnName("source_id");
+
+                            b1.HasKey("pack_id", "SourceId");
+
+                            b1.ToTable("veille_pack_item", (string)null);
+
+                            b1.WithOwner()
+                                .HasForeignKey("pack_id");
+                        });
+
+                    b.Navigation("Items");
                 });
 #pragma warning restore 612, 618
         }

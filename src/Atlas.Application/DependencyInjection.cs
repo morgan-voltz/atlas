@@ -1,6 +1,7 @@
 using System.Reflection;
 using Atlas.Application.Common.Behaviors;
 using Atlas.Application.Users;
+using Atlas.Application.Veille;
 using FluentValidation;
 using MediatR;
 using Microsoft.Extensions.DependencyInjection;
@@ -21,6 +22,7 @@ public static class DependencyInjection
 
         services.AddValidatorsFromAssembly(assembly, includeInternalTypes: true);
         services.AddScoped<AuthTokenFactory>();
+        services.AddScoped<VeillePackEnroller>();
 
         return services;
     }
