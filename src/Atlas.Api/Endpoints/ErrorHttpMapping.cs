@@ -35,6 +35,11 @@ internal static class ErrorHttpMapping
         "users.account_locked" => StatusCodes.Status423Locked,
         "users.invalid_refresh_token" => StatusCodes.Status401Unauthorized,
         "users.not_found" => StatusCodes.Status404NotFound,
+        "users.two_factor_already_enabled" => StatusCodes.Status409Conflict,
+        "users.two_factor_not_enabled" => StatusCodes.Status409Conflict,
+        "users.two_factor_setup_not_started" => StatusCodes.Status409Conflict,
+        "users.invalid_two_factor_code" => StatusCodes.Status401Unauthorized,
+        "users.invalid_two_factor_challenge" => StatusCodes.Status401Unauthorized,
         _ => StatusCodes.Status400BadRequest,
     };
 }

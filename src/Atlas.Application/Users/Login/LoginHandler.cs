@@ -13,20 +13,21 @@ internal sealed class LoginHandler(
     IDateTimeProvider clock,
     IUnitOfWork unitOfWork,
     AuthTokenFactory tokenFactory,
-    AuthSettings settings) : IRequestHandler<LoginCommand, Result<AuthTokensDto>>
+    ITwoFactorChallengeService challengeService,
+    AuthSettings settings) : IRequestHandler<LoginCommand, Result<LoginResultDto>>
 {
-    public async Task<Result<AuthTokensDto>> Handle(LoginCommand request, CancellationToken cancellationToken)
+    public async Task<Result<LoginResultDto>> Handle(LoginCommand request, CancellationToken cancellationToken)
     {
         Result<EmailAddress> emailResult = EmailAddress.Create(request.Email);
         if (emailResult.IsFailure)
         {
-            return Result<AuthTokensDto>.Fail(UserErrors.InvalidCredentials);
+            return Result<LoginResultDto>.Fail(UserErrors.InvalidCredentials);
         }
 
         User? user = await userRepository.GetByEmailAsync(emailResult.Value, cancellationToken);
         if (user is null)
         {
-            return Result<AuthTokensDto>.Fail(UserErrors.InvalidCredentials);
+            return Result<LoginResultDto>.Fail(UserErrors.InvalidCredentials);
         }
 
         DateTimeOffset now = clock.UtcNow;
@@ -36,21 +37,30 @@ internal sealed class LoginHandler(
             user.RegisterFailedLogin(now, settings.MaxFailedLoginAttempts, settings.LockoutDuration);
             userRepository.Update(user);
             await unitOfWork.SaveChangesAsync(cancellationToken);
-            return Result<AuthTokensDto>.Fail(UserErrors.InvalidCredentials);
+            return Result<LoginResultDto>.Fail(UserErrors.InvalidCredentials);
         }
 
         Result canAuthenticate = user.EnsureCanAuthenticate(now);
         if (canAuthenticate.IsFailure)
         {
-            return Result<AuthTokensDto>.Fail(canAuthenticate.Error!);
+            return Result<LoginResultDto>.Fail(canAuthenticate.Error!);
         }
 
         user.RegisterSuccessfulLogin();
-        AuthTokensDto tokens = await tokenFactory.IssueAsync(user, now, cancellationToken);
 
+        // Le mot de passe est correct : si le 2FA est actif, on n'émet pas encore les jetons mais un défi.
+        if (user.TwoFactorEnabled)
+        {
+            string challenge = challengeService.IssueChallenge(user.Id);
+            userRepository.Update(user);
+            await unitOfWork.SaveChangesAsync(cancellationToken);
+            return Result<LoginResultDto>.Ok(new LoginResultDto(TwoFactorRequired: true, Tokens: null, TwoFactorChallengeToken: challenge));
+        }
+
+        AuthTokensDto tokens = await tokenFactory.IssueAsync(user, now, cancellationToken);
         userRepository.Update(user);
         await unitOfWork.SaveChangesAsync(cancellationToken);
 
-        return Result<AuthTokensDto>.Ok(tokens);
+        return Result<LoginResultDto>.Ok(new LoginResultDto(TwoFactorRequired: false, Tokens: tokens, TwoFactorChallengeToken: null));
     }
 }

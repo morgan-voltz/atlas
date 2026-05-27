@@ -49,6 +49,16 @@ internal sealed class UserConfiguration : IEntityTypeConfiguration<User>
         builder.Property<DateTimeOffset?>("_emailVerificationTokenExpiresAt")
             .HasColumnName("email_verification_token_expires_at");
 
+        builder.Property(user => user.TwoFactorEnabled).HasColumnName("two_factor_enabled");
+
+        builder.Property(user => user.TwoFactorSecret)
+            .HasColumnName("two_factor_secret")
+            .HasMaxLength(512);
+
+        builder.Property(user => user.PendingTwoFactorSecret)
+            .HasColumnName("pending_two_factor_secret")
+            .HasMaxLength(512);
+
         builder.Ignore(user => user.DomainEvents);
     }
 }
