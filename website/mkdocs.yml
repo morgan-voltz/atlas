@@ -25,6 +25,7 @@ nav:
   - Accueil: index.md
   - Installation: installation.md
   - Premiers pas: premiers-pas.md
+  - Référence API: reference-api.md
   - FAQ: faq.md
 
 markdown_extensions:
