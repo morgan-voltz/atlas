@@ -1,0 +1,34 @@
+meta {
+  name: 01 Login e2e (token)
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/auth/login
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "email": "{{email}}",
+    "password": "{{password}}"
+  }
+}
+
+vars:post-response {
+  accessToken: res.body.accessToken
+}
+
+assert {
+  res.status: eq 200
+}
+
+docs {
+  Récupère un accessToken (compte e2e vérifié) pour les scénarios authentifiés de ce dossier.
+}

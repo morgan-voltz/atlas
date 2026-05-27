@@ -1,0 +1,26 @@
+meta {
+  name: 13 Trademarks (409)
+  type: http
+  seq: 13
+}
+
+get {
+  url: {{baseUrl}}/trademarks?name=test
+  auth: bearer
+}
+
+params:query {
+  name: test
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+assert {
+  res.status: eq 409
+}
+
+docs {
+  Recherche de marques sans connexion INPI → 409 (inpi.not_connected).
+}
