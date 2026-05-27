@@ -137,6 +137,8 @@ Pour chaque feature, on documente :
 
 ### F-005 — Recherche entreprise par dénomination
 
+> **Statut** : 🟡 Implémenté (MVP 1, 27 mai 2026) — à valider contre l'API réelle. `ICompanyDataProvider.SearchByNameAsync` → `PagedResult<CompanySummary>` (SIREN, dénomination, ville, NAF) ; endpoint `GET /companies?name=&page=&pageSize=` (réutilise le client RNE + cache token). **Limites** : pagination **par page** (la doc évoque un curseur `searchAfter`), forme de la réponse et `TotalCount` best-effort à valider contre le schéma RNE réel ; le debouncing 300 ms est côté client (MAUI, F-009).
+
 **Description** : l'utilisateur saisit tout ou partie d'un nom d'entreprise, le système retourne une liste de résultats avec pagination.
 
 **Valeur user** : la majorité des recherches commencent sans connaître le SIREN. Cette fonction est complémentaire de F-004.

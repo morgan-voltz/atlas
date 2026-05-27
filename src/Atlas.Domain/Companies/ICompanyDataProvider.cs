@@ -13,4 +13,9 @@ public interface ICompanyDataProvider
         Siren siren,
         InpiAccessCredentials credentials,
         CancellationToken ct = default);
+
+    Task<Result<PagedResult<CompanySummary>>> SearchByNameAsync(
+        CompanySearchQuery query,
+        InpiAccessCredentials credentials,
+        CancellationToken ct = default);
 }
