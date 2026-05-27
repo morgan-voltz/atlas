@@ -73,7 +73,7 @@ internal sealed class ClusterPendingFeedItemsHandler(
             }
             else
             {
-                FeedItemCluster created = FeedItemCluster.Create(fingerprint, item, now);
+                var created = FeedItemCluster.Create(fingerprint, item, now);
                 item.AttachToCluster(created.Id);
                 await clusterRepository.AddAsync(created, cancellationToken);
                 candidates.Add(created);
