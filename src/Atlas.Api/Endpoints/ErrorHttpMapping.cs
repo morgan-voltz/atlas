@@ -41,6 +41,7 @@ internal static class ErrorHttpMapping
         "users.invalid_two_factor_code" => StatusCodes.Status401Unauthorized,
         "users.invalid_two_factor_challenge" => StatusCodes.Status401Unauthorized,
         "inpi.invalid_credentials" => StatusCodes.Status400BadRequest,
+        "inpi.api_access_not_allowed" => StatusCodes.Status403Forbidden,
         "inpi.unavailable" => StatusCodes.Status502BadGateway,
         "inpi.not_connected" => StatusCodes.Status409Conflict,
         "companies.invalid_siren" => StatusCodes.Status400BadRequest,

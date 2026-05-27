@@ -92,6 +92,17 @@ public sealed class RneAdaptersIntegrationTests : IDisposable
     }
 
     [Fact]
+    public async Task Authenticate_with_forbidden_returns_api_access_not_allowed()
+    {
+        StubLogin(statusCode: 403);
+
+        Result<InpiSession> result = await CreateAuthProvider().AuthenticateAsync("u", "p", CancellationToken.None);
+
+        result.IsFailure.Should().BeTrue();
+        result.Error!.Code.Should().Be("inpi.api_access_not_allowed");
+    }
+
+    [Fact]
     public async Task Authenticate_with_server_error_returns_unavailable()
     {
         StubLogin(statusCode: 500);
