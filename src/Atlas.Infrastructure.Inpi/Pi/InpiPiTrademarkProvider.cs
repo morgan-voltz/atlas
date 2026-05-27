@@ -12,31 +12,53 @@ using Microsoft.Extensions.Options;
 namespace Atlas.Infrastructure.Inpi.Pi;
 
 /// <summary>
-/// Recherche de marques via l'API INPI PI. ⚠️ Best-effort : l'authentification PI (login → cookies
-/// <c>access_token</c> + <c>XSRF-TOKEN</c>) et le contrat de <c>POST /services/apidiffusion/api/marques/search</c>
-/// sont *supposés* et doivent être validés contre l'API réelle. Les identifiants ne sont jamais loggés.
-/// Multi-tenant : les cookies sont gérés manuellement (handler configuré avec UseCookies=false).
+/// Accès aux marques via l'API INPI PI (recherche, notice, image). ⚠️ Best-effort : l'authentification PI
+/// (login → cookies <c>access_token</c> + <c>XSRF-TOKEN</c>) et les contrats des endpoints
+/// (<c>/marques/search</c>, <c>/marques/notice/{id}</c>, <c>/marques/image/{id}</c>) sont *supposés* et
+/// doivent être validés contre l'API réelle. Les identifiants ne sont jamais loggés. Multi-tenant : les
+/// cookies sont gérés manuellement (handler configuré avec UseCookies=false).
 /// </summary>
 internal sealed class InpiPiTrademarkProvider(
     HttpClient httpClient,
     IMemoryCache cache,
     IOptions<InpiOptions> options) : IIntellectualPropertyProvider
 {
+    private const string SearchPath = "services/apidiffusion/api/marques/search";
+    private const string NoticePath = "services/apidiffusion/api/marques/notice/";
+    private const string ImagePath = "services/apidiffusion/api/marques/image/";
+
     private static readonly TimeSpan SessionMargin = TimeSpan.FromMinutes(1);
 
-    public async Task<Result<PagedResult<TrademarkSummary>>> SearchTrademarksAsync(
+    public Task<Result<PagedResult<TrademarkSummary>>> SearchTrademarksAsync(
         TrademarkSearchQuery query,
         InpiAccessCredentials credentials,
-        CancellationToken ct = default)
+        CancellationToken ct = default) =>
+        ExecuteAsync(credentials, (session, innerCt) => TrySearchAsync(query, session, innerCt), ct);
+
+    public Task<Result<TrademarkDetail>> GetTrademarkAsync(
+        DepositNumber depositNumber,
+        InpiAccessCredentials credentials,
+        CancellationToken ct = default) =>
+        ExecuteAsync(credentials, (session, innerCt) => TryGetNoticeAsync(depositNumber, session, innerCt), ct);
+
+    public Task<Result<TrademarkImage>> GetTrademarkImageAsync(
+        DepositNumber depositNumber,
+        InpiAccessCredentials credentials,
+        CancellationToken ct = default) =>
+        ExecuteAsync(credentials, (session, innerCt) => TryGetImageAsync(depositNumber, session, innerCt), ct);
+
+    private async Task<Result<T>> ExecuteAsync<T>(
+        InpiAccessCredentials credentials,
+        Func<PiSession, CancellationToken, Task<(Result<T> Result, bool Unauthorized)>> attempt,
+        CancellationToken ct)
     {
         Result<PiSession> session = await GetSessionAsync(credentials, forceRefresh: false, ct);
         if (session.IsFailure)
         {
-            return Result<PagedResult<TrademarkSummary>>.Fail(session.Error!);
+            return Result<T>.Fail(session.Error!);
         }
 
-        (Result<PagedResult<TrademarkSummary>> result, bool unauthorized) =
-            await TrySearchAsync(query, session.Value!, ct);
+        (Result<T> result, bool unauthorized) = await attempt(session.Value!, ct);
         if (!unauthorized)
         {
             return result;
@@ -45,10 +67,10 @@ internal sealed class InpiPiTrademarkProvider(
         Result<PiSession> refreshed = await GetSessionAsync(credentials, forceRefresh: true, ct);
         if (refreshed.IsFailure)
         {
-            return Result<PagedResult<TrademarkSummary>>.Fail(refreshed.Error!);
+            return Result<T>.Fail(refreshed.Error!);
         }
 
-        (result, _) = await TrySearchAsync(query, refreshed.Value!, ct);
+        (result, _) = await attempt(refreshed.Value!, ct);
         return result;
     }
 
@@ -57,37 +79,20 @@ internal sealed class InpiPiTrademarkProvider(
         PiSession session,
         CancellationToken ct)
     {
-        using var request = new HttpRequestMessage(HttpMethod.Post, "services/apidiffusion/api/marques/search")
-        {
-            Content = JsonContent.Create(new PiSearchRequest(query.Term, query.Page, query.PageSize)),
-        };
-        request.Headers.TryAddWithoutValidation("Cookie", $"access_token={session.AccessToken}");
-        request.Headers.TryAddWithoutValidation("X-XSRF-TOKEN", session.XsrfToken);
+        using HttpRequestMessage request = Authenticated(
+            HttpMethod.Post, SearchPath, session, JsonContent.Create(new PiSearchRequest(query.Term, query.Page, query.PageSize)));
 
-        HttpResponseMessage response;
-        try
+        (HttpResponseMessage? response, bool unauthorized, Error? transportError) = await SendAsync(request, ct);
+        if (response is null)
         {
-            response = await httpClient.SendAsync(request, ct);
-        }
-        catch (HttpRequestException)
-        {
-            return (Failure(InpiErrors.Unavailable), false);
-        }
-        catch (TaskCanceledException) when (!ct.IsCancellationRequested)
-        {
-            return (Failure(InpiErrors.Unavailable), false);
+            return (Result<PagedResult<TrademarkSummary>>.Fail(transportError!), unauthorized);
         }
 
         using (response)
         {
-            if (response.StatusCode == HttpStatusCode.Unauthorized)
-            {
-                return (Failure(InpiErrors.Unavailable), true);
-            }
-
             if (!response.IsSuccessStatusCode)
             {
-                return (Failure(InpiErrors.Unavailable), false);
+                return (Result<PagedResult<TrademarkSummary>>.Fail(InpiErrors.Unavailable), false);
             }
 
             PiTrademarkSearchResponse? body = await response.Content.ReadFromJsonAsync<PiTrademarkSearchResponse>(ct);
@@ -96,9 +101,96 @@ internal sealed class InpiPiTrademarkProvider(
             var page = new PagedResult<TrademarkSummary>(items, query.Page, query.PageSize, total);
             return (Result<PagedResult<TrademarkSummary>>.Ok(page), false);
         }
+    }
 
-        static Result<PagedResult<TrademarkSummary>> Failure(Error error) =>
-            Result<PagedResult<TrademarkSummary>>.Fail(error);
+    private async Task<(Result<TrademarkDetail> Result, bool Unauthorized)> TryGetNoticeAsync(
+        DepositNumber depositNumber,
+        PiSession session,
+        CancellationToken ct)
+    {
+        using HttpRequestMessage request = Authenticated(HttpMethod.Get, NoticePath + depositNumber.Value, session);
+
+        (HttpResponseMessage? response, bool unauthorized, Error? transportError) = await SendAsync(request, ct);
+        if (response is null)
+        {
+            return (Result<TrademarkDetail>.Fail(transportError!), unauthorized);
+        }
+
+        using (response)
+        {
+            if (response.StatusCode == HttpStatusCode.NotFound)
+            {
+                return (Result<TrademarkDetail>.Fail(TrademarkErrors.NotFound(depositNumber)), false);
+            }
+
+            if (!response.IsSuccessStatusCode)
+            {
+                return (Result<TrademarkDetail>.Fail(InpiErrors.Unavailable), false);
+            }
+
+            PiTrademarkNotice? body = await response.Content.ReadFromJsonAsync<PiTrademarkNotice>(ct);
+            return body is null
+                ? (Result<TrademarkDetail>.Fail(InpiErrors.Unavailable), false)
+                : (Result<TrademarkDetail>.Ok(PiTrademarkMapper.MapDetail(body, depositNumber)), false);
+        }
+    }
+
+    private async Task<(Result<TrademarkImage> Result, bool Unauthorized)> TryGetImageAsync(
+        DepositNumber depositNumber,
+        PiSession session,
+        CancellationToken ct)
+    {
+        using HttpRequestMessage request = Authenticated(HttpMethod.Get, ImagePath + depositNumber.Value, session);
+
+        (HttpResponseMessage? response, bool unauthorized, Error? transportError) = await SendAsync(request, ct);
+        if (response is null)
+        {
+            return (Result<TrademarkImage>.Fail(transportError!), unauthorized);
+        }
+
+        using (response)
+        {
+            if (response.StatusCode == HttpStatusCode.NotFound)
+            {
+                return (Result<TrademarkImage>.Fail(TrademarkErrors.ImageNotFound), false);
+            }
+
+            if (!response.IsSuccessStatusCode)
+            {
+                return (Result<TrademarkImage>.Fail(InpiErrors.Unavailable), false);
+            }
+
+            byte[] content = await response.Content.ReadAsByteArrayAsync(ct);
+            string contentType = response.Content.Headers.ContentType?.MediaType ?? "application/octet-stream";
+            return (Result<TrademarkImage>.Ok(new TrademarkImage(content, contentType)), false);
+        }
+    }
+
+    private async Task<(HttpResponseMessage? Response, bool Unauthorized, Error? TransportError)> SendAsync(
+        HttpRequestMessage request,
+        CancellationToken ct)
+    {
+        HttpResponseMessage response;
+        try
+        {
+            response = await httpClient.SendAsync(request, ct);
+        }
+        catch (HttpRequestException)
+        {
+            return (null, false, InpiErrors.Unavailable);
+        }
+        catch (TaskCanceledException) when (!ct.IsCancellationRequested)
+        {
+            return (null, false, InpiErrors.Unavailable);
+        }
+
+        if (response.StatusCode == HttpStatusCode.Unauthorized)
+        {
+            response.Dispose();
+            return (null, true, InpiErrors.Unavailable);
+        }
+
+        return (response, false, null);
     }
 
     private async Task<Result<PiSession>> GetSessionAsync(
@@ -164,6 +256,18 @@ internal sealed class InpiPiTrademarkProvider(
 
             return Result<PiSession>.Ok(session);
         }
+    }
+
+    private static HttpRequestMessage Authenticated(
+        HttpMethod method,
+        string url,
+        PiSession session,
+        HttpContent? content = null)
+    {
+        var request = new HttpRequestMessage(method, url) { Content = content };
+        request.Headers.TryAddWithoutValidation("Cookie", $"access_token={session.AccessToken}");
+        request.Headers.TryAddWithoutValidation("X-XSRF-TOKEN", session.XsrfToken);
+        return request;
     }
 
     private static string? ExtractCookie(IEnumerable<string> setCookies, string name)
