@@ -6,3 +6,6 @@ dotnet_diagnostic.CA1707.severity = none
 
 # Les assertions et données de test n'ont pas besoin des contraintes de culture/perf de production.
 dotnet_diagnostic.CA1861.severity = none
+
+# Convention xunit : les marqueurs de collection se nomment « ...Collection ».
+dotnet_diagnostic.CA1711.severity = none
