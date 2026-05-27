@@ -1,9 +1,9 @@
 using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
+using System.Text.Json;
 using Atlas.Domain.Companies;
 using Atlas.Domain.Inpi;
-using Atlas.Infrastructure.Inpi.Rne.DTOs;
 using Atlas.Shared.Result;
 using Microsoft.Extensions.Caching.Memory;
 
@@ -85,8 +85,8 @@ internal sealed class RneCompanyProvider(
                 return (Result<UniteLegale>.Fail(InpiErrors.Unavailable), false);
             }
 
-            RneCompanyResponse? body = await response.Content.ReadFromJsonAsync<RneCompanyResponse>(ct);
-            return body is null
+            JsonElement body = await response.Content.ReadFromJsonAsync<JsonElement>(ct);
+            return body.ValueKind != JsonValueKind.Object
                 ? (Result<UniteLegale>.Fail(InpiErrors.Unavailable), false)
                 : (Result<UniteLegale>.Ok(RneCompanyMapper.Map(siren, body)), false);
         }
@@ -119,11 +119,18 @@ internal sealed class RneCompanyProvider(
                 return (Result<PagedResult<CompanySummary>>.Fail(InpiErrors.Unavailable), false);
             }
 
-            List<RneCompanyResponse>? items = await response.Content.ReadFromJsonAsync<List<RneCompanyResponse>>(ct);
-            List<CompanySummary> summaries = (items ?? [])
-                .Select(RneCompanyMapper.MapSummary)
-                .OfType<CompanySummary>()
-                .ToList();
+            JsonElement body = await response.Content.ReadFromJsonAsync<JsonElement>(ct);
+            var summaries = new List<CompanySummary>();
+            if (body.ValueKind == JsonValueKind.Array)
+            {
+                foreach (JsonElement item in body.EnumerateArray())
+                {
+                    if (RneCompanyMapper.MapSummary(item) is { } summary)
+                    {
+                        summaries.Add(summary);
+                    }
+                }
+            }
 
             var page = new PagedResult<CompanySummary>(summaries, query.Page, query.PageSize, summaries.Count);
             return (Ok(page), false);

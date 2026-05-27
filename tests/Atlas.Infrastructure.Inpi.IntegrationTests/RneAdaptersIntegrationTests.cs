@@ -28,19 +28,26 @@ public sealed class RneAdaptersIntegrationTests : IDisposable
     {
       "siren": "552032534",
       "formality": {
-        "diffusionINSEE": "O",
         "content": {
           "personneMorale": {
-            "identite": { "entreprise": {
+            "identite": {
               "denomination": "RENAULT",
               "formeJuridique": "5710",
-              "codeApe": "2910Z",
               "dateImmatriculation": "1990-01-15"
-            } },
-            "adresseEntreprise": { "adresse": {
-              "numVoie": "122", "typeVoie": "AV", "voie": "du General Leclerc",
-              "codePostal": "92100", "commune": "Boulogne-Billancourt", "pays": "France"
-            } }
+            },
+            "entreprise": {
+              "activitePrincipale": { "codeNAF": "2910Z" },
+              "adresseEntreprise": {
+                "numVoie": "122", "typeVoie": "AV", "voie": "du General Leclerc",
+                "codePostal": "92100", "commune": "Boulogne-Billancourt", "pays": "France"
+              }
+            },
+            "composition": {
+              "pouvoirs": [
+                { "individu": { "descriptionPersonne": { "nom": "Dupont" } }, "roleEntreprise": "Président" }
+              ]
+            },
+            "indicateurDiffusionINSEE": "O"
           }
         }
       }
@@ -50,11 +57,11 @@ public sealed class RneAdaptersIntegrationTests : IDisposable
     private const string SearchJson = """
     [
       { "siren": "552032534", "formality": { "content": { "personneMorale": {
-          "identite": { "entreprise": { "denomination": "RENAULT", "codeApe": "2910Z" } },
-          "adresseEntreprise": { "adresse": { "commune": "Boulogne-Billancourt" } } } } } },
+          "identite": { "denomination": "RENAULT" },
+          "entreprise": { "activitePrincipale": { "codeNAF": "2910Z" }, "adresseEntreprise": { "commune": "Boulogne-Billancourt" } } } } } },
       { "siren": "775665011", "formality": { "content": { "personneMorale": {
-          "identite": { "entreprise": { "denomination": "RENAULT TRUCKS" } },
-          "adresseEntreprise": { "adresse": { "commune": "Saint-Priest" } } } } } }
+          "identite": { "denomination": "RENAULT TRUCKS" },
+          "entreprise": { "adresseEntreprise": { "commune": "Saint-Priest" } } } } } }
     ]
     """;
 
@@ -113,6 +120,7 @@ public sealed class RneAdaptersIntegrationTests : IDisposable
         company.Adresse!.Line.Should().Be("122 AV du General Leclerc");
         company.DateCreation.Should().Be(new DateOnly(1990, 1, 15));
         company.IsDiffusible.Should().BeTrue();
+        company.Dirigeants.Should().ContainSingle(dirigeant => dirigeant.Nom == "Dupont");
     }
 
     [Fact]
