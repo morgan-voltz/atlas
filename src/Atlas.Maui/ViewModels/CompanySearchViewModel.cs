@@ -7,10 +7,18 @@ using CommunityToolkit.Mvvm.Input;
 
 namespace Atlas.Maui.ViewModels;
 
-public partial class CompanySearchViewModel(IAtlasApiClient api) : BaseViewModel
+public partial class CompanySearchViewModel : BaseViewModel
 {
+    private readonly IAtlasApiClient _api;
+
+    public CompanySearchViewModel(IAtlasApiClient api)
+    {
+        _api = api;
+        Query = string.Empty;
+    }
+
     [ObservableProperty]
-    private string _query = string.Empty;
+    public partial string Query { get; set; }
 
     public ObservableCollection<CompanySummaryResponse> Results { get; } = [];
 
@@ -35,7 +43,7 @@ public partial class CompanySearchViewModel(IAtlasApiClient api) : BaseViewModel
                 return;
             }
 
-            PagedResult<CompanySummaryResponse>? page = await api.SearchCompaniesAsync(term, 1, 20);
+            PagedResult<CompanySummaryResponse>? page = await _api.SearchCompaniesAsync(term, 1, 20);
             if (page is not null)
             {
                 foreach (CompanySummaryResponse item in page.Items)

@@ -5,8 +5,12 @@ using CommunityToolkit.Mvvm.Input;
 
 namespace Atlas.Maui.ViewModels;
 
-public partial class SearchHistoryViewModel(IAtlasApiClient api) : BaseViewModel
+public partial class SearchHistoryViewModel : BaseViewModel
 {
+    private readonly IAtlasApiClient _api;
+
+    public SearchHistoryViewModel(IAtlasApiClient api) => _api = api;
+
     public ObservableCollection<SearchHistoryEntryResponse> Entries { get; } = [];
 
     [RelayCommand]
@@ -22,7 +26,7 @@ public partial class SearchHistoryViewModel(IAtlasApiClient api) : BaseViewModel
         Entries.Clear();
         try
         {
-            foreach (SearchHistoryEntryResponse entry in await api.GetSearchHistoryAsync())
+            foreach (SearchHistoryEntryResponse entry in await _api.GetSearchHistoryAsync())
             {
                 Entries.Add(entry);
             }

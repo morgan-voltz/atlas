@@ -4,13 +4,22 @@ using CommunityToolkit.Mvvm.Input;
 
 namespace Atlas.Maui.ViewModels;
 
-public partial class LoginViewModel(IAtlasApiClient api) : BaseViewModel
+public partial class LoginViewModel : BaseViewModel
 {
-    [ObservableProperty]
-    private string _email = string.Empty;
+    private readonly IAtlasApiClient _api;
+
+    public LoginViewModel(IAtlasApiClient api)
+    {
+        _api = api;
+        Email = string.Empty;
+        Password = string.Empty;
+    }
 
     [ObservableProperty]
-    private string _password = string.Empty;
+    public partial string Email { get; set; }
+
+    [ObservableProperty]
+    public partial string Password { get; set; }
 
     [RelayCommand]
     private async Task LoginAsync()
@@ -24,7 +33,7 @@ public partial class LoginViewModel(IAtlasApiClient api) : BaseViewModel
         ErrorMessage = null;
         try
         {
-            if (await api.LoginAsync(Email, Password))
+            if (await _api.LoginAsync(Email, Password))
             {
                 await Shell.Current.GoToAsync("//main");
             }
