@@ -14,4 +14,6 @@ public sealed class AuthSettings
     public int MaxFailedLoginAttempts { get; init; } = 5;
 
     public TimeSpan LockoutDuration { get; init; } = TimeSpan.FromMinutes(15);
+
+    public int RecoveryCodeCount { get; init; } = 10;
 }

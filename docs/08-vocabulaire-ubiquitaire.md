@@ -260,8 +260,10 @@ Les **value objects** sont des types immuables sans identité propre, qui encaps
 | Mot de passe | `Password` (en input), `PasswordHash` (en stockage) | Jamais en clair. Hash Argon2id (ADR-010) |
 | Token JWT | `AccessToken` | Émis en RS256 (ADR-010) |
 | Token de rafraîchissement | `RefreshToken` | Rotatif, révocable, seul le hash est persisté |
-| Code 2FA TOTP | `TotpCode` | |
-| Code de récupération 2FA | `RecoveryCode` | |
+| Code 2FA TOTP | `TotpCode` | Vérifié via `ITotpProvider` (RFC 6238) |
+| Code de récupération 2FA | `RecoveryCode` / `TwoFactorRecoveryCode` | 10 codes à usage unique, seul le hash est persisté |
+| Secret TOTP partagé | `TwoFactorSecret` | Chiffré au repos (AES-256-GCM via `ICryptoService`) |
+| Jeton de défi 2FA | `TwoFactorChallengeToken` | JWT court (audience `atlas-2fa`) émis après mot de passe valide, à échanger contre les jetons d'accès via /auth/2fa/verify |
 
 ---
 

@@ -14,12 +14,16 @@ public static class DependencyInjection
         IConfiguration configuration)
     {
         services.Configure<JwtOptions>(configuration.GetSection(JwtOptions.SectionName));
+        services.Configure<CryptoOptions>(configuration.GetSection(CryptoOptions.SectionName));
 
         services.AddSingleton<ISigningKeyProvider, RsaSigningKeyProvider>();
         services.AddSingleton<IJwtIssuer, JwtIssuer>();
         services.AddSingleton<IPasswordHasher, Argon2idPasswordHasher>();
         services.AddSingleton<ITokenGenerator, SecureTokenGenerator>();
         services.AddSingleton<IDateTimeProvider, SystemDateTimeProvider>();
+        services.AddSingleton<ITotpProvider, TotpProvider>();
+        services.AddSingleton<ICryptoService, AesGcmCryptoService>();
+        services.AddSingleton<ITwoFactorChallengeService, TwoFactorChallengeService>();
 
         return services;
     }

@@ -1,9 +1,11 @@
+using System.Security.Claims;
 using Atlas.Application.Common;
 using Atlas.Application.Users;
 using Atlas.Application.Users.Login;
 using Atlas.Application.Users.Logout;
 using Atlas.Application.Users.Refresh;
 using Atlas.Application.Users.Register;
+using Atlas.Application.Users.TwoFactor;
 using Atlas.Application.Users.VerifyEmail;
 using Atlas.Shared.Result;
 using MediatR;
@@ -14,6 +16,7 @@ internal static class AuthEndpoints
 {
     private const string RefreshCookieName = "atlas_refresh";
     private const string CookiePath = "/auth";
+    private const string SubClaim = "sub";
 
     public static IEndpointRouteBuilder MapAuthEndpoints(this IEndpointRouteBuilder routes)
     {
@@ -24,6 +27,11 @@ internal static class AuthEndpoints
         group.MapPost("/login", LoginAsync);
         group.MapPost("/refresh", RefreshAsync);
         group.MapPost("/logout", LogoutAsync);
+
+        group.MapPost("/2fa/setup", SetupTwoFactorAsync).RequireAuthorization();
+        group.MapPost("/2fa/enable", EnableTwoFactorAsync).RequireAuthorization();
+        group.MapPost("/2fa/disable", DisableTwoFactorAsync).RequireAuthorization();
+        group.MapPost("/2fa/verify", VerifyTwoFactorAsync);
 
         return routes;
     }
@@ -60,16 +68,20 @@ internal static class AuthEndpoints
         AuthSettings settings,
         CancellationToken ct)
     {
-        Result<AuthTokensDto> result = await sender.Send(new LoginCommand(request.Email, request.Password), ct);
+        Result<LoginResultDto> result = await sender.Send(new LoginCommand(request.Email, request.Password), ct);
         if (result.IsFailure)
         {
             return result.Error!.ToProblem();
         }
 
-        AuthTokensDto tokens = result.Value!;
-        SetRefreshCookie(httpContext, tokens.RefreshToken, settings.RefreshTokenLifetime);
+        LoginResultDto login = result.Value!;
+        if (login.TwoFactorRequired)
+        {
+            return Results.Ok(new { twoFactorRequired = true, challengeToken = login.TwoFactorChallengeToken });
+        }
 
-        return Results.Ok(new AccessTokenResponse(tokens.AccessToken, tokens.AccessTokenExpiresAt));
+        SetRefreshCookie(httpContext, login.Tokens!.RefreshToken, settings.RefreshTokenLifetime);
+        return Results.Ok(new AccessTokenResponse(login.Tokens.AccessToken, login.Tokens.AccessTokenExpiresAt));
     }
 
     private static async Task<IResult> RefreshAsync(
@@ -110,6 +122,76 @@ internal static class AuthEndpoints
 
         DeleteRefreshCookie(httpContext);
         return Results.NoContent();
+    }
+
+    private static async Task<IResult> SetupTwoFactorAsync(
+        ClaimsPrincipal principal,
+        ISender sender,
+        CancellationToken ct)
+    {
+        if (!TryGetUserId(principal, out Guid userId))
+        {
+            return Results.Unauthorized();
+        }
+
+        Result<TwoFactorSetupDto> result = await sender.Send(new SetupTwoFactorCommand(userId), ct);
+        return result.IsSuccess ? Results.Ok(result.Value) : result.Error!.ToProblem();
+    }
+
+    private static async Task<IResult> EnableTwoFactorAsync(
+        EnableTwoFactorRequest request,
+        ClaimsPrincipal principal,
+        ISender sender,
+        CancellationToken ct)
+    {
+        if (!TryGetUserId(principal, out Guid userId))
+        {
+            return Results.Unauthorized();
+        }
+
+        Result<TwoFactorEnabledDto> result = await sender.Send(new EnableTwoFactorCommand(userId, request.Code), ct);
+        return result.IsSuccess ? Results.Ok(result.Value) : result.Error!.ToProblem();
+    }
+
+    private static async Task<IResult> DisableTwoFactorAsync(
+        DisableTwoFactorRequest request,
+        ClaimsPrincipal principal,
+        ISender sender,
+        CancellationToken ct)
+    {
+        if (!TryGetUserId(principal, out Guid userId))
+        {
+            return Results.Unauthorized();
+        }
+
+        Result result = await sender.Send(new DisableTwoFactorCommand(userId, request.Code), ct);
+        return result.IsSuccess ? Results.NoContent() : result.Error!.ToProblem();
+    }
+
+    private static async Task<IResult> VerifyTwoFactorAsync(
+        VerifyTwoFactorRequest request,
+        ISender sender,
+        HttpContext httpContext,
+        AuthSettings settings,
+        CancellationToken ct)
+    {
+        Result<AuthTokensDto> result =
+            await sender.Send(new VerifyTwoFactorCommand(request.ChallengeToken, request.Code), ct);
+        if (result.IsFailure)
+        {
+            return result.Error!.ToProblem();
+        }
+
+        AuthTokensDto tokens = result.Value!;
+        SetRefreshCookie(httpContext, tokens.RefreshToken, settings.RefreshTokenLifetime);
+        return Results.Ok(new AccessTokenResponse(tokens.AccessToken, tokens.AccessTokenExpiresAt));
+    }
+
+    private static bool TryGetUserId(ClaimsPrincipal principal, out Guid userId)
+    {
+        userId = Guid.Empty;
+        string? subject = principal.FindFirstValue(SubClaim);
+        return subject is not null && Guid.TryParse(subject, out userId);
     }
 
     private static void SetRefreshCookie(HttpContext httpContext, string token, TimeSpan lifetime)

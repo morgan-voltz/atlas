@@ -1,0 +1,6 @@
+# Migrations EF Core : code généré. On relâche les analyseurs purement stylistiques/perf
+# qui ne s'appliquent pas à du code qu'on n'édite pas à la main.
+
+[*.cs]
+# CA1861 : EF génère des tableaux constants en argument (ex. index composites).
+dotnet_diagnostic.CA1861.severity = none

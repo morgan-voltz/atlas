@@ -40,6 +40,14 @@ public sealed class User : Entity<UserId>
 
     public DateTimeOffset? LockoutEndsAt { get; private set; }
 
+    public bool TwoFactorEnabled { get; private set; }
+
+    /// <summary>Secret TOTP actif, chiffré au repos (jamais en clair sur l'entité).</summary>
+    public string? TwoFactorSecret { get; private set; }
+
+    /// <summary>Secret TOTP en cours de configuration (chiffré), non encore confirmé par un code.</summary>
+    public string? PendingTwoFactorSecret { get; private set; }
+
     /// <summary>
     /// Crée un nouvel utilisateur en attente de vérification d'email.
     /// Le token de vérification est fourni déjà hashé (le clair est envoyé par email, jamais persisté).
@@ -124,6 +132,54 @@ public sealed class User : Entity<UserId>
     {
         FailedLoginAttempts = 0;
         LockoutEndsAt = null;
+    }
+
+    /// <summary>
+    /// Démarre la configuration du 2FA en mémorisant le secret (déjà chiffré) en attente de confirmation.
+    /// </summary>
+    public Result BeginTwoFactorSetup(string encryptedSecret)
+    {
+        if (TwoFactorEnabled)
+        {
+            return Result.Fail(UserErrors.TwoFactorAlreadyEnabled);
+        }
+
+        PendingTwoFactorSecret = encryptedSecret;
+        return Result.Ok();
+    }
+
+    /// <summary>
+    /// Active le 2FA après vérification d'un code par l'appelant (handler). Promeut le secret en attente.
+    /// </summary>
+    public Result EnableTwoFactor()
+    {
+        if (TwoFactorEnabled)
+        {
+            return Result.Fail(UserErrors.TwoFactorAlreadyEnabled);
+        }
+
+        if (PendingTwoFactorSecret is null)
+        {
+            return Result.Fail(UserErrors.TwoFactorSetupNotStarted);
+        }
+
+        TwoFactorSecret = PendingTwoFactorSecret;
+        PendingTwoFactorSecret = null;
+        TwoFactorEnabled = true;
+        return Result.Ok();
+    }
+
+    public Result DisableTwoFactor()
+    {
+        if (!TwoFactorEnabled)
+        {
+            return Result.Fail(UserErrors.TwoFactorNotEnabled);
+        }
+
+        TwoFactorEnabled = false;
+        TwoFactorSecret = null;
+        PendingTwoFactorSecret = null;
+        return Result.Ok();
     }
 
     private static bool FixedTimeEquals(string left, string right) =>
