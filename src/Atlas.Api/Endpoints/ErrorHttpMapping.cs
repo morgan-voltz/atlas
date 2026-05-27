@@ -14,7 +14,7 @@ internal static class ErrorHttpMapping
 
         if (error is ValidationError validation)
         {
-            Dictionary<string, string[]> errors = validation.Failures
+            var errors = validation.Failures
                 .GroupBy(failure => failure.PropertyName)
                 .ToDictionary(
                     group => group.Key,
