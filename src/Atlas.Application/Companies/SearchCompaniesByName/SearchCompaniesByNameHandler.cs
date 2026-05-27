@@ -1,5 +1,7 @@
+using Atlas.Application.Search;
 using Atlas.Domain.Companies;
 using Atlas.Domain.Inpi;
+using Atlas.Domain.Search;
 using Atlas.Domain.Security;
 using Atlas.Domain.Users;
 using Atlas.Shared.Result;
@@ -10,7 +12,8 @@ namespace Atlas.Application.Companies.SearchCompaniesByName;
 internal sealed class SearchCompaniesByNameHandler(
     IInpiCredentialsRepository inpiCredentialsRepository,
     ICryptoService cryptoService,
-    ICompanyDataProvider companyDataProvider)
+    ICompanyDataProvider companyDataProvider,
+    IPublisher publisher)
     : IRequestHandler<SearchCompaniesByNameQuery, Result<PagedResult<CompanySummaryDto>>>
 {
     public async Task<Result<PagedResult<CompanySummaryDto>>> Handle(
@@ -45,6 +48,10 @@ internal sealed class SearchCompaniesByNameHandler(
                 summary.Ville,
                 summary.ActivitePrincipale?.Code))
             .ToList();
+
+        await publisher.Publish(
+            new SearchPerformedNotification(request.UserId, SearchType.CompanyByName, request.Term),
+            cancellationToken);
 
         var dto = new PagedResult<CompanySummaryDto>(items, page.Page, page.PageSize, page.TotalCount);
         return Result<PagedResult<CompanySummaryDto>>.Ok(dto);

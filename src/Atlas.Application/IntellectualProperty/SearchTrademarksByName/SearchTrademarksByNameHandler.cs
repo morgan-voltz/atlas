@@ -1,5 +1,7 @@
+using Atlas.Application.Search;
 using Atlas.Domain.Inpi;
 using Atlas.Domain.IntellectualProperty;
+using Atlas.Domain.Search;
 using Atlas.Domain.Security;
 using Atlas.Domain.Users;
 using Atlas.Shared.Result;
@@ -10,7 +12,8 @@ namespace Atlas.Application.IntellectualProperty.SearchTrademarksByName;
 internal sealed class SearchTrademarksByNameHandler(
     IInpiCredentialsRepository inpiCredentialsRepository,
     ICryptoService cryptoService,
-    IIntellectualPropertyProvider intellectualPropertyProvider)
+    IIntellectualPropertyProvider intellectualPropertyProvider,
+    IPublisher publisher)
     : IRequestHandler<SearchTrademarksByNameQuery, Result<PagedResult<TrademarkSummaryDto>>>
 {
     public async Task<Result<PagedResult<TrademarkSummaryDto>>> Handle(
@@ -46,6 +49,10 @@ internal sealed class SearchTrademarksByNameHandler(
                 trademark.DateDepot,
                 trademark.StatutJuridique))
             .ToList();
+
+        await publisher.Publish(
+            new SearchPerformedNotification(request.UserId, SearchType.TrademarkByName, request.Term),
+            cancellationToken);
 
         var dto = new PagedResult<TrademarkSummaryDto>(items, page.Page, page.PageSize, page.TotalCount);
         return Result<PagedResult<TrademarkSummaryDto>>.Ok(dto);
