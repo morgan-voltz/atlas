@@ -5,13 +5,17 @@ using CommunityToolkit.Mvvm.ComponentModel;
 namespace Atlas.Maui.ViewModels;
 
 [QueryProperty(nameof(Siren), "siren")]
-public partial class CompanyDetailViewModel(IAtlasApiClient api) : BaseViewModel
+public partial class CompanyDetailViewModel : BaseViewModel
 {
-    [ObservableProperty]
-    private string? _siren;
+    private readonly IAtlasApiClient _api;
+
+    public CompanyDetailViewModel(IAtlasApiClient api) => _api = api;
 
     [ObservableProperty]
-    private CompanyResponse? _company;
+    public partial string? Siren { get; set; }
+
+    [ObservableProperty]
+    public partial CompanyResponse? Company { get; set; }
 
     partial void OnSirenChanged(string? value)
     {
@@ -32,7 +36,7 @@ public partial class CompanyDetailViewModel(IAtlasApiClient api) : BaseViewModel
         ErrorMessage = null;
         try
         {
-            Company = await api.GetCompanyBySirenAsync(siren);
+            Company = await _api.GetCompanyBySirenAsync(siren);
             if (Company is null)
             {
                 ErrorMessage = "Entreprise introuvable.";

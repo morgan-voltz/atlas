@@ -5,8 +5,8 @@ namespace Atlas.Maui.ViewModels;
 public abstract partial class BaseViewModel : ObservableObject
 {
     [ObservableProperty]
-    private bool _isBusy;
+    public partial bool IsBusy { get; set; }
 
     [ObservableProperty]
-    private string? _errorMessage;
+    public partial string? ErrorMessage { get; set; }
 }
