@@ -1,0 +1,30 @@
+# Infrastructure de développement local pour Atlas.
+# Démarre PostgreSQL avec les identifiants attendus par appsettings.json :
+#   Host=localhost;Port=5433;Database=atlas;Username=atlas;Password=atlas
+#
+# Le port hôte est 5433 (et non 5432) pour ne pas entrer en conflit avec une
+# instance PostgreSQL native souvent déjà présente sur 5432.
+#
+#   docker compose up -d     # démarre Postgres en arrière-plan
+#   docker compose down      # arrête (conserve les données)
+#   docker compose down -v   # arrête et supprime le volume (reset complet de la BDD)
+services:
+  postgres:
+    image: postgres:17-alpine
+    container_name: atlas-postgres
+    environment:
+      POSTGRES_USER: atlas
+      POSTGRES_PASSWORD: atlas
+      POSTGRES_DB: atlas
+    ports:
+      - "5433:5432"
+    volumes:
+      - atlas-pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U atlas -d atlas"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  atlas-pgdata:

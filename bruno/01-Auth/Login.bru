@@ -1,0 +1,43 @@
+meta {
+  name: Login
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{baseUrl}}/auth/login
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "email": "{{email}}",
+    "password": "{{password}}"
+  }
+}
+
+vars:post-response {
+  accessToken: res.body.accessToken
+  challengeToken: res.body.challengeToken
+}
+
+tests {
+  test("statut 200", function () {
+    expect(res.getStatus()).to.equal(200);
+  });
+  test("accessToken ou défi 2FA", function () {
+    const b = res.getBody();
+    expect(b.accessToken || b.twoFactorRequired).to.be.ok;
+  });
+}
+
+docs {
+  Dépose le refresh token dans un cookie httpOnly et renvoie l'accessToken (stocké
+  dans la variable `accessToken`). Si le 2FA est activé, la réponse contient
+  `twoFactorRequired: true` et `challengeToken` : enchaîner avec « 2FA > Verify ».
+}

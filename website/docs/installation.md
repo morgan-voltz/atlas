@@ -7,7 +7,7 @@ Atlas est composé d'un backend **ASP.NET Core 10** (API) et d'un client **.NET 
 - **.NET 10 SDK**
 - **PostgreSQL** (une base accessible)
 - Un **compte INPI** (pour interroger les API publiques en votre nom)
-- *(optionnel)* **Docker**, pour lancer PostgreSQL rapidement
+- *(optionnel)* **Docker**, pour lancer PostgreSQL rapidement via le `docker-compose.yml` fourni
 
 ## 1. Récupérer le code
 
@@ -22,7 +22,7 @@ Dans `src/Atlas.Api/appsettings.json` (ou via des variables d'environnement / se
 
 ```json
 {
-  "ConnectionStrings": { "Atlas": "Host=localhost;Port=5432;Database=atlas;Username=atlas;Password=…" },
+  "ConnectionStrings": { "Atlas": "Host=localhost;Port=5433;Database=atlas;Username=atlas;Password=…" },
   "Jwt": { "Issuer": "atlas", "Audience": "atlas", "PrivateKeyPem": "<clé RSA PEM>" },
   "Crypto": { "KeyBase64": "<clé AES-256 base64 (32 octets)>" }
 }
@@ -32,13 +32,19 @@ Dans `src/Atlas.Api/appsettings.json` (ou via des variables d'environnement / se
     En production, fournissez impérativement `Jwt:PrivateKeyPem` et `Crypto:KeyBase64`
     (idéalement via un KMS). À défaut, des clés de **développement** non sécurisées sont utilisées.
 
+!!! tip "PostgreSQL via Docker"
+    `docker compose up -d` à la racine démarre un PostgreSQL prêt à l'emploi, exposé sur le
+    port hôte **5433** (et non 5432, pour ne pas heurter une instance native), avec les
+    identifiants attendus par la configuration de développement.
+
 ## 3. Appliquer les migrations de base de données
 
 ```bash
-dotnet ef database update \
-  --project src/Atlas.Infrastructure.Persistence \
-  --startup-project src/Atlas.Api
+dotnet ef database update --project src/Atlas.Infrastructure.Persistence
 ```
+
+> La factory design-time (`AtlasDbContextFactory`) fournit la chaîne de connexion ;
+> inutile de préciser `--startup-project`.
 
 ## 4. Lancer l'API
 

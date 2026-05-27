@@ -1,0 +1,23 @@
+meta {
+  name: Image
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/trademarks/{{depositNumber}}/image
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+assert {
+  res.status: eq 200
+}
+
+docs {
+  Image binaire de la marque (variable `depositNumber`). 404 si la marque n'a pas
+  d'image associée.
+}

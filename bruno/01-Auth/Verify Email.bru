@@ -1,0 +1,24 @@
+meta {
+  name: Verify Email
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/auth/verify-email?userId={{userId}}&token={{verificationToken}}
+  auth: none
+}
+
+params:query {
+  userId: {{userId}}
+  token: {{verificationToken}}
+}
+
+assert {
+  res.status: eq 200
+}
+
+docs {
+  Active le compte. Nécessite `userId` et `verificationToken` (copiés depuis les
+  logs de l'API après « Register »).
+}

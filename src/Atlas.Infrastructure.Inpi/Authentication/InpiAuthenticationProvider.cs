@@ -34,9 +34,16 @@ internal sealed class InpiAuthenticationProvider(HttpClient httpClient, IOptions
             return Result<InpiSession>.Fail(InpiErrors.Unavailable);
         }
 
-        if (response.StatusCode is HttpStatusCode.Unauthorized or HttpStatusCode.Forbidden or HttpStatusCode.BadRequest)
+        // 401/400 : identifiants rejetés. 403 : compte authentifié mais non habilité à l'API
+        // (INPI renvoie connection_type_not_allowed) — cas distinct, message dédié.
+        if (response.StatusCode is HttpStatusCode.Unauthorized or HttpStatusCode.BadRequest)
         {
             return Result<InpiSession>.Fail(InpiErrors.InvalidCredentials);
+        }
+
+        if (response.StatusCode is HttpStatusCode.Forbidden)
+        {
+            return Result<InpiSession>.Fail(InpiErrors.ApiAccessNotAllowed);
         }
 
         if (!response.IsSuccessStatusCode)

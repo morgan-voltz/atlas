@@ -1,0 +1,33 @@
+meta {
+  name: Disable
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{baseUrl}}/auth/2fa/disable
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "code": "{{totpCode}}"
+  }
+}
+
+assert {
+  res.status: eq 204
+}
+
+docs {
+  Désactive le 2FA après vérification d'un code TOTP courant.
+}

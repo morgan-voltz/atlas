@@ -1,0 +1,29 @@
+meta {
+  name: Search
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/companies?name=renault&page=1&pageSize=20
+  auth: bearer
+}
+
+params:query {
+  name: renault
+  page: 1
+  pageSize: 20
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+assert {
+  res.status: eq 200
+}
+
+docs {
+  Recherche d'entreprises par nom (RNE/INPI). Nécessite une connexion INPI active,
+  sinon 409 (inpi.not_connected). Réponse paginée { items, page, pageSize, totalCount }.
+}

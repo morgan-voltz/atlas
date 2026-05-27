@@ -1,0 +1,23 @@
+meta {
+  name: List
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/search-history
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+assert {
+  res.status: eq 200
+}
+
+docs {
+  Historique des recherches de l'utilisateur (200 entrées max), du plus récent au
+  plus ancien : { type, query, createdAt }.
+}

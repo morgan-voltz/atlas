@@ -1,0 +1,23 @@
+meta {
+  name: Status
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/inpi/connection
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+assert {
+  res.status: eq 200
+}
+
+docs {
+  Renvoie l'état de la connexion INPI de l'utilisateur : `connected`, `status`,
+  `lastTestedAt`. `connected:false` tant qu'aucun credential n'est configuré.
+}

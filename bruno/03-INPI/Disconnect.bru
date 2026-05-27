@@ -1,0 +1,22 @@
+meta {
+  name: Disconnect
+  type: http
+  seq: 3
+}
+
+delete {
+  url: {{baseUrl}}/inpi/connection
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+assert {
+  res.status: eq 204
+}
+
+docs {
+  Supprime les credentials INPI chiffrés de l'utilisateur.
+}
