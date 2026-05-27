@@ -30,6 +30,20 @@ public sealed class InpiPiTrademarkProviderIntegrationTests : IDisposable
     }
     """;
 
+    private const string NoticeJson = """
+    {
+      "marque": "NIKE",
+      "deposant": "Nike Inc.",
+      "numeroDepot": "4001234",
+      "dateDepot": "2018-03-15",
+      "dateEnregistrement": "2018-09-01",
+      "statut": "Enregistrée",
+      "type": "verbale",
+      "hasImage": true,
+      "classes": [ { "numero": 25, "libelle": "Vêtements" }, { "numero": 35, "libelle": "Publicité" } ]
+    }
+    """;
+
     private readonly WireMockServer _server = WireMockServer.Start();
 
     public void Dispose() => _server.Stop();
@@ -65,6 +79,58 @@ public sealed class InpiPiTrademarkProviderIntegrationTests : IDisposable
 
         result.IsFailure.Should().BeTrue();
         result.Error!.Code.Should().Be("inpi.invalid_credentials");
+    }
+
+    [Fact]
+    public async Task GetTrademark_authenticates_then_maps_the_notice()
+    {
+        StubLogin();
+        _server
+            .Given(Request.Create().WithPath("/services/apidiffusion/api/marques/notice/4001234").UsingGet())
+            .RespondWith(JsonResponse(200, NoticeJson));
+
+        Result<TrademarkDetail> result = await CreateProvider()
+            .GetTrademarkAsync(new DepositNumber("4001234"), Credentials, CancellationToken.None);
+
+        result.IsSuccess.Should().BeTrue();
+        result.Value!.Denomination.Should().Be("NIKE");
+        result.Value!.Type.Should().Be("verbale");
+        result.Value!.HasImage.Should().BeTrue();
+        result.Value!.ClassesNice.Should().HaveCount(2);
+        result.Value!.ClassesNice[0].Number.Should().Be(25);
+        result.Value!.DateEnregistrement.Should().Be(new DateOnly(2018, 9, 1));
+    }
+
+    [Fact]
+    public async Task GetTrademark_returns_not_found_on_404()
+    {
+        StubLogin();
+        _server
+            .Given(Request.Create().WithPath("/services/apidiffusion/api/marques/notice/0000000").UsingGet())
+            .RespondWith(Response.Create().WithStatusCode(404));
+
+        Result<TrademarkDetail> result = await CreateProvider()
+            .GetTrademarkAsync(new DepositNumber("0000000"), Credentials, CancellationToken.None);
+
+        result.IsFailure.Should().BeTrue();
+        result.Error!.Code.Should().Be("trademarks.not_found");
+    }
+
+    [Fact]
+    public async Task GetTrademarkImage_returns_bytes_with_content_type()
+    {
+        StubLogin();
+        byte[] png = [0x89, 0x50, 0x4E, 0x47];
+        _server
+            .Given(Request.Create().WithPath("/services/apidiffusion/api/marques/image/4001234").UsingGet())
+            .RespondWith(Response.Create().WithStatusCode(200).WithHeader("Content-Type", "image/png").WithBody(png));
+
+        Result<TrademarkImage> result = await CreateProvider()
+            .GetTrademarkImageAsync(new DepositNumber("4001234"), Credentials, CancellationToken.None);
+
+        result.IsSuccess.Should().BeTrue();
+        result.Value!.ContentType.Should().Be("image/png");
+        result.Value!.Content.Should().Equal(png);
     }
 
     private InpiPiTrademarkProvider CreateProvider()

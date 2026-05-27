@@ -13,4 +13,14 @@ public interface IIntellectualPropertyProvider
         TrademarkSearchQuery query,
         InpiAccessCredentials credentials,
         CancellationToken ct = default);
+
+    Task<Result<TrademarkDetail>> GetTrademarkAsync(
+        DepositNumber depositNumber,
+        InpiAccessCredentials credentials,
+        CancellationToken ct = default);
+
+    Task<Result<TrademarkImage>> GetTrademarkImageAsync(
+        DepositNumber depositNumber,
+        InpiAccessCredentials credentials,
+        CancellationToken ct = default);
 }

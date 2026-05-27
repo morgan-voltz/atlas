@@ -17,6 +17,27 @@ internal static class PiTrademarkMapper
             DateDepot: ParseDate(trademark.DateDepot),
             StatutJuridique: trademark.Statut);
 
+    public static TrademarkDetail MapDetail(PiTrademarkNotice notice, DepositNumber requested)
+    {
+        IReadOnlyList<NiceClassification> classes = (notice.Classes ?? [])
+            .Where(nice => nice.Numero is not null)
+            .Select(nice => new NiceClassification(nice.Numero!.Value, nice.Libelle))
+            .ToList();
+
+        string? numero = string.IsNullOrWhiteSpace(notice.NumeroDepot) ? null : notice.NumeroDepot;
+
+        return new TrademarkDetail(
+            Denomination: string.IsNullOrWhiteSpace(notice.Marque) ? "(dénomination non disponible)" : notice.Marque!,
+            Deposant: notice.Deposant,
+            DepositNumber: numero is null ? requested : new DepositNumber(numero),
+            DateDepot: ParseDate(notice.DateDepot),
+            DateEnregistrement: ParseDate(notice.DateEnregistrement),
+            StatutJuridique: notice.Statut,
+            Type: notice.Type,
+            HasImage: notice.HasImage ?? false,
+            ClassesNice: classes);
+    }
+
     private static DateOnly? ParseDate(string? value) =>
         DateOnly.TryParse(value, CultureInfo.InvariantCulture, DateTimeStyles.None, out DateOnly date)
             ? date
