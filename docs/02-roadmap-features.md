@@ -115,7 +115,7 @@ Pour chaque feature, on documente :
 
 ### F-004 — Recherche entreprise par SIREN
 
-> **Statut** : 🟡 Implémenté (MVP 1, 27 mai 2026) — à valider contre l'API réelle. Value object `Siren` (Luhn), port `ICompanyDataProvider`, adapter `RneCompanyProvider` (`GET /companies/{siren}`, token Bearer mis en cache + ré-auth sur 401), endpoint `GET /companies/{siren}`. **Limites** : le mapping JSON RNE→`UniteLegale` est best-effort (identité, forme juridique, NAF, adresse, date) et doit être validé contre le schéma RNE réel ; le mapping des **dirigeants** (`composition.pouvoirs`) est laissé en TODO (liste vide). Pas de test live (PostgreSQL/credentials INPI requis).
+> **Statut** : 🟡 Implémenté (MVP 1, 27 mai 2026). Value object `Siren` (Luhn), port `ICompanyDataProvider`, adapter `RneCompanyProvider` (`GET /companies/{siren}`, token Bearer mis en cache + ré-auth sur 401), endpoint `GET /companies/{siren}`. **Mapping aligné sur la doc technique INPI v4.0** : navigation JSON **défensive** (`RneCompanyMapper`) — chemins documentés en primaire (`identite.denomination`, `entreprise.activitePrincipale.codeNAF`, `entreprise.adresseEntreprise`, `indicateurDiffusionINSEE`) + variantes en repli ; **dirigeants désormais mappés** (`composition.pouvoirs`). L'auth `/sso/login` est confirmée conforme. **Reste** : confirmation par un **appel authentifié réel** (compte INPI requis) — la navigation défensive dé-risque l'écart de schéma.
 
 **Description** : l'utilisateur saisit un numéro SIREN (9 chiffres) et consulte la fiche complète de l'entreprise : identité, adresse, dirigeants, code NAF, activité, observations, établissements (le cas échéant).
 
@@ -137,7 +137,7 @@ Pour chaque feature, on documente :
 
 ### F-005 — Recherche entreprise par dénomination
 
-> **Statut** : 🟡 Implémenté (MVP 1, 27 mai 2026) — à valider contre l'API réelle. `ICompanyDataProvider.SearchByNameAsync` → `PagedResult<CompanySummary>` (SIREN, dénomination, ville, NAF) ; endpoint `GET /companies?name=&page=&pageSize=` (réutilise le client RNE + cache token). **Limites** : pagination **par page** (la doc évoque un curseur `searchAfter`), forme de la réponse et `TotalCount` best-effort à valider contre le schéma RNE réel ; le debouncing 300 ms est côté client (MAUI, F-009).
+> **Statut** : 🟡 Implémenté (MVP 1, 27 mai 2026). `ICompanyDataProvider.SearchByNameAsync` → `PagedResult<CompanySummary>` (SIREN, dénomination, ville, NAF) ; endpoint `GET /companies?name=&page=&pageSize=` (réutilise le client RNE + cache token). Mapping des items aligné sur la doc INPI v4.0 (navigation défensive, cf. F-004). **Reste à valider en réel** : pagination (par page vs curseur `searchAfter`) et `TotalCount` (forme de réponse de recherche non documentée publiquement). Debouncing 300 ms côté client (MAUI, F-009).
 
 **Description** : l'utilisateur saisit tout ou partie d'un nom d'entreprise, le système retourne une liste de résultats avec pagination.
 
