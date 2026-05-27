@@ -1,0 +1,16 @@
+using Atlas.Domain.Inpi;
+using Atlas.Shared.Result;
+
+namespace Atlas.Domain.IntellectualProperty;
+
+/// <summary>
+/// Lecture des titres de propriété industrielle depuis l'API INPI PI (api-gateway.inpi.fr).
+/// L'authentification (XSRF + tokens) est gérée par l'adapter à partir des identifiants INPI de l'utilisateur.
+/// </summary>
+public interface IIntellectualPropertyProvider
+{
+    Task<Result<PagedResult<TrademarkSummary>>> SearchTrademarksAsync(
+        TrademarkSearchQuery query,
+        InpiAccessCredentials credentials,
+        CancellationToken ct = default);
+}
