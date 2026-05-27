@@ -53,7 +53,25 @@ runtime réutilisée par toutes les requêtes protégées.
 | `challengeToken` / `totpCode` | Parcours 2FA (TOTP à générer depuis le `secret` de Setup) |
 | `siren` | SIREN pour la fiche entreprise (défaut RENAULT) |
 | `depositNumber` | Numéro de dépôt pour la notice de marque |
-| `inpiUsername` / `inpiPassword` | **Compte INPI réel** — requis pour les dossiers Entreprises/Marques (`inpiPassword` est une variable secrète) |
+| `inpiUsername` / `inpiPassword` | **Identifiants techniques API INPI** — lus depuis `bruno/.env` (cf. ci-dessous) |
+
+### Secrets : `bruno/.env` (jamais commité)
+
+Les identifiants INPI ne vivent **pas** dans le fichier d'environnement versionné. Copier
+`bruno/.env.example` en `bruno/.env` (gitignoré) et y renseigner :
+
+```dotenv
+INPI_USERNAME=...
+INPI_PASSWORD='...'   # quotes simples si caractères spéciaux ($ % !)
+```
+
+`environments/Local.bru` les référence via `{{process.env.INPI_USERNAME}}` /
+`{{process.env.INPI_PASSWORD}}`. Bruno (app et CLI) charge automatiquement le `.env`.
+
+> **Accès API requis.** Un compte portail inpi.fr standard n'est **pas** habilité à l'API :
+> `Connect` renvoie alors **403 `inpi.api_access_not_allowed`** (l'INPI répond
+> `connection_type_not_allowed`). Activer l'accès via data.inpi.fr → « Mes accès API / SFTP »
+> et utiliser les identifiants techniques fournis.
 
 > Tant qu'aucune connexion INPI n'est configurée, `04-Companies` et `05-Trademarks`
 > renvoient **409 `inpi.not_connected`** : c'est le comportement attendu.
