@@ -57,6 +57,8 @@ Pour chaque feature, on documente :
 
 ### F-001 — Inscription et connexion utilisateur
 
+> **Statut** : ✅ Implémenté (MVP 1, 27 mai 2026). Auth hexagonale custom — Argon2id, JWT RS256, refresh tokens rotatifs (cf. ADR-010). Endpoints `/auth/{register,verify-email,login,refresh,logout}`. 2FA (F-002) à suivre.
+
 **Description** : un utilisateur peut créer un compte sur la plateforme (email + mot de passe), valider son email, se connecter et se déconnecter.
 
 **Valeur user** : prérequis à toute personnalisation et à la connexion d'un compte INPI multi-tenant.
@@ -72,6 +74,8 @@ Pour chaque feature, on documente :
 ---
 
 ### F-002 — Authentification deux facteurs (2FA)
+
+> **Statut** : ✅ Implémenté (MVP 1, 27 mai 2026). TOTP RFC 6238 (Otp.NET), secret chiffré AES-256-GCM (`ICryptoService`), 10 codes de secours hashés, défi 2FA à la connexion. Endpoints `/auth/2fa/{setup,enable,disable,verify}`. WebAuthn/passkeys non couvert (futur).
 
 **Description** : l'utilisateur peut activer un 2FA TOTP (Google Authenticator, Authy, etc.) pour sécuriser son compte.
 

@@ -4,6 +4,11 @@
     <ProjectReference Include="..\Atlas.Shared\Atlas.Shared.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <!-- Autorise la persistance à réhydrater les value objects validés (EmailAddress.FromStorage). -->
+    <InternalsVisibleTo Include="Atlas.Infrastructure.Persistence" />
+  </ItemGroup>
+
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>

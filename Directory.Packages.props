@@ -19,6 +19,11 @@
     <PackageVersion Include="Mapster" Version="7.5.0" />
   </ItemGroup>
 
+  <ItemGroup Label="Overrides transitifs (sécurité — CVE)">
+    <!-- Force une version patchée du package transitif vulnérable (GHSA-37gx-xxp4-5rgx, GHSA-w3x6-4m5h-cxqf). -->
+    <PackageVersion Include="System.Security.Cryptography.Xml" Version="10.0.8" />
+  </ItemGroup>
+
   <ItemGroup Label="Entity Framework Core">
     <PackageVersion Include="Microsoft.EntityFrameworkCore" Version="10.0.0" />
     <PackageVersion Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.0" />
@@ -38,13 +43,17 @@
     <PackageVersion Include="Microsoft.Extensions.Http" Version="10.0.0" />
     <PackageVersion Include="Microsoft.Extensions.Configuration.Abstractions" Version="10.0.0" />
     <PackageVersion Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="10.0.0" />
+    <PackageVersion Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.0" />
   </ItemGroup>
 
   <ItemGroup Label="Securite et Cryptographie">
-    <PackageVersion Include="Konscious.Security.Cryptography.Argon2" Version="1.4.0" />
+    <PackageVersion Include="Konscious.Security.Cryptography.Argon2" Version="1.3.1" />
     <PackageVersion Include="Otp.NET" Version="1.4.0" />
     <PackageVersion Include="Azure.Security.KeyVault.Keys" Version="4.7.0" />
     <PackageVersion Include="VaultSharp" Version="1.17.5" />
+    <!-- Alignées sur la version transitive tirée par Microsoft.AspNetCore.Authentication.JwtBearer 10.0.0 -->
+    <PackageVersion Include="Microsoft.IdentityModel.JsonWebTokens" Version="8.0.1" />
+    <PackageVersion Include="Microsoft.IdentityModel.Tokens" Version="8.0.1" />
   </ItemGroup>
 
   <ItemGroup Label="Résilience">
@@ -87,13 +96,13 @@
     <PackageVersion Include="xunit.runner.visualstudio" Version="3.1.4" />
     <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
     <PackageVersion Include="FluentAssertions" Version="7.0.0" />
-    <PackageVersion Include="NSubstitute" Version="6.0.0" />
+    <PackageVersion Include="NSubstitute" Version="5.3.0" />
     <PackageVersion Include="Bogus" Version="36.0.0" />
     <PackageVersion Include="WireMock.Net" Version="2.0.0" />
     <PackageVersion Include="Testcontainers" Version="5.0.0" />
     <PackageVersion Include="Testcontainers.PostgreSql" Version="5.0.0" />
     <PackageVersion Include="Microsoft.AspNetCore.Mvc.Testing" Version="10.0.0" />
-    <PackageVersion Include="NetArchTest.Rules" Version="2.0.0" />
+    <PackageVersion Include="NetArchTest.Rules" Version="1.3.2" />
     <PackageVersion Include="coverlet.collector" Version="6.0.4" />
   </ItemGroup>
 
