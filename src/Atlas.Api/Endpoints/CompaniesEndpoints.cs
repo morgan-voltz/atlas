@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using Atlas.Application.Companies;
 using Atlas.Application.Companies.GetCompanyBySiren;
+using Atlas.Application.Companies.SearchCompaniesByName;
 using Atlas.Shared.Result;
 using MediatR;
 
@@ -12,9 +13,28 @@ internal static class CompaniesEndpoints
     {
         RouteGroupBuilder group = routes.MapGroup("/companies").WithTags("Companies").RequireAuthorization();
 
+        group.MapGet("/", SearchByNameAsync);
         group.MapGet("/{siren}", GetBySirenAsync);
 
         return routes;
+    }
+
+    private static async Task<IResult> SearchByNameAsync(
+        string? name,
+        int? page,
+        int? pageSize,
+        ClaimsPrincipal principal,
+        ISender sender,
+        CancellationToken ct)
+    {
+        if (!principal.TryGetUserId(out Guid userId))
+        {
+            return Results.Unauthorized();
+        }
+
+        var query = new SearchCompaniesByNameQuery(userId, name ?? string.Empty, page ?? 1, pageSize ?? 20);
+        Result<PagedResult<CompanySummaryDto>> result = await sender.Send(query, ct);
+        return result.IsSuccess ? Results.Ok(result.Value) : result.Error!.ToProblem();
     }
 
     private static async Task<IResult> GetBySirenAsync(

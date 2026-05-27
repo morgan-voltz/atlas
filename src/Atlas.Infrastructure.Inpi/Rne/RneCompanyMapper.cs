@@ -1,6 +1,7 @@
 using System.Globalization;
 using Atlas.Domain.Companies;
 using Atlas.Infrastructure.Inpi.Rne.DTOs;
+using Atlas.Shared.Result;
 
 namespace Atlas.Infrastructure.Inpi.Rne;
 
@@ -41,6 +42,34 @@ internal static class RneCompanyMapper
             DateCreation: ParseDate(entreprise?.DateImmatriculation),
             IsDiffusible: isDiffusible,
             Dirigeants: []); // TODO F-004+: mapper composition.pouvoirs une fois le schéma RNE validé.
+    }
+
+    /// <summary>Mappe un item de résultat de recherche vers un résumé. Retourne null si le SIREN est inexploitable.</summary>
+    public static CompanySummary? MapSummary(RneCompanyResponse response)
+    {
+        Result<Siren> siren = Siren.Create(response.Siren);
+        if (siren.IsFailure)
+        {
+            return null;
+        }
+
+        RneContent? content = response.Formality?.Content;
+        RneEntreprise? entreprise =
+            content?.PersonneMorale?.Identite?.Entreprise
+            ?? content?.PersonnePhysique?.Identite?.Entreprise;
+        RneAdresse? adresse =
+            content?.PersonneMorale?.AdresseEntreprise?.Adresse
+            ?? content?.PersonnePhysique?.AdresseEntreprise?.Adresse;
+
+        string denomination = string.IsNullOrWhiteSpace(entreprise?.Denomination)
+            ? "(dénomination non disponible)"
+            : entreprise!.Denomination!;
+
+        Naf? naf = string.IsNullOrWhiteSpace(entreprise?.CodeApe)
+            ? null
+            : new Naf(entreprise!.CodeApe!, Label: null);
+
+        return new CompanySummary(siren.Value!, denomination, adresse?.Commune, naf);
     }
 
     private static Address? MapAddress(RneAdresse? adresse)
