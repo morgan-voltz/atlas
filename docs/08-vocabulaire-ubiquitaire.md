@@ -241,6 +241,7 @@ Les **value objects** sont des types immuables sans identité propre, qui encaps
 | Définition | Identifiants INPI personnels de l'utilisateur, chiffrés via le KMS (cf. doc 04). Utilisés pour authentifier les requêtes INPI au nom du user (modèle multi-tenant, ADR-003). |
 | Propriétés | `Username` (chiffré), `Password` (chiffré), `LastTested`, `Status` |
 | Pièges | Ne JAMAIS logger en clair. Ne JAMAIS retourner via une API. Accès strictement limité au service d'orchestration INPI. |
+| À distinguer de | `InpiAccessCredentials` : identifiants **en clair**, transients (en mémoire le temps d'un appel RNE), obtenus en déchiffrant `InpiCredentials`. Jamais persistés ni loggés. |
 
 ### 4.5 Session
 

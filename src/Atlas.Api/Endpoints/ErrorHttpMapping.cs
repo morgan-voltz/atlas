@@ -42,7 +42,9 @@ internal static class ErrorHttpMapping
         "users.invalid_two_factor_challenge" => StatusCodes.Status401Unauthorized,
         "inpi.invalid_credentials" => StatusCodes.Status400BadRequest,
         "inpi.unavailable" => StatusCodes.Status502BadGateway,
-        "inpi.not_connected" => StatusCodes.Status404NotFound,
+        "inpi.not_connected" => StatusCodes.Status409Conflict,
+        "companies.invalid_siren" => StatusCodes.Status400BadRequest,
+        "companies.not_found" => StatusCodes.Status404NotFound,
         _ => StatusCodes.Status400BadRequest,
     };
 }
