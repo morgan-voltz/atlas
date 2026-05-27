@@ -3,6 +3,7 @@ using System;
 using Atlas.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Atlas.Infrastructure.Persistence.Migrations
 {
     [DbContext(typeof(AtlasDbContext))]
-    partial class AtlasDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260527225736_AddVeilleUserCascade")]
+    partial class AddVeilleUserCascade
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -274,10 +277,6 @@ namespace Atlas.Infrastructure.Persistence.Migrations
                         .HasColumnType("character varying(1024)")
                         .HasColumnName("categories");
 
-                    b.Property<Guid?>("ClusterId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("cluster_id");
-
                     b.Property<string>("ContentHash")
                         .IsRequired()
                         .HasMaxLength(64)
@@ -314,47 +313,12 @@ namespace Atlas.Infrastructure.Persistence.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ClusterId");
-
                     b.HasIndex("PublishedAt");
 
                     b.HasIndex("SourceId", "ContentHash")
                         .IsUnique();
 
                     b.ToTable("feed_item", (string)null);
-                });
-
-            modelBuilder.Entity("Atlas.Domain.Veille.FeedItemCluster", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .HasColumnType("uuid")
-                        .HasColumnName("id");
-
-                    b.Property<DateTimeOffset>("CreatedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("created_at");
-
-                    b.Property<DateTimeOffset>("FirstPublishedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("first_published_at");
-
-                    b.Property<int>("ItemCount")
-                        .HasColumnType("integer")
-                        .HasColumnName("item_count");
-
-                    b.Property<DateTimeOffset>("LastPublishedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("last_published_at");
-
-                    b.Property<long>("SimHash")
-                        .HasColumnType("bigint")
-                        .HasColumnName("simhash");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("LastPublishedAt");
-
-                    b.ToTable("feed_item_cluster", (string)null);
                 });
 
             modelBuilder.Entity("Atlas.Domain.Veille.FeedItemUserState", b =>
@@ -600,11 +564,6 @@ namespace Atlas.Infrastructure.Persistence.Migrations
 
             modelBuilder.Entity("Atlas.Domain.Veille.FeedItem", b =>
                 {
-                    b.HasOne("Atlas.Domain.Veille.FeedItemCluster", null)
-                        .WithMany()
-                        .HasForeignKey("ClusterId")
-                        .OnDelete(DeleteBehavior.SetNull);
-
                     b.HasOne("Atlas.Domain.Veille.FeedSource", null)
                         .WithMany()
                         .HasForeignKey("SourceId")

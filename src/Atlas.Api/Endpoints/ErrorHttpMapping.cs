@@ -14,7 +14,7 @@ internal static class ErrorHttpMapping
 
         if (error is ValidationError validation)
         {
-            Dictionary<string, string[]> errors = validation.Failures
+            var errors = validation.Failures
                 .GroupBy(failure => failure.PropertyName)
                 .ToDictionary(
                     group => group.Key,
@@ -48,6 +48,16 @@ internal static class ErrorHttpMapping
         "companies.not_found" => StatusCodes.Status404NotFound,
         "trademarks.not_found" => StatusCodes.Status404NotFound,
         "trademarks.image_not_found" => StatusCodes.Status404NotFound,
+        "veille.subscription_not_found" => StatusCodes.Status404NotFound,
+        "veille.veille_pack_not_found" => StatusCodes.Status404NotFound,
+        "veille.feed_item_not_found" => StatusCodes.Status404NotFound,
+        "veille.already_subscribed" => StatusCodes.Status409Conflict,
+        "veille.veille_pack_not_enrolled" => StatusCodes.Status409Conflict,
+        "veille.subscription_limit_reached" => StatusCodes.Status409Conflict,
+        "veille.source_blocked" => StatusCodes.Status403Forbidden,
+        "veille.fetch_failed" => StatusCodes.Status502BadGateway,
+        // veille.feed_unreachable / veille.invalid_feed_source / veille.invalid_veille_pack
+        // restent en 400 (URL/saisie utilisateur invalide) via le défaut.
         _ => StatusCodes.Status400BadRequest,
     };
 }

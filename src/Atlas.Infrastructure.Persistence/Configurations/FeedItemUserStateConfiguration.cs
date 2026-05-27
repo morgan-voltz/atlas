@@ -43,6 +43,12 @@ internal sealed class FeedItemUserStateConfiguration : IEntityTypeConfiguration<
             .HasForeignKey(state => state.FeedItemId)
             .OnDelete(DeleteBehavior.Cascade);
 
+        // Cascade RGPD (art. 17) : la suppression de l'utilisateur supprime ses états d'items.
+        builder.HasOne<User>()
+            .WithMany()
+            .HasForeignKey(state => state.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
+
         builder.Ignore(state => state.DomainEvents);
     }
 }

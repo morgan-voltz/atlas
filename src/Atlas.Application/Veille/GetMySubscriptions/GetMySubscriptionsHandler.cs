@@ -26,7 +26,7 @@ internal sealed class GetMySubscriptionsHandler(
         IReadOnlyCollection<FeedSourceId> sourceIds =
             subscriptions.Select(subscription => subscription.SourceId).Distinct().ToList();
         IReadOnlyList<FeedSource> sources = await sourceRepository.GetByIdsAsync(sourceIds, cancellationToken);
-        Dictionary<FeedSourceId, FeedSource> sourcesById = sources.ToDictionary(source => source.Id);
+        var sourcesById = sources.ToDictionary(source => source.Id);
 
         IReadOnlyList<VeilleSubscriptionDto> dtos = subscriptions
             .Where(subscription => sourcesById.ContainsKey(subscription.SourceId))

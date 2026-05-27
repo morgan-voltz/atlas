@@ -1,0 +1,57 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      # Backend uniquement : on n'embarque pas les têtes MAUI (workload mobile +
+      # CA1711 iOS/MacCatalyst en warnings-as-errors, cf. docs/audit/07-maui.md).
+      # Atlas.Api tire transitivement Domain, Application, Shared et tous les Infrastructure.*.
+      - name: Build backend (Release)
+        run: dotnet build src/Atlas.Api/Atlas.Api.csproj -c Release
+
+      # Tests unitaires + architecture (rapides, sans Docker).
+      - name: Unit & architecture tests
+        run: |
+          dotnet test tests/Atlas.Domain.UnitTests/Atlas.Domain.UnitTests.csproj -c Release \
+            --collect:"XPlat Code Coverage" --results-directory TestResults
+          dotnet test tests/Atlas.Application.UnitTests/Atlas.Application.UnitTests.csproj -c Release \
+            --collect:"XPlat Code Coverage" --results-directory TestResults
+          dotnet test tests/Atlas.Architecture.Tests/Atlas.Architecture.Tests.csproj -c Release
+
+      # Tests d'intégration : PostgreSQL réel (Testcontainers) + INPI/RSS mockés (WireMock).
+      # Le runner ubuntu-latest fournit un daemon Docker.
+      - name: Integration tests (Docker)
+        run: |
+          dotnet test tests/Atlas.Infrastructure.Persistence.IntegrationTests/Atlas.Infrastructure.Persistence.IntegrationTests.csproj -c Release
+          dotnet test tests/Atlas.Infrastructure.Veille.IntegrationTests/Atlas.Infrastructure.Veille.IntegrationTests.csproj -c Release
+          dotnet test tests/Atlas.Infrastructure.Inpi.IntegrationTests/Atlas.Infrastructure.Inpi.IntegrationTests.csproj -c Release
+          dotnet test tests/Atlas.Api.IntegrationTests/Atlas.Api.IntegrationTests.csproj -c Release
+
+      # Rapport de couverture (informatif, non bloquant).
+      - name: Upload coverage
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage
+          path: TestResults/**/coverage.cobertura.xml
+          if-no-files-found: ignore

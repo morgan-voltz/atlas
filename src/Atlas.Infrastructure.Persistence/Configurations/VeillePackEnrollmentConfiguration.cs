@@ -35,6 +35,12 @@ internal sealed class VeillePackEnrollmentConfiguration : IEntityTypeConfigurati
         // Un utilisateur ne s'inscrit qu'une fois à un pack donné.
         builder.HasIndex(enrollment => new { enrollment.UserId, enrollment.PackId }).IsUnique();
 
+        // Cascade RGPD (art. 17) : la suppression de l'utilisateur supprime ses inscriptions aux packs.
+        builder.HasOne<User>()
+            .WithMany()
+            .HasForeignKey(enrollment => enrollment.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
+
         builder.Ignore(enrollment => enrollment.DomainEvents);
     }
 }
