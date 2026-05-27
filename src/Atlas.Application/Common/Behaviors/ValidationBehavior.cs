@@ -24,7 +24,7 @@ internal sealed class ValidationBehavior<TRequest, TResponse>(IEnumerable<IValid
 
         var context = new ValidationContext<TRequest>(request);
 
-        List<ValidationFailureDetail> failures = validators
+        var failures = validators
             .Select(validator => validator.Validate(context))
             .SelectMany(result => result.Errors)
             .Where(failure => failure is not null)

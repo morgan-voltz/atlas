@@ -33,7 +33,7 @@ internal sealed class ConnectInpiAccountHandler(
         InpiCredentials? existing = await credentialsRepository.GetByUserIdAsync(userId, cancellationToken);
         if (existing is null)
         {
-            InpiCredentials credentials = InpiCredentials.Create(userId, encryptedUsername, encryptedPassword, now);
+            var credentials = InpiCredentials.Create(userId, encryptedUsername, encryptedPassword, now);
             await credentialsRepository.AddAsync(credentials, cancellationToken);
         }
         else
