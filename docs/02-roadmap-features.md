@@ -115,6 +115,8 @@ Pour chaque feature, on documente :
 
 ### F-004 — Recherche entreprise par SIREN
 
+> **Statut** : 🟡 Implémenté (MVP 1, 27 mai 2026) — à valider contre l'API réelle. Value object `Siren` (Luhn), port `ICompanyDataProvider`, adapter `RneCompanyProvider` (`GET /companies/{siren}`, token Bearer mis en cache + ré-auth sur 401), endpoint `GET /companies/{siren}`. **Limites** : le mapping JSON RNE→`UniteLegale` est best-effort (identité, forme juridique, NAF, adresse, date) et doit être validé contre le schéma RNE réel ; le mapping des **dirigeants** (`composition.pouvoirs`) est laissé en TODO (liste vide). Pas de test live (PostgreSQL/credentials INPI requis).
+
 **Description** : l'utilisateur saisit un numéro SIREN (9 chiffres) et consulte la fiche complète de l'entreprise : identité, adresse, dirigeants, code NAF, activité, observations, établissements (le cas échéant).
 
 **Valeur user** : c'est la fonction de base, l'équivalent du "search bar" d'un outil de recherche entreprise. Sans ça, le produit n'existe pas.
