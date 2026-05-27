@@ -29,6 +29,7 @@ public static class DependencyInjection
         services.AddScoped<ISearchHistoryRepository, SearchHistoryRepository>();
         services.AddScoped<IFeedSourceRepository, FeedSourceRepository>();
         services.AddScoped<IFeedItemRepository, FeedItemRepository>();
+        services.AddScoped<IVeilleSubscriptionRepository, VeilleSubscriptionRepository>();
 
         return services;
     }
