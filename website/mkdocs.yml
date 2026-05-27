@@ -1,0 +1,37 @@
+site_name: Atlas — Documentation
+site_description: Documentation utilisateur d'Atlas, SaaS open source d'agrégation de données entreprises (RNE) et propriété industrielle (INPI).
+docs_dir: docs
+
+theme:
+  name: material
+  language: fr
+  features:
+    - navigation.instant
+    - navigation.top
+    - content.code.copy
+  palette:
+    - scheme: default
+      primary: indigo
+      toggle:
+        icon: material/brightness-7
+        name: Mode sombre
+    - scheme: slate
+      primary: indigo
+      toggle:
+        icon: material/brightness-4
+        name: Mode clair
+
+nav:
+  - Accueil: index.md
+  - Installation: installation.md
+  - Premiers pas: premiers-pas.md
+  - FAQ: faq.md
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - pymdownx.highlight
+  - pymdownx.superfences
+
+extra:
+  generator: false
