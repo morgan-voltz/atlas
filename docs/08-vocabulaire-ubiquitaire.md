@@ -264,6 +264,7 @@ Les **value objects** sont des types immuables sans identité propre, qui encaps
 | Code de récupération 2FA | `RecoveryCode` / `TwoFactorRecoveryCode` | 10 codes à usage unique, seul le hash est persisté |
 | Secret TOTP partagé | `TwoFactorSecret` | Chiffré au repos (AES-256-GCM via `ICryptoService`) |
 | Jeton de défi 2FA | `TwoFactorChallengeToken` | JWT court (audience `atlas-2fa`) émis après mot de passe valide, à échanger contre les jetons d'accès via /auth/2fa/verify |
+| Session INPI | `InpiSession` | JWT Bearer RNE (+ expiration) obtenu via `IInpiAuthenticationProvider` ; jamais persisté |
 
 ---
 

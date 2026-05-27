@@ -1,6 +1,7 @@
 using Atlas.Api.Endpoints;
 using Atlas.Application;
 using Atlas.Application.Common;
+using Atlas.Infrastructure.Inpi;
 using Atlas.Infrastructure.Messaging;
 using Atlas.Infrastructure.Persistence;
 using Atlas.Infrastructure.Security;
@@ -18,6 +19,7 @@ builder.Services.AddApplication();
 builder.Services.AddSecurityInfrastructure(builder.Configuration);
 builder.Services.AddPersistenceInfrastructure(builder.Configuration);
 builder.Services.AddMessagingInfrastructure(builder.Configuration);
+builder.Services.AddInpiInfrastructure(builder.Configuration);
 
 // Politique d'authentification (durées de jetons, verrouillage).
 AuthSettings authSettings = builder.Configuration.GetSection("Auth").Get<AuthSettings>() ?? new AuthSettings();
@@ -63,5 +65,6 @@ app.MapGet("/", () => Results.Ok(new { name = "Atlas API", status = "ok" }))
     .WithName("Root");
 
 app.MapAuthEndpoints();
+app.MapInpiEndpoints();
 
 app.Run();
