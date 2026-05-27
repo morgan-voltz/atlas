@@ -69,3 +69,6 @@ app.MapInpiEndpoints();
 app.MapCompaniesEndpoints();
 
 app.Run();
+
+// Rend la classe Program générée accessible aux tests d'intégration (WebApplicationFactory<Program>).
+public partial class Program;
