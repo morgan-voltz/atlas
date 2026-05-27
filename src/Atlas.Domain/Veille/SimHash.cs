@@ -18,7 +18,7 @@ public static class SimHash
     /// <summary>Empreinte SimHash 64 bits du texte (titre + extrait), après normalisation et tokenisation.</summary>
     public static long Compute(string? text)
     {
-        var weights = new int[64];
+        int[] weights = new int[64];
 
         foreach (string token in Tokenize(text))
         {
