@@ -1,5 +1,6 @@
 using Atlas.Domain.Common;
 using Atlas.Domain.Inpi;
+using Atlas.Domain.Search;
 using Atlas.Domain.Users;
 using Atlas.Infrastructure.Persistence.Repositories;
 using Microsoft.EntityFrameworkCore;
@@ -24,6 +25,7 @@ public static class DependencyInjection
         services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
         services.AddScoped<ITwoFactorRecoveryCodeRepository, TwoFactorRecoveryCodeRepository>();
         services.AddScoped<IInpiCredentialsRepository, InpiCredentialsRepository>();
+        services.AddScoped<ISearchHistoryRepository, SearchHistoryRepository>();
 
         return services;
     }

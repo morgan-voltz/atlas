@@ -1,5 +1,6 @@
 using Atlas.Domain.Common;
 using Atlas.Domain.Inpi;
+using Atlas.Domain.Search;
 using Atlas.Domain.Users;
 using Microsoft.EntityFrameworkCore;
 
@@ -17,6 +18,8 @@ public sealed class AtlasDbContext(DbContextOptions<AtlasDbContext> options)
     public DbSet<TwoFactorRecoveryCode> TwoFactorRecoveryCodes => Set<TwoFactorRecoveryCode>();
 
     public DbSet<InpiCredentials> InpiCredentials => Set<InpiCredentials>();
+
+    public DbSet<SearchHistoryEntry> SearchHistory => Set<SearchHistoryEntry>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

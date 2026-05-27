@@ -1,5 +1,7 @@
+using Atlas.Application.Search;
 using Atlas.Domain.Companies;
 using Atlas.Domain.Inpi;
+using Atlas.Domain.Search;
 using Atlas.Domain.Security;
 using Atlas.Domain.Users;
 using Atlas.Shared.Result;
@@ -10,7 +12,8 @@ namespace Atlas.Application.Companies.GetCompanyBySiren;
 internal sealed class GetCompanyBySirenHandler(
     IInpiCredentialsRepository inpiCredentialsRepository,
     ICryptoService cryptoService,
-    ICompanyDataProvider companyDataProvider) : IRequestHandler<GetCompanyBySirenQuery, Result<CompanyDto>>
+    ICompanyDataProvider companyDataProvider,
+    IPublisher publisher) : IRequestHandler<GetCompanyBySirenQuery, Result<CompanyDto>>
 {
     public async Task<Result<CompanyDto>> Handle(GetCompanyBySirenQuery request, CancellationToken cancellationToken)
     {
@@ -37,6 +40,10 @@ internal sealed class GetCompanyBySirenHandler(
         {
             return Result<CompanyDto>.Fail(company.Error!);
         }
+
+        await publisher.Publish(
+            new SearchPerformedNotification(request.UserId, SearchType.CompanyBySiren, sirenResult.Value.Value),
+            cancellationToken);
 
         return Result<CompanyDto>.Ok(Map(company.Value!));
     }

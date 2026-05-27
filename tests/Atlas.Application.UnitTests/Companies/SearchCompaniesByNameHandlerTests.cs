@@ -74,7 +74,8 @@ public class SearchCompaniesByNameHandlerTests
         result.Error!.Code.Should().Be("inpi.unavailable");
     }
 
-    private SearchCompaniesByNameHandler CreateHandler() => new(_credentials, _crypto, _provider);
+    private SearchCompaniesByNameHandler CreateHandler() =>
+        new(_credentials, _crypto, _provider, Substitute.For<MediatR.IPublisher>());
 
     private void GiveConnectedAccount() =>
         _credentials.GetByUserIdAsync(Arg.Any<UserId>(), Arg.Any<CancellationToken>())

@@ -81,7 +81,8 @@ public class GetCompanyBySirenHandlerTests
         result.Error!.Code.Should().Be("companies.not_found");
     }
 
-    private GetCompanyBySirenHandler CreateHandler() => new(_credentials, _crypto, _provider);
+    private GetCompanyBySirenHandler CreateHandler() =>
+        new(_credentials, _crypto, _provider, Substitute.For<MediatR.IPublisher>());
 
     private void GiveConnectedAccount() =>
         _credentials.GetByUserIdAsync(Arg.Any<UserId>(), Arg.Any<CancellationToken>())
