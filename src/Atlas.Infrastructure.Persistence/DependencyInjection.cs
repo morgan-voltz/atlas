@@ -30,6 +30,7 @@ public static class DependencyInjection
         services.AddScoped<IFeedSourceRepository, FeedSourceRepository>();
         services.AddScoped<IFeedItemRepository, FeedItemRepository>();
         services.AddScoped<IVeilleSubscriptionRepository, VeilleSubscriptionRepository>();
+        services.AddScoped<IFeedItemUserStateRepository, FeedItemUserStateRepository>();
 
         return services;
     }

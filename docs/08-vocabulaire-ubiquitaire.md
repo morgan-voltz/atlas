@@ -668,6 +668,16 @@ Les **value objects** sont des types immuables sans identité propre, qui encaps
 | Définition | Règle définie par un user pour générer des alertes (mots-clés, sources, entreprises favorites). |
 | Cf. | F-046 |
 
+### 9.9 FeedItemUserState
+
+| | |
+|---|---|
+| Nom canonique | `FeedItemUserState` |
+| Type | Entité |
+| Langue | mix |
+| Définition | État d'un `FeedItem` pour un user dans sa timeline : lu/non-lu, favori, archivé. L'absence d'instance vaut « non-lu, non-favori, non-archivé » (créée au premier marquage). |
+| Cf. | F-044 |
+
 ---
 
 ## 10. Notifications et alertes

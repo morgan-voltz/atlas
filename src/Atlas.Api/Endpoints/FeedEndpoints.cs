@@ -2,6 +2,8 @@ using System.Security.Claims;
 using Atlas.Application.Veille.AddUserFeedSource;
 using Atlas.Application.Veille.GetMySubscriptions;
 using Atlas.Application.Veille.GetRecentFeedItems;
+using Atlas.Application.Veille.GetTimeline;
+using Atlas.Application.Veille.SetFeedItemState;
 using Atlas.Application.Veille.Unsubscribe;
 using Atlas.Shared.Result;
 using MediatR;
@@ -30,7 +32,56 @@ internal static class FeedEndpoints
         group.MapGet("/subscriptions", GetSubscriptionsAsync);
         group.MapDelete("/subscriptions/{id:guid}", UnsubscribeAsync);
 
+        // F-044 — timeline unifiée (sources abonnées) et état lu/favori/archivé par item.
+        group.MapGet("/timeline", GetTimelineAsync);
+        group.MapPatch("/items/{id:guid}/state", SetItemStateAsync);
+
         return routes;
+    }
+
+    private static async Task<IResult> GetTimelineAsync(
+        ClaimsPrincipal principal,
+        ISender sender,
+        CancellationToken ct,
+        int? page = null,
+        int? pageSize = null,
+        Guid? sourceId = null,
+        DateTimeOffset? after = null,
+        DateTimeOffset? before = null,
+        string? keyword = null,
+        bool unread = false,
+        bool favorites = false,
+        bool includeArchived = false)
+    {
+        if (!principal.TryGetUserId(out Guid userId))
+        {
+            return Results.Unauthorized();
+        }
+
+        Result<PagedResult<TimelineItemDto>> result = await sender.Send(
+            new GetTimelineQuery(
+                userId, page ?? 1, pageSize ?? 20, sourceId, after, before, keyword, unread, favorites, includeArchived),
+            ct);
+
+        return result.IsSuccess ? Results.Ok(result.Value) : result.Error!.ToProblem();
+    }
+
+    private static async Task<IResult> SetItemStateAsync(
+        ClaimsPrincipal principal,
+        Guid id,
+        SetFeedItemStateRequest request,
+        ISender sender,
+        CancellationToken ct)
+    {
+        if (!principal.TryGetUserId(out Guid userId))
+        {
+            return Results.Unauthorized();
+        }
+
+        Result<FeedItemStateDto> result = await sender.Send(
+            new SetFeedItemStateCommand(userId, id, request.IsRead, request.IsFavorite, request.IsArchived), ct);
+
+        return result.IsSuccess ? Results.Ok(result.Value) : result.Error!.ToProblem();
     }
 
     private static async Task<IResult> AddSourceAsync(
@@ -75,4 +126,6 @@ internal static class FeedEndpoints
     }
 
     private sealed record AddFeedSourceRequest(string Url, string? Name);
+
+    private sealed record SetFeedItemStateRequest(bool? IsRead, bool? IsFavorite, bool? IsArchived);
 }
