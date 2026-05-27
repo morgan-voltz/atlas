@@ -33,8 +33,13 @@ appel authentifié réel (cf. roadmap, statuts 🟡).
   GitHub Pages.
 - **F-012 — Conformité RGPD** : export des données (JSON) et suppression de compte avec
   effacement en cascade.
+- **F-041 — Moteur d'agrégation RSS/Atom (MVP 2)** : contexte Veille (port
+  `IExternalContentSource`, entités `FeedSource`/`FeedItem`), provider RSS/Atom
+  (CodeHollow.FeedReader), polling récurrent via **Hangfire** (stockage PostgreSQL),
+  déduplication par hash (URL + titre), endpoint `GET /feed/items`. Sources système amorcées
+  au démarrage (.NET Blog, CNIL, data.gouv.fr).
 - **Endpoints API** : `/auth/*`, `/inpi/connection`, `/companies`, `/trademarks`,
-  `/search-history`, `/account`.
+  `/search-history`, `/account`, `/feed/items`.
 - **Tests** : suite unitaire + tests d'architecture (NetArchTest) + tests d'intégration
   (PostgreSQL via Testcontainers, INPI via WireMock, API end-to-end via WebApplicationFactory).
 - **Documentation** : `ARCHITECTURE.md`, `CHANGELOG.md`, `CONTRIBUTING.md`.

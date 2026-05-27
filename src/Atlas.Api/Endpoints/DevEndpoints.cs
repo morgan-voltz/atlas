@@ -1,4 +1,7 @@
 using Atlas.Api.Dev;
+using Atlas.Application.Veille.PollFeedSources;
+using Atlas.Shared.Result;
+using MediatR;
 
 namespace Atlas.Api.Endpoints;
 
@@ -18,6 +21,13 @@ internal static class DevEndpoints
             store.TryGet(email, out DevVerificationEntry entry)
                 ? Results.Ok(new { userId = entry.UserId, token = entry.Token })
                 : Results.NotFound(new { message = "Aucun token de vérification pour cet email." }));
+
+        // Déclenche immédiatement le polling des sources de veille (au lieu d'attendre le job Hangfire).
+        group.MapPost("/feed/poll", async (ISender sender, CancellationToken ct) =>
+        {
+            Result<FeedPollSummary> result = await sender.Send(new PollFeedSourcesCommand(), ct);
+            return result.IsSuccess ? Results.Ok(result.Value) : result.Error!.ToProblem();
+        });
 
         return routes;
     }

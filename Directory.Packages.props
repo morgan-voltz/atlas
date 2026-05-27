@@ -22,6 +22,9 @@
   <ItemGroup Label="Overrides transitifs (sécurité — CVE)">
     <!-- Force une version patchée du package transitif vulnérable (GHSA-37gx-xxp4-5rgx, GHSA-w3x6-4m5h-cxqf). -->
     <PackageVersion Include="System.Security.Cryptography.Xml" Version="10.0.8" />
+    <!-- Hangfire tire Newtonsoft.Json 11.0.1 (GHSA-5crp-9r3c-p9vr). Pin transitif vers une version patchée
+         (≥ 13.0.4 pour satisfaire aussi WireMock.Net). -->
+    <PackageVersion Include="Newtonsoft.Json" Version="13.0.4" />
   </ItemGroup>
 
   <ItemGroup Label="Entity Framework Core">
@@ -74,6 +77,12 @@
   <ItemGroup Label="Veille (RSS, BODACC)">
     <PackageVersion Include="CodeHollow.FeedReader" Version="1.2.6" />
     <PackageVersion Include="System.ServiceModel.Syndication" Version="10.0.0" />
+  </ItemGroup>
+
+  <ItemGroup Label="Jobs en arrière-plan (Hangfire)">
+    <PackageVersion Include="Hangfire.Core" Version="1.8.18" />
+    <PackageVersion Include="Hangfire.AspNetCore" Version="1.8.18" />
+    <PackageVersion Include="Hangfire.PostgreSql" Version="1.20.10" />
   </ItemGroup>
 
   <ItemGroup Label="Cache">
