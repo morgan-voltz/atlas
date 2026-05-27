@@ -26,6 +26,8 @@ public sealed class AtlasDbContext(DbContextOptions<AtlasDbContext> options)
 
     public DbSet<FeedItem> FeedItems => Set<FeedItem>();
 
+    public DbSet<VeilleSubscription> VeilleSubscriptions => Set<VeilleSubscription>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         ArgumentNullException.ThrowIfNull(modelBuilder);

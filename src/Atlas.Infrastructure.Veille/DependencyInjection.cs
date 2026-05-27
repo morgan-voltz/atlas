@@ -15,6 +15,8 @@ public static class DependencyInjection
 
         services.AddHttpClient<IExternalContentSource, RssFeedProvider>(ConfigureClient);
 
+        services.AddSingleton<IFeedSubscriptionPolicy, FeedSubscriptionPolicy>();
+
         return services;
     }
 
