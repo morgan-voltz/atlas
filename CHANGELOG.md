@@ -38,11 +38,33 @@ appel authentifié réel (cf. roadmap, statuts 🟡).
   (CodeHollow.FeedReader), polling récurrent via **Hangfire** (stockage PostgreSQL),
   déduplication par hash (URL + titre), endpoint `GET /feed/items`. Sources système amorcées
   au démarrage (.NET Blog, CNIL, data.gouv.fr).
+- **F-042 — Catalogue de `VeillePack` par métier** : entité `VeillePack` versionnée
+  (re-sync au upgrade), port `IVeillePackRepository`, enrôlement / désenrôlement
+  utilisateur, sources système rattachées au pack. Les sources d'un pack **ignorent
+  la limite par utilisateur** des sources libres.
+- **F-043 — Sources de veille ajoutées par l'utilisateur** : entité
+  `VeilleSubscription`, port `IFeedSubscriptionPolicy` (limite par utilisateur +
+  blocklist d'hôtes), endpoints `POST /veille/subscriptions`,
+  `DELETE /veille/subscriptions/{id}`, `GET /veille/subscriptions`.
+- **F-044 — Timeline unifiée (backend)** : timeline par utilisateur agrégeant ses
+  abonnements libres et ses packs, états par item (`FeedItemUserState` :
+  lu / non lu / favori / archivé), filtrage et pagination, endpoints `/timeline/*`.
+- **F-045 — Déduplication intelligente des items** : empreinte **SimHash 64 bits**
+  (FNV-1a) calculée à l'ingestion, regroupement en `FeedItemCluster` par distance
+  de Hamming, collapse dans la timeline (un seul représentant par cluster).
+- **Pipeline CI GitHub Actions** (Lot 0 audit) : `.github/workflows/ci.yml` exécute
+  build Release + tests unitaires + tests d'architecture + tests d'intégration
+  (Docker / Testcontainers) sur chaque PR et chaque push sur `main`. Analyseurs
+  IDE en mode `EnforceCodeStyleInBuild` (stricteté égale à CI dès le build).
 - **Endpoints API** : `/auth/*`, `/inpi/connection`, `/companies`, `/trademarks`,
-  `/search-history`, `/account`, `/feed/items`.
+  `/search-history`, `/account`, `/feed/items`, `/veille/subscriptions/*`,
+  `/veille/packs/*`, `/timeline/*`.
 - **Tests** : suite unitaire + tests d'architecture (NetArchTest) + tests d'intégration
   (PostgreSQL via Testcontainers, INPI via WireMock, API end-to-end via WebApplicationFactory).
-- **Documentation** : `ARCHITECTURE.md`, `CHANGELOG.md`, `CONTRIBUTING.md`.
+- **Documentation** : `ARCHITECTURE.md`, `CHANGELOG.md`, `CONTRIBUTING.md`,
+  audit profond lecture seule de la solution dans `docs/audit/` (Shared → Domain →
+  Application → Infrastructure.{Persistence,Veille,Inpi,Security,Messaging} → Api →
+  Tests → Maui, plus synthèse priorisée).
 
 ### Modifié
 
@@ -53,6 +75,15 @@ appel authentifié réel (cf. roadmap, statuts 🟡).
   CommunityToolkit.Mvvm) et montée d'OpenTelemetry.
 - Client MAUI : passage des `[ObservableProperty]` en propriétés partielles
   (compatibilité WinRT/desktop).
+- **Effacement RGPD étendu à la veille** (Lot 1 audit) : cascade FK sur
+  `VeilleSubscription`, `VeillePackEnrollment` et `FeedItemUserState` lors de la
+  suppression de compte (art. 17 RGPD) — toutes les traces de veille d'un
+  utilisateur sont purgées avec son compte.
+- **Mapping HTTP `veille.*`** (Lot 1 audit) : codes d'erreur veille
+  (`subscription_not_found`, `source_blocked`, `fetch_failed`,
+  `subscription_limit_reached`, `already_subscribed`, …) explicitement traduits
+  en 404 / 409 / 403 / 502 par `ErrorHttpMapping` au lieu de retomber en 400
+  par défaut.
 
 ### Sécurité
 
