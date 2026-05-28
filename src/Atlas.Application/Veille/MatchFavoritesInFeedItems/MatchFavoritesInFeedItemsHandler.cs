@@ -40,7 +40,7 @@ internal sealed class MatchFavoritesInFeedItemsHandler(
             cancellationToken.ThrowIfCancellationRequested();
 
             UserId userId = group.Key;
-            List<CompanyFavorite> userFavorites = group.ToList();
+            var userFavorites = group.ToList();
 
             IReadOnlyList<FeedItem> candidates =
                 await matches.GetCandidatesForUserAsync(userId, request.LookbackDays, cancellationToken);
