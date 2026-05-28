@@ -65,10 +65,26 @@ internal sealed class FeedSubscriptionPolicy(IOptions<VeilleOptions> options) : 
         if (ip.AddressFamily == AddressFamily.InterNetwork)
         {
             byte[] bytes = ip.GetAddressBytes();
-            if (bytes[0] == 10) return true;                              // 10.0.0.0/8
-            if (bytes[0] == 172 && (bytes[1] & 0xF0) == 16) return true;  // 172.16.0.0/12
-            if (bytes[0] == 192 && bytes[1] == 168) return true;          // 192.168.0.0/16
-            if (bytes[0] == 169 && bytes[1] == 254) return true;          // 169.254.0.0/16 (link-local + métadonnées cloud)
+            // 10.0.0.0/8
+            if (bytes[0] == 10)
+            {
+                return true;
+            }
+            // 172.16.0.0/12
+            if (bytes[0] == 172 && (bytes[1] & 0xF0) == 16)
+            {
+                return true;
+            }
+            // 192.168.0.0/16
+            if (bytes[0] == 192 && bytes[1] == 168)
+            {
+                return true;
+            }
+            // 169.254.0.0/16 (link-local + métadonnées cloud AWS/GCP)
+            if (bytes[0] == 169 && bytes[1] == 254)
+            {
+                return true;
+            }
         }
 
         return false;
