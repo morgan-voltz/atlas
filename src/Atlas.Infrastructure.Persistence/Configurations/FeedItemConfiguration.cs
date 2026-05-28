@@ -47,14 +47,27 @@ internal sealed class FeedItemConfiguration : IEntityTypeConfiguration<FeedItem>
 
         builder.Property(item => item.FetchedAt).HasColumnName("fetched_at");
 
+        builder.Property(item => item.ClusterId)
+            .HasColumnName("cluster_id")
+            .HasConversion(
+                id => id == null ? (Guid?)null : id.Value.Value,
+                value => value == null ? (FeedItemClusterId?)null : new FeedItemClusterId(value.Value));
+
         // Déduplication : un même hash ne peut exister qu'une fois par source.
         builder.HasIndex(item => new { item.SourceId, item.ContentHash }).IsUnique();
         builder.HasIndex(item => item.PublishedAt);
+        builder.HasIndex(item => item.ClusterId);
 
         builder.HasOne<FeedSource>()
             .WithMany()
             .HasForeignKey(item => item.SourceId)
             .OnDelete(DeleteBehavior.Cascade);
+
+        // F-045 : le cluster de déduplication ; sa suppression détache l'item sans le supprimer.
+        builder.HasOne<FeedItemCluster>()
+            .WithMany()
+            .HasForeignKey(item => item.ClusterId)
+            .OnDelete(DeleteBehavior.SetNull);
 
         builder.Ignore(item => item.DomainEvents);
     }

@@ -1,3 +1,4 @@
+using Atlas.Application.Veille.ClusterPendingFeedItems;
 using Atlas.Application.Veille.PollFeedSources;
 using Atlas.Shared.Result;
 using MediatR;
@@ -29,6 +30,26 @@ public sealed class FeedPollingJob(ISender sender, ILogger<FeedPollingJob> logge
         else if (logger.IsEnabled(LogLevel.Warning))
         {
             logger.LogWarning("Veille : échec du polling ({Code}).", result.Error!.Code);
+        }
+
+        // Déduplication intelligente (F-045) : clusterise les nouveaux items (et backfille les anciens au 1er run).
+        Result<ClusterRunSummary> clustering = await sender.Send(new ClusterPendingFeedItemsCommand());
+
+        if (clustering.IsSuccess)
+        {
+            ClusterRunSummary summary = clustering.Value!;
+            if (logger.IsEnabled(LogLevel.Information))
+            {
+                logger.LogInformation(
+                    "Veille : déduplication — {Processed} item(s) traité(s), {Created} cluster(s) créé(s), {Clustered} regroupé(s).",
+                    summary.ItemsProcessed,
+                    summary.ClustersCreated,
+                    summary.ItemsClustered);
+            }
+        }
+        else if (logger.IsEnabled(LogLevel.Warning))
+        {
+            logger.LogWarning("Veille : échec de la déduplication ({Code}).", clustering.Error!.Code);
         }
     }
 }

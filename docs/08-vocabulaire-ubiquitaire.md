@@ -658,6 +658,16 @@ Les **value objects** sont des types immuables sans identité propre, qui encaps
 | Définition | Regroupement d'items similaires détectés par déduplication (même info reportée par plusieurs sources). |
 | Cf. | F-045 |
 
+### 9.7.1 SimHash (empreinte de déduplication)
+
+| | |
+|---|---|
+| Nom canonique | `SimHash` |
+| Type | Concept technique (value/algorithme) |
+| Langue | EN |
+| Définition | Empreinte floue 64 bits d'un texte (titre + extrait). Deux textes proches ont une faible distance de Hamming, base de l'appariement des `FeedItemCluster`. |
+| Cf. | F-045 |
+
 ### 9.8 WatchRule (règle de surveillance)
 
 | | |
