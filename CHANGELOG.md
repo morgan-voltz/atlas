@@ -58,6 +58,30 @@ appel authentifié réel (cf. roadmap, statuts 🟡).
   `GET /favorites/companies`. Pose la base de F-019 (alertes sur favoris) puis
   F-047 (timeline mixte veille+favoris). Méthode `Siren.FromTrustedValue` ajoutée
   pour la réhydratation EF (constructeur de confiance limité à la persistance).
+- **F-019 — Alerte sur modification d'une entreprise favorite (backend)** :
+  - Entité `CompanyFavoriteSnapshot` (un seul cliché vivant par `(UserId, SIREN)`),
+    capture dénomination / forme juridique / NAF / adresse / hash des dirigeants.
+  - `CompanyFavoriteSnapshot.DiffWith(UniteLegale)` retourne la liste des
+    `CompanyFavoriteChange` (champ, ancien, nouveau).
+  - Use case `RefreshFavoritesCommand` (use case Application) — itère les users qui
+    ont des favoris et un compte INPI connecté, re-fetch RNE, calcule le diff,
+    upsert le snapshot, publie `CompanyFavoriteChangedNotification`.
+  - 2 handlers de notification : `SendFavoriteChangeEmailHandler` (email via
+    `IEmailSender.SendFavoriteChangeAsync`, nouvelle méthode ajoutée à
+    `IEmailSender`) et `DispatchFavoriteChangePushHandler` (push via
+    `INotificationDispatcher`).
+  - Job Hangfire `favorite-refresh` planifié quotidiennement à **03:00 UTC**,
+    désactivable via `BackgroundJobs:Enabled=false`.
+- **F-020 — Notifications push (ports + endpoints, adapters à venir par plateforme)** :
+  - Entité `DeviceRegistration` (UserId, `DevicePlatform` enum
+    `FcmAndroid` / `ApnsIos` / `WindowsWns` / `MacOsApns`, token unique global, label),
+    upsert sur token, cascade FK RGPD.
+  - Port `INotificationDispatcher` (`DispatchAsync(UserId, NotificationPayload, CT)`).
+  - Implémentation par défaut `LoggingNotificationDispatcher` (log les notifications
+    au lieu de les pousser) — **les adapters FCM / APNs / WNS arrivent en PRs
+    séparées par plateforme**, sans modification du domaine.
+  - Endpoints `POST /devices`, `DELETE /devices/{id}`, `GET /devices` (le token
+    n'est jamais renvoyé).
 - **Pipeline CI GitHub Actions** (Lot 0 audit) : `.github/workflows/ci.yml` exécute
   build Release + tests unitaires + tests d'architecture + tests d'intégration
   (Docker / Testcontainers) sur chaque PR et chaque push sur `main`. Analyseurs

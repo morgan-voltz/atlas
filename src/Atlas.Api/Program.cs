@@ -1,5 +1,6 @@
 using Atlas.Api.Dev;
 using Atlas.Api.Endpoints;
+using Atlas.Api.Favorites;
 using Atlas.Api.Security;
 using Atlas.Api.Veille;
 using Atlas.Application;
@@ -37,6 +38,7 @@ builder.Services.AddMessagingInfrastructure(builder.Configuration);
 builder.Services.AddInpiInfrastructure(builder.Configuration);
 builder.Services.AddVeilleInfrastructure(builder.Configuration);
 builder.Services.AddScoped<FeedPollingJob>();
+builder.Services.AddScoped<FavoriteRefreshJob>();
 
 // Jobs en arrière-plan (Hangfire, stockage PostgreSQL). Désactivable via BackgroundJobs:Enabled=false
 // (les tests d'intégration le coupent : ils utilisent une autre base que la chaîne de connexion app).
@@ -127,6 +129,7 @@ app.MapTrademarksEndpoints();
 app.MapSearchHistoryEndpoints();
 app.MapAccountEndpoints();
 app.MapFavoritesEndpoints();
+app.MapDevicesEndpoints();
 app.MapFeedEndpoints();
 app.MapVeillePackEndpoints();
 
@@ -137,8 +140,10 @@ if (backgroundJobsEnabled)
         // Amorce les sources de veille puis les VeillePacks (idempotents) ; planifie ensuite le polling récurrent.
         await FeedSourceSeeder.SeedAsync(scope.ServiceProvider);
         await VeillePackSeeder.SeedAsync(scope.ServiceProvider);
-        scope.ServiceProvider.GetRequiredService<IRecurringJobManager>()
-            .AddOrUpdate<FeedPollingJob>("feed-polling", job => job.PollAsync(), "*/30 * * * *");
+        IRecurringJobManager recurringJobs = scope.ServiceProvider.GetRequiredService<IRecurringJobManager>();
+        recurringJobs.AddOrUpdate<FeedPollingJob>("feed-polling", job => job.PollAsync(), "*/30 * * * *");
+        // Alerte favoris (F-019) : tous les jours à 03:00 UTC.
+        recurringJobs.AddOrUpdate<FavoriteRefreshJob>("favorite-refresh", job => job.RunAsync(), "0 3 * * *");
     }
 
     if (app.Environment.IsDevelopment())

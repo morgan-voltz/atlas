@@ -415,6 +415,8 @@ Pour chaque feature, on documente :
 
 ### F-019 — Alerte email sur modification d'une entreprise favorite
 
+> **Statut** : ✅ Backend implémenté (MVP 2, 28 mai 2026). `CompanyFavoriteSnapshot` (un cliché vivant par `(UserId, SIREN)`) + `DiffWith(UniteLegale)` détecte les changements de dénomination / forme juridique / NAF / adresse / dirigeants (hash). Job Hangfire `favorite-refresh` cron `0 3 * * *` (désactivable). Notification MediatR `CompanyFavoriteChangedNotification` → 2 handlers : email (via `IEmailSender.SendFavoriteChangeAsync`, nouvelle méthode) et push (via `INotificationDispatcher`, cf. F-020). Users sans compte INPI connecté passés silencieusement. **Reste** : adapter email Brevo (actuellement `LoggingEmailSender` = dev only), templates email enrichis.
+
 **Description** : un job quotidien re-fetch les fiches favorites. Si une modification est détectée (changement d'adresse, de dirigeant, dépôt d'un bilan, etc.), l'utilisateur reçoit un email résumant les changements.
 
 **Valeur user** : première fonction de veille — passage d'un outil de consultation à un outil pro-actif.
@@ -433,9 +435,11 @@ Pour chaque feature, on documente :
 
 ---
 
-### F-020 — Notifications push mobiles
+### F-020 — Notifications push mobiles (et desktop)
 
-**Description** : alertes envoyées en push sur l'app mobile MAUI en complément des emails.
+> **Statut** : 🟡 Ports + endpoints implémentés (MVP 2, 28 mai 2026), **adapters concrets à venir par plateforme**. Domain : entité `DeviceRegistration` (token, plateforme `FcmAndroid` / `ApnsIos` / `WindowsWns` / `MacOsApns`, cascade FK RGPD), port `INotificationDispatcher` (`DispatchAsync(UserId, NotificationPayload, CT)`), `NotificationPayload(Title, Body, Data)`. API : `POST /devices` (upsert par token), `DELETE /devices/{id}`, `GET /devices` (sans token). Implémentation par défaut `LoggingNotificationDispatcher` (log → upgrade transparent côté Application : F-019 publie déjà la notification push). **Reste** : adapters FCM (Android + Web) puis APNs (iOS + macOS) puis WNS (Windows desktop) — une PR par plateforme. Côté MAUI : récupération du token natif puis `POST /devices` au démarrage.
+
+**Description** : alertes envoyées en push sur l'app mobile MAUI en complément des emails. Étendu pour couvrir aussi le desktop (Windows / macOS).
 
 **Valeur user** : immédiateté de l'information.
 

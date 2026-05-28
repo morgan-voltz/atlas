@@ -1,6 +1,7 @@
 using Atlas.Domain.Companies;
 using Atlas.Domain.Favorites;
 using Atlas.Domain.Inpi;
+using Atlas.Domain.Notifications;
 using Atlas.Domain.Search;
 using Atlas.Domain.Users;
 using Atlas.Domain.Veille;
@@ -51,6 +52,12 @@ public sealed class UserCascadeDeleteTests(PostgresFixture fixture)
             Siren siren = Siren.Create("552032534").Value;
             await context.CompanyFavorites.AddAsync(CompanyFavorite.Mark(user.Id, siren, "Renault", Now));
 
+            // Snapshot favori (F-019) + device push (F-020) : également cascadés.
+            UniteLegale snap = new(siren, "Renault", "SAS", null, null, null, true, []);
+            await context.CompanyFavoriteSnapshots.AddAsync(CompanyFavoriteSnapshot.Capture(user.Id, snap, Now));
+            await context.DeviceRegistrations.AddAsync(
+                DeviceRegistration.Register(user.Id, DevicePlatform.FcmAndroid, $"tok-{Guid.NewGuid():N}", "Pixel", Now));
+
             await context.SaveChangesAsync();
         }
 
@@ -70,6 +77,8 @@ public sealed class UserCascadeDeleteTests(PostgresFixture fixture)
             (await context.VeillePackEnrollments.CountAsync(en => en.UserId == user.Id)).Should().Be(0);
             (await context.FeedItemUserStates.CountAsync(st => st.UserId == user.Id)).Should().Be(0);
             (await context.CompanyFavorites.CountAsync(f => f.UserId == user.Id)).Should().Be(0);
+            (await context.CompanyFavoriteSnapshots.CountAsync(s => s.UserId == user.Id)).Should().Be(0);
+            (await context.DeviceRegistrations.CountAsync(d => d.UserId == user.Id)).Should().Be(0);
         }
     }
 }

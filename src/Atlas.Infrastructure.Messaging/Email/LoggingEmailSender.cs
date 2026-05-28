@@ -1,3 +1,4 @@
+using Atlas.Domain.Favorites;
 using Atlas.Domain.Notifications;
 using Atlas.Domain.Users;
 using Microsoft.Extensions.Logging;
@@ -28,6 +29,30 @@ internal sealed class LoggingEmailSender(
                 "[DEV] Email de vérification pour {Recipient}. Lien de vérification : {VerificationLink}",
                 recipient.Value,
                 link);
+        }
+
+        return Task.CompletedTask;
+    }
+
+    public Task SendFavoriteChangeAsync(
+        EmailAddress recipient,
+        string sirenValue,
+        string? denomination,
+        IReadOnlyList<CompanyFavoriteChange> changes,
+        CancellationToken ct = default)
+    {
+        ArgumentNullException.ThrowIfNull(changes);
+
+        if (logger.IsEnabled(LogLevel.Information))
+        {
+            string summary = string.Join("; ", changes.Select(c => c.Field));
+            logger.LogInformation(
+                "[DEV] Alerte favori pour {Recipient} : {Denomination} ({Siren}) — {ChangeCount} changement(s) : {Changes}",
+                recipient.Value,
+                denomination ?? "(sans dénomination)",
+                sirenValue,
+                changes.Count,
+                summary);
         }
 
         return Task.CompletedTask;
