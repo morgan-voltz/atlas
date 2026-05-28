@@ -52,6 +52,12 @@ appel authentifié réel (cf. roadmap, statuts 🟡).
 - **F-045 — Déduplication intelligente des items** : empreinte **SimHash 64 bits**
   (FNV-1a) calculée à l'ingestion, regroupement en `FeedItemCluster` par distance
   de Hamming, collapse dans la timeline (un seul représentant par cluster).
+- **F-017 — Favoris entreprise** : entité `CompanyFavorite` (UserId + SIREN +
+  NameSnapshot optionnel + AddedAt) avec index unique `(UserId, SIREN)` et cascade
+  FK RGPD. Endpoints `POST /favorites/companies`, `DELETE /favorites/companies/{siren}`,
+  `GET /favorites/companies`. Pose la base de F-019 (alertes sur favoris) puis
+  F-047 (timeline mixte veille+favoris). Méthode `Siren.FromTrustedValue` ajoutée
+  pour la réhydratation EF (constructeur de confiance limité à la persistance).
 - **Pipeline CI GitHub Actions** (Lot 0 audit) : `.github/workflows/ci.yml` exécute
   build Release + tests unitaires + tests d'architecture + tests d'intégration
   (Docker / Testcontainers) sur chaque PR et chaque push sur `main`. Analyseurs

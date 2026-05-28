@@ -126,6 +126,7 @@ app.MapCompaniesEndpoints();
 app.MapTrademarksEndpoints();
 app.MapSearchHistoryEndpoints();
 app.MapAccountEndpoints();
+app.MapFavoritesEndpoints();
 app.MapFeedEndpoints();
 app.MapVeillePackEndpoints();
 
