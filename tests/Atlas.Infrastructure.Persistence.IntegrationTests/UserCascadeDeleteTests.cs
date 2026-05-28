@@ -62,6 +62,10 @@ public sealed class UserCascadeDeleteTests(PostgresFixture fixture)
             await context.FeedItemFavoriteMatches.AddAsync(
                 FeedItemFavoriteMatch.Create(item.Id, user.Id, siren, "Renault", Now));
 
+            // Événements de favoris (F-047 volet 2) : cascade aussi.
+            await context.FavoriteEvents.AddAsync(FavoriteEvent.Record(
+                user.Id, siren, FavoriteEventType.RneChanged, "Mise à jour de Renault", "Adresse modifiée.", Now));
+
             await context.SaveChangesAsync();
         }
 
@@ -84,6 +88,7 @@ public sealed class UserCascadeDeleteTests(PostgresFixture fixture)
             (await context.CompanyFavoriteSnapshots.CountAsync(s => s.UserId == user.Id)).Should().Be(0);
             (await context.DeviceRegistrations.CountAsync(d => d.UserId == user.Id)).Should().Be(0);
             (await context.FeedItemFavoriteMatches.CountAsync(m => m.UserId == user.Id)).Should().Be(0);
+            (await context.FavoriteEvents.CountAsync(e => e.UserId == user.Id)).Should().Be(0);
         }
     }
 }
