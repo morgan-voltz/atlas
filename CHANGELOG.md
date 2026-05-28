@@ -61,3 +61,19 @@ appel authentifié réel (cf. roadmap, statuts 🟡).
 - JWT d'accès signés **RS256**, refresh tokens rotatifs et révocables.
 - Droits RGPD (export / effacement) implémentés.
 - Pin de sécurité `System.Security.Cryptography.Xml` 10.0.8 (CVE GHSA-37gx-xxp4-5rgx).
+- **Lot 2a — Durcissement crypto et anti-SSRF** :
+  - **Garde-fous au démarrage sur les clés** : `Jwt:PrivateKeyPem` et `Crypto:KeyBase64`
+    deviennent obligatoires hors `Development` (validation `ValidateOnStart`). Plus de
+    fallback silencieux sur clé RSA éphémère (qui invalidait tous les JWT à chaque
+    redémarrage) ou clé AES dérivée d'un secret de dev en production.
+  - **Anti-SSRF dans `FeedSubscriptionPolicy`** : rejet des hôtes IP en plages privées
+    (10/8, 172.16/12, 192.168/16), loopback (127/8, ::1, `localhost`), link-local
+    (169.254/16) et IPv6 site/link-local. Couvre notamment `169.254.169.254`
+    (endpoints de métadonnées AWS / GCP). Empêche un utilisateur d'ajouter une URL de
+    flux qui ferait pivoter le serveur vers son réseau interne.
+  - **Couverture de tests cryptographiques** : nouveau projet
+    `Atlas.Infrastructure.Security.UnitTests` (37 tests) couvrant `Argon2idPasswordHasher`,
+    `AesGcmCryptoService` (détection de tampering ciphertext + tag), `JwtIssuer`,
+    `TwoFactorChallengeService` (isolation d'audience `atlas` vs `atlas-2fa`),
+    `TotpProvider`, `SecureTokenGenerator`. 21 tests supplémentaires sur
+    `FeedSubscriptionPolicy`.
