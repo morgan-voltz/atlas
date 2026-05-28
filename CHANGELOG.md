@@ -81,8 +81,20 @@ appel authentifié réel (cf. roadmap, statuts 🟡).
   `MentionedFavorites` par item et un filtre `?mentionsFavoritesOnly=true`
   pour ne voir que les items qui parlent de **mes** entreprises favorites.
   Le matching est exécuté à chaque cycle de polling, juste après la
-  déduplication (F-045). Cascades FK RGPD sur user + feed_item. Les volets
-  événements RNE en timeline et BODACC (F-048) restent à venir.
+  déduplication (F-045). Cascades FK RGPD sur user + feed_item.
+- **F-047 volet 2 — Événements RNE dans la timeline** : les
+  `CompanyFavoriteChangedNotification` publiées par F-019 deviennent désormais
+  des entrées de timeline aux côtés des items RSS, triées chronologiquement.
+  Nouvelle entité `FavoriteEvent` (UserId, Siren, type `RneChanged` / réservé
+  `BodaccPublished`, Title, Summary, OccurredAt), cascade FK RGPD. 3ᵉ handler
+  MediatR `RecordFavoriteEventOnChangeHandler` sur la notification de F-019.
+  **Breaking change léger** côté `GET /feed/timeline` : le DTO devient un
+  union discriminée — `Kind = "RssItem" | "FavoriteEvent"`, `OccurredAt`
+  remplace `PublishedAt`, champs spécifiques `EventType` / `EventSiren`
+  pour les events, `SourceId` / `Categories` désormais optionnels. Fusion
+  bornée à 500 entrées de chaque source en mémoire pour MVP ; les events
+  sont exclus si un filtre RSS-only est actif (`sourceId`, `unread`,
+  `favoritesOnly`, `mentionsFavoritesOnly`). Reste : BODACC (F-048).
 - **F-020 — Notifications push (ports + endpoints, adapters à venir par plateforme)** :
   - Entité `DeviceRegistration` (UserId, `DevicePlatform` enum
     `FcmAndroid` / `ApnsIos` / `WindowsWns` / `MacOsApns`, token unique global, label),

@@ -46,6 +46,8 @@ public sealed class AtlasDbContext(DbContextOptions<AtlasDbContext> options)
 
     public DbSet<FeedItemFavoriteMatch> FeedItemFavoriteMatches => Set<FeedItemFavoriteMatch>();
 
+    public DbSet<FavoriteEvent> FavoriteEvents => Set<FavoriteEvent>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         ArgumentNullException.ThrowIfNull(modelBuilder);

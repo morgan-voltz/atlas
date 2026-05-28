@@ -3,7 +3,8 @@ using MediatR;
 
 namespace Atlas.Application.Veille.GetTimeline;
 
-/// <summary>Timeline unifiée de l'utilisateur : items de ses sources abonnées, filtrés et paginés (F-044).</summary>
+/// <summary>Timeline unifiée de l'utilisateur : items RSS de ses sources abonnées + événements
+/// de ses entreprises favorites (F-044 + F-047), filtrés et paginés, triés chronologiquement.</summary>
 public sealed record GetTimelineQuery(
     Guid UserId,
     int Page,
@@ -21,17 +22,26 @@ public sealed record GetTimelineQuery(
 /// <summary>F-047 : référence à une entreprise favorite du user mentionnée dans un item.</summary>
 public sealed record FavoriteMentionDto(string Siren, string Name);
 
+/// <summary>
+/// Item de timeline unifiée (F-044 + F-047 volet 2). <see cref="Kind"/> discrimine entre
+/// <c>"RssItem"</c> (item d'un flux RSS) et <c>"FavoriteEvent"</c> (changement RNE / BODACC sur
+/// un favori). Les champs non applicables au kind concerné valent <c>null</c> / valeur par défaut.
+/// </summary>
 public sealed record TimelineItemDto(
+    string Kind,
     Guid Id,
-    Guid SourceId,
     string Title,
     string? Url,
     string? Summary,
-    DateTimeOffset PublishedAt,
-    IReadOnlyList<string> Categories,
+    DateTimeOffset OccurredAt,
     bool IsRead,
     bool IsFavorite,
     bool IsArchived,
+    // RSS-only (null pour les events)
+    Guid? SourceId,
+    IReadOnlyList<string> Categories,
     int SourceCount,
-    /// <summary>F-047 : entreprises favorites du user mentionnées dans cet item (vide si aucune).</summary>
-    IReadOnlyList<FavoriteMentionDto> MentionedFavorites);
+    IReadOnlyList<FavoriteMentionDto> MentionedFavorites,
+    // FavoriteEvent-only (null pour les RSS items)
+    string? EventType,
+    string? EventSiren);
