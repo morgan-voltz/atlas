@@ -1,4 +1,5 @@
 using Atlas.Application.Veille.ClusterPendingFeedItems;
+using Atlas.Application.Veille.MatchFavoritesInFeedItems;
 using Atlas.Application.Veille.PollFeedSources;
 using Atlas.Shared.Result;
 using MediatR;
@@ -50,6 +51,25 @@ public sealed class FeedPollingJob(ISender sender, ILogger<FeedPollingJob> logge
         else if (logger.IsEnabled(LogLevel.Warning))
         {
             logger.LogWarning("Veille : échec de la déduplication ({Code}).", clustering.Error!.Code);
+        }
+
+        // Tagging des items avec les favoris des users (F-047, timeline mixte).
+        Result<FavoriteMatchSummary> matching = await sender.Send(new MatchFavoritesInFeedItemsCommand());
+        if (matching.IsSuccess)
+        {
+            FavoriteMatchSummary summary = matching.Value!;
+            if (logger.IsEnabled(LogLevel.Information))
+            {
+                logger.LogInformation(
+                    "Veille : matching favoris — {Users} user(s) scanné(s), {Items} item(s) examiné(s), {Matches} mention(s) créée(s).",
+                    summary.UsersScanned,
+                    summary.ItemsScanned,
+                    summary.MatchesCreated);
+            }
+        }
+        else if (logger.IsEnabled(LogLevel.Warning))
+        {
+            logger.LogWarning("Veille : échec du matching favoris ({Code}).", matching.Error!.Code);
         }
     }
 }

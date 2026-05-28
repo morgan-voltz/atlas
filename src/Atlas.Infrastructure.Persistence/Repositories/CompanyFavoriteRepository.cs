@@ -17,6 +17,9 @@ internal sealed class CompanyFavoriteRepository(AtlasDbContext dbContext) : ICom
             .OrderByDescending(favorite => favorite.AddedAt)
             .ToListAsync(ct);
 
+    public async Task<IReadOnlyList<CompanyFavorite>> GetAllAsync(CancellationToken ct = default) =>
+        await dbContext.CompanyFavorites.ToListAsync(ct);
+
     public Task<int> CountByUserAsync(UserId userId, CancellationToken ct = default) =>
         dbContext.CompanyFavorites.CountAsync(favorite => favorite.UserId == userId, ct);
 

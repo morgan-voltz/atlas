@@ -72,6 +72,17 @@ appel authentifié réel (cf. roadmap, statuts 🟡).
     `INotificationDispatcher`).
   - Job Hangfire `favorite-refresh` planifié quotidiennement à **03:00 UTC**,
     désactivable via `BackgroundJobs:Enabled=false`.
+- **F-047 — Combinaison veille + favoris (MVP, tagging RSS)** : LA feature
+  différenciante du produit. Quand un item RSS est ingéré, le moteur scanne le
+  titre et le résumé pour y détecter les noms d'entreprises favorites des
+  utilisateurs (matching mot entier case-insensitive, ≥ 3 caractères). Chaque
+  mention est persistée dans `feed_item_favorite_matches` (index unique
+  `(user_id, item_id, siren)`). La timeline (F-044) expose un nouveau champ
+  `MentionedFavorites` par item et un filtre `?mentionsFavoritesOnly=true`
+  pour ne voir que les items qui parlent de **mes** entreprises favorites.
+  Le matching est exécuté à chaque cycle de polling, juste après la
+  déduplication (F-045). Cascades FK RGPD sur user + feed_item. Les volets
+  événements RNE en timeline et BODACC (F-048) restent à venir.
 - **F-020 — Notifications push (ports + endpoints, adapters à venir par plateforme)** :
   - Entité `DeviceRegistration` (UserId, `DevicePlatform` enum
     `FcmAndroid` / `ApnsIos` / `WindowsWns` / `MacOsApns`, token unique global, label),

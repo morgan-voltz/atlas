@@ -14,7 +14,12 @@ public sealed record GetTimelineQuery(
     string? Keyword,
     bool UnreadOnly,
     bool FavoritesOnly,
-    bool IncludeArchived) : IRequest<Result<PagedResult<TimelineItemDto>>>;
+    bool IncludeArchived,
+    /// <summary>F-047 : ne renvoyer que les items mentionnant au moins une entreprise favorite du user.</summary>
+    bool MentionsFavoritesOnly) : IRequest<Result<PagedResult<TimelineItemDto>>>;
+
+/// <summary>F-047 : référence à une entreprise favorite du user mentionnée dans un item.</summary>
+public sealed record FavoriteMentionDto(string Siren, string Name);
 
 public sealed record TimelineItemDto(
     Guid Id,
@@ -27,4 +32,6 @@ public sealed record TimelineItemDto(
     bool IsRead,
     bool IsFavorite,
     bool IsArchived,
-    int SourceCount);
+    int SourceCount,
+    /// <summary>F-047 : entreprises favorites du user mentionnées dans cet item (vide si aucune).</summary>
+    IReadOnlyList<FavoriteMentionDto> MentionedFavorites);

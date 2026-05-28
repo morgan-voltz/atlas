@@ -606,6 +606,8 @@ Pour chaque feature, on documente :
 
 ### F-047 — Combinaison veille + favoris entreprises
 
+> **Statut** : 🟡 MVP livré (MVP 2, 28 mai 2026) — **tagging RSS → favoris dans la timeline**. Quand un item RSS est ingéré, on scanne titre + résumé pour les noms d'entreprises favorites des users (matching mot entier case-insensitive, frontières non-lettre, longueur ≥ 3). Persisté dans `FeedItemFavoriteMatch` (index unique `(user, item, siren)`, cascades FK RGPD sur user + feed_item). Timeline (F-044) enrichie : DTO inclut `MentionedFavorites: [{ Siren, Name }]` et nouveau filtre `?mentionsFavoritesOnly=true`. Matching exécuté à la fin du `FeedPollingJob`, après la déduplication (F-045). **Reste** : (a) événements RNE de F-019 injectés dans la timeline (table `FavoriteEvent` ou source dédiée user), (b) BODACC (F-048 dédiée).
+
 **Description** : feature **différenciante phare** : la timeline affiche **aussi** les évolutions des entreprises favorites du user (mises à jour RNE, dépôts BODACC, articles RSS mentionnant le nom de l'entreprise). Tout au même endroit.
 
 **Valeur user** : c'est LE feature qui justifie le projet face à un Feedly ou un Pappers seuls. **L'argument commercial central de la veille.**

@@ -12,6 +12,9 @@ public interface ICompanyFavoriteRepository
 
     Task<IReadOnlyList<CompanyFavorite>> GetByUserAsync(UserId userId, CancellationToken ct = default);
 
+    /// <summary>Charge tous les favoris (tous users) pour les jobs cross-user (F-047 matching).</summary>
+    Task<IReadOnlyList<CompanyFavorite>> GetAllAsync(CancellationToken ct = default);
+
     Task<int> CountByUserAsync(UserId userId, CancellationToken ct = default);
 
     Task AddAsync(CompanyFavorite favorite, CancellationToken ct = default);

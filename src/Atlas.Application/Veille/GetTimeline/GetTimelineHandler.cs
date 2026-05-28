@@ -19,7 +19,8 @@ internal sealed class GetTimelineHandler(IFeedItemRepository itemRepository)
             string.IsNullOrWhiteSpace(request.Keyword) ? null : request.Keyword.Trim(),
             request.UnreadOnly,
             request.FavoritesOnly,
-            request.IncludeArchived);
+            request.IncludeArchived,
+            request.MentionsFavoritesOnly);
 
         PagedResult<TimelineEntry> page = await itemRepository.GetTimelineAsync(
             new UserId(request.UserId), filter, request.Page, request.PageSize, cancellationToken);
@@ -40,5 +41,8 @@ internal sealed class GetTimelineHandler(IFeedItemRepository itemRepository)
         entry.IsRead,
         entry.IsFavorite,
         entry.IsArchived,
-        entry.SourceCount);
+        entry.SourceCount,
+        entry.MentionedFavorites
+            .Select(m => new FavoriteMentionDto(m.Siren, m.Name))
+            .ToList());
 }
