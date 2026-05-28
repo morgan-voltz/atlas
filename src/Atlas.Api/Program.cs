@@ -6,6 +6,7 @@ using Atlas.Api.Veille;
 using Atlas.Application;
 using Atlas.Application.Common;
 using Atlas.Domain.Notifications;
+using Atlas.Infrastructure.Bodacc;
 using Atlas.Infrastructure.Inpi;
 using Atlas.Infrastructure.Messaging;
 using Atlas.Infrastructure.Persistence;
@@ -36,9 +37,11 @@ builder.Services.AddSecurityInfrastructure(builder.Configuration, builder.Enviro
 builder.Services.AddPersistenceInfrastructure(builder.Configuration);
 builder.Services.AddMessagingInfrastructure(builder.Configuration);
 builder.Services.AddInpiInfrastructure(builder.Configuration);
+builder.Services.AddBodaccInfrastructure(builder.Configuration);
 builder.Services.AddVeilleInfrastructure(builder.Configuration);
 builder.Services.AddScoped<FeedPollingJob>();
 builder.Services.AddScoped<FavoriteRefreshJob>();
+builder.Services.AddScoped<BodaccPollingJob>();
 
 // Jobs en arrière-plan (Hangfire, stockage PostgreSQL). Désactivable via BackgroundJobs:Enabled=false
 // (les tests d'intégration le coupent : ils utilisent une autre base que la chaîne de connexion app).
@@ -144,6 +147,8 @@ if (backgroundJobsEnabled)
         recurringJobs.AddOrUpdate<FeedPollingJob>("feed-polling", job => job.PollAsync(), "*/30 * * * *");
         // Alerte favoris (F-019) : tous les jours à 03:00 UTC.
         recurringJobs.AddOrUpdate<FavoriteRefreshJob>("favorite-refresh", job => job.RunAsync(), "0 3 * * *");
+        // Polling BODACC (F-048) : tous les jours à 04:00 UTC, après le refresh RNE.
+        recurringJobs.AddOrUpdate<BodaccPollingJob>("bodacc-polling", job => job.RunAsync(), "0 4 * * *");
     }
 
     if (app.Environment.IsDevelopment())

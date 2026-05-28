@@ -46,7 +46,16 @@ internal sealed class FavoriteEventConfiguration : IEntityTypeConfiguration<Favo
 
         builder.Property(evt => evt.OccurredAt).HasColumnName("occurred_at");
 
+        builder.Property(evt => evt.ExternalId)
+            .HasColumnName("external_id")
+            .HasMaxLength(FavoriteEvent.MaxExternalIdLength);
+
         builder.HasIndex(evt => new { evt.UserId, evt.OccurredAt });
+
+        // F-048 : dédup BODACC. Index unique partiel sur (user_id, external_id) où external_id IS NOT NULL.
+        builder.HasIndex(evt => new { evt.UserId, evt.ExternalId })
+            .IsUnique()
+            .HasFilter("external_id IS NOT NULL");
 
         // Cascade RGPD (art. 17).
         builder.HasOne<User>()

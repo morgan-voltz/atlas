@@ -606,7 +606,7 @@ Pour chaque feature, on documente :
 
 ### F-047 — Combinaison veille + favoris entreprises
 
-> **Statut** : 🟡 MVP volets 1 + 2 livrés (MVP 2, 28 mai 2026). **Volet 1 — tagging RSS → favoris** : à l'ingestion d'un item RSS, scan titre + résumé pour les noms d'entreprises favorites (matching mot entier case-insensitive, ≥ 3 caractères). Persisté dans `FeedItemFavoriteMatch` (index unique `(user, item, siren)`, cascades FK RGPD). Timeline étendue avec `MentionedFavorites` et filtre `?mentionsFavoritesOnly=true`. **Volet 2 — événements RNE dans la timeline** : `FavoriteEvent` (entité + repo) créée par un 3ᵉ handler MediatR `RecordFavoriteEventOnChangeHandler` sur `CompanyFavoriteChangedNotification` (publiée par F-019). DTO timeline désormais discriminé `Kind = "RssItem" | "FavoriteEvent"` avec `OccurredAt`, `EventType`, `EventSiren`. Fusion mémoire bornée 500 entrées/source (MVP). Events exclus si filtre RSS-only actif. **Reste** : volet 3 — BODACC (F-048 dédiée).
+> **Statut** : ✅ MVP intégral livré (3 volets, MVP 2, 29 mai 2026). **Volet 1 — tagging RSS → favoris** : à l'ingestion d'un item RSS, scan titre + résumé pour les noms d'entreprises favorites (matching mot entier case-insensitive, ≥ 3 caractères). Persisté dans `FeedItemFavoriteMatch`. Timeline étendue avec `MentionedFavorites` et filtre `?mentionsFavoritesOnly=true`. **Volet 2 — événements RNE** : `FavoriteEvent` (entité + repo) créée par un 3ᵉ handler MediatR sur `CompanyFavoriteChangedNotification` (F-019). DTO timeline discriminé `Kind = "RssItem" | "FavoriteEvent"` avec fusion mémoire bornée. **Volet 3 — BODACC (cf. F-048)** : annonces légales pour les SIREN favoris, dédupliquées via `FavoriteEvent.ExternalId`. La timeline mixte est désormais opérationnelle : RSS + RNE + BODACC, tout au même endroit, trié chronologiquement.
 
 **Description** : feature **différenciante phare** : la timeline affiche **aussi** les évolutions des entreprises favorites du user (mises à jour RNE, dépôts BODACC, articles RSS mentionnant le nom de l'entreprise). Tout au même endroit.
 
@@ -624,6 +624,8 @@ Pour chaque feature, on documente :
 - Timeline mixte triée chronologiquement
 
 ### F-048 — Intégration BODACC dans la veille
+
+> **Statut** : ✅ Backend implémenté (MVP 2, 29 mai 2026). Nouveau projet `Atlas.Infrastructure.Bodacc` avec adapter `OpendatasoftBodaccProvider` interrogeant l'API publique `bodacc-datadila.opendatasoft.com` (anonyme, pas d'INPI requis). Job Hangfire `bodacc-polling` cron `0 4 * * *` (après F-019), **déduplication cross-users** (1 appel API par SIREN partagé). Chaque annonce non encore connue → `FavoriteEvent` type `BodaccPublished` avec `ExternalId = AnnouncementId BODACC`. Index unique partiel `(user_id, external_id) WHERE external_id IS NOT NULL` pour dédup efficace. Apparaît dans la timeline via la fusion F-047 volet 2. **Reste** : (a) configuration fine côté user (mots-clés, secteurs, types d'annonces) — actuellement toutes les annonces sont remontées, (b) validation contre l'API réelle (schéma documenté mais non testé en prod).
 
 **Description** : intégration du BODACC comme source de veille parmi d'autres, avec configuration fine (mots-clés, secteurs d'activité, tribunaux, types d'annonces).
 

@@ -82,6 +82,19 @@ appel authentifié réel (cf. roadmap, statuts 🟡).
   pour ne voir que les items qui parlent de **mes** entreprises favorites.
   Le matching est exécuté à chaque cycle de polling, juste après la
   déduplication (F-045). Cascades FK RGPD sur user + feed_item.
+- **F-048 — BODACC dans la timeline (F-047 volet 3)** : nouvelle source
+  d'événements légaux pour les SIREN favoris. Adapter `OpendatasoftBodaccProvider`
+  (nouveau projet `Atlas.Infrastructure.Bodacc`) interroge l'API publique
+  data.gouv.fr/Opendatasoft (anonyme, pas d'INPI requis). Job Hangfire
+  `bodacc-polling` cron `0 4 * * *` (1 h après le refresh RNE de F-019),
+  déduplication cross-users (un seul appel API par SIREN partagé entre N users).
+  Chaque annonce non encore connue devient un `FavoriteEvent` type
+  `BodaccPublished` avec `ExternalId = AnnouncementId BODACC`. Nouveau
+  champ `FavoriteEvent.ExternalId` + index unique partiel
+  `(user_id, external_id) WHERE external_id IS NOT NULL` pour la dédup
+  efficace. **Clôture F-047 dans son MVP** : la timeline mixe désormais
+  items RSS (F-041/045), événements RNE (F-019/F-047 v2) et annonces
+  BODACC (F-048) — tout au même endroit.
 - **F-047 volet 2 — Événements RNE dans la timeline** : les
   `CompanyFavoriteChangedNotification` publiées par F-019 deviennent désormais
   des entrées de timeline aux côtés des items RSS, triées chronologiquement.
