@@ -1,3 +1,5 @@
+using Atlas.Domain.Companies;
+using Atlas.Domain.Favorites;
 using Atlas.Domain.Inpi;
 using Atlas.Domain.Search;
 using Atlas.Domain.Users;
@@ -45,6 +47,10 @@ public sealed class UserCascadeDeleteTests(PostgresFixture fixture)
             await context.VeillePackEnrollments.AddAsync(VeillePackEnrollment.Create(user.Id, pack.Id, pack.Version, Now));
             await context.FeedItemUserStates.AddAsync(FeedItemUserState.Create(user.Id, item.Id, Now));
 
+            // Favoris d'entreprises (F-017) : également effacés par cascade RGPD.
+            Siren siren = Siren.Create("552032534").Value;
+            await context.CompanyFavorites.AddAsync(CompanyFavorite.Mark(user.Id, siren, "Renault", Now));
+
             await context.SaveChangesAsync();
         }
 
@@ -63,6 +69,7 @@ public sealed class UserCascadeDeleteTests(PostgresFixture fixture)
             (await context.VeilleSubscriptions.CountAsync(s => s.UserId == user.Id)).Should().Be(0);
             (await context.VeillePackEnrollments.CountAsync(en => en.UserId == user.Id)).Should().Be(0);
             (await context.FeedItemUserStates.CountAsync(st => st.UserId == user.Id)).Should().Be(0);
+            (await context.CompanyFavorites.CountAsync(f => f.UserId == user.Id)).Should().Be(0);
         }
     }
 }

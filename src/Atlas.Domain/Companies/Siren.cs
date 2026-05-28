@@ -13,6 +13,12 @@ public readonly record struct Siren
 
     public string Value { get; }
 
+    /// <summary>
+    /// Construit un SIREN sans validation. **Réservé à la réhydratation EF Core et aux migrations** :
+    /// la valeur doit provenir d'une persistance contrôlée (déjà passée par <see cref="Create"/>).
+    /// </summary>
+    public static Siren FromTrustedValue(string value) => new(value);
+
     public static Result<Siren> Create(string? raw)
     {
         if (string.IsNullOrWhiteSpace(raw))

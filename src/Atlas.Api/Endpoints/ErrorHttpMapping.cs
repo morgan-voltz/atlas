@@ -56,6 +56,9 @@ internal static class ErrorHttpMapping
         "veille.subscription_limit_reached" => StatusCodes.Status409Conflict,
         "veille.source_blocked" => StatusCodes.Status403Forbidden,
         "veille.fetch_failed" => StatusCodes.Status502BadGateway,
+        "favorites.company_already_favorite" => StatusCodes.Status409Conflict,
+        "favorites.company_not_favorite" => StatusCodes.Status404NotFound,
+        "favorites.invalid_siren" => StatusCodes.Status400BadRequest,
         // veille.feed_unreachable / veille.invalid_feed_source / veille.invalid_veille_pack
         // restent en 400 (URL/saisie utilisateur invalide) via le défaut.
         _ => StatusCodes.Status400BadRequest,

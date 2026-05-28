@@ -1,4 +1,5 @@
 using Atlas.Domain.Common;
+using Atlas.Domain.Favorites;
 using Atlas.Domain.Inpi;
 using Atlas.Domain.Search;
 using Atlas.Domain.Users;
@@ -34,6 +35,7 @@ public static class DependencyInjection
         services.AddScoped<IFeedItemUserStateRepository, FeedItemUserStateRepository>();
         services.AddScoped<IVeillePackRepository, VeillePackRepository>();
         services.AddScoped<IVeillePackEnrollmentRepository, VeillePackEnrollmentRepository>();
+        services.AddScoped<ICompanyFavoriteRepository, CompanyFavoriteRepository>();
 
         return services;
     }

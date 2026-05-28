@@ -385,6 +385,8 @@ Pour chaque feature, on documente :
 
 ### F-017 — Favoris : suivi d'une entreprise
 
+> **Statut** : ✅ Backend implémenté (MVP 2, 28 mai 2026). Entité `CompanyFavorite` (UserId + Siren + NameSnapshot optionnel + AddedAt) avec index unique `(UserId, Siren)` et cascade FK RGPD sur User. Endpoints `POST /favorites/companies`, `DELETE /favorites/companies/{siren}`, `GET /favorites/companies`. Couvre la base du tableau de bord et débloque F-019 (alertes) puis F-047 (timeline mixte veille+favoris, feature phare). **Reste** : UI MAUI (onglet « Mes favoris »).
+
 **Description** : l'utilisateur marque une entreprise en favori. La fiche est alors accessible depuis un onglet "Mes favoris" et automatiquement mise à jour à chaque consultation.
 
 **Valeur user** : pose les bases du tableau de bord et des alertes.
@@ -506,6 +508,8 @@ Pour chaque feature, on documente :
 
 ### F-042 — Catalogue de templates de veille par métier
 
+> **Statut** : ✅ Implémenté (MVP 2, 27 mai 2026). Entité `VeillePack` versionnée (champ `Version` incrémenté à chaque évolution), `IVeillePackRepository`, enrôlement / désenrôlement utilisateur, re-sync au upgrade via `VeillePackEnrollment.Version`. Sources système rattachées au pack ; **les sources d'un pack ignorent la limite par utilisateur** des sources libres (F-043). Endpoints `/veille/packs/*`. PR #19.
+
 **Description** : bibliothèque de "Packs de veille" pré-curés. À l'inscription ou plus tard, l'utilisateur choisit un ou plusieurs templates correspondant à son métier (Cabinet PI, Expert-comptable, Compliance, Investisseur, Veille concurrentielle B2B, etc.). Les sources sont automatiquement abonnées.
 
 **Valeur user** : friction zéro à l'onboarding. Un user obtient une veille pertinente en 30 secondes au lieu de configurer 2 heures.
@@ -522,6 +526,8 @@ Pour chaque feature, on documente :
 - Versionné (un template peut évoluer, les utilisateurs choisissent s'ils synchronisent)
 
 ### F-043 — Ajout libre de sources par l'utilisateur
+
+> **Statut** : ✅ Implémenté (MVP 2, 27 mai 2026). Entité `VeilleSubscription`, port `IFeedSubscriptionPolicy` (limite par utilisateur configurable + blocklist d'hôtes + anti-SSRF Lot 2a), endpoints `POST /veille/subscriptions`, `DELETE /veille/subscriptions/{id}`, `GET /veille/subscriptions`. PR #18.
 
 **Description** : l'utilisateur peut ajouter manuellement n'importe quel flux RSS / Atom. Le système valide la source (parsing test) et l'intègre à son abonnement.
 
@@ -540,6 +546,8 @@ Pour chaque feature, on documente :
 
 ### F-044 — Timeline unifiée de la veille
 
+> **Statut** : ✅ Backend implémenté (MVP 2, 27 mai 2026). Timeline par utilisateur agrégeant abonnements libres (F-043) et packs (F-042), états par item (`FeedItemUserState` : lu / non lu / favori / archivé), filtrage par source/date/mot-clé, pagination. Endpoints `/timeline/*`. **Reste** : UI MAUI (cf. doc 06 §UI veille). PR #20.
+
 **Description** : vue principale de la feature : une timeline chronologique inversée affichant tous les items des sources abonnées de l'utilisateur, avec filtres et tri.
 
 **Valeur user** : l'interface où le user passe son temps. Le "Twitter de sa veille".
@@ -557,6 +565,8 @@ Pour chaque feature, on documente :
 - Filtres : par source, par date, par mot-clé
 
 ### F-045 — Déduplication intelligente des items
+
+> **Statut** : ✅ Implémenté (MVP 2, 28 mai 2026). Empreinte **SimHash 64 bits** (FNV-1a) calculée à l'ingestion, regroupement en `FeedItemCluster` par distance de Hamming (seuil configurable), collapse dans la timeline (un seul représentant par cluster avec compteur de sources). PR #24.
 
 **Description** : si la même information est publiée par plusieurs sources (ex. rachat d'une entreprise repris par 5 médias), regrouper ces items en un seul dans la timeline avec indication "5 sources rapportent".
 

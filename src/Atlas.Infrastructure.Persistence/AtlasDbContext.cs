@@ -1,4 +1,5 @@
 using Atlas.Domain.Common;
+using Atlas.Domain.Favorites;
 using Atlas.Domain.Inpi;
 using Atlas.Domain.Search;
 using Atlas.Domain.Users;
@@ -35,6 +36,8 @@ public sealed class AtlasDbContext(DbContextOptions<AtlasDbContext> options)
     public DbSet<VeillePack> VeillePacks => Set<VeillePack>();
 
     public DbSet<VeillePackEnrollment> VeillePackEnrollments => Set<VeillePackEnrollment>();
+
+    public DbSet<CompanyFavorite> CompanyFavorites => Set<CompanyFavorite>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
