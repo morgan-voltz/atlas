@@ -4,6 +4,7 @@
     <Project Path="src/Atlas.Application.Premium/Atlas.Application.Premium.csproj" />
     <Project Path="src/Atlas.Application/Atlas.Application.csproj" />
     <Project Path="src/Atlas.Domain/Atlas.Domain.csproj" />
+    <Project Path="src/Atlas.Infrastructure.Bodacc/Atlas.Infrastructure.Bodacc.csproj" />
     <Project Path="src/Atlas.Infrastructure.Cache/Atlas.Infrastructure.Cache.csproj" />
     <Project Path="src/Atlas.Infrastructure.Inpi/Atlas.Infrastructure.Inpi.csproj" />
     <Project Path="src/Atlas.Infrastructure.Messaging/Atlas.Infrastructure.Messaging.csproj" />

@@ -17,4 +17,13 @@ public interface IFavoriteEventRepository
         DateTimeOffset? before,
         int limit,
         CancellationToken ct = default);
+
+    /// <summary>
+    /// Renvoie les <see cref="FavoriteEvent.ExternalId"/> déjà connus pour ce user (F-048) afin
+    /// d'éviter de recréer des doublons lors d'un nouveau polling BODACC.
+    /// </summary>
+    Task<IReadOnlyCollection<string>> GetKnownExternalIdsAsync(
+        UserId userId,
+        IReadOnlyCollection<string> candidateExternalIds,
+        CancellationToken ct = default);
 }

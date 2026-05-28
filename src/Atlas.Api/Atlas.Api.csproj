@@ -20,6 +20,7 @@
     <ProjectReference Include="..\Atlas.Application\Atlas.Application.csproj" />
     <ProjectReference Include="..\Atlas.Application.Premium\Atlas.Application.Premium.csproj" />
     <ProjectReference Include="..\Atlas.Shared\Atlas.Shared.csproj" />
+    <ProjectReference Include="..\Atlas.Infrastructure.Bodacc\Atlas.Infrastructure.Bodacc.csproj" />
     <ProjectReference Include="..\Atlas.Infrastructure.Inpi\Atlas.Infrastructure.Inpi.csproj" />
     <ProjectReference Include="..\Atlas.Infrastructure.Persistence\Atlas.Infrastructure.Persistence.csproj" />
     <ProjectReference Include="..\Atlas.Infrastructure.Veille\Atlas.Infrastructure.Veille.csproj" />
