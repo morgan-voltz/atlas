@@ -30,7 +30,7 @@ internal sealed class AddCompanyFavoriteHandler(
             return Result.Fail(CompanyFavoriteErrors.AlreadyFavorite(siren.Value));
         }
 
-        CompanyFavorite favorite = CompanyFavorite.Mark(userId, siren, request.NameSnapshot, clock.UtcNow);
+        var favorite = CompanyFavorite.Mark(userId, siren, request.NameSnapshot, clock.UtcNow);
         await favorites.AddAsync(favorite, cancellationToken);
         await unitOfWork.SaveChangesAsync(cancellationToken);
 
