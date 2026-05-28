@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using Atlas.Api.Security;
 using Atlas.Application.Common;
 using Atlas.Application.Users;
 using Atlas.Application.Users.Login;
@@ -21,16 +22,19 @@ internal static class AuthEndpoints
     {
         RouteGroupBuilder group = routes.MapGroup("/auth").WithTags("Auth");
 
-        group.MapPost("/register", RegisterAsync);
+        // Rate limiting strict (Lot 2b) sur les endpoints exposés à la force brute :
+        // register (énumération de comptes), login + refresh + 2fa/verify (devinette de
+        // mot de passe / code TOTP / token de refresh).
+        group.MapPost("/register", RegisterAsync).RequireRateLimiting(RateLimitOptions.AuthStrictPolicy);
         group.MapGet("/verify-email", VerifyEmailAsync);
-        group.MapPost("/login", LoginAsync);
-        group.MapPost("/refresh", RefreshAsync);
+        group.MapPost("/login", LoginAsync).RequireRateLimiting(RateLimitOptions.AuthStrictPolicy);
+        group.MapPost("/refresh", RefreshAsync).RequireRateLimiting(RateLimitOptions.AuthStrictPolicy);
         group.MapPost("/logout", LogoutAsync);
 
         group.MapPost("/2fa/setup", SetupTwoFactorAsync).RequireAuthorization();
         group.MapPost("/2fa/enable", EnableTwoFactorAsync).RequireAuthorization();
         group.MapPost("/2fa/disable", DisableTwoFactorAsync).RequireAuthorization();
-        group.MapPost("/2fa/verify", VerifyTwoFactorAsync);
+        group.MapPost("/2fa/verify", VerifyTwoFactorAsync).RequireRateLimiting(RateLimitOptions.AuthStrictPolicy);
 
         return routes;
     }
