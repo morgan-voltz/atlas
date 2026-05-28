@@ -4,6 +4,7 @@ using Atlas.Infrastructure.Security.Crypto;
 using Atlas.Infrastructure.Security.Jwt;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 
 namespace Atlas.Infrastructure.Security;
 
@@ -11,10 +12,24 @@ public static class DependencyInjection
 {
     public static IServiceCollection AddSecurityInfrastructure(
         this IServiceCollection services,
-        IConfiguration configuration)
+        IConfiguration configuration,
+        IHostEnvironment environment)
     {
-        services.Configure<JwtOptions>(configuration.GetSection(JwtOptions.SectionName));
-        services.Configure<CryptoOptions>(configuration.GetSection(CryptoOptions.SectionName));
+        // Garde-fous (audit Lot 2a) : hors Development, les clés DOIVENT être configurées (idéalement via KMS).
+        // ValidateOnStart fait échouer le démarrage de l'application si la condition n'est pas remplie.
+        services.AddOptions<JwtOptions>()
+            .Bind(configuration.GetSection(JwtOptions.SectionName))
+            .Validate(
+                opts => environment.IsDevelopment() || !string.IsNullOrWhiteSpace(opts.PrivateKeyPem),
+                "Jwt:PrivateKeyPem doit être configuré hors Development (clé RSA persistée, KMS recommandé).")
+            .ValidateOnStart();
+
+        services.AddOptions<CryptoOptions>()
+            .Bind(configuration.GetSection(CryptoOptions.SectionName))
+            .Validate(
+                opts => environment.IsDevelopment() || !string.IsNullOrWhiteSpace(opts.KeyBase64),
+                "Crypto:KeyBase64 doit être configuré hors Development (clé AES-256-GCM, KMS recommandé).")
+            .ValidateOnStart();
 
         services.AddSingleton<ISigningKeyProvider, RsaSigningKeyProvider>();
         services.AddSingleton<IJwtIssuer, JwtIssuer>();
