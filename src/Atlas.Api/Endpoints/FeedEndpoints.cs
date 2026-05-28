@@ -51,7 +51,8 @@ internal static class FeedEndpoints
         string? keyword = null,
         bool unread = false,
         bool favorites = false,
-        bool includeArchived = false)
+        bool includeArchived = false,
+        bool mentionsFavoritesOnly = false)
     {
         if (!principal.TryGetUserId(out Guid userId))
         {
@@ -60,7 +61,8 @@ internal static class FeedEndpoints
 
         Result<PagedResult<TimelineItemDto>> result = await sender.Send(
             new GetTimelineQuery(
-                userId, page ?? 1, pageSize ?? 20, sourceId, after, before, keyword, unread, favorites, includeArchived),
+                userId, page ?? 1, pageSize ?? 20, sourceId, after, before, keyword,
+                unread, favorites, includeArchived, mentionsFavoritesOnly),
             ct);
 
         return result.IsSuccess ? Results.Ok(result.Value) : result.Error!.ToProblem();

@@ -58,6 +58,10 @@ public sealed class UserCascadeDeleteTests(PostgresFixture fixture)
             await context.DeviceRegistrations.AddAsync(
                 DeviceRegistration.Register(user.Id, DevicePlatform.FcmAndroid, $"tok-{Guid.NewGuid():N}", "Pixel", Now));
 
+            // Mentions de favoris dans la timeline (F-047) : cascade aussi.
+            await context.FeedItemFavoriteMatches.AddAsync(
+                FeedItemFavoriteMatch.Create(item.Id, user.Id, siren, "Renault", Now));
+
             await context.SaveChangesAsync();
         }
 
@@ -79,6 +83,7 @@ public sealed class UserCascadeDeleteTests(PostgresFixture fixture)
             (await context.CompanyFavorites.CountAsync(f => f.UserId == user.Id)).Should().Be(0);
             (await context.CompanyFavoriteSnapshots.CountAsync(s => s.UserId == user.Id)).Should().Be(0);
             (await context.DeviceRegistrations.CountAsync(d => d.UserId == user.Id)).Should().Be(0);
+            (await context.FeedItemFavoriteMatches.CountAsync(m => m.UserId == user.Id)).Should().Be(0);
         }
     }
 }

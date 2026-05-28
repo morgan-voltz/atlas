@@ -95,6 +95,13 @@ internal sealed class FeedItemRepository(AtlasDbContext dbContext) : IFeedItemRe
             query = query.Where(row => row.state == null || !row.state.IsArchived);
         }
 
+        // F-047 : restriction aux items mentionnant au moins un favori du user.
+        if (filter.MentionsFavoritesOnly)
+        {
+            query = query.Where(row => dbContext.FeedItemFavoriteMatches
+                .Any(m => m.UserId == userId && m.FeedItemId == row.item.Id));
+        }
+
         // Collapse de déduplication (F-045) : on n'affiche qu'un représentant par cluster, l'item le plus récent
         // PARMI les sources auxquelles l'utilisateur est abonné (un cluster peut contenir des items de sources
         // non suivies). Départage déterministe sur (PublishedAt, FetchedAt). Les items standalone passent toujours.
@@ -128,13 +135,28 @@ internal sealed class FeedItemRepository(AtlasDbContext dbContext) : IFeedItemRe
             })
             .ToListAsync(ct);
 
+        // F-047 : charge en une requête les mentions de favoris pour les items affichés.
+        List<FeedItemId> displayedIds = rows.Select(r => r.item.Id).ToList();
+        Dictionary<Guid, List<FavoriteMention>> mentionsByItem = await dbContext.FeedItemFavoriteMatches
+            .Where(m => m.UserId == userId && displayedIds.Contains(m.FeedItemId))
+            .Select(m => new { ItemId = m.FeedItemId.Value, m.Siren, m.MatchedName })
+            .ToListAsync(ct)
+            .ContinueWith(t => t.Result
+                .GroupBy(x => x.ItemId)
+                .ToDictionary(g => g.Key, g => g
+                    .Select(x => new FavoriteMention(x.Siren.Value, x.MatchedName))
+                    .ToList()), ct);
+
         IReadOnlyList<TimelineEntry> entries = rows
             .Select(row => new TimelineEntry(
                 row.item,
                 row.state != null && row.state.IsRead,
                 row.state != null && row.state.IsFavorite,
                 row.state != null && row.state.IsArchived,
-                row.SourceCount))
+                row.SourceCount,
+                mentionsByItem.TryGetValue(row.item.Id.Value, out List<FavoriteMention>? mentions)
+                    ? mentions
+                    : []))
             .ToList();
 
         return new PagedResult<TimelineEntry>(entries, page, pageSize, total);

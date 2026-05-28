@@ -11,4 +11,6 @@ public sealed record TimelineFilter(
     string? Keyword = null,
     bool UnreadOnly = false,
     bool FavoritesOnly = false,
-    bool IncludeArchived = false);
+    bool IncludeArchived = false,
+    /// <summary>F-047 : ne renvoyer que les items qui mentionnent au moins une entreprise favorite du user.</summary>
+    bool MentionsFavoritesOnly = false);

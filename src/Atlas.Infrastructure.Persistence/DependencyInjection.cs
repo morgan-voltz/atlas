@@ -39,6 +39,7 @@ public static class DependencyInjection
         services.AddScoped<ICompanyFavoriteRepository, CompanyFavoriteRepository>();
         services.AddScoped<ICompanyFavoriteSnapshotRepository, CompanyFavoriteSnapshotRepository>();
         services.AddScoped<IDeviceRegistrationRepository, DeviceRegistrationRepository>();
+        services.AddScoped<IFeedItemFavoriteMatchRepository, FeedItemFavoriteMatchRepository>();
 
         return services;
     }

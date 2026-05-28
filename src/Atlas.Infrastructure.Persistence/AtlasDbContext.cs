@@ -44,6 +44,8 @@ public sealed class AtlasDbContext(DbContextOptions<AtlasDbContext> options)
 
     public DbSet<DeviceRegistration> DeviceRegistrations => Set<DeviceRegistration>();
 
+    public DbSet<FeedItemFavoriteMatch> FeedItemFavoriteMatches => Set<FeedItemFavoriteMatch>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         ArgumentNullException.ThrowIfNull(modelBuilder);

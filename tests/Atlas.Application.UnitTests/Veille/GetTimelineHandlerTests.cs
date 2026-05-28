@@ -22,14 +22,15 @@ public sealed class GetTimelineHandlerTests
         var sourceId = Guid.NewGuid();
         FeedItem item = FeedItem.Create(
             new FeedSourceId(sourceId), "Titre", "https://x.test/1", "résumé", Now, ["tech", "veille"], Now);
-        var entry = new TimelineEntry(item, IsRead: true, IsFavorite: false, IsArchived: false, SourceCount: 3);
+        var entry = new TimelineEntry(item, IsRead: true, IsFavorite: false, IsArchived: false, SourceCount: 3,
+            MentionedFavorites: [new FavoriteMention("552032534", "Renault")]);
 
         TimelineFilter? captured = null;
         _itemRepo.GetTimelineAsync(Arg.Any<UserId>(), Arg.Do<TimelineFilter>(f => captured = f),
                 Arg.Any<int>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
             .Returns(new PagedResult<TimelineEntry>([entry], 1, 20, 1));
 
-        var query = new GetTimelineQuery(userId, 1, 20, sourceId, null, null, "veille", true, false, false);
+        var query = new GetTimelineQuery(userId, 1, 20, sourceId, null, null, "veille", true, false, false, false);
         Result<PagedResult<TimelineItemDto>> result = await CreateHandler().Handle(query, CancellationToken.None);
 
         result.IsSuccess.Should().BeTrue();
@@ -38,6 +39,8 @@ public sealed class GetTimelineHandlerTests
         dto.IsRead.Should().BeTrue();
         dto.SourceCount.Should().Be(3);
         dto.Categories.Should().BeEquivalentTo(["tech", "veille"]);
+        dto.MentionedFavorites.Should().HaveCount(1).And.Subject.First().Should().BeEquivalentTo(
+            new FavoriteMentionDto("552032534", "Renault"));
 
         captured.Should().NotBeNull();
         captured!.SourceId.Should().Be(new FeedSourceId(sourceId));
@@ -51,7 +54,7 @@ public sealed class GetTimelineHandlerTests
         _itemRepo.GetTimelineAsync(Arg.Any<UserId>(), Arg.Any<TimelineFilter>(), Arg.Any<int>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
             .Returns(new PagedResult<TimelineEntry>([], 2, 10, 42));
 
-        var query = new GetTimelineQuery(Guid.NewGuid(), 2, 10, null, null, null, null, false, false, false);
+        var query = new GetTimelineQuery(Guid.NewGuid(), 2, 10, null, null, null, null, false, false, false, false);
         Result<PagedResult<TimelineItemDto>> result = await CreateHandler().Handle(query, CancellationToken.None);
 
         result.IsSuccess.Should().BeTrue();
