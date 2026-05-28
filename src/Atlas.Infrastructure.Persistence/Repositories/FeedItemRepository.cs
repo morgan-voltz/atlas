@@ -136,8 +136,8 @@ internal sealed class FeedItemRepository(AtlasDbContext dbContext) : IFeedItemRe
             .ToListAsync(ct);
 
         // F-047 : charge en une requête les mentions de favoris pour les items affichés.
-        List<FeedItemId> displayedIds = rows.Select(r => r.item.Id).ToList();
-        Dictionary<Guid, List<FavoriteMention>> mentionsByItem = await dbContext.FeedItemFavoriteMatches
+        var displayedIds = rows.Select(r => r.item.Id).ToList();
+        var mentionsByItem = await dbContext.FeedItemFavoriteMatches
             .Where(m => m.UserId == userId && displayedIds.Contains(m.FeedItemId))
             .Select(m => new { ItemId = m.FeedItemId.Value, m.Siren, m.MatchedName })
             .ToListAsync(ct)
