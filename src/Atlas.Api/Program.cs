@@ -1,5 +1,6 @@
 using Atlas.Api.Dev;
 using Atlas.Api.Endpoints;
+using Atlas.Api.Security;
 using Atlas.Api.Veille;
 using Atlas.Application;
 using Atlas.Application.Common;
@@ -14,11 +15,19 @@ using Hangfire;
 using Hangfire.PostgreSql;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
+using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Logging structuré Serilog (Lot 2b audit) + masquage proactif des propriétés sensibles.
+builder.Host.UseSerilog((context, _, loggerConfiguration) =>
+    SerilogConfiguration.Configure(loggerConfiguration, context.Configuration));
+
 builder.Services.AddOpenApi();
 builder.Services.AddProblemDetails();
+
+// CORS strict + rate limiting (Lot 2b audit). Hors Development, exige au moins une origine CORS.
+builder.Services.AddApiSecurity(builder.Configuration, builder.Environment);
 
 // Couches applicatives et adapters d'infrastructure.
 builder.Services.AddApplication();
@@ -87,10 +96,26 @@ if (app.Environment.IsDevelopment())
     app.MapOpenApi();
     app.MapDevEndpoints();
 }
+else
+{
+    // HSTS hors Development (max-age 30 jours par défaut, ajustable via configuration).
+    app.UseHsts();
+}
 
 app.UseHttpsRedirection();
+
+// En-têtes de sécurité (Lot 2b) tôt dans le pipeline pour s'appliquer aussi aux réponses d'erreur.
+app.UseSecurityHeaders();
+
+// Logging structuré des requêtes HTTP (status, durée, route).
+app.UseSerilogRequestLogging();
+
+app.UseCors(CorsOptions.DefaultPolicyName);
 app.UseAuthentication();
 app.UseAuthorization();
+
+// Rate limiter après authentification pour partitionner par sub quand le user est connu.
+app.UseRateLimiter();
 
 app.MapGet("/", () => Results.Ok(new { name = "Atlas API", status = "ok" }))
     .WithName("Root");

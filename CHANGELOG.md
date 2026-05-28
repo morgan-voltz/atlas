@@ -108,3 +108,24 @@ appel authentifié réel (cf. roadmap, statuts 🟡).
     `TwoFactorChallengeService` (isolation d'audience `atlas` vs `atlas-2fa`),
     `TotpProvider`, `SecureTokenGenerator`. 21 tests supplémentaires sur
     `FeedSubscriptionPolicy`.
+- **Lot 2b — Rate limiting, en-têtes de sécurité, CORS, logging structuré** :
+  - **Rate limiter ASP.NET Core** : politique globale (100 req / 60 s) + politique
+    `auth-strict` (10 req / 60 s) appliquée à `POST /auth/register`, `/auth/login`,
+    `/auth/refresh` et `/auth/2fa/verify`. Partition par `sub` (utilisateur
+    authentifié) ou par IP. Renvoie **429 Too Many Requests** au-delà.
+  - **En-têtes de sécurité** via middleware custom (`SecurityHeadersMiddleware`) :
+    `X-Content-Type-Options: nosniff`, `Referrer-Policy: strict-origin-when-cross-origin`,
+    `X-Frame-Options: DENY`, `Content-Security-Policy: default-src 'none'; frame-ancestors
+    'none'; base-uri 'none'; form-action 'none'` (API JSON pure), `Permissions-Policy`
+    refusant l'accès aux APIs sensibles du navigateur. **HSTS** activé hors Development.
+  - **CORS strict** : section `Cors:AllowedOrigins` lue depuis la configuration, **jamais
+    `*`**. Liste vide tolérée en Development uniquement ; hors Development le démarrage
+    échoue (`ValidateOnStart`).
+  - **Logging Serilog structuré** + `UseSerilogRequestLogging` (durée / route / statut
+    par requête). `SensitiveDataMaskingEnricher` masque proactivement toute propriété
+    structurée dont le nom contient `password`, `token`, `secret`, `credential`,
+    `privatekey`, `keybase64`, `authorization` — défense en profondeur en plus de la
+    règle « ne jamais logger d'`InpiCredentials` ».
+  - **Tests d'intégration** : `SecurityHeadersTests` (vérifie les 5 en-têtes sur les
+    réponses), `RateLimitingTests` (4ᵉ requête `/auth/login` → 429 quand
+    `PermitLimit=3`).

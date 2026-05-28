@@ -46,6 +46,12 @@ public sealed class AtlasApiFactory : WebApplicationFactory<Program>, IAsyncLife
         // on coupe donc les jobs en arrière-plan pour ne pas perturber le démarrage.
         builder.UseSetting("BackgroundJobs:Enabled", "false");
 
+        // Rate limiting (Lot 2b) : neutralisé par défaut dans le harness de test pour ne pas
+        // interférer avec les scénarios qui enchaînent plusieurs requêtes auth. Les tests qui
+        // ciblent le rate limiting utilisent leur propre factory avec des limites basses.
+        builder.UseSetting("RateLimit:AuthStrict:PermitLimit", "100000");
+        builder.UseSetting("RateLimit:Global:PermitLimit", "100000");
+
         builder.ConfigureTestServices(services =>
         {
             services.RemoveAll<DbContextOptions<AtlasDbContext>>();
