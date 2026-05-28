@@ -22,7 +22,7 @@ builder.Services.AddProblemDetails();
 
 // Couches applicatives et adapters d'infrastructure.
 builder.Services.AddApplication();
-builder.Services.AddSecurityInfrastructure(builder.Configuration);
+builder.Services.AddSecurityInfrastructure(builder.Configuration, builder.Environment);
 builder.Services.AddPersistenceInfrastructure(builder.Configuration);
 builder.Services.AddMessagingInfrastructure(builder.Configuration);
 builder.Services.AddInpiInfrastructure(builder.Configuration);
