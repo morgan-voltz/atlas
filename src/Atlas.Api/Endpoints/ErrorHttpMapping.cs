@@ -59,6 +59,9 @@ internal static class ErrorHttpMapping
         "favorites.company_already_favorite" => StatusCodes.Status409Conflict,
         "favorites.company_not_favorite" => StatusCodes.Status404NotFound,
         "favorites.invalid_siren" => StatusCodes.Status400BadRequest,
+        "devices.not_found" => StatusCodes.Status404NotFound,
+        "devices.invalid_token" => StatusCodes.Status400BadRequest,
+        "devices.invalid_platform" => StatusCodes.Status400BadRequest,
         // veille.feed_unreachable / veille.invalid_feed_source / veille.invalid_veille_pack
         // restent en 400 (URL/saisie utilisateur invalide) via le défaut.
         _ => StatusCodes.Status400BadRequest,

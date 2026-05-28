@@ -1,3 +1,4 @@
+using Atlas.Domain.Favorites;
 using Atlas.Domain.Notifications;
 using Atlas.Domain.Users;
 
@@ -23,4 +24,11 @@ public sealed class CapturingEmailSender : IEmailSender
         LastVerificationToken = verificationToken;
         return Task.CompletedTask;
     }
+
+    public Task SendFavoriteChangeAsync(
+        EmailAddress recipient,
+        string sirenValue,
+        string? denomination,
+        IReadOnlyList<CompanyFavoriteChange> changes,
+        CancellationToken ct = default) => Task.CompletedTask;
 }

@@ -1,3 +1,4 @@
+using Atlas.Domain.Favorites;
 using Atlas.Domain.Notifications;
 using Atlas.Domain.Users;
 
@@ -31,6 +32,26 @@ internal sealed class CapturingEmailSender(
                 link);
         }
 
+        return Task.CompletedTask;
+    }
+
+    public Task SendFavoriteChangeAsync(
+        EmailAddress recipient,
+        string sirenValue,
+        string? denomination,
+        IReadOnlyList<CompanyFavoriteChange> changes,
+        CancellationToken ct = default)
+    {
+        // En dev on log seulement — pas de capture nécessaire pour les tests automatisés.
+        if (logger.IsEnabled(LogLevel.Information))
+        {
+            logger.LogInformation(
+                "[DEV] Alerte favori pour {Recipient} : {Denomination} ({Siren}) — {ChangeCount} changement(s).",
+                recipient.Value,
+                denomination ?? "(sans dénomination)",
+                sirenValue,
+                changes.Count);
+        }
         return Task.CompletedTask;
     }
 }
