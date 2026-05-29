@@ -129,6 +129,7 @@ app.MapAuthEndpoints();
 app.MapInpiEndpoints();
 app.MapCompaniesEndpoints();
 app.MapTrademarksEndpoints();
+app.MapPatentsEndpoints();
 app.MapSearchHistoryEndpoints();
 app.MapAccountEndpoints();
 app.MapFavoritesEndpoints();
