@@ -29,6 +29,7 @@ Avant toute contribution significative, consulter le document approprié dans `d
 | Nommer une classe, méthode, ou concept métier | `docs/08-vocabulaire-ubiquitaire.md` |
 | Comprendre où placer du code (couche, projet) | `docs/09-architecture-detaillee.md` |
 | Créer un nouveau projet `.csproj` ou modifier la solution | `docs/10-layout-solution-dotnet.md` |
+| Ajouter, modifier ou supprimer un endpoint HTTP | `docs/11-api-endpoints.md` |
 
 ---
 
