@@ -396,6 +396,53 @@ appel authentifié réel (cf. roadmap, statuts 🟡).
   pour la carte-aperçu (§7) et la carte-section (§8). Référencée depuis la
   table « Documents fondateurs » de `CLAUDE.md` et depuis les fiches F-009
   et F-010.
+- **Lot 5c — Préférences d'accessibilité utilisateur, bout-en-bout** :
+  pipeline complet backend + client MAUI pour les préférences
+  d'accessibilité portées par l'utilisateur, synchronisées multi-device
+  (cf. `docs/06-accessibilite.md` §6.3).
+  - **Domain** : record `UserAccessibilityPreferences(HighContrast,
+    ReduceMotion, FontPreference)` + enum `AccessibilityFontPreference`
+    (Default / DyslexiaFriendly / HighReadability). `User.AccessibilityPreferences`
+    owned type, valeur initiale `UserAccessibilityPreferences.Default`,
+    méthode `User.UpdateAccessibilityPreferences` idempotente.
+  - **Persistence** : EF Core `OwnsOne` mapping (`a11y_high_contrast`,
+    `a11y_reduce_motion`, `a11y_font_preference` colonnes sur `users`).
+    Migration `AddUserAccessibilityPreferences` (3 colonnes, defaults `false` /
+    `'Default'`, backfill non destructif).
+  - **Application** : `GetAccessibilityPreferencesQuery` /
+    `UpdateAccessibilityPreferencesCommand` MediatR, validator
+    FluentValidation, DTO `AccessibilityPreferencesDto`.
+  - **Api** : `AccessibilityEndpoints` — `GET /user/preferences/accessibility`
+    (retourne les préférences ; défauts neutres pour un nouvel utilisateur)
+    + `PUT /user/preferences/accessibility` (NoContent). `RequireAuthorization`
+    + `TryGetUserId` claim. Mapping HTTP via `users.not_found` → 404 déjà en place.
+  - **MAUI** : `AccessibilityPreferencesPage` accessible depuis un nouvel
+    onglet « Accessibilité » du `TabBar`. `AccessibilityPreferencesViewModel`
+    charge depuis l'API à `OnAppearing`, applique localement via
+    `ThemeManager.SetAccessibility(...)`, pousse au `Save`.
+    Toggles « Contraste élevé » et « Réduire les animations » + Picker police
+    facilitante (Default / DyslexiaFriendly / HighReadability). Tous les
+    contrôles équipés WCAG 2.2 AA (cf. Lot 5b — SemanticProperties, font
+    auto-scaling, taille tactile 44 px).
+  - **Application au runtime** : `ThemeManager` étendu —
+    `HighContrast = true` force le thème « Contraste » du kit (sans écraser
+    la préférence `Theme` de l'utilisateur, revert transparent au
+    désactivation). `ReduceMotion` exposé comme flag global pour les
+    futures animations. `FontPreference` persistée et synchronisée mais
+    **application visuelle reportée** : aucun asset `.ttf` custom
+    (OpenDyslexic, Atkinson Hyperlegible — SIL OFL 1.1) embarqué dans
+    cette PR, à intégrer dans une mise à jour ultérieure une fois la
+    licence et le poids assets validés.
+  - **`AtlasApiClient`** : nouvelles méthodes `GetAccessibilityPreferencesAsync`
+    + `UpdateAccessibilityPreferencesAsync` (PUT JSON via le pipeline
+    `SendWithAuthAsync` qui gère le refresh JWT automatique).
+  - **Tests** : 4 tests Domain (`UserAccessibilityPreferencesTests`),
+    4 tests Application (`AccessibilityPreferencesHandlersTests`),
+    3 tests intégration API (`AccessibilityPreferencesTests` —
+    défauts pour un nouvel utilisateur, round-trip PUT/GET, accès non
+    authentifié → 401).
+  - Build Release vert sur les 3 cibles MAUI (`net10.0-android` 2m07s,
+    `net10.0-ios` 13s, `net10.0-maccatalyst` 27s).
 - **Lot 5b — Accessibilité MAUI WCAG 2.2 AA sur les 4 vues actuelles** :
   première passe d'accessibilité sur l'ensemble des vues XAML
   (`LoginPage`, `CompanySearchPage`, `CompanyDetailPage`, `SearchHistoryPage`).
@@ -509,19 +556,21 @@ appel authentifié réel (cf. roadmap, statuts 🟡).
     `ResultOfT.cs`, `IJwtIssuer.cs` éclaté en `AccessToken.cs` + `IJwtIssuer.cs`,
     domain events câblés via `IPublisher` MediatR dans `SaveChangesAsync`,
     projet `Atlas.Shared.UnitTests` créé (19 tests), 2 nouveaux tests d'archi.
-  - **Lot 5 (pré-prod produit) — Lots 5a et 5b livrés** : adapter Brevo
-    livré ; base URL `AtlasApiClient` externalisée (override
+  - **Lot 5 (pré-prod produit) — Lots 5a, 5b et 5c livrés** : adapter
+    Brevo ; base URL `AtlasApiClient` externalisée (override
     `Preferences` + défauts par plateforme) ; build iOS / MacCatalyst
-    Release débloqué (`[SuppressMessage]` CA1711 ciblé avec
-    justification Apple) ; **accessibilité MAUI WCAG 2.2 AA** sur les
-    4 vues XAML existantes — `SemanticProperties` (Description / Hint /
-    HeadingLevel), `FontAutoScalingEnabled`, couleurs dynamiques sur
-    tokens sémantiques du kit thèmes, tailles tactiles min 44 px,
-    annonces lecteur d'écran dans les ViewModels. Reste pour suite UI
-    (Lot 5c+) : intégration des préférences accessibilité utilisateur
-    (high contrast, reduce motion, police facilitante dyslexie),
-    endpoints `/api/user/preferences/accessibility`, tests utilisateurs
-    réels avec associations.
+    Release débloqué ; **accessibilité MAUI WCAG 2.2 AA** sur les 4 vues
+    XAML (`SemanticProperties`, `FontAutoScalingEnabled`, tokens
+    sémantiques dynamiques, tailles tactiles 44 px, annonces lecteur
+    d'écran) ; **préférences accessibilité utilisateur bout-en-bout**
+    (domain `UserAccessibilityPreferences` owned type + endpoints
+    `/user/preferences/accessibility` GET/PUT + migration EF + page MAUI
+    + application runtime via `ThemeManager.SetAccessibility(...)` —
+    HighContrast force le thème « Contraste » du kit, ReduceMotion en
+    flag global, FontPreference persistée mais asset `.ttf` non encore
+    embarqué). Reste pour Lot 5d+ : assets fonts facilitantes
+    embarqués (OpenDyslexic / Atkinson Hyperlegible — SIL OFL 1.1),
+    tests utilisateurs réels avec associations (Valentin Haüy, APF…).
 
 ### Modifié
 

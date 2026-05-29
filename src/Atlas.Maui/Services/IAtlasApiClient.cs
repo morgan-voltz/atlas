@@ -24,4 +24,10 @@ public interface IAtlasApiClient
         CancellationToken ct = default);
 
     Task<IReadOnlyList<SearchHistoryEntryResponse>> GetSearchHistoryAsync(CancellationToken ct = default);
+
+    Task<AccessibilityPreferencesResponse?> GetAccessibilityPreferencesAsync(CancellationToken ct = default);
+
+    Task<bool> UpdateAccessibilityPreferencesAsync(
+        AccessibilityPreferencesResponse preferences,
+        CancellationToken ct = default);
 }

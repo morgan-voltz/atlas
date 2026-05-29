@@ -1,4 +1,5 @@
 using Atlas.Maui.Services;
+using Atlas.Maui.Theming;
 using Atlas.Maui.ViewModels;
 using Atlas.Maui.Views;
 using Microsoft.Extensions.Logging;
@@ -28,16 +29,19 @@ public static class MauiProgram
         builder.Services.AddSingleton(SecureStorage.Default);
         builder.Services.AddSingleton<ITokenStore, SecureStorageTokenStore>();
         builder.Services.AddSingleton<IAtlasApiClient, AtlasApiClient>();
+        builder.Services.AddSingleton<ThemeManager>();
 
         builder.Services.AddTransient<LoginViewModel>();
         builder.Services.AddTransient<CompanySearchViewModel>();
         builder.Services.AddTransient<CompanyDetailViewModel>();
         builder.Services.AddTransient<SearchHistoryViewModel>();
+        builder.Services.AddTransient<AccessibilityPreferencesViewModel>();
 
         builder.Services.AddTransient<LoginPage>();
         builder.Services.AddTransient<CompanySearchPage>();
         builder.Services.AddTransient<CompanyDetailPage>();
         builder.Services.AddTransient<SearchHistoryPage>();
+        builder.Services.AddTransient<AccessibilityPreferencesPage>();
 
 #if DEBUG
         builder.Logging.AddDebug();

@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage
+    x:Class="Atlas.Maui.Views.AccessibilityPreferencesPage"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:vm="clr-namespace:Atlas.Maui.ViewModels"
+    x:DataType="vm:AccessibilityPreferencesViewModel"
+    Title="Accessibilité">
+
+    <ScrollView>
+        <VerticalStackLayout Padding="16" Spacing="20">
+
+            <Label
+                Text="Préférences d'accessibilité"
+                FontSize="24"
+                FontAttributes="Bold"
+                FontAutoScalingEnabled="True"
+                TextColor="{DynamicResource onBackground}"
+                SemanticProperties.HeadingLevel="Level1"
+                SemanticProperties.Description="Page de réglages d'accessibilité Atlas" />
+
+            <Label
+                Text="Ces réglages s'appliquent immédiatement et sont synchronisés sur tous vos appareils."
+                FontAutoScalingEnabled="True"
+                TextColor="{DynamicResource onSurfaceVariant}" />
+
+            <ActivityIndicator
+                IsRunning="{Binding IsBusy}"
+                IsVisible="{Binding IsBusy}"
+                Color="{DynamicResource primary}"
+                SemanticProperties.Description="Synchronisation des préférences" />
+
+            <Label
+                Text="{Binding ErrorMessage}"
+                IsVisible="{Binding HasError}"
+                FontAutoScalingEnabled="True"
+                TextColor="{DynamicResource error}"
+                SemanticProperties.HeadingLevel="Level2"
+                SemanticProperties.Description="Message d'erreur de synchronisation" />
+
+            <!-- High contrast -->
+            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12" MinimumHeightRequest="44">
+                <VerticalStackLayout Grid.Column="0" Spacing="2">
+                    <Label
+                        Text="Contraste élevé"
+                        FontAttributes="Bold"
+                        FontAutoScalingEnabled="True"
+                        TextColor="{DynamicResource onSurface}"
+                        SemanticProperties.HeadingLevel="Level2" />
+                    <Label
+                        Text="Force le thème Atlas à contraste maximum."
+                        FontSize="12"
+                        FontAutoScalingEnabled="True"
+                        TextColor="{DynamicResource onSurfaceVariant}" />
+                </VerticalStackLayout>
+                <Switch
+                    Grid.Column="1"
+                    IsToggled="{Binding HighContrast}"
+                    VerticalOptions="Center"
+                    SemanticProperties.Description="Activer le contraste élevé"
+                    SemanticProperties.Hint="Bascule le thème vers la palette à contraste maximum" />
+            </Grid>
+
+            <!-- Reduce motion -->
+            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12" MinimumHeightRequest="44">
+                <VerticalStackLayout Grid.Column="0" Spacing="2">
+                    <Label
+                        Text="Réduire les animations"
+                        FontAttributes="Bold"
+                        FontAutoScalingEnabled="True"
+                        TextColor="{DynamicResource onSurface}"
+                        SemanticProperties.HeadingLevel="Level2" />
+                    <Label
+                        Text="Désactive les transitions et micro-animations non essentielles."
+                        FontSize="12"
+                        FontAutoScalingEnabled="True"
+                        TextColor="{DynamicResource onSurfaceVariant}" />
+                </VerticalStackLayout>
+                <Switch
+                    Grid.Column="1"
+                    IsToggled="{Binding ReduceMotion}"
+                    VerticalOptions="Center"
+                    SemanticProperties.Description="Réduire les animations"
+                    SemanticProperties.Hint="Désactive les transitions et effets de mouvement" />
+            </Grid>
+
+            <!-- Font preference -->
+            <VerticalStackLayout Spacing="6">
+                <Label
+                    Text="Police facilitante"
+                    FontAttributes="Bold"
+                    FontAutoScalingEnabled="True"
+                    TextColor="{DynamicResource onSurface}"
+                    SemanticProperties.HeadingLevel="Level2" />
+                <Label
+                    Text="Préférence persistée — l'application visuelle nécessite un asset de police facilitante intégré dans une future mise à jour."
+                    FontSize="12"
+                    FontAutoScalingEnabled="True"
+                    TextColor="{DynamicResource onSurfaceVariant}" />
+                <Picker
+                    ItemsSource="{Binding FontPreferences}"
+                    SelectedItem="{Binding SelectedFontPreference}"
+                    MinimumHeightRequest="44"
+                    FontAutoScalingEnabled="True"
+                    SemanticProperties.Description="Choix de la police facilitante"
+                    SemanticProperties.Hint="Sélectionnez « DyslexiaFriendly » pour OpenDyslexic ou « HighReadability » pour Atkinson Hyperlegible" />
+            </VerticalStackLayout>
+
+            <Button
+                Text="Enregistrer"
+                Command="{Binding SaveCommand}"
+                FontAutoScalingEnabled="True"
+                SemanticProperties.Description="Enregistrer les préférences d'accessibilité"
+                SemanticProperties.Hint="Applique les choix localement et synchronise vers le serveur" />
+
+        </VerticalStackLayout>
+    </ScrollView>
+
+</ContentPage>

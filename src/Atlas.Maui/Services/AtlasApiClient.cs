@@ -58,6 +58,29 @@ internal sealed class AtlasApiClient(HttpClient httpClient, ITokenStore tokenSto
     public async Task<IReadOnlyList<SearchHistoryEntryResponse>> GetSearchHistoryAsync(CancellationToken ct = default) =>
         await GetAsync<List<SearchHistoryEntryResponse>>("search-history", ct) ?? [];
 
+    public Task<AccessibilityPreferencesResponse?> GetAccessibilityPreferencesAsync(CancellationToken ct = default) =>
+        GetAsync<AccessibilityPreferencesResponse>("user/preferences/accessibility", ct);
+
+    public async Task<bool> UpdateAccessibilityPreferencesAsync(
+        AccessibilityPreferencesResponse preferences,
+        CancellationToken ct = default)
+    {
+        ArgumentNullException.ThrowIfNull(preferences);
+
+        using HttpResponseMessage response = await SendWithAuthAsync(
+            () =>
+            {
+                var request = new HttpRequestMessage(HttpMethod.Put, "user/preferences/accessibility")
+                {
+                    Content = JsonContent.Create(preferences),
+                };
+                return request;
+            },
+            ct);
+
+        return response.IsSuccessStatusCode;
+    }
+
     private async Task<T?> GetAsync<T>(string url, CancellationToken ct)
     {
         using HttpResponseMessage response =

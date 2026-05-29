@@ -152,6 +152,7 @@ app.MapTrademarksEndpoints();
 app.MapPatentsEndpoints();
 app.MapSearchHistoryEndpoints();
 app.MapAccountEndpoints();
+app.MapAccessibilityEndpoints();
 app.MapFavoritesEndpoints();
 app.MapDevicesEndpoints();
 app.MapFeedEndpoints();

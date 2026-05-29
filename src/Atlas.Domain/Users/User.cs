@@ -49,6 +49,13 @@ public sealed class User : Entity<UserId>
     public string? PendingTwoFactorSecret { get; private set; }
 
     /// <summary>
+    /// Préférences d'accessibilité (cf. <see cref="UserAccessibilityPreferences"/>). Owned type
+    /// EF Core ; valeur initiale <see cref="UserAccessibilityPreferences.Default"/>.
+    /// </summary>
+    public UserAccessibilityPreferences AccessibilityPreferences { get; private set; } =
+        UserAccessibilityPreferences.Default;
+
+    /// <summary>
     /// Crée un nouvel utilisateur en attente de vérification d'email.
     /// Le token de vérification est fourni déjà hashé (le clair est envoyé par email, jamais persisté).
     /// </summary>
@@ -180,6 +187,17 @@ public sealed class User : Entity<UserId>
         TwoFactorSecret = null;
         PendingTwoFactorSecret = null;
         return Result.Ok();
+    }
+
+    /// <summary>
+    /// Met à jour les préférences d'accessibilité de l'utilisateur. Idempotent : applique la
+    /// valeur fournie sans regarder l'état précédent (les préférences ne portent pas
+    /// d'invariant métier).
+    /// </summary>
+    public void UpdateAccessibilityPreferences(UserAccessibilityPreferences preferences)
+    {
+        ArgumentNullException.ThrowIfNull(preferences);
+        AccessibilityPreferences = preferences;
     }
 
     private static bool FixedTimeEquals(string left, string right) =>
