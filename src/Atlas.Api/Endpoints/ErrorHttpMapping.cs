@@ -52,6 +52,7 @@ internal static class ErrorHttpMapping
         "trademarks.image_not_found" => StatusCodes.Status404NotFound,
         "patents.invalid_publication_number" => StatusCodes.Status400BadRequest,
         "patents.not_found" => StatusCodes.Status404NotFound,
+        "patents.empty_search" => StatusCodes.Status400BadRequest,
         "veille.subscription_not_found" => StatusCodes.Status404NotFound,
         "veille.veille_pack_not_found" => StatusCodes.Status404NotFound,
         "veille.feed_item_not_found" => StatusCodes.Status404NotFound,

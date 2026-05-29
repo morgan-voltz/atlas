@@ -3,7 +3,7 @@
 > **Périmètre** : tous les endpoints HTTP exposés par `Atlas.Api`, groupés par domaine fonctionnel.
 > Document **vivant** : à mettre à jour à chaque PR qui ajoute, modifie ou supprime un endpoint.
 
-**Dernière mise à jour** : 29 mai 2026 — après merge F-015 (PR à venir).
+**Dernière mise à jour** : 29 mai 2026 — après merge F-016 (PR à venir).
 
 ---
 
@@ -149,18 +149,20 @@ Cf. [`TrademarksEndpoints.cs`](../src/Atlas.Api/Endpoints/TrademarksEndpoints.cs
 
 ---
 
-## Brevets — `/patents` (F-015)
+## Brevets — `/patents` (F-015 / F-016)
 
 Cf. [`PatentsEndpoints.cs`](../src/Atlas.Api/Endpoints/PatentsEndpoints.cs). 🔐 et nécessite INPI connecté.
 
 | Méthode | Path | Auth | Description |
 |---|---|---|---|
-| `GET` | `/patents/{publicationNumber}` | 🔐 | Notice brevet : titre, déposant, inventeurs, dates, statut, abrégé. Le numéro est normalisé (majuscules, sans espace). |
+| `GET` | `/patents?title=&inventor=&applicant=&page=&pageSize=` | 🔐 | F-016 — recherche multi-critères. Au moins un critère requis. Pagination clampée à `[1, 100]`. |
+| `GET` | `/patents/{publicationNumber}` | 🔐 | F-015 — notice brevet : titre, déposant, inventeurs, dates, statut, abrégé. Le numéro est normalisé (majuscules, sans espace). |
 
 | Code | HTTP | Sens |
 |---|---|---|
 | `patents.invalid_publication_number` | 400 | Format invalide (longueur 4-32, lettres/chiffres/`-`/`.`/`/`) |
 | `patents.not_found` | 404 | Numéro de publication inconnu |
+| `patents.empty_search` | 400 | Aucun critère de recherche fourni |
 
 ---
 

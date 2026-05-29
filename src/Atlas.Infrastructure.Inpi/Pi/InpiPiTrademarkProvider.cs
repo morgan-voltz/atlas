@@ -28,6 +28,7 @@ internal sealed class InpiPiTrademarkProvider(
     private const string ImagePath = "services/apidiffusion/api/marques/image/";
     // F-015 : couverture brevets via le même backend PI (auth XSRF + cookies identique).
     private const string PatentNoticePath = "services/apidiffusion/api/brevets/notice/";
+    private const string PatentSearchPath = "services/apidiffusion/api/brevets/search";
 
     private static readonly TimeSpan SessionMargin = TimeSpan.FromMinutes(1);
 
@@ -54,6 +55,12 @@ internal sealed class InpiPiTrademarkProvider(
         InpiAccessCredentials credentials,
         CancellationToken ct = default) =>
         ExecuteAsync(credentials, (session, innerCt) => TryGetPatentAsync(publicationNumber, session, innerCt), ct);
+
+    public Task<Result<PagedResult<PatentSummary>>> SearchPatentsAsync(
+        PatentSearchQuery query,
+        InpiAccessCredentials credentials,
+        CancellationToken ct = default) =>
+        ExecuteAsync(credentials, (session, innerCt) => TrySearchPatentsAsync(query, session, innerCt), ct);
 
     private async Task<Result<T>> ExecuteAsync<T>(
         InpiAccessCredentials credentials,
@@ -171,6 +178,38 @@ internal sealed class InpiPiTrademarkProvider(
             byte[] content = await response.Content.ReadAsByteArrayAsync(ct);
             string contentType = response.Content.Headers.ContentType?.MediaType ?? "application/octet-stream";
             return (Result<TrademarkImage>.Ok(new TrademarkImage(content, contentType)), false);
+        }
+    }
+
+    // ── F-016 : recherche brevets multi-critères ────────────────────────────────────
+
+    private async Task<(Result<PagedResult<PatentSummary>> Result, bool Unauthorized)> TrySearchPatentsAsync(
+        PatentSearchQuery query,
+        PiSession session,
+        CancellationToken ct)
+    {
+        using HttpRequestMessage request = Authenticated(
+            HttpMethod.Post, PatentSearchPath, session,
+            JsonContent.Create(new PiPatentSearchRequest(query.Title, query.Inventor, query.Applicant, query.Page, query.PageSize)));
+
+        (HttpResponseMessage? response, bool unauthorized, Error? transportError) = await SendAsync(request, ct);
+        if (response is null)
+        {
+            return (Result<PagedResult<PatentSummary>>.Fail(transportError!), unauthorized);
+        }
+
+        using (response)
+        {
+            if (!response.IsSuccessStatusCode)
+            {
+                return (Result<PagedResult<PatentSummary>>.Fail(InpiErrors.Unavailable), false);
+            }
+
+            PiPatentSearchResponse? body = await response.Content.ReadFromJsonAsync<PiPatentSearchResponse>(ct);
+            var items = (body?.Results ?? []).Select(PiPatentMapper.MapSummary).ToList();
+            long total = body?.Total ?? items.Count;
+            var page = new PagedResult<PatentSummary>(items, query.Page, query.PageSize, total);
+            return (Result<PagedResult<PatentSummary>>.Ok(page), false);
         }
     }
 
