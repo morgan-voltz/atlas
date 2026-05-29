@@ -396,6 +396,29 @@ appel authentifié réel (cf. roadmap, statuts 🟡).
   pour la carte-aperçu (§7) et la carte-section (§8). Référencée depuis la
   table « Documents fondateurs » de `CLAUDE.md` et depuis les fiches F-009
   et F-010.
+- **Lot 9 — Mapping HTTP des 6 codes d'erreur veille manquants** :
+  ferme la dette annexe documentée par Lot 8. Les codes métier
+  `veille.feed_rule_not_found`, `feed_rule_forbidden`,
+  `veille_pack_immutable`, `veille_pack_forbidden`,
+  `veille_pack_not_public`, `veille_pack_code_already_used`
+  retournent désormais leur **statut HTTP attendu** au lieu de
+  retomber sur 400 par défaut (`ErrorHttpMapping.cs`) :
+  | Code métier | Avant | Après |
+  |---|---|---|
+  | `veille.feed_rule_not_found` | 400 | **404** |
+  | `veille.feed_rule_forbidden` | 400 | **403** |
+  | `veille.veille_pack_immutable` | 400 | **409** |
+  | `veille.veille_pack_forbidden` | 400 | **403** |
+  | `veille.veille_pack_not_public` | 400 | **404** |
+  | `veille.veille_pack_code_already_used` | 400 | **409** |
+  4 tests d'intégration ajoutés (`VeilleErrorMappingTests`) :
+  `Update_unknown_feed_rule_returns_404_not_400`,
+  `Delete_unknown_feed_rule_returns_404_not_400`,
+  `Create_user_pack_with_duplicate_code_returns_409_not_400`,
+  `Like_unknown_pack_returns_404_not_400` (sanity-check du chemin
+  `veille_pack_not_found` déjà mappé pour éviter une régression).
+  Les assertions Bruno correspondantes (Lot 8) deviennent
+  exécutables avec leurs statuts annoncés sans contournement.
 - **Lot 8 — Couverture Bruno fermée à 100 % (rules / marketplace / a11y +
   variantes négatives + capture runtime + E2E)** : suite directe de l'audit
   Bruno profond livré post-Lot 7. Ferme les 14 endpoints non couverts +
