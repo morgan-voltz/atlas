@@ -1,4 +1,5 @@
 using Atlas.Domain.Companies;
+using Atlas.Domain.Downloads;
 using Atlas.Domain.Favorites;
 using Atlas.Domain.Inpi;
 using Atlas.Domain.IntellectualProperty;
@@ -73,6 +74,10 @@ public sealed class UserCascadeDeleteTests(PostgresFixture fixture)
             await context.PatentFavorites.AddAsync(
                 PatentFavorite.Mark(user.Id, PublicationNumber.FromTrustedValue("FR3045678B1"), "Système de freinage", Now));
 
+            // Jobs de téléchargement en masse (F-014) : cascade aussi.
+            await context.BulkDownloadJobs.AddAsync(
+                BulkDownloadJob.Request(user.Id, ["552032534"], Now, TimeSpan.FromHours(24)));
+
             await context.SaveChangesAsync();
         }
 
@@ -98,6 +103,7 @@ public sealed class UserCascadeDeleteTests(PostgresFixture fixture)
             (await context.FavoriteEvents.CountAsync(e => e.UserId == user.Id)).Should().Be(0);
             (await context.TrademarkFavorites.CountAsync(f => f.UserId == user.Id)).Should().Be(0);
             (await context.PatentFavorites.CountAsync(f => f.UserId == user.Id)).Should().Be(0);
+            (await context.BulkDownloadJobs.CountAsync(j => j.UserId == user.Id)).Should().Be(0);
         }
     }
 }

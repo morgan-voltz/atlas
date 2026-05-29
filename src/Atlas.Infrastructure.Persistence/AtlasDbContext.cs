@@ -1,4 +1,5 @@
 using Atlas.Domain.Common;
+using Atlas.Domain.Downloads;
 using Atlas.Domain.Favorites;
 using Atlas.Domain.Inpi;
 using Atlas.Domain.Notifications;
@@ -51,6 +52,8 @@ public sealed class AtlasDbContext(DbContextOptions<AtlasDbContext> options)
     public DbSet<TrademarkFavorite> TrademarkFavorites => Set<TrademarkFavorite>();
 
     public DbSet<PatentFavorite> PatentFavorites => Set<PatentFavorite>();
+
+    public DbSet<BulkDownloadJob> BulkDownloadJobs => Set<BulkDownloadJob>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

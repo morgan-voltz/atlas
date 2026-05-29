@@ -35,6 +35,19 @@ appel authentifié réel (cf. roadmap, statuts 🟡).
   GitHub Pages.
 - **F-012 — Conformité RGPD** : export des données (JSON) et suppression de compte avec
   effacement en cascade.
+- **F-014 — Téléchargement en masse de documents (MVP 2)** : un utilisateur soumet
+  jusqu'à 50 SIREN via `POST /downloads/bulk` ; le backend valide chaque SIREN (Luhn),
+  crée un `BulkDownloadJob` (`Pending`) et enfile un job Hangfire qui télécharge les
+  actes et bilans publics de chaque entreprise puis empaquette l'ensemble dans une
+  archive ZIP (`bulk/{jobId:N}.zip`). Suivi par polling sur `GET /downloads/bulk/{id}`
+  (`Pending` → `Running` → `Ready` / `Failed`). Récupération via
+  `GET /downloads/bulk/{id}/archive` (streaming). Nouveau port `IFileStorage` dans
+  `Atlas.Domain.Storage` (`Save` / `OpenRead` / `Delete`) avec adapter
+  `LocalFileStorage` filesystem (nouveau projet `Atlas.Infrastructure.Storage`).
+  TTL d'archive : 24 h (renvoie `410 Gone` après expiration). Documents confidentiels
+  filtrés à la source. Cascade FK RGPD sur `bulk_download_jobs`. Le push / email
+  de finalisation, le job de purge automatique et l'adapter S3 sont reportés à un
+  lot ultérieur.
 - **F-041 — Moteur d'agrégation RSS/Atom (MVP 2)** : contexte Veille (port
   `IExternalContentSource`, entités `FeedSource`/`FeedItem`), provider RSS/Atom
   (CodeHollow.FeedReader), polling récurrent via **Hangfire** (stockage PostgreSQL),
