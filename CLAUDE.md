@@ -24,12 +24,13 @@ Avant toute contribution significative, consulter le document approprié dans `d
 | Une intégration d'une nouvelle API publique | `docs/03-catalogue-apis-publiques.md` |
 | Tout ce qui touche aux credentials INPI, données personnelles, ou stockage de secrets | `docs/04-securite-rgpd.md` |
 | La gestion du repo, des branches, ou de la CI | `docs/05-strategie-repos.md` |
-| Toute interface utilisateur (MAUI, API publique) | `docs/06-accessibilite.md` |
+| Toute interface utilisateur (MAUI, API publique) — accessibilité (exigence bloquante) | `docs/06-accessibilite.md` |
 | Une source de veille (RSS, BODACC, etc.) | `docs/07-flux-rss-veille.md` |
 | Nommer une classe, méthode, ou concept métier | `docs/08-vocabulaire-ubiquitaire.md` |
 | Comprendre où placer du code (couche, projet) | `docs/09-architecture-detaillee.md` |
 | Créer un nouveau projet `.csproj` ou modifier la solution | `docs/10-layout-solution-dotnet.md` |
 | Ajouter, modifier ou supprimer un endpoint HTTP | `docs/11-api-endpoints.md` |
+| Concevoir une vue MAUI (navigation, list-detail, page vs carte, densité mobile/desktop) | `docs/12-modele-ux-client-maui.md` |
 
 ---
 
