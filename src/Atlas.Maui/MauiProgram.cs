@@ -18,6 +18,13 @@ public static class MauiProgram
             {
                 fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");
                 fonts.AddFont("OpenSans-Semibold.ttf", "OpenSansSemibold");
+
+                // Lot 5d : polices facilitantes (cf. docs/06-accessibilite.md §10.3).
+                // SIL OFL 1.1 — assets déposés manuellement dans Resources/Fonts/.
+                // Tant qu'un .ttf manque, MAUI logge un warning au build et la font
+                // sélectionnée retombe sur OpenSansRegular au runtime (FontFamily inconnue).
+                fonts.AddFont("OpenDyslexic-Regular.ttf", "OpenDyslexicRegular");
+                fonts.AddFont("AtkinsonHyperlegible-Regular.ttf", "AtkinsonHyperlegibleRegular");
             });
 
         // BaseUrl résolue par plateforme + override Preferences (cf. AtlasApiOptions).
@@ -30,6 +37,7 @@ public static class MauiProgram
         builder.Services.AddSingleton<ITokenStore, SecureStorageTokenStore>();
         builder.Services.AddSingleton<IAtlasApiClient, AtlasApiClient>();
         builder.Services.AddSingleton<ThemeManager>();
+        builder.Services.AddSingleton<IMotionCoordinator, MotionCoordinator>();
 
         builder.Services.AddTransient<LoginViewModel>();
         builder.Services.AddTransient<CompanySearchViewModel>();

@@ -136,5 +136,21 @@ public sealed class ThemeManager
         if (_current is not null) dicts.Remove(_current);
         dicts.Add(next);
         _current = next;
+
+        // Lot 5d : applique la police facilitante. Mise a jour de la ressource racine
+        // AppFontFamily (referencee par les Style globaux via DynamicResource) — un
+        // changement propage l'effet sur toutes les vues sans recompilation des styles.
+        app.Resources["AppFontFamily"] = ResolveFontFamily(FontPreference);
     }
+
+    /// <summary>
+    /// Mappe une preference utilisateur ("DyslexiaFriendly", "HighReadability", ...) sur
+    /// le nom de FontFamily enregistre dans MauiProgram. Inconnue → defaut OpenSans.
+    /// </summary>
+    public static string ResolveFontFamily(string fontPreference) => fontPreference switch
+    {
+        "DyslexiaFriendly" => "OpenDyslexicRegular",
+        "HighReadability"  => "AtkinsonHyperlegibleRegular",
+        _ => "OpenSansRegular",
+    };
 }
