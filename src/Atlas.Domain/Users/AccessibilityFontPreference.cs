@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+
 namespace Atlas.Domain.Users;
 
 /// <summary>
@@ -6,7 +8,12 @@ namespace Atlas.Domain.Users;
 /// <see cref="HighReadability"/> via embedded font si disponible, sinon meilleur fallback système).
 /// La préférence est persistée et synchronisée multi-device même si l'asset font n'est pas
 /// encore embarqué : la valeur reste portée par l'utilisateur.
+/// <para>
+/// Sérialisée JSON en chaîne (« DyslexiaFriendly ») et non en entier — l'API expose un contrat
+/// stable et lisible plutôt que des ordinaux d'enum fragiles aux insertions futures.
+/// </para>
 /// </summary>
+[JsonConverter(typeof(JsonStringEnumConverter<AccessibilityFontPreference>))]
 public enum AccessibilityFontPreference
 {
     /// <summary>Police par défaut (OpenSans dans Atlas MAUI).</summary>
