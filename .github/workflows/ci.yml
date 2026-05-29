@@ -38,6 +38,8 @@ jobs:
             --collect:"XPlat Code Coverage" --results-directory TestResults
           dotnet test tests/Atlas.Infrastructure.Security.UnitTests/Atlas.Infrastructure.Security.UnitTests.csproj -c Release \
             --collect:"XPlat Code Coverage" --results-directory TestResults
+          dotnet test tests/Atlas.Infrastructure.Messaging.UnitTests/Atlas.Infrastructure.Messaging.UnitTests.csproj -c Release \
+            --collect:"XPlat Code Coverage" --results-directory TestResults
           dotnet test tests/Atlas.Architecture.Tests/Atlas.Architecture.Tests.csproj -c Release
 
       # Tests d'intégration : PostgreSQL réel (Testcontainers) + INPI/RSS mockés (WireMock).
