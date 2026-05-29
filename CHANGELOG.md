@@ -253,6 +253,26 @@ appel authentifié réel (cf. roadmap, statuts 🟡).
   des 3 templates, l'échec HTTP non bloquant, l'exception réseau
   swallowée et le skip sans `SenderEmail`. Débloque les annonces
   « alertes email opérationnelles » pour F-019 et F-046.
+- **Kit de thèmes accessibles MAUI (WCAG 2.2 AA)** : 7 thèmes
+  sélectionnables × 2 modes (clair / sombre) = 14 palettes intégrées
+  dans `src/Atlas.Maui/`. Thèmes : Atlas, Ocean, Forêt, Ambre,
+  Améthyste, Contraste (élevé), Sépia (faible lumière bleue). Chaque
+  palette est un `ResourceDictionary` XAML avec tokens sémantiques
+  (`primary`, `surface`, `onBackground`, `error`, `success`, `warning`,
+  `info`, etc.) à référencer via `{DynamicResource <token>}`. Service
+  `ThemeManager` (`src/Atlas.Maui/Theming/`) qui persiste la préférence
+  thème + mode via `Preferences` et applique le ResourceDictionary
+  actif sur `Application.Current.Resources` ; trois modes pris en
+  charge (Light / Dark / System). Enum `AppThemeId` + extensions de
+  libellé affichable. Wiring : `App.xaml.cs` appelle
+  `new ThemeManager().Initialize()` au démarrage. Source de génération
+  (chaîne Python `palettes.py → generate.py`) conservée dans
+  `docs/atlas-themes-kit/atlas-themes/source/` comme outillage canonique
+  de régénération — le XAML n'est jamais modifié à la main. Aucun
+  thème n'est ajouté tant qu'il ne passe pas le vérificateur de
+  contraste WCAG. Câblage des vues existantes (LoginPage,
+  CompanySearchPage, etc.) sur les tokens reporté au chantier UI MAUI
+  cross-cutting (cf. doctrine UX `docs/12-modele-ux-client-maui.md`).
 - **F-020 — Adapter Firebase Cloud Messaging (Android + Web Push)** : OAuth2
   par service account (JWT RS256 signé avec la clé privée du service account
   Firebase, échange contre un access token, cache 55 min thread-safe). POST
@@ -324,6 +344,49 @@ appel authentifié réel (cf. roadmap, statuts 🟡).
   audit profond lecture seule de la solution dans `docs/audit/` (Shared → Domain →
   Application → Infrastructure.{Persistence,Veille,Inpi,Security,Messaging} → Api →
   Tests → Maui, plus synthèse priorisée).
+- **Documentation — doctrine architecturale étendue (29 mai 2026)** : 4 nouveaux
+  ADRs (013 → 016) intégrés dans `docs/01-decisions-architecturales.md` :
+  - **ADR-013** Substrat de surveillance des entités (deux stratégies
+    `IStateMonitor<TState>` / `IItemStreamMonitor<TItem>` + runner mutualisé ;
+    extraction à la troisième instance F-057).
+  - **ADR-014** Matching conservateur unifié (le contrat `MatchCandidate`
+    encode la doctrine ADR-012 dans le type — verdict irreprésentable —, noyau
+    de normalisation des noms partagé par les 3 matchers à base de noms).
+  - **ADR-015** Couche d'assemblage du dossier entreprise (read-model
+    `CompanyDossier` à sections auto-descriptives, 5 états `SectionState`,
+    résolution snapshot-first).
+  - **ADR-016** Sécurité & doctrine de la surface agentique MCP (4 principes :
+    surface curée lecture-d'abord, doctrine inline avec donnée, contenu externe
+    = donnée jamais instruction, délégation utilisateur).
+- **Documentation — 5 fiches V3+ (29 mai 2026)** : insérées dans
+  `docs/02-roadmap-features.md` à partir de la 5ᵉ graine du persona avocat /
+  juriste et des séances de cartographie. **F-031** réactivée et recadrée
+  (Judilibre / jurisprudence rattachée à l'entité, personnes morales seulement,
+  matching conservateur sous ADR-012/014). **F-056** Vue 360 / Dossier
+  entreprise (méta-feature d'assemblage sous ADR-015). **F-057** Re-screening
+  continu des sanctions (le « F-019 des sanctions », `IStateMonitor`
+  d'ADR-013). **F-058** Signaux concurrentiels & digest sectoriel (typage des
+  `FavoriteEvent`, digest hebdo via `IFeedSummarizer`). **F-059** Veille
+  d'échéances PI / docketing assistif (V3+ conditionnel — cadrage de
+  responsabilité explicite en prérequis). Cross-refs ajoutées sur F-019, F-026,
+  F-027, F-032, F-046, F-047, F-048, F-052, F-055.
+- **Documentation — vocabulaire et sécurité étendus** : 4 nouvelles sous-sections
+  §12.4 → §12.7 dans `docs/08-vocabulaire-ubiquitaire.md` (~25 termes :
+  `MonitoredDimension`, `MatchCandidate` / `Confidence` / `Basis`,
+  `CompanyDossier` / `DossierSection` / `SectionState`, `IDossierSectionResolver`,
+  scopes MCP, `McpToolDescriptor`, etc.). Nouvelle section §12bis
+  « Surface agentique MCP — confinement et audit » dans
+  `docs/04-securite-rgpd.md` (taxonomie des scopes, confinement du contenu
+  externe, audit logging par outil, délégation utilisateur).
+- **Documentation — modèle UX du client MAUI (`docs/12`)** : doctrine UX et
+  navigation du client `Atlas.Maui` : 6 règles du modèle adaptatif (un seul
+  modèle mental deux densités, adaptation à la largeur et non à la plateforme,
+  list-detail récursif, mobile = focus & pouce / desktop = densité & clavier,
+  divulgation progressive jamais d'amputation, pertinence avant exhaustivité),
+  page vs carte, architecture de navigation à **5 destinations plafonnées**
+  (Accueil / Recherche / Veille / Favoris / Profil) — c'est la ligne qu'on ne
+  franchit plus. Référencée depuis la table « Documents fondateurs » de
+  `CLAUDE.md` et depuis les fiches F-009 et F-010.
 
 ### Modifié
 
