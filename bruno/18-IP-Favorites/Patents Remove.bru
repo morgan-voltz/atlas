@@ -1,0 +1,23 @@
+meta {
+  name: Patents Remove
+  type: http
+  seq: 6
+}
+
+delete {
+  url: {{baseUrl}}/favorites/patents/{{publicationNumber}}
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+assert {
+  res.status: in [204, 404]
+}
+
+docs {
+  F-018 — Retire un brevet des favoris.
+  204 = supprimé. 404 (`favorites.patent_not_favorite`) = pas en favori.
+}

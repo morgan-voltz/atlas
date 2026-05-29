@@ -1,0 +1,54 @@
+meta {
+  name: Report PDF
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/companies/{{siren}}/report.pdf
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+tests {
+  test("statut 200", function () {
+    expect(res.getStatus()).to.equal(200);
+  });
+  test("Content-Type application/pdf", function () {
+    const contentType = res.getHeaders()["content-type"] || "";
+    expect(contentType.toLowerCase()).to.include("application/pdf");
+  });
+  test("Content-Disposition attachment + filename atlas-<siren>.pdf", function () {
+    const disposition = res.getHeaders()["content-disposition"] || "";
+    expect(disposition.toLowerCase()).to.include("attachment");
+    expect(disposition).to.include("atlas-");
+    expect(disposition.toLowerCase()).to.include(".pdf");
+  });
+  test("signature PDF (%PDF)", function () {
+    const body = res.getBody();
+    const head = typeof body === "string"
+      ? body.slice(0, 4)
+      : Buffer.from(body).slice(0, 4).toString("utf-8");
+    expect(head).to.equal("%PDF");
+  });
+}
+
+docs {
+  F-022 — Rapport PDF de fiche entreprise (powered by QuestPDF community edition).
+
+  Réponse : `application/pdf`. Format A4. Contenu :
+    - Identité (dénomination, SIREN, forme juridique)
+    - NAF
+    - Adresse
+    - Dirigeants
+    - Table actes/bilans (best-effort : PDF généré même si la liste échoue)
+
+  Erreurs métier :
+    - 404 si SIREN inconnu côté INPI.
+    - 409 `inpi.not_connected` si pas de compte INPI lié.
+
+  Requiert : compte INPI connecté + entreprise valide.
+}

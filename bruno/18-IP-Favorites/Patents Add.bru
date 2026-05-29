@@ -1,0 +1,38 @@
+meta {
+  name: Patents Add
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{baseUrl}}/favorites/patents
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "publicationNumber": "{{publicationNumber}}",
+    "title": "Brevet bruno test"
+  }
+}
+
+assert {
+  res.status: in [204, 409]
+}
+
+docs {
+  F-018 — Marque un brevet en favori.
+  204 = créé, 409 (`favorites.patent_already_favorite`) = déjà en favori,
+  400 = publicationNumber invalide.
+  Le `title` est optionnel (snapshot du titre pour l'affichage en liste).
+  Renseigner `publicationNumber` dans Local.bru.
+}

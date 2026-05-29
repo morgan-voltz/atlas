@@ -1,0 +1,35 @@
+meta {
+  name: Patents List
+  type: http
+  seq: 5
+}
+
+get {
+  url: {{baseUrl}}/favorites/patents
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+tests {
+  test("statut 200", function () {
+    expect(res.getStatus()).to.equal(200);
+  });
+  test("réponse = tableau", function () {
+    expect(res.getBody()).to.be.an("array");
+  });
+  test("chaque favori a publicationNumber + addedAt", function () {
+    const list = res.getBody();
+    if (list.length > 0) {
+      expect(list[0]).to.have.property("publicationNumber");
+      expect(list[0]).to.have.property("addedAt");
+    }
+  });
+}
+
+docs {
+  F-018 — Mes favoris brevet. Tri AddedAt desc.
+  DTO : `{ publicationNumber, title?, addedAt }`.
+}

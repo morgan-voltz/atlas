@@ -1,0 +1,33 @@
+meta {
+  name: Detail
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/patents/{{publicationNumber}}
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+tests {
+  test("statut 200", function () {
+    expect(res.getStatus()).to.equal(200);
+  });
+  test("publicationNumber présent", function () {
+    expect(res.getBody()).to.have.property("publicationNumber");
+  });
+}
+
+docs {
+  F-015 — Détail d'un brevet par numéro de publication (FR, EP, WO).
+
+  Requiert : compte INPI connecté.
+  Réponse : PatentDetailDto = `{ publicationNumber, title?, applicants?, inventors?,
+  filingDate?, publicationDate?, status?, classifications?, abstract? }`.
+
+  Renseigner `publicationNumber` dans Local.bru (par ex. issu de la recherche F-016).
+}

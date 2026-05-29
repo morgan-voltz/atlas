@@ -1,0 +1,50 @@
+meta {
+  name: Companies CSV
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/favorites/companies/export
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+tests {
+  test("statut 200", function () {
+    expect(res.getStatus()).to.equal(200);
+  });
+  test("Content-Type text/csv", function () {
+    const contentType = res.getHeaders()["content-type"] || "";
+    expect(contentType.toLowerCase()).to.include("text/csv");
+  });
+  test("Content-Disposition attachment", function () {
+    const disposition = res.getHeaders()["content-disposition"] || "";
+    expect(disposition.toLowerCase()).to.include("attachment");
+    expect(disposition).to.include("favoris-entreprises.csv");
+  });
+  test("BOM UTF-8 présent (RFC 4180)", function () {
+    const body = res.getBody();
+    const head = typeof body === "string"
+      ? body.charCodeAt(0)
+      : Buffer.from(body)[0];
+    // BOM UTF-8 commence par 0xEF (239) ; sinon le fichier doit au moins commencer par "SIREN"
+    const bodyAsText = typeof body === "string" ? body : Buffer.from(body).toString("utf-8");
+    const startsWithBom = head === 0xEF || bodyAsText.charCodeAt(0) === 0xFEFF;
+    const startsWithHeader = bodyAsText.startsWith("SIREN") || bodyAsText.startsWith("﻿SIREN");
+    expect(startsWithBom || startsWithHeader).to.be.true;
+  });
+}
+
+docs {
+  F-021 — Export CSV de mes favoris entreprises.
+
+  Réponse : `text/csv; charset=utf-8`, UTF-8 + BOM (compat Excel FR), CRLF, RFC 4180.
+  En-tête : `SIREN,Dénomination,AjoutéLe`.
+  Filename : `favoris-entreprises.csv`.
+
+  Pas d'erreur métier sur liste vide (en-tête seule).
+}

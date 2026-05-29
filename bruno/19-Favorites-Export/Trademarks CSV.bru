@@ -1,0 +1,36 @@
+meta {
+  name: Trademarks CSV
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/favorites/trademarks/export
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+tests {
+  test("statut 200", function () {
+    expect(res.getStatus()).to.equal(200);
+  });
+  test("Content-Type text/csv", function () {
+    const contentType = res.getHeaders()["content-type"] || "";
+    expect(contentType.toLowerCase()).to.include("text/csv");
+  });
+  test("Content-Disposition attachment + filename", function () {
+    const disposition = res.getHeaders()["content-disposition"] || "";
+    expect(disposition.toLowerCase()).to.include("attachment");
+    expect(disposition).to.include("favoris-marques.csv");
+  });
+}
+
+docs {
+  F-021 — Export CSV de mes favoris marques.
+
+  Réponse : `text/csv; charset=utf-8`. En-tête : `NuméroDépôt,Nom,AjoutéLe`.
+  Filename : `favoris-marques.csv`.
+}

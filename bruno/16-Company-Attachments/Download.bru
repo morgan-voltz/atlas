@@ -1,0 +1,47 @@
+meta {
+  name: Download attachment
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/companies/{{siren}}/attachments/{{attachmentId}}/download
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+tests {
+  test("statut 200", function () {
+    expect(res.getStatus()).to.equal(200);
+  });
+  test("Content-Type application/pdf", function () {
+    const contentType = res.getHeaders()["content-type"] || "";
+    expect(contentType.toLowerCase()).to.include("application/pdf");
+  });
+  test("signature PDF (%PDF)", function () {
+    const body = res.getBody();
+    const head = typeof body === "string"
+      ? body.slice(0, 4)
+      : Buffer.from(body).slice(0, 4).toString("utf-8");
+    expect(head).to.equal("%PDF");
+  });
+}
+
+docs {
+  F-013 — Téléchargement d'un acte ou bilan en PDF.
+
+  L'API streame directement le binaire INPI (proxy). Content-Type `application/pdf`,
+  Content-Disposition `attachment; filename=...`.
+
+  Erreurs métier :
+    - 403 `companies.attachment_confidential` si le bilan est marqué confidentiel
+      (champ `confidentialite` côté INPI).
+    - 404 `companies.attachment_not_found` si l'attachment est inconnu.
+    - 409 `inpi.not_connected` si pas de compte INPI lié.
+
+  Renseigner `attachmentId` (Local.bru) avec un ID retourné par la requête « List attachments »
+  précédente avant de jouer celle-ci.
+}
