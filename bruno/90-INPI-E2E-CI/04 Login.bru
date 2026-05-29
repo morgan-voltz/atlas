@@ -1,0 +1,44 @@
+meta {
+  name: 04 Login
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{baseUrl}}/auth/login
+  body: json
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "email": "{{ciEmail}}",
+    "password": "{{password}}"
+  }
+}
+
+script:post-response {
+  if (res.getStatus() === 200) {
+    const body = res.getBody();
+    if (body && body.accessToken) {
+      bru.setVar("accessToken", body.accessToken);
+    }
+  }
+}
+
+tests {
+  test("statut 200", function () {
+    expect(res.getStatus()).to.equal(200);
+  });
+  test("accessToken capturé", function () {
+    expect(bru.getVar("accessToken")).to.be.a("string");
+  });
+}
+
+docs {
+  Lot 10 — Étape 4/14. Login → capture le JWT access token pour toutes les
+  requêtes authentifiées suivantes.
+}

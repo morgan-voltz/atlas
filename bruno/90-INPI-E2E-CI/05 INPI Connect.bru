@@ -1,0 +1,41 @@
+meta {
+  name: 05 INPI Connect
+  type: http
+  seq: 5
+}
+
+post {
+  url: {{baseUrl}}/inpi/connection
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "username": "{{inpiUsername}}",
+    "password": "{{inpiPassword}}"
+  }
+}
+
+tests {
+  test("statut 204", function () {
+    expect(res.getStatus()).to.equal(204);
+  });
+}
+
+docs {
+  Lot 10 — Étape 5/14. Connecte le compte INPI réel de l'utilisateur via
+  POST /inpi/connection. L'API teste le `/sso/login` INPI puis stocke les
+  credentials chiffrés (AES-256-GCM).
+
+  Préreq : `INPI_USERNAME` et `INPI_PASSWORD` doivent être dans `bruno/.env`
+  (en CI : injectés depuis les secrets GitHub `INPI_USERNAME` / `INPI_PASSWORD`).
+}

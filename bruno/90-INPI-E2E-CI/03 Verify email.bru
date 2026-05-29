@@ -1,0 +1,19 @@
+meta {
+  name: 03 Verify email
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/auth/verify-email?userId={{userId}}&token={{verificationToken}}
+}
+
+tests {
+  test("statut 200", function () {
+    expect(res.getStatus()).to.equal(200);
+  });
+}
+
+docs {
+  Lot 10 — Étape 3/14. Active le compte via le token capturé.
+}

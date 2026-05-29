@@ -1,0 +1,25 @@
+meta {
+  name: 13 INPI Disconnect
+  type: http
+  seq: 13
+}
+
+delete {
+  url: {{baseUrl}}/inpi/connection
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+tests {
+  test("statut 204", function () {
+    expect(res.getStatus()).to.equal(204);
+  });
+}
+
+docs {
+  Lot 10 — Étape 13/14. Déconnecte le compte INPI proprement (les credentials
+  chiffrés sont supprimés de la base).
+}

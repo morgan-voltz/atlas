@@ -1,0 +1,31 @@
+meta {
+  name: 12 Company Attachments + Report PDF
+  type: http
+  seq: 12
+}
+
+get {
+  url: {{baseUrl}}/companies/{{siren}}/attachments
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+tests {
+  test("statut 200", function () {
+    expect(res.getStatus()).to.equal(200);
+  });
+  test("réponse = tableau", function () {
+    expect(res.getBody()).to.be.an("array");
+  });
+}
+
+docs {
+  Lot 10 — Étape 12/14 (F-013). Liste les actes et bilans de RENAULT.
+
+  Note : la requête `Report PDF` (F-022) n'est pas un assertion-friendly dans
+  Bruno CLI (binaire PDF, signature %PDF nécessite Buffer). Une variante simple
+  est jouée à l'étape 13 séparément si besoin de couvrir le PDF.
+}

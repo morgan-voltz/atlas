@@ -1,0 +1,42 @@
+meta {
+  name: 09 Trademark Search
+  type: http
+  seq: 9
+}
+
+get {
+  url: {{baseUrl}}/trademarks?name=renault&page=1&pageSize=10
+  auth: bearer
+  params:query {
+    name: renault
+    page: 1
+    pageSize: 10
+  }
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+script:post-response {
+  if (res.getStatus() === 200) {
+    const items = (res.getBody() && res.getBody().items) || [];
+    if (items.length > 0 && items[0].depositNumber) {
+      bru.setVar("depositNumber", items[0].depositNumber);
+    }
+  }
+}
+
+tests {
+  test("statut 200", function () {
+    expect(res.getStatus()).to.equal(200);
+  });
+  test("au moins un résultat", function () {
+    expect(res.getBody().items.length).to.be.greaterThan(0);
+  });
+}
+
+docs {
+  Lot 10 — Étape 9/14 (F-006). Recherche de marques INPI. Capture le premier
+  `depositNumber` pour l'étape suivante (Trademark Detail).
+}

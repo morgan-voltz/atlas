@@ -1,0 +1,48 @@
+meta {
+  name: 01 Register
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/auth/register
+  body: json
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "email": "{{ciEmail}}",
+    "password": "{{password}}"
+  }
+}
+
+script:post-response {
+  if (res.getStatus() === 200) {
+    const body = res.getBody();
+    if (body && body.userId) {
+      bru.setVar("userId", body.userId);
+    }
+  }
+}
+
+tests {
+  test("statut 200", function () {
+    expect(res.getStatus()).to.equal(200);
+  });
+  test("userId capturé", function () {
+    expect(bru.getVar("userId")).to.be.a("string");
+  });
+}
+
+docs {
+  Lot 10 — Étape 1/14 de la séquence E2E INPI CI.
+
+  Inscrit un nouvel utilisateur de test (email unique généré au moment du run pour
+  éviter les collisions inter-runs). Capture l'userId pour l'étape de vérification.
+
+  `ciEmail` est défini dans environments/CI.bru avec un suffixe runtime aléatoire.
+}
