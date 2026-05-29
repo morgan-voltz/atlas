@@ -33,6 +33,48 @@ restant pour le RGPD (F-012). Le détail figure dans le bloc « Statut » de cha
 
 ---
 
+## État d'avancement — MVP 2
+
+Légende identique au tableau MVP 1.
+
+**Section principale** (F-013 → F-022) :
+
+| Feature | Statut |
+|---|:--:|
+| F-013 Téléchargement individuel d'actes et bilans | 🟡 |
+| F-014 Téléchargement en masse de documents | ✅ |
+| F-015 Recherche brevet par numéro | ✅ |
+| F-016 Recherche brevet avancée (titre / inventeur / déposant) | 🟡 |
+| F-017 Favoris : suivi d'une entreprise | ✅ |
+| F-018 Favoris : suivi d'une marque ou d'un brevet | ✅ |
+| F-019 Alerte email sur modification d'une entreprise favorite | ✅ |
+| F-020 Notifications push mobiles (et desktop) | ✅ |
+| F-021 Export CSV / Excel | 🟡 |
+| F-022 Rapport PDF de fiche entreprise | ✅ |
+
+**Cluster Veille** (F-041 → F-050) :
+
+| Feature | Statut |
+|---|:--:|
+| F-041 Moteur d'agrégation RSS / Atom | ✅ |
+| F-042 Catalogue de templates (VeillePack) | ✅ |
+| F-043 Ajout libre de sources | ✅ |
+| F-044 Timeline unifiée | ✅ |
+| F-045 Déduplication intelligente (SimHash) | ✅ |
+| F-046 Filtres et règles de surveillance | ⬜ |
+| F-047 Combinaison veille + favoris (3 volets : RSS, RNE, BODACC) | ✅ |
+| F-048 Intégration BODACC | ✅ |
+| F-049 Marketplace des templates partagés | ⬜ |
+| F-050 Préparation à la couche premium (architecture) | 🟡 |
+
+Les 🟡 correspondent surtout à : confirmation contre l'API INPI réelle (F-013, F-016),
+export XLSX et étendue de couverture (F-021), et discipline d'architecture partiellement en
+place (F-050 — ports `IFeedSummarizer` référencé dans F-054, à valider). Les ⬜ sont les
+deux vrais trous restants du cluster veille (F-046, F-049). UI MAUI restante pour
+F-017, F-020, F-044 (chantier client cross-cutting, suivi côté F-009/F-010 du MVP 1).
+
+---
+
 ## Sommaire
 
 - [Méthodologie](#méthodologie)
@@ -40,6 +82,7 @@ restant pour le RGPD (F-012). Le détail figure dans le bloc « Statut » de cha
 - [MVP 1 — Must have (mois 1–4)](#mvp-1--must-have-mois-1-4)
 - [MVP 2 — Should have (mois 4–8)](#mvp-2--should-have-mois-4-8)
 - [Cluster Veille (intégré au MVP 2)](#cluster-veille-intégré-au-mvp-2)
+- [Reste à faire pour clore MVP 2](#reste-à-faire-pour-clore-mvp-2)
 - [V2 — Could have (mois 8–18)](#v2--could-have-mois-8-18)
 - [V3+ — Won't have (yet)](#v3--wont-have-yet)
 - [Features explicitement écartées](#features-explicitement-écartées)
@@ -366,6 +409,8 @@ Pour chaque feature, on documente :
 
 ### F-015 — Recherche brevet par numéro
 
+> **Statut** : ✅ Backend implémenté (MVP 2, commit `85ae014`). Endpoint `GET /patents/{publicationNumber}` qui interroge l'INPI PI brevets via `IIntellectualPropertyProvider.GetPatentAsync`. Route paramétrée placée **après** la route de recherche (F-016) pour éviter la collision. Mapping best-effort `PiPatentMapper.MapDetail`. **Reste** : confirmation contre l'API INPI réelle (structure JSON exacte) et couverture Bruno.
+
 **Description** : recherche d'un brevet par son numéro de publication (FR, EP, WO), affichage de la notice + image d'abrégé.
 
 **Valeur user** : couverture du périmètre PI au-delà des marques.
@@ -680,6 +725,8 @@ Pour chaque feature, on documente :
 
 ### F-050 — Préparation à la couche premium (architecture)
 
+> **Statut** : 🟡 Partiellement en place. Le port `IFeedSummarizer` est référencé comme patron par F-054 (port `IFinancialSummarizer` analogue, doc), suggérant que le squelette `Atlas.Application.Premium` existe. **À valider** : présence effective du projet `Atlas.Application.Premium`, déclaration des 3 ports (`IFeedItemEnricher`, `IFeedRelevanceScorer`, `IFeedSummarizer`) côté domaine, et test d'architecture (`Atlas.Architecture.Tests`) verrouillant la séparation cœur / premium.
+
 **Description** : pas une feature visible côté user, mais une **décision d'architecture** à respecter dès la phase de design du cluster veille : tous les use cases d'enrichissement (futurs résumés IA, scoring IA, synthèse hebdo) sont définis comme des **ports séparés** dans le domaine, implémentés en projet `.Premium` distinct (vide en MVP 2).
 
 **Valeur user** : aucune en MVP 2. Préparation à la phase de monétisation pour ne pas refondre.
@@ -695,6 +742,34 @@ Pour chaque feature, on documente :
 - Ports `IFeedItemEnricher`, `IFeedRelevanceScorer`, `IFeedSummarizer` définis côté domaine
 - Aucune implémentation en MVP 2 (les use cases premium ne sont pas appelés)
 - L'ajout futur d'adapters LLM ne nécessitera **aucune modification du domaine**
+
+---
+
+## Reste à faire pour clore MVP 2
+
+> **Synthèse au 29 mai 2026** — extraite des blocs « Statut » des fiches ci-dessus. Tient lieu de punch-list MVP 2.
+
+**🔴 Bloquant — vrais trous restants** (à livrer pour annoncer MVP 2 « fini »)
+
+1. **F-046 — Filtres et règles de surveillance personnalisées** : pas commencé. C'est le seul vrai trou côté backend du cluster veille. Sans F-046, la timeline F-044 reste passive ; toutes les règles d'alerte sont aujourd'hui dérivées de mécanismes ad hoc (F-019 favoris RNE, F-048 BODACC). Cf. aussi V2 F-027 (qui dépend de F-046 — frontière clarifiée dans V2).
+2. **F-049 — Marketplace des templates partagés** : pas commencé. La fiche elle-même note « V2 light, posée en MVP 2 » — décision à arbitrer : on la garde dans le périmètre MVP 2, ou on la déporte officiellement en V2 ?
+3. **F-050 — Vérification de l'architecture premium** : ports `IFeedItemEnricher` / `IFeedRelevanceScorer` / `IFeedSummarizer` à confirmer dans `Atlas.Application.Premium` + test d'architecture qui les verrouille.
+
+**🟡 Important non-bloquant** (peut basculer en post-MVP 2 sans casser la promesse)
+
+- **Adapter email Brevo (F-019)** : actuellement `LoggingEmailSender` = dev only → les alertes favoris ne sortent qu'en logs. Bloquant si on annonce « alertes email opérationnelles ».
+- **Trame UI MAUI cross-cutting** : F-017 (onglet « Mes favoris »), F-020 (récupération du token push natif + `POST /devices`), F-044 (vue timeline veille). Backend livré pour les 3 ; côté MAUI c'est le gros chantier client restant (suivi en parallèle dans F-009/F-010 du MVP 1, encore 🟡).
+- **Validation contre l'API INPI réelle** : F-013 (auth Bearer + structure JSON attachments), F-015 (structure JSON détail brevet), F-016 (syntaxe SolR + réponse paginée). Tous documentés mais non confirmés en prod. Idéalement levés via un compte INPI réel et une session Bruno.
+- **F-014 — Lot ultérieur** : notification fin de job (push/email), job récurrent de purge des archives expirées + entité `BulkDownloadJob`, adapter `S3FileStorage` (MinIO/Wasabi/AWS), rate limiting INPI dédié aux téléchargements.
+- **F-021 — Étendue d'export** : ClosedXML pour XLSX, export des résultats de recherche RNE/PI (paginé), export de la veille (timeline).
+- **F-022 — Enrichissement PDF** : logo, historique des modifications via snapshots F-019, bilans intégrés via F-013 download.
+- **F-048 — Configuration fine user** : aujourd'hui toutes les annonces BODACC sont remontées. Filtres par mots-clés / secteurs / types d'annonces à ajouter ; et validation contre l'API Opendatasoft réelle.
+
+**🧭 Décisions à acter avant de fermer MVP 2**
+
+- F-049 : dans MVP 2 ou bascule officielle en V2 ?
+- Quels « 🟡 » assume-t-on en post-MVP 2 vs lesquels passe-t-on en ✅ avant de fermer ?
+- Promotion des MVP 1 🟡 résiduels (F-004 à F-007 — confirmation INPI réelle, F-009/F-010 — exécution MAUI + QA, F-012 — contenu légal UI) : à boucler dans la même fenêtre que MVP 2 pour pouvoir parler de « MVP livré ».
 
 ---
 
