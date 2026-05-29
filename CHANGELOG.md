@@ -396,6 +396,37 @@ appel authentifié réel (cf. roadmap, statuts 🟡).
   pour la carte-aperçu (§7) et la carte-section (§8). Référencée depuis la
   table « Documents fondateurs » de `CLAUDE.md` et depuis les fiches F-009
   et F-010.
+- **Lot 6 — Tests d'architecture étendus (Lot 3 résiduel de l'audit)** :
+  ferme la dette d'audit côté contrôle automatique. NetArchTest + parsing
+  `.csproj` couvrent désormais tous les projets de la solution.
+  - **`Atlas.Maui` : couverture par parsing `.csproj`** — multi-target
+    `net10.0-{android,ios,maccatalyst,windows}` non référencable depuis un
+    projet de tests classique. Le `.csproj` est lu directement via XLINQ.
+    Test : `Atlas_Maui_csproj_should_only_reference_Domain_and_Shared` —
+    interdit toute référence à `Atlas.Application`, `Atlas.Infrastructure.*`
+    ou `Atlas.Api` (le client mobile ne doit JAMAIS embarquer ces couches —
+    décompilation possible, cf. CLAUDE.md).
+  - **`Atlas.Infrastructure.*` : 8 projets couverts par `[Theory]`** —
+    Persistence, Inpi, Veille, Messaging, Security, Cache, Storage, Bodacc.
+    Test :
+    `Infrastructure_csproj_should_not_reference_other_infrastructure_or_api`
+    — interdit (1) auto-référence à `Atlas.Api`, (2) cross-référence à un
+    autre `Atlas.Infrastructure.*`, (3) référence à `Atlas.Maui`. La
+    composition se fait uniquement dans `Atlas.Api` (composition root).
+  - **Convention handlers MediatR `internal sealed`** — Tests
+    `Application_handlers_must_be_internal_sealed` et
+    `Application_premium_handlers_must_be_internal_sealed` (`ConventionTests`)
+    parcourent tous les types implémentant `IRequestHandler<,>` /
+    `IRequestHandler<>` / `INotificationHandler<>` / `IStreamRequestHandler<,>`
+    et vérifient qu'ils sont bien `sealed` ET non `public`. CLAUDE.md
+    « Patterns à utiliser systématiquement » — empêche un handler exposé en
+    `public` de fuiter le contrat interne du module.
+  - **Helper `FindRepoRoot()`** — remonte les dossiers depuis
+    `AppContext.BaseDirectory` jusqu'au répertoire contenant `Atlas.slnx`
+    pour rendre le path des `.csproj` robuste aux profils de build
+    (Debug/Release, output dir custom, runner CI).
+  - 11 nouveaux tests d'archi (20 au total dans `Atlas.Architecture.Tests`,
+    vs 9 avant). 391 tests verts au total.
 - **Lot 5d — Câblage des polices facilitantes et `IMotionCoordinator`** :
   termine la couverture WCAG 2.2 AA des préférences accessibilité côté
   client MAUI initiées par les Lots 5b et 5c.
@@ -580,10 +611,12 @@ appel authentifié réel (cf. roadmap, statuts 🟡).
   37 tests) et 2b (rate limiting + en-têtes sécurité + CORS strict + Serilog
   + masquage) livrés**. Les rapports sont supprimés (récupérables via git
   history) ; les items P1/P2 résiduels sont à instruire au fil :
-  - **Lot 3 (tests d'archi étendus)** : 7 tests en place (incluant la
-    séparation cœur / `Atlas.Application.Premium` posée par F-050) — manque
-    encore la couverture archi de `Atlas.Shared`, `Atlas.Maui`,
-    `Atlas.Infrastructure.{Veille,Inpi,Security,Messaging}`.
+  - **Lot 3 (tests d'archi étendus) — livré** : 20 tests d'archi (NetArchTest
+    + parsing `.csproj`) couvrent Domain, Application, Application.Premium,
+    Shared, Atlas.Maui (via parsing multi-target), et les 8 projets
+    `Atlas.Infrastructure.*` (Persistence, Inpi, Veille, Messaging, Security,
+    Cache, Storage, Bodacc). Convention handlers MediatR `internal sealed`
+    également vérifiée automatiquement.
   - **Lot 4 (dette structurée) — livré** : combinateurs `Result.Map` / `Bind` /
     `Match` / `Tap` / `Ensure` / `TryGetValue` ajoutés, garde-fou sur
     `Result<T>.Value`, `Result.cs` éclaté en `Error.cs` + `Result.cs` +
