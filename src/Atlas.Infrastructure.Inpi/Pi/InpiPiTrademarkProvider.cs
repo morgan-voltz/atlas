@@ -286,10 +286,27 @@ internal sealed class InpiPiTrademarkProvider(
             return Result<PiSession>.Ok(cached);
         }
 
+        // Lot 11 — durcissement INPI : l'auth PI exige désormais un primer CSRF.
+        // (1) POST auth/login sans body avec header `X-CSRF-TOKEN: Fetch` → réponse 403
+        //     attendue avec un cookie `XSRF-TOKEN=<guid>` à réutiliser.
+        // (2) Vrai POST auth/login avec body JSON + header `X-XSRF-TOKEN: <guid>` + le
+        //     cookie XSRF-TOKEN renvoyé en `Cookie:` (le serveur compare les deux,
+        //     pattern double-submit cookie de Spring Security).
+        // Cf. erreur INPI : « Invalid CSRF Token 'null' was found on the request
+        // parameter '_csrf' or header 'X-XSRF-TOKEN'. ».
+        Result<string> primerResult = await FetchCsrfTokenAsync(ct);
+        if (primerResult.IsFailure)
+        {
+            return Result<PiSession>.Fail(primerResult.Error!);
+        }
+        string initialXsrf = primerResult.Value!;
+
         using var request = new HttpRequestMessage(HttpMethod.Post, "auth/login")
         {
             Content = JsonContent.Create(new PiLoginRequest(credentials.Username, credentials.Password)),
         };
+        request.Headers.TryAddWithoutValidation("X-XSRF-TOKEN", initialXsrf);
+        request.Headers.TryAddWithoutValidation("Cookie", $"XSRF-TOKEN={initialXsrf}");
 
         HttpResponseMessage response;
         try
@@ -327,7 +344,9 @@ internal sealed class InpiPiTrademarkProvider(
                 return Result<PiSession>.Fail(InpiErrors.Unavailable);
             }
 
-            string xsrf = ExtractCookie(setCookies, "XSRF-TOKEN") ?? string.Empty;
+            // Le serveur renvoie un nouveau XSRF-TOKEN post-login (rotation) ; on prend ça
+            // pour les requêtes suivantes, sinon on retombe sur le token primer.
+            string xsrf = ExtractCookie(setCookies, "XSRF-TOKEN") ?? initialXsrf;
             var session = new PiSession(accessToken, xsrf, DateTimeOffset.UtcNow.Add(options.Value.TokenLifetimeFallback));
 
             TimeSpan ttl = session.ExpiresAt - DateTimeOffset.UtcNow - SessionMargin;
@@ -337,6 +356,46 @@ internal sealed class InpiPiTrademarkProvider(
             }
 
             return Result<PiSession>.Ok(session);
+        }
+    }
+
+    /// <summary>
+    /// Lot 11 — Primer CSRF de l'auth PI. <c>POST auth/login</c> avec <c>X-CSRF-TOKEN: Fetch</c>
+    /// et sans body : le serveur renvoie 403 (attendu) en posant un cookie <c>XSRF-TOKEN=&lt;guid&gt;</c>
+    /// que l'on extrait et réutilise pour la vraie requête de login. Sans ce primer, le serveur
+    /// rejette systématiquement avec « Invalid CSRF Token 'null' ».
+    /// </summary>
+    private async Task<Result<string>> FetchCsrfTokenAsync(CancellationToken ct)
+    {
+        using var primer = new HttpRequestMessage(HttpMethod.Post, "auth/login");
+        primer.Headers.TryAddWithoutValidation("X-CSRF-TOKEN", "Fetch");
+
+        HttpResponseMessage primerResponse;
+        try
+        {
+            primerResponse = await httpClient.SendAsync(primer, ct);
+        }
+        catch (HttpRequestException)
+        {
+            return Result<string>.Fail(InpiErrors.Unavailable);
+        }
+        catch (TaskCanceledException) when (!ct.IsCancellationRequested)
+        {
+            return Result<string>.Fail(InpiErrors.Unavailable);
+        }
+
+        using (primerResponse)
+        {
+            // Le primer répond 403 par design (pas de credentials, juste pose le cookie).
+            // On tolère aussi 200 / 401 — seule l'absence du cookie XSRF est bloquante.
+            List<string> setCookies = primerResponse.Headers.TryGetValues("Set-Cookie", out IEnumerable<string>? values)
+                ? values.ToList()
+                : [];
+
+            string? xsrf = ExtractCookie(setCookies, "XSRF-TOKEN");
+            return xsrf is null
+                ? Result<string>.Fail(InpiErrors.Unavailable)
+                : Result<string>.Ok(xsrf);
         }
     }
 

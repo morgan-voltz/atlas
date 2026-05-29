@@ -396,6 +396,45 @@ appel authentifié réel (cf. roadmap, statuts 🟡).
   pour la carte-aperçu (§7) et la carte-section (§8). Référencée depuis la
   table « Documents fondateurs » de `CLAUDE.md` et depuis les fiches F-009
   et F-010.
+- **Lot 11 — Fix CSRF primer dans l'auth INPI PI (régression INPI réel)** :
+  l'API INPI PI a durci son authentification — un primer CSRF est désormais
+  exigé avant le `POST /auth/login`. L'adapter `InpiPiTrademarkProvider`
+  (qui couvre F-006/F-007 marques + F-015/F-016 brevets) recevait 403
+  systématique avec le message *« Could not verify the provided CSRF token
+  because your session was not found. »*. Détecté à la main en validation
+  curl post-Lot 10 contre data.inpi.fr le 2026-05-29 22:25 UTC.
+  - **Nouveau flow d'auth PI** dans `GetSessionAsync` :
+    1. **Primer** : `POST auth/login` **sans body** avec `X-CSRF-TOKEN: Fetch`.
+       Le serveur répond 403 (attendu) en posant un cookie
+       `XSRF-TOKEN=<guid>`.
+    2. **Vrai login** : `POST auth/login` avec body JSON
+       `{ username, password }` + header **`X-XSRF-TOKEN: <guid>`** (double X,
+       convention Spring Security) + `Cookie: XSRF-TOKEN=<guid>` (pattern
+       double-submit cookie).
+    3. La réponse de login pose un **nouveau** XSRF-TOKEN (rotation),
+       réutilisé pour les requêtes suivantes ; fallback sur le token primer
+       si absent.
+  - **Helper privé `FetchCsrfTokenAsync`** : encapsule le primer + extrait
+    le cookie XSRF-TOKEN + retourne `Result<string>`. Erreurs réseau /
+    cookie absent → `InpiErrors.Unavailable`.
+  - **Tests d'intégration WireMock (`InpiPiTrademarkProviderIntegrationTests`,
+    +2 tests)** :
+    - `SearchTrademarks_performs_csrf_primer_before_login` — inspecte
+      `_server.LogEntries` pour vérifier que **2 requêtes** `/auth/login`
+      sont émises, que la 1ère porte `X-CSRF-TOKEN: Fetch` (sans body), et
+      que la 2ᵉ porte `X-XSRF-TOKEN: <token>` + cookie `XSRF-TOKEN` + body
+      avec le username.
+    - `SearchTrademarks_fails_invalid_credentials_when_primer_succeeds_but_real_login_returns_401`
+      — reproduit le scénario où le primer pose un cookie XSRF puis le vrai
+      login répond 401 (compte API sans accès au catalogue PI).
+  - **Ancien test `SearchTrademarks_with_invalid_login_returns_invalid_credentials`**
+    devenu ambigu (stubbait toutes les `/auth/login` à 401, dont le primer
+    qui n'a alors plus de cookie XSRF) — renommé en
+    `SearchTrademarks_fails_unavailable_when_csrf_primer_returns_no_cookie`
+    et stub remplacé par `503` pour exprimer le cas explicitement.
+  - **Validation manuelle curl** contre l'INPI live : avant le fix, 403
+    « CSRF token null » sur le 1er POST ; après le fix, le flow CSRF
+    passe et l'INPI traite la requête jusqu'à la vérification credentials.
 - **Lot 10 — Automatisation E2E API contre l'INPI réel (workflow GitHub
   Actions + Bruno CLI)** : la couverture Bruno (100 % endpoints, Lot 8) +
   les mappings HTTP corrects (Lot 9) deviennent **exécutables en automatique**
