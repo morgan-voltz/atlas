@@ -3,7 +3,7 @@
 > **Périmètre** : tous les endpoints HTTP exposés par `Atlas.Api`, groupés par domaine fonctionnel.
 > Document **vivant** : à mettre à jour à chaque PR qui ajoute, modifie ou supprime un endpoint.
 
-**Dernière mise à jour** : 29 mai 2026 — après merge F-020 WNS (PR à venir).
+**Dernière mise à jour** : 29 mai 2026 — après merge F-013 (PR à venir).
 
 ---
 
@@ -120,11 +120,15 @@ Cf. [`CompaniesEndpoints.cs`](../src/Atlas.Api/Endpoints/CompaniesEndpoints.cs).
 |---|---|---|---|
 | `GET` | `/companies?name=&page=&pageSize=` | 🔐 | Recherche par dénomination. Pagination. |
 | `GET` | `/companies/{siren}` | 🔐 | Fiche complète (identité, NAF, adresse, dirigeants…). Publie `SearchPerformedNotification`. |
+| `GET` | `/companies/{siren}/attachments` | 🔐 | F-013 — liste des actes et bilans (`{ id, type, name, depositedAt?, sizeBytes?, isConfidential }`). |
+| `GET` | `/companies/{siren}/attachments/{id}/download` | 🔐 | F-013 — téléchargement binaire du document (proxy INPI). |
 
 | Code | HTTP | Sens |
 |---|---|---|
 | `companies.invalid_siren` | 400 | SIREN mal formé (9 chiffres + Luhn) |
 | `companies.not_found` | 404 | SIREN inconnu du RNE |
+| `companies.attachment_not_found` | 404 | Attachment ID inconnu |
+| `companies.attachment_confidential` | 403 | Bilan déclaré confidentiel par le déposant |
 
 ---
 

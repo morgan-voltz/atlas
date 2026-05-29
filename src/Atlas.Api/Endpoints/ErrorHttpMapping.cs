@@ -46,6 +46,8 @@ internal static class ErrorHttpMapping
         "inpi.not_connected" => StatusCodes.Status409Conflict,
         "companies.invalid_siren" => StatusCodes.Status400BadRequest,
         "companies.not_found" => StatusCodes.Status404NotFound,
+        "companies.attachment_not_found" => StatusCodes.Status404NotFound,
+        "companies.attachment_confidential" => StatusCodes.Status403Forbidden,
         "trademarks.not_found" => StatusCodes.Status404NotFound,
         "trademarks.image_not_found" => StatusCodes.Status404NotFound,
         "veille.subscription_not_found" => StatusCodes.Status404NotFound,
