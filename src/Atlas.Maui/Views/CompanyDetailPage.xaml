@@ -10,24 +10,88 @@
 
     <ScrollView>
         <VerticalStackLayout Padding="16" Spacing="10">
-            <ActivityIndicator IsRunning="{Binding IsBusy}" IsVisible="{Binding IsBusy}" />
-            <Label Text="{Binding ErrorMessage}" TextColor="Red" />
 
-            <VerticalStackLayout Spacing="6" BindingContext="{Binding Company}" x:DataType="models:CompanyResponse">
-                <Label Text="{Binding Denomination}" FontSize="24" FontAttributes="Bold" />
-                <Label Text="{Binding Siren}" />
-                <Label Text="{Binding FormeJuridique}" />
-                <Label Text="{Binding NafLabel}" />
-                <Label Text="{Binding Adresse.City}" />
-                <Label Text="Dirigeants" FontAttributes="Bold" Margin="0,12,0,0" />
-                <CollectionView ItemsSource="{Binding Dirigeants}">
+            <ActivityIndicator
+                IsRunning="{Binding IsBusy}"
+                IsVisible="{Binding IsBusy}"
+                Color="{DynamicResource primary}"
+                SemanticProperties.Description="Chargement de la fiche entreprise" />
+
+            <Label
+                Text="{Binding ErrorMessage}"
+                IsVisible="{Binding HasError}"
+                FontAutoScalingEnabled="True"
+                TextColor="{DynamicResource error}"
+                SemanticProperties.HeadingLevel="Level2"
+                SemanticProperties.Description="Message d'erreur de chargement" />
+
+            <VerticalStackLayout
+                Spacing="6"
+                BindingContext="{Binding Company}"
+                IsVisible="{Binding ., TargetNullValue=False, FallbackValue=False}"
+                x:DataType="models:CompanyResponse">
+
+                <Label
+                    Text="{Binding Denomination}"
+                    FontSize="24"
+                    FontAttributes="Bold"
+                    FontAutoScalingEnabled="True"
+                    TextColor="{DynamicResource onBackground}"
+                    SemanticProperties.HeadingLevel="Level1"
+                    SemanticProperties.Description="{Binding Denomination, StringFormat='Fiche entreprise {0}'}" />
+
+                <Label
+                    Text="{Binding Siren}"
+                    FontAutoScalingEnabled="True"
+                    TextColor="{DynamicResource onSurface}"
+                    SemanticProperties.Description="{Binding Siren, StringFormat='Numéro SIREN {0}'}" />
+
+                <Label
+                    Text="{Binding FormeJuridique}"
+                    FontAutoScalingEnabled="True"
+                    TextColor="{DynamicResource onSurface}"
+                    SemanticProperties.Description="{Binding FormeJuridique, StringFormat='Forme juridique {0}'}" />
+
+                <Label
+                    Text="{Binding NafLabel}"
+                    FontAutoScalingEnabled="True"
+                    TextColor="{DynamicResource onSurface}"
+                    SemanticProperties.Description="{Binding NafLabel, StringFormat='Activité {0}'}" />
+
+                <Label
+                    Text="{Binding Adresse.City}"
+                    FontAutoScalingEnabled="True"
+                    TextColor="{DynamicResource onSurface}"
+                    SemanticProperties.Description="{Binding Adresse.City, StringFormat='Ville {0}'}" />
+
+                <Label
+                    Text="Dirigeants"
+                    FontAttributes="Bold"
+                    FontAutoScalingEnabled="True"
+                    Margin="0,12,0,0"
+                    TextColor="{DynamicResource onBackground}"
+                    SemanticProperties.HeadingLevel="Level2"
+                    SemanticProperties.Description="Section dirigeants" />
+
+                <CollectionView
+                    ItemsSource="{Binding Dirigeants}"
+                    SemanticProperties.Description="Liste des dirigeants">
                     <CollectionView.ItemTemplate>
                         <DataTemplate x:DataType="models:DirigeantResponse">
-                            <Label Text="{Binding Nom}" Padding="0,2" />
+                            <Label
+                                Text="{Binding Nom}"
+                                Padding="0,2"
+                                MinimumHeightRequest="44"
+                                FontAutoScalingEnabled="True"
+                                TextColor="{DynamicResource onSurface}"
+                                SemanticProperties.HeadingLevel="Level3"
+                                SemanticProperties.Description="{Binding Nom, StringFormat='Dirigeant {0}'}" />
                         </DataTemplate>
                     </CollectionView.ItemTemplate>
                 </CollectionView>
+
             </VerticalStackLayout>
+
         </VerticalStackLayout>
     </ScrollView>
 

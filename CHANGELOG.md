@@ -396,6 +396,43 @@ appel authentifié réel (cf. roadmap, statuts 🟡).
   pour la carte-aperçu (§7) et la carte-section (§8). Référencée depuis la
   table « Documents fondateurs » de `CLAUDE.md` et depuis les fiches F-009
   et F-010.
+- **Lot 5b — Accessibilité MAUI WCAG 2.2 AA sur les 4 vues actuelles** :
+  première passe d'accessibilité sur l'ensemble des vues XAML
+  (`LoginPage`, `CompanySearchPage`, `CompanyDetailPage`, `SearchHistoryPage`).
+  Conformité à la checklist universelle de `docs/06-accessibilite.md` §12.1.
+  - **`SemanticProperties.Description` et `Hint`** sur tous les éléments
+    interactifs (Entry, Button, SearchBar, items CollectionView) — un
+    lecteur d'écran annonce désormais le rôle et l'action de chaque
+    contrôle, et chaque item de résultat est introduit par son entité
+    (« Entreprise X », « Recherche Y », « Dirigeant Z »).
+  - **`SemanticProperties.HeadingLevel`** sur la structure documentaire de
+    chaque page (Level1 sur le titre principal, Level2 sur les sections,
+    Level3 sur les items de liste). Permet la navigation par titres au
+    lecteur d'écran.
+  - **`FontAutoScalingEnabled="True"`** partout — les pages respectent
+    désormais la taille de texte système (Dynamic Type iOS, Font Scale
+    Android), test obligatoire de `docs/06` §4.4.
+  - **Couleurs sémantiques dynamiques** : `TextColor="Red"` et `"Gray"`
+    en dur remplacés par `{DynamicResource error}` / `{DynamicResource
+    onSurfaceVariant}` / `{DynamicResource onSurface}` / `{DynamicResource
+    onBackground}` / `{DynamicResource primary}` — câble les vues sur le
+    kit de thèmes WCAG 2.2 AA (PR #52) et débloque le passage clair / sombre
+    sans contraste cassé.
+  - **`MinimumHeightRequest="44"`** sur Entry, SearchBar, items
+    cliquables CollectionView — respecte le critère WCAG 2.5.5 (cible
+    tactile 44×44 px Apple HIG).
+  - **Annonces `SemanticScreenReader.Default.Announce`** dans les
+    ViewModels (`LoginViewModel`, `CompanySearchViewModel`,
+    `CompanyDetailViewModel`) après chaque action significative : succès /
+    échec de connexion, nombre de résultats trouvés, succès / échec de
+    chargement d'une fiche. L'utilisateur lecteur d'écran sait que l'état
+    a changé sans avoir à scruter visuellement.
+  - **`BaseViewModel.HasError`** propriété calculée + `NotifyPropertyChangedFor`
+    sur `ErrorMessage` — permet aux vues de masquer la zone d'erreur via
+    `IsVisible="{Binding HasError}"` au lieu d'afficher un label vide
+    (qui serait annoncé par le lecteur d'écran).
+  - Build Release vert sur les 3 cibles MAUI (`net10.0-android` 1m26s,
+    `net10.0-ios` 9s, `net10.0-maccatalyst` 17s).
 - **Lot 5a — Pré-prod produit, client MAUI** : 2 items résiduels de pré-prod
   produit ferment leur ticket avant la suite UI.
   - **`AtlasApiClient` base URL configurable** : `AtlasApiOptions` passe de
@@ -472,13 +509,19 @@ appel authentifié réel (cf. roadmap, statuts 🟡).
     `ResultOfT.cs`, `IJwtIssuer.cs` éclaté en `AccessToken.cs` + `IJwtIssuer.cs`,
     domain events câblés via `IPublisher` MediatR dans `SaveChangesAsync`,
     projet `Atlas.Shared.UnitTests` créé (19 tests), 2 nouveaux tests d'archi.
-  - **Lot 5 (pré-prod produit) — Lot 5a livré** : adapter Brevo livré ;
-    base URL `AtlasApiClient` externalisée (override `Preferences` +
-    défauts par plateforme) ; build iOS / MacCatalyst Release débloqué
-    (`[SuppressMessage]` CA1711 ciblé avec justification Apple). Reste
-    pour Lot 5b : accessibilité MAUI WCAG 2.2 AA sur les 5 vues
-    existantes (LoginPage, CompanySearchPage, CompanyDetailPage,
-    SearchHistoryPage, MainPage).
+  - **Lot 5 (pré-prod produit) — Lots 5a et 5b livrés** : adapter Brevo
+    livré ; base URL `AtlasApiClient` externalisée (override
+    `Preferences` + défauts par plateforme) ; build iOS / MacCatalyst
+    Release débloqué (`[SuppressMessage]` CA1711 ciblé avec
+    justification Apple) ; **accessibilité MAUI WCAG 2.2 AA** sur les
+    4 vues XAML existantes — `SemanticProperties` (Description / Hint /
+    HeadingLevel), `FontAutoScalingEnabled`, couleurs dynamiques sur
+    tokens sémantiques du kit thèmes, tailles tactiles min 44 px,
+    annonces lecteur d'écran dans les ViewModels. Reste pour suite UI
+    (Lot 5c+) : intégration des préférences accessibilité utilisateur
+    (high contrast, reduce motion, police facilitante dyslexie),
+    endpoints `/api/user/preferences/accessibility`, tests utilisateurs
+    réels avec associations.
 
 ### Modifié
 

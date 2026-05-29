@@ -8,33 +8,75 @@
     x:DataType="vm:CompanySearchViewModel"
     Title="Entreprises">
 
-    <Grid Padding="12" RowSpacing="8" RowDefinitions="Auto,Auto,*">
+    <Grid Padding="12" RowSpacing="8" RowDefinitions="Auto,Auto,Auto,*">
+
         <SearchBar
             Grid.Row="0"
             Placeholder="SIREN (9 chiffres) ou dénomination..."
             Text="{Binding Query}"
-            SearchCommand="{Binding SearchCommand}" />
+            SearchCommand="{Binding SearchCommand}"
+            FontAutoScalingEnabled="True"
+            MinimumHeightRequest="44"
+            SemanticProperties.Description="Recherche d'entreprises"
+            SemanticProperties.Hint="Saisissez un numéro SIREN de 9 chiffres ou une dénomination puis activez la recherche" />
 
-        <ActivityIndicator Grid.Row="1" IsRunning="{Binding IsBusy}" IsVisible="{Binding IsBusy}" />
+        <ActivityIndicator
+            Grid.Row="1"
+            IsRunning="{Binding IsBusy}"
+            IsVisible="{Binding IsBusy}"
+            Color="{DynamicResource primary}"
+            SemanticProperties.Description="Recherche en cours" />
 
-        <CollectionView Grid.Row="2" ItemsSource="{Binding Results}">
+        <Label
+            Grid.Row="2"
+            Text="{Binding ErrorMessage}"
+            IsVisible="{Binding HasError}"
+            FontAutoScalingEnabled="True"
+            TextColor="{DynamicResource error}"
+            SemanticProperties.HeadingLevel="Level2"
+            SemanticProperties.Description="Message d'erreur de recherche" />
+
+        <CollectionView
+            Grid.Row="3"
+            ItemsSource="{Binding Results}"
+            SemanticProperties.Description="Résultats de recherche">
             <CollectionView.ItemTemplate>
                 <DataTemplate x:DataType="models:CompanySummaryResponse">
-                    <Grid Padding="8">
+                    <Grid
+                        Padding="8"
+                        MinimumHeightRequest="44"
+                        SemanticProperties.Description="{Binding Denomination, StringFormat='Entreprise {0}'}"
+                        SemanticProperties.Hint="Touchez pour ouvrir la fiche détaillée">
                         <Grid.GestureRecognizers>
                             <TapGestureRecognizer
                                 Command="{Binding Source={RelativeSource AncestorType={x:Type vm:CompanySearchViewModel}}, Path=OpenCommand}"
                                 CommandParameter="{Binding .}" />
                         </Grid.GestureRecognizers>
                         <VerticalStackLayout Spacing="2">
-                            <Label Text="{Binding Denomination}" FontAttributes="Bold" />
-                            <Label Text="{Binding Siren}" FontSize="12" />
-                            <Label Text="{Binding Ville}" FontSize="12" TextColor="Gray" />
+                            <Label
+                                Text="{Binding Denomination}"
+                                FontAttributes="Bold"
+                                FontAutoScalingEnabled="True"
+                                TextColor="{DynamicResource onSurface}"
+                                SemanticProperties.HeadingLevel="Level3" />
+                            <Label
+                                Text="{Binding Siren}"
+                                FontSize="12"
+                                FontAutoScalingEnabled="True"
+                                TextColor="{DynamicResource onSurfaceVariant}"
+                                SemanticProperties.Description="{Binding Siren, StringFormat='Numéro SIREN {0}'}" />
+                            <Label
+                                Text="{Binding Ville}"
+                                FontSize="12"
+                                FontAutoScalingEnabled="True"
+                                TextColor="{DynamicResource onSurfaceVariant}"
+                                SemanticProperties.Description="{Binding Ville, StringFormat='Ville {0}'}" />
                         </VerticalStackLayout>
                     </Grid>
                 </DataTemplate>
             </CollectionView.ItemTemplate>
         </CollectionView>
+
     </Grid>
 
 </ContentPage>

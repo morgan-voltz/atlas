@@ -9,18 +9,48 @@
     Title="Historique">
 
     <Grid Padding="12" RowDefinitions="Auto,*" RowSpacing="8">
-        <ActivityIndicator Grid.Row="0" IsRunning="{Binding IsBusy}" IsVisible="{Binding IsBusy}" />
-        <CollectionView Grid.Row="1" ItemsSource="{Binding Entries}">
+
+        <ActivityIndicator
+            Grid.Row="0"
+            IsRunning="{Binding IsBusy}"
+            IsVisible="{Binding IsBusy}"
+            Color="{DynamicResource primary}"
+            SemanticProperties.Description="Chargement de l'historique" />
+
+        <CollectionView
+            Grid.Row="1"
+            ItemsSource="{Binding Entries}"
+            SemanticProperties.Description="Historique des recherches récentes">
             <CollectionView.ItemTemplate>
                 <DataTemplate x:DataType="models:SearchHistoryEntryResponse">
-                    <VerticalStackLayout Padding="8" Spacing="2">
-                        <Label Text="{Binding Query}" FontAttributes="Bold" />
-                        <Label Text="{Binding Type}" FontSize="12" TextColor="Gray" />
-                        <Label Text="{Binding CreatedAt}" FontSize="12" TextColor="Gray" />
+                    <VerticalStackLayout
+                        Padding="8"
+                        Spacing="2"
+                        MinimumHeightRequest="44"
+                        SemanticProperties.Description="{Binding Query, StringFormat='Recherche {0}'}">
+                        <Label
+                            Text="{Binding Query}"
+                            FontAttributes="Bold"
+                            FontAutoScalingEnabled="True"
+                            TextColor="{DynamicResource onSurface}"
+                            SemanticProperties.HeadingLevel="Level3" />
+                        <Label
+                            Text="{Binding Type}"
+                            FontSize="12"
+                            FontAutoScalingEnabled="True"
+                            TextColor="{DynamicResource onSurfaceVariant}"
+                            SemanticProperties.Description="{Binding Type, StringFormat='Type de recherche {0}'}" />
+                        <Label
+                            Text="{Binding CreatedAt}"
+                            FontSize="12"
+                            FontAutoScalingEnabled="True"
+                            TextColor="{DynamicResource onSurfaceVariant}"
+                            SemanticProperties.Description="{Binding CreatedAt, StringFormat='Effectuée le {0}'}" />
                     </VerticalStackLayout>
                 </DataTemplate>
             </CollectionView.ItemTemplate>
         </CollectionView>
+
     </Grid>
 
 </ContentPage>
