@@ -65,13 +65,12 @@ Légende identique au tableau MVP 1.
 | F-047 Combinaison veille + favoris (3 volets : RSS, RNE, BODACC) | ✅ |
 | F-048 Intégration BODACC | ✅ |
 | F-049 Marketplace des templates partagés | ⬜ |
-| F-050 Préparation à la couche premium (architecture) | 🟡 |
+| F-050 Préparation à la couche premium (architecture) | ✅ |
 
-Les 🟡 correspondent surtout à : confirmation contre l'API INPI réelle (F-013, F-016),
-export XLSX et étendue de couverture (F-021), et discipline d'architecture partiellement en
-place (F-050 — ports `IFeedSummarizer` référencé dans F-054, à valider). Le ⬜ restant
-du cluster veille est F-049 (marketplace templates). UI MAUI restante pour
-F-017, F-020, F-044, F-046 (chantier client cross-cutting, suivi côté F-009/F-010 du MVP 1).
+Les 🟡 correspondent surtout à : confirmation contre l'API INPI réelle (F-013, F-016) et
+export XLSX et étendue de couverture (F-021). Le ⬜ restant du cluster veille est F-049
+(marketplace templates). UI MAUI restante pour F-017, F-020, F-044, F-046 (chantier client
+cross-cutting, suivi côté F-009/F-010 du MVP 1).
 
 ---
 
@@ -727,7 +726,7 @@ Pour chaque feature, on documente :
 
 ### F-050 — Préparation à la couche premium (architecture)
 
-> **Statut** : 🟡 Partiellement en place. Le port `IFeedSummarizer` est référencé comme patron par F-054 (port `IFinancialSummarizer` analogue, doc), suggérant que le squelette `Atlas.Application.Premium` existe. **À valider** : présence effective du projet `Atlas.Application.Premium`, déclaration des 3 ports (`IFeedItemEnricher`, `IFeedRelevanceScorer`, `IFeedSummarizer`) côté domaine, et test d'architecture (`Atlas.Architecture.Tests`) verrouillant la séparation cœur / premium.
+> **Statut** : ✅ Implémenté (MVP 2, 29 mai 2026). Les 3 ports premium sont déclarés côté domaine dans `Atlas.Domain.Veille.Premium` : `IFeedItemEnricher` (+ `FeedItemEnrichment` record), `IFeedRelevanceScorer` (score 0-100 par item × user), `IFeedSummarizer` (synthèse narrative d'un batch). Projet `Atlas.Application.Premium` matérialisé via `AssemblyMarker` public pour permettre aux tests d'architecture de cibler son assembly. 3 nouveaux tests dans `Atlas.Architecture.Tests` verrouillant la séparation : (a) `Atlas.Application` (cœur) ne référence pas `Atlas.Application.Premium`, (b) `Atlas.Domain` ne référence pas `Atlas.Application.Premium`, (c) `Atlas.Application.Premium` ne référence pas `Atlas.Infrastructure.*` ni `Atlas.Api`. Total : 7 tests d'archi verts (4 existants + 3 F-050). Aucune implémentation des ports en MVP 2 (cœur open source intact) ; les adapters viendront dans des projets `Atlas.Infrastructure.*Premium` dédiés. Patron réutilisable pour `IFinancialSummarizer` (F-054).
 
 **Description** : pas une feature visible côté user, mais une **décision d'architecture** à respecter dès la phase de design du cluster veille : tous les use cases d'enrichissement (futurs résumés IA, scoring IA, synthèse hebdo) sont définis comme des **ports séparés** dans le domaine, implémentés en projet `.Premium` distinct (vide en MVP 2).
 
@@ -755,7 +754,7 @@ Pour chaque feature, on documente :
 
 1. ~~**F-046 — Filtres et règles de surveillance personnalisées**~~ ✅ **Livré 29 mai 2026** (backend). Reste UI MAUI et adapter Brevo (commun avec F-019).
 2. **F-049 — Marketplace des templates partagés** : pas commencé. La fiche elle-même note « V2 light, posée en MVP 2 » — décision à arbitrer : on la garde dans le périmètre MVP 2, ou on la déporte officiellement en V2 ?
-3. **F-050 — Vérification de l'architecture premium** : ports `IFeedItemEnricher` / `IFeedRelevanceScorer` / `IFeedSummarizer` à confirmer dans `Atlas.Application.Premium` + test d'architecture qui les verrouille.
+3. ~~**F-050 — Vérification de l'architecture premium**~~ ✅ **Livré 29 mai 2026** : 3 ports déclarés dans `Atlas.Domain.Veille.Premium` + 3 tests d'archi verrouillant la séparation cœur / premium (cf. fiche F-050).
 
 **🟡 Important non-bloquant** (peut basculer en post-MVP 2 sans casser la promesse)
 
