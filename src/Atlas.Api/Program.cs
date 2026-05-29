@@ -64,6 +64,17 @@ if (backgroundJobsEnabled)
         .UseRecommendedSerializerSettings()
         .UsePostgreSqlStorage(storage => storage.UseNpgsqlConnection(hangfireConnection)));
     builder.Services.AddHangfireServer();
+
+    // Adapter Hangfire de l'enqueueur F-014.
+    builder.Services.AddScoped<Atlas.Application.Downloads.IBulkDownloadEnqueuer,
+        Atlas.Api.Downloads.HangfireBulkDownloadEnqueuer>();
+}
+else
+{
+    // Fallback no-op : l'endpoint POST /downloads/bulk reste fonctionnel (le job est créé en
+    // base au statut Pending), mais aucun job n'est exécuté. Utilisé par les tests d'intégration.
+    builder.Services.AddSingleton<Atlas.Application.Downloads.IBulkDownloadEnqueuer,
+        Atlas.Api.Downloads.LoggingBulkDownloadEnqueuer>();
 }
 
 // DEV UNIQUEMENT : capture du token de vérification d'email pour l'automatisation des tests.

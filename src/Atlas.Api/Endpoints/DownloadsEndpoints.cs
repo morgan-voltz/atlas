@@ -1,10 +1,9 @@
 using System.Security.Claims;
-using Atlas.Api.Downloads;
+using Atlas.Application.Downloads;
 using Atlas.Application.Downloads.DownloadBulkArchive;
 using Atlas.Application.Downloads.GetBulkDownload;
 using Atlas.Application.Downloads.RequestBulkDownload;
 using Atlas.Shared.Result;
-using Hangfire;
 using MediatR;
 
 namespace Atlas.Api.Endpoints;
@@ -32,7 +31,7 @@ internal static class DownloadsEndpoints
         BulkDownloadRequest body,
         ClaimsPrincipal principal,
         ISender sender,
-        IBackgroundJobClient backgroundJobs,
+        IBulkDownloadEnqueuer enqueuer,
         CancellationToken ct)
     {
         if (!principal.TryGetUserId(out Guid userId))
@@ -50,7 +49,7 @@ internal static class DownloadsEndpoints
         // Le job est créé en base avant l'enqueue : si Hangfire est down, le user voit Pending
         // et un opérateur peut le relancer manuellement.
         Guid jobId = result.Value;
-        backgroundJobs.Enqueue<BulkDownloadJob>(job => job.RunAsync(jobId));
+        enqueuer.Enqueue(jobId);
 
         return Results.Accepted($"/downloads/bulk/{jobId}", new { jobId });
     }
