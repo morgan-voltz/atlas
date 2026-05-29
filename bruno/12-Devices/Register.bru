@@ -1,0 +1,47 @@
+meta {
+  name: Register
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/devices
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "platform": "{{devicePlatform}}",
+    "token": "{{deviceToken}}",
+    "label": "Bruno test device"
+  }
+}
+
+vars:post-response {
+  deviceId: res.body.id
+}
+
+tests {
+  test("statut 200", function () {
+    expect(res.getStatus()).to.equal(200);
+  });
+  test("id capturé", function () {
+    expect(res.getBody().id).to.be.a("string");
+  });
+}
+
+docs {
+  F-020 — Enregistre un device pour les notifications push.
+  Plateformes : `FcmAndroid`, `ApnsIos`, `WindowsWns`, `MacOsApns`.
+  Upsert sur le token : un renvoi du même token rafraîchit `LastSeenAt` sans créer de doublon.
+  Le token n'est jamais renvoyé dans les listes — seul `id` revient ici.
+}

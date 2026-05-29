@@ -1,0 +1,23 @@
+meta {
+  name: Unregister
+  type: http
+  seq: 3
+}
+
+delete {
+  url: {{baseUrl}}/devices/{{deviceId}}
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+assert {
+  res.status: in [204, 404]
+}
+
+docs {
+  F-020 — Désenregistre un device. Refuse les devices d'un autre user (404 IDOR-safe).
+  Utilise la variable `deviceId` (capturée par `Register`).
+}

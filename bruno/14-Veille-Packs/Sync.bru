@@ -1,0 +1,25 @@
+meta {
+  name: Sync
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{baseUrl}}/veille/packs/{{packCode}}/sync
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+assert {
+  res.status: in [204, 404, 409]
+}
+
+docs {
+  F-042 — Re-synchroniser un pack après upgrade de la version catalogue.
+  Met à jour la liste des sources abonnées pour l'utilisateur.
+  409 (`veille.veille_pack_not_enrolled`) = tentative de sync sans inscription préalable
+  (faire `Apply` d'abord).
+}

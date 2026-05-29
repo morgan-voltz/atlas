@@ -1,0 +1,35 @@
+meta {
+  name: Recent items
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/feed/items?page=1&pageSize=20
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+vars:post-response {
+  feedItemId: res.body.items[0].id
+}
+
+tests {
+  test("statut 200", function () {
+    expect(res.getStatus()).to.equal(200);
+  });
+  test("réponse paginée", function () {
+    const b = res.getBody();
+    expect(b).to.have.property("items").that.is.an("array");
+    expect(b).to.have.property("totalCount");
+  });
+}
+
+docs {
+  F-041 — Items RSS récents (toutes sources, non personnalisé). Tri par `publishedAt` desc.
+  Capture le premier `feedItemId` dans une variable runtime pour les requêtes suivantes
+  (PATCH state).
+}

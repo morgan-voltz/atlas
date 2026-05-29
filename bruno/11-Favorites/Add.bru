@@ -1,0 +1,36 @@
+meta {
+  name: Add
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/favorites/companies
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "siren": "{{siren}}",
+    "name": "{{companyName}}"
+  }
+}
+
+assert {
+  res.status: in [204, 409]
+}
+
+docs {
+  F-017 — Marque une entreprise en favori.
+  204 = créé, 409 (`favorites.company_already_favorite`) = déjà en favori, 400 = SIREN invalide.
+  Le `name` est optionnel (snapshot de la dénomination pour l'affichage en liste).
+}

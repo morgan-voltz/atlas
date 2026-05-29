@@ -1,0 +1,39 @@
+meta {
+  name: Set item state
+  type: http
+  seq: 6
+}
+
+patch {
+  url: {{baseUrl}}/feed/items/{{feedItemId}}/state
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "isRead": true,
+    "isFavorite": false,
+    "isArchived": false
+  }
+}
+
+assert {
+  res.status: in [200, 404]
+}
+
+docs {
+  F-044 — Met à jour l'état (lu/favori/archivé) d'un item de timeline pour l'utilisateur.
+  Tous les champs sont optionnels (PATCH partiel). 404 (`veille.feed_item_not_found`)
+  si l'item est inconnu.
+
+  Utilise `feedItemId` (capturé par `Recent items`).
+}

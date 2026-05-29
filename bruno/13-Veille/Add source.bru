@@ -1,0 +1,49 @@
+meta {
+  name: Add source
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/feed/sources
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "url": "{{feedSourceUrl}}",
+    "name": "Bruno test feed"
+  }
+}
+
+vars:post-response {
+  subscriptionId: res.body.subscriptionId
+}
+
+tests {
+  test("statut 201 ou 409", function () {
+    expect([201, 409]).to.include(res.getStatus());
+  });
+  test("subscriptionId capturé si 201", function () {
+    if (res.getStatus() === 201) {
+      expect(res.getBody().subscriptionId).to.be.a("string");
+    }
+  });
+}
+
+docs {
+  F-043 — Ajout libre d'une source RSS/Atom.
+  201 = créé, 409 (`veille.already_subscribed`) = déjà abonné, 403 (`veille.source_blocked`)
+  = URL refusée par la policy (anti-SSRF : IP privées / loopback / link-local, blocklist d'hôtes).
+  La validation du flux (parsing test) est effectuée immédiatement ; un flux injoignable
+  renvoie 400 (`veille.feed_unreachable`).
+}

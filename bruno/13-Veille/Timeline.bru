@@ -1,0 +1,47 @@
+meta {
+  name: Timeline
+  type: http
+  seq: 5
+}
+
+get {
+  url: {{baseUrl}}/feed/timeline?page=1&pageSize=20
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+tests {
+  test("statut 200", function () {
+    expect(res.getStatus()).to.equal(200);
+  });
+  test("DTO discriminé Kind", function () {
+    const b = res.getBody();
+    expect(b).to.have.property("items").that.is.an("array");
+    b.items.forEach(item => {
+      expect(item).to.have.property("kind");
+      expect(["RssItem", "FavoriteEvent"]).to.include(item.kind);
+      expect(item).to.have.property("occurredAt");
+    });
+  });
+}
+
+docs {
+  F-044 + F-047 — Timeline unifiée : items RSS des sources abonnées + événements
+  (changements RNE F-019/F-047 v2, annonces BODACC F-048), triés chronologiquement.
+
+  DTO union discriminée :
+  - `kind = "RssItem"` : items RSS avec `sourceId`, `categories`, `sourceCount`,
+    `mentionedFavorites` (F-047 v1 tagging).
+  - `kind = "FavoriteEvent"` : événements avec `eventType` (`RneChanged`/`BodaccPublished`),
+    `eventSiren`.
+
+  Paramètres optionnels : `sourceId`, `after`, `before`, `keyword`, `unread`, `favorites`,
+  `includeArchived`, `mentionsFavoritesOnly` (F-047 v1, seulement les items qui parlent
+  d'une de mes entreprises favorites).
+
+  Note : les FavoriteEvent sont exclus quand un filtre RSS-only est actif (sourceId,
+  unread, favoritesOnly, mentionsFavoritesOnly).
+}
