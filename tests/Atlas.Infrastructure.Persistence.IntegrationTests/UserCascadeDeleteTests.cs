@@ -1,6 +1,7 @@
 using Atlas.Domain.Companies;
 using Atlas.Domain.Favorites;
 using Atlas.Domain.Inpi;
+using Atlas.Domain.IntellectualProperty;
 using Atlas.Domain.Notifications;
 using Atlas.Domain.Search;
 using Atlas.Domain.Users;
@@ -66,6 +67,12 @@ public sealed class UserCascadeDeleteTests(PostgresFixture fixture)
             await context.FavoriteEvents.AddAsync(FavoriteEvent.Record(
                 user.Id, siren, FavoriteEventType.RneChanged, "Mise à jour de Renault", "Adresse modifiée.", Now));
 
+            // Favoris PI (F-018) : marques + brevets.
+            await context.TrademarkFavorites.AddAsync(
+                TrademarkFavorite.Mark(user.Id, new DepositNumber("4567890"), "Nike", Now));
+            await context.PatentFavorites.AddAsync(
+                PatentFavorite.Mark(user.Id, PublicationNumber.FromTrustedValue("FR3045678B1"), "Système de freinage", Now));
+
             await context.SaveChangesAsync();
         }
 
@@ -89,6 +96,8 @@ public sealed class UserCascadeDeleteTests(PostgresFixture fixture)
             (await context.DeviceRegistrations.CountAsync(d => d.UserId == user.Id)).Should().Be(0);
             (await context.FeedItemFavoriteMatches.CountAsync(m => m.UserId == user.Id)).Should().Be(0);
             (await context.FavoriteEvents.CountAsync(e => e.UserId == user.Id)).Should().Be(0);
+            (await context.TrademarkFavorites.CountAsync(f => f.UserId == user.Id)).Should().Be(0);
+            (await context.PatentFavorites.CountAsync(f => f.UserId == user.Id)).Should().Be(0);
         }
     }
 }

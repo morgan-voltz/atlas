@@ -41,6 +41,8 @@ public static class DependencyInjection
         services.AddScoped<IDeviceRegistrationRepository, DeviceRegistrationRepository>();
         services.AddScoped<IFeedItemFavoriteMatchRepository, FeedItemFavoriteMatchRepository>();
         services.AddScoped<IFavoriteEventRepository, FavoriteEventRepository>();
+        services.AddScoped<ITrademarkFavoriteRepository, TrademarkFavoriteRepository>();
+        services.AddScoped<IPatentFavoriteRepository, PatentFavoriteRepository>();
 
         return services;
     }
