@@ -51,10 +51,21 @@ public partial class CompanySearchViewModel : BaseViewModel
                     Results.Add(item);
                 }
             }
+
+            // Annonce pour les lecteurs d'écran (cf. docs/06 §4.2 — l'utilisateur doit savoir
+            // que la liste a changé sans avoir à scruter visuellement).
+            string announcement = Results.Count switch
+            {
+                0 => "Aucun résultat trouvé.",
+                1 => "1 résultat trouvé.",
+                _ => $"{Results.Count} résultats trouvés.",
+            };
+            SemanticScreenReader.Default.Announce(announcement);
         }
         catch (HttpRequestException)
         {
             ErrorMessage = "Service indisponible. Réessayez plus tard.";
+            SemanticScreenReader.Default.Announce(ErrorMessage);
         }
         finally
         {

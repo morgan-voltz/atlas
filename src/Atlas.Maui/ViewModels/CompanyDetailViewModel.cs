@@ -40,11 +40,18 @@ public partial class CompanyDetailViewModel : BaseViewModel
             if (Company is null)
             {
                 ErrorMessage = "Entreprise introuvable.";
+                SemanticScreenReader.Default.Announce(ErrorMessage);
+            }
+            else
+            {
+                SemanticScreenReader.Default.Announce(
+                    $"Fiche de {Company.Denomination} chargée.");
             }
         }
         catch (HttpRequestException)
         {
             ErrorMessage = "Service indisponible. Réessayez plus tard.";
+            SemanticScreenReader.Default.Announce(ErrorMessage);
         }
         finally
         {

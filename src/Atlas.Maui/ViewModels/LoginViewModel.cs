@@ -35,16 +35,19 @@ public partial class LoginViewModel : BaseViewModel
         {
             if (await _api.LoginAsync(Email, Password))
             {
+                SemanticScreenReader.Default.Announce("Connexion réussie, ouverture de l'application.");
                 await Shell.Current.GoToAsync("//main");
             }
             else
             {
                 ErrorMessage = "Email ou mot de passe incorrect.";
+                SemanticScreenReader.Default.Announce(ErrorMessage);
             }
         }
         catch (HttpRequestException)
         {
             ErrorMessage = "Service indisponible. Réessayez plus tard.";
+            SemanticScreenReader.Default.Announce(ErrorMessage);
         }
         finally
         {
