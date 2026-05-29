@@ -5,6 +5,14 @@
   </ItemGroup>
 
   <ItemGroup>
+    <!--
+      MediatR.Contracts ne contient que les interfaces marqueur (INotification, IRequest…).
+      Aucune dépendance d'exécution. Autorisé par CLAUDE.md (cf. anti-patterns).
+    -->
+    <PackageReference Include="MediatR.Contracts" />
+  </ItemGroup>
+
+  <ItemGroup>
     <!-- Autorise la persistance à réhydrater les value objects validés (EmailAddress.FromStorage). -->
     <InternalsVisibleTo Include="Atlas.Infrastructure.Persistence" />
   </ItemGroup>

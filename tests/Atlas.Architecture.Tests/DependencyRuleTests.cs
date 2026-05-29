@@ -19,6 +19,7 @@ public class DependencyRuleTests
     private static readonly Assembly ApplicationAssembly = typeof(Atlas.Application.DependencyInjection).Assembly;
     private static readonly Assembly ApplicationPremiumAssembly = typeof(Atlas.Application.Premium.AssemblyMarker).Assembly;
     private static readonly Assembly PersistenceAssembly = typeof(Atlas.Infrastructure.Persistence.AtlasDbContext).Assembly;
+    private static readonly Assembly SharedAssembly = typeof(Atlas.Shared.Result.Result).Assembly;
 
     [Fact]
     public void Domain_should_not_depend_on_application_infrastructure_or_api()
@@ -34,12 +35,27 @@ public class DependencyRuleTests
     [Fact]
     public void Domain_should_not_depend_on_external_infrastructure_libraries()
     {
+        // MediatR (runtime) est exclu : seul MediatR.Contracts (interfaces marqueur INotification/IRequest)
+        // est autorisé dans Atlas.Domain par CLAUDE.md. La distinction est vérifiée séparément ci-dessous
+        // car NetArchTest matche les namespaces, et MediatR.Contracts utilise le namespace `MediatR`.
         TestResult result = Types.InAssembly(DomainAssembly)
             .ShouldNot()
-            .HaveDependencyOnAny("Microsoft.EntityFrameworkCore", "Microsoft.AspNetCore", "MediatR", "Npgsql")
+            .HaveDependencyOnAny("Microsoft.EntityFrameworkCore", "Microsoft.AspNetCore", "Npgsql")
             .GetResult();
 
         result.IsSuccessful.Should().BeTrue(Describe(result));
+    }
+
+    [Fact]
+    public void Domain_should_only_reference_MediatR_Contracts_not_MediatR_runtime()
+    {
+        // CLAUDE.md autorise MediatR.Contracts (INotification, IRequest…) dans Atlas.Domain ;
+        // l'assembly runtime MediatR (IPublisher, IMediator, Mediator…) reste interdite.
+        AssemblyName[] referenced = DomainAssembly.GetReferencedAssemblies();
+
+        referenced.Should().NotContain(name => name.Name == "MediatR",
+            "Atlas.Domain doit éviter l'assembly runtime MediatR. " +
+            "Seul le package MediatR.Contracts (interfaces marqueur pures) est autorisé.");
     }
 
     [Fact]
@@ -112,6 +128,31 @@ public class DependencyRuleTests
             .GetResult();
 
         result.IsSuccessful.Should().BeTrue(Describe(result));
+    }
+
+    /// <summary>
+    /// <c>Atlas.Shared</c> est le noyau : aucun autre projet de la solution ne doit y figurer
+    /// dans ses dépendances. Seuls les libs de base .NET sont autorisées.
+    /// Empêche toute fuite progressive (logging, mediator, EF) dans le bas de l'hexagone.
+    /// </summary>
+    [Fact]
+    public void Shared_should_not_depend_on_any_atlas_project_or_external_lib()
+    {
+        AssemblyName[] referenced = SharedAssembly.GetReferencedAssemblies();
+
+        IEnumerable<string> illegal = referenced
+            .Select(a => a.Name ?? string.Empty)
+            .Where(name =>
+                name.StartsWith("Atlas.", StringComparison.Ordinal)
+                || name.StartsWith("MediatR", StringComparison.Ordinal)
+                || name.StartsWith("Microsoft.EntityFrameworkCore", StringComparison.Ordinal)
+                || name.StartsWith("Microsoft.AspNetCore", StringComparison.Ordinal)
+                || name.StartsWith("Serilog", StringComparison.Ordinal)
+                || name.StartsWith("Polly", StringComparison.Ordinal)
+                || name.StartsWith("FluentValidation", StringComparison.Ordinal)
+                || name.StartsWith("Npgsql", StringComparison.Ordinal));
+
+        illegal.Should().BeEmpty("Atlas.Shared est le noyau : aucune dépendance projet ou tierce, hors BCL.");
     }
 
     private static string Describe(TestResult result) =>

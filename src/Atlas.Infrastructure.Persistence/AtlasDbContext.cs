@@ -6,13 +6,19 @@ using Atlas.Domain.Notifications;
 using Atlas.Domain.Search;
 using Atlas.Domain.Users;
 using Atlas.Domain.Veille;
+using MediatR;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.ChangeTracking;
 
 namespace Atlas.Infrastructure.Persistence;
 
-public sealed class AtlasDbContext(DbContextOptions<AtlasDbContext> options)
+public sealed class AtlasDbContext(
+    DbContextOptions<AtlasDbContext> options,
+    IPublisher? domainEventPublisher = null)
     : DbContext(options), IUnitOfWork
 {
+    private readonly IPublisher? _domainEventPublisher = domainEventPublisher;
+
     public DbSet<User> Users => Set<User>();
 
     public DbSet<Account> Accounts => Set<Account>();
@@ -66,5 +72,45 @@ public sealed class AtlasDbContext(DbContextOptions<AtlasDbContext> options)
         ArgumentNullException.ThrowIfNull(modelBuilder);
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(AtlasDbContext).Assembly);
         base.OnModelCreating(modelBuilder);
+    }
+
+    /// <summary>
+    /// Sémantique « after-commit » : les événements domaine sont collectés depuis les entités tracked,
+    /// nettoyés, puis publiés via <see cref="IPublisher"/> après le <c>SaveChangesAsync</c> EF Core réussi.
+    /// Si la transaction échoue, aucun événement n'est publié — pas de fuite vers les handlers.
+    /// </summary>
+    public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
+    {
+        List<IDomainEvent> events = CollectAndClearDomainEvents();
+
+        int affected = await base.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+
+        if (events.Count > 0 && _domainEventPublisher is not null)
+        {
+            foreach (IDomainEvent domainEvent in events)
+            {
+                await _domainEventPublisher.Publish(domainEvent, cancellationToken).ConfigureAwait(false);
+            }
+        }
+
+        return affected;
+    }
+
+    private List<IDomainEvent> CollectAndClearDomainEvents()
+    {
+        List<IDomainEvent> events = [];
+
+        foreach (EntityEntry entry in ChangeTracker.Entries())
+        {
+            if (entry.Entity is not IHasDomainEvents holder || holder.DomainEvents.Count == 0)
+            {
+                continue;
+            }
+
+            events.AddRange(holder.DomainEvents);
+            holder.ClearDomainEvents();
+        }
+
+        return events;
     }
 }

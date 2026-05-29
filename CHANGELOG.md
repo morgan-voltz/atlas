@@ -396,6 +396,47 @@ appel authentifié réel (cf. roadmap, statuts 🟡).
   pour la carte-aperçu (§7) et la carte-section (§8). Référencée depuis la
   table « Documents fondateurs » de `CLAUDE.md` et depuis les fiches F-009
   et F-010.
+- **Lot 4 — Dette structurée résolue (audit profond)** : convergence des 4 points
+  P2 / P3 du Lot 4.
+  - **Combinateurs `Result` / `Result<T>`** ajoutés dans `Atlas.Shared` (purement
+    additif, le boilerplate `if (x.IsFailure) return Result<Y>.Fail(x.Error!);`
+    n'est plus imposé) : `Map`, `Bind` (générique et non générique), `Match`,
+    `Tap`, `Ensure`, `TryGetValue`. Conversion implicite `Error` → `Result` /
+    `Result<T>` pour `return error;`.
+  - **`Result<T>.Value` garde-fou** : accès en état d'échec lève
+    `InvalidOperationException` au lieu de retourner `default(T)`
+    silencieusement. Un `result.Value!` placé après un check oublié devient
+    bruyant. Migration : utiliser `TryGetValue` ou `Match`.
+  - **Splits « 1 type / 1 fichier »** (docs/08 §2.3) : `Result.cs` éclaté en
+    `Error.cs` + `Result.cs` + `ResultOfT.cs` ; `IJwtIssuer.cs` éclaté en
+    `AccessToken.cs` + `IJwtIssuer.cs`.
+  - **Domain events câblés via MediatR** : `IDomainEvent` hérite désormais de
+    `MediatR.INotification` (seule `MediatR.Contracts` est tirée par
+    `Atlas.Domain`, sémantique « interfaces marqueur » autorisée par CLAUDE.md).
+    `AtlasDbContext.SaveChangesAsync` collecte les événements des entités
+    tracked, commit, puis publie via `IPublisher` (sémantique after-commit —
+    aucun event publié si la transaction échoue). `IHasDomainEvents` marqueur
+    introduit pour découpler le scan du ChangeTracker du paramètre TId.
+    `UserRegisteredDomainEvent` est désormais effectivement reçu par les
+    `INotificationHandler<UserRegisteredDomainEvent>`.
+  - **`Atlas.Shared.UnitTests` (nouveau projet, 19 tests)** : couverture
+    `Result` / `Result<T>` (Map / Bind / Match / Tap / Ensure / TryGetValue /
+    guard sur Value / conversion implicite depuis Error).
+  - **Tests d'archi (+2)** : nouveau test
+    `Domain_should_only_reference_MediatR_Contracts_not_MediatR_runtime` qui
+    différencie le package marqueur (autorisé) du runtime MediatR (interdit) via
+    `Assembly.GetReferencedAssemblies()`. Nouveau test
+    `Shared_should_not_depend_on_any_atlas_project_or_external_lib` qui ferme la
+    porte à toute fuite progressive (logging, mediator, EF, Serilog, Polly,
+    FluentValidation, Npgsql) dans le noyau `Atlas.Shared`.
+  - **`Atlas.Shared` retargeté `netstandard2.1` → `net10.0`** : tous les
+    consommateurs réels (y compris les têtes MAUI net10.0-*) sont net10.0.
+    Suppression du polyfill `IsExternalInit.cs` désormais inutile. Débloque
+    l'usage natif de `ArgumentNullException.ThrowIfNull` dans les combinateurs.
+  - **Test `SearchCompaniesByNameHandlerTests`** corrigé : un SIREN invalide
+    Luhn (`775665019`) avait été collé en fixture — révélé par le nouveau
+    guard `Value` qui throw au lieu de retourner `null` silencieusement. SIREN
+    remplacé par un SIREN valide (`954506077`, Renault Trucks).
 - **Audit profond — clos (29 mai 2026)** : l'audit lecture-seule de la
   solution (`docs/audit/`, daté du 2026-05-28, 9 rapports : Shared / Domain /
   Application / Persistence / Infra-adapters / Api / Tests / MAUI + synthèse)
@@ -409,10 +450,12 @@ appel authentifié réel (cf. roadmap, statuts 🟡).
     séparation cœur / `Atlas.Application.Premium` posée par F-050) — manque
     encore la couverture archi de `Atlas.Shared`, `Atlas.Maui`,
     `Atlas.Infrastructure.{Veille,Inpi,Security,Messaging}`.
-  - **Lot 4 (dette structurée)** : combinateurs `Result.Map` / `Bind` /
-    `Match` non implémentés, `Result.cs` héberge encore 3 types (`Error` +
-    `Result` + `Result<T>`), `UserRegisteredDomainEvent` levé mais aucun
-    dispatcher câblé.
+  - **Lot 4 (dette structurée) — livré** : combinateurs `Result.Map` / `Bind` /
+    `Match` / `Tap` / `Ensure` / `TryGetValue` ajoutés, garde-fou sur
+    `Result<T>.Value`, `Result.cs` éclaté en `Error.cs` + `Result.cs` +
+    `ResultOfT.cs`, `IJwtIssuer.cs` éclaté en `AccessToken.cs` + `IJwtIssuer.cs`,
+    domain events câblés via `IPublisher` MediatR dans `SaveChangesAsync`,
+    projet `Atlas.Shared.UnitTests` créé (19 tests), 2 nouveaux tests d'archi.
   - **Lot 5 (pré-prod produit)** : adapter Brevo livré (cf. ci-dessus),
     mais accessibilité MAUI à compléter (WCAG 2.2 AA non encore réglée sur
     les vues), build iOS / MacCatalyst toujours cassé par CA1711 sur
