@@ -2,6 +2,8 @@
 
 Toutes les modifications notables de ce projet sont consignées ici.
 
+
+
 Le format s'appuie sur [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/),
 et le projet suit le [versionnage sémantique](https://semver.org/lang/fr/).
 
