@@ -797,7 +797,7 @@ Pour chaque feature, on documente :
 
 ### F-030 — Annotations et tags utilisateur
 
-**Description** : l'utilisateur ajoute des notes privées et des tags sur les fiches qu'il consulte.
+**Description** : l'utilisateur ajoute des notes privées **et des tags** sur les fiches qu'il consulte (entités annotées : entreprise, marque, brevet). Les tags appartiennent à F-030 car ce sont des attributs de l'entité annotée, indépendants de toute liste — cf. « Frontière avec F-053 » dans F-053.
 
 **Valeur user** : capitalisation de la connaissance personnelle au-dessus des données publiques.
 
@@ -806,6 +806,111 @@ Pour chaque feature, on documente :
 **APIs externes** : aucune.
 
 **Dépendances** : F-017.
+
+---
+
+### F-051 — Suivi boursier des entreprises cotées
+
+**Description** : quand une entreprise favorite est cotée en bourse, Atlas affiche sa cotation sur sa fiche (cours, variation, mini-historique) et peut notifier d'une variation notable, sur le patron de F-019/F-048 (snapshot + diff + job Hangfire). **Fonction de suivi, pas service d'investissement** : aucune recommandation, aucun ordre, aucune donnée de portefeuille.
+
+**Valeur user** : pour le persona Investisseur / M&A (déjà identifié dans les packs de veille), une vue unifiée « identité légale + propriété industrielle + veille + cotation » dans un seul outil.
+
+**Complexité** : ★★★★ (phasable : pont d'identifiants → BYO-key → cours → événements).
+
+**APIs externes** :
+- **GLEIF** (Global LEI Foundation) — gratuit, sans auth. Sert au pont **SIREN → LEI → ISIN → ticker**. Le LEI étant obligatoire pour être coté, la chaîne couvre exactement le sous-ensemble pertinent.
+- **Fournisseur de cours au choix de l'utilisateur** (BYO-key) : Finnhub, Twelve Data, EOD Historical Data, Financial Modeling Prep… Port `IMarketDataProvider` + adapters interchangeables.
+
+**Dépendances** : F-017 (favoris entreprise), patron de F-019 (snapshot + diff + job Hangfire), ADR-003 (coffre de credentials chiffré), ADR-004 (architecture hexagonale).
+
+**Détails techniques** :
+- Ports : `ISecurityIdentifierResolver` (adapter `GleifIdentifierResolver`) et `IMarketDataProvider` (adapters par fournisseur).
+- Modèle BYO-key : la clé du fournisseur de cours est chiffrée dans le coffre AES-256-GCM (réutilisation de `ICryptoService` / ADR-003). Avantage : zéro coût par utilisateur côté Atlas, redistribution réglée par construction, souveraineté préservée.
+- Entités : `CompanySecurityLink (Siren, Isin, Ticker, Mic, ResolvedAt)`, `MarketDataCredential` (clé chiffrée + fournisseur choisi, cascade FK RGPD), `MarketEvent` (optionnel, branché sur la timeline F-047).
+- Job Hangfire `market-refresh` sur le modèle de `favorite-refresh` / `bodacc-polling`.
+- Endpoints (esquisse) : `POST/GET/DELETE /market/credential`, `GET /companies/{siren}/quote`.
+
+**Cadre légal & éthique** : strictement descriptif. Pas de RGPD spécifique (données d'entreprises cotées, publiques) ; seule sensibilité = la clé API utilisateur (traitée comme secret, ADR-003).
+
+**Accessibilité (rappel ADR-008)** : **jamais l'information par la couleur seule** sur les variations — toujours doubler d'un signe (`+`/`−`), d'une flèche, ou d'un libellé. Critique sur un écran de cotation.
+
+**Modèle économique** : reste dans le cœur open source (BYO-key → zéro coût par utilisateur, cohérent ADR-006).
+
+**Décisions ouvertes** :
+- Fournisseur de cours recommandé par défaut dans la doc utilisateur.
+- Granularité : EOD en V1, temps réel/différé en option ? La cadence du job en dépend.
+- Seuil de « variation notable » (configurable par l'utilisateur ?).
+- ADR dédié pour acter le pont d'identifiants et le choix BYO-key (recommandé, au même titre que l'ADR-003).
+
+---
+
+### F-052 — Serveur MCP (accès agents IA)
+
+**Description** : Atlas expose ses capacités sous forme de **serveur MCP** (Model Context Protocol), pour que des **agents IA** (Claude, et tout client compatible) puissent interroger les données et la veille au nom de l'utilisateur (rechercher une entreprise, lire une fiche, consulter les marques, gérer les favoris, interroger la timeline). L'agent n'a jamais plus de droits que l'utilisateur.
+
+**Valeur user** : pour les power users et les profils « travaillant avec l'IA », automatiser des workflows de suivi en langage naturel ; pour les intégrateurs, brancher Atlas dans leurs propres agents via une interface standard. **Différenciation** : un MCP **souverain et auto-hébergeable** est unique sur le marché français des données d'entreprise (Pappers expose déjà un MCP mais sans cet angle).
+
+**Complexité** : ★★★★ (lecture + écriture encadrée) ; ★★★★★ avec couche OAuth 2.1 complète. L'essentiel de l'effort est l'**auth/scoping** et le **durcissement sécurité**, pas la définition des outils (le SDK la rend triviale).
+
+**APIs externes** : aucune nouvelle source (réexpose les capacités existantes). Dépendance technique : SDK MCP officiel C# (`ModelContextProtocol`, `ModelContextProtocol.AspNetCore`), maintenu par Microsoft et Anthropic.
+
+**Dépendances** : use cases existants (F-004/F-005, fiche entreprise, F-006/F-007, F-017, F-041→F-047, F-042) ; ADR-003 (coffre de credentials) ; ADR-004 (archi hexagonale) ; **ADR-010 (auth utilisateur) + ADR-011 (OAuth 2.1 pour la délégation)**.
+
+**Détails techniques** :
+- **Nouvel adapter entrant** par-dessus les use cases MediatR existants (exactement comme `Atlas.Api`). Projet `Atlas.Mcp` (ou module dans l'API) qui traduit des appels d'outils MCP en commandes/queries du domaine. **Zéro modification du domaine** (ADR-004).
+- Le SDK C# déclare un outil en décorant une méthode (`[McpServerTool]`) ; le schéma JSON est généré automatiquement. Intégration : `AddMcpServer().WithHttpTransport().WithToolsFromAssembly()` + `MapMcp()`.
+- **Outils lecture (V1)** : `search_companies`, `get_company`, `search_trademarks`, `get_trademark`, `list_favorites`, `get_veille_timeline`, `list_veille_packs`.
+- **Outils écriture (encadrés, V2 du chantier)** : `add_favorite` / `remove_favorite`, `subscribe_feed_source` / `apply_veille_pack` — derrière des **approval workflows** et des **scopes** dédiés.
+- **Transports** : stdio (auto-hébergement local) et HTTP/Streamable HTTP (instance distante).
+- **Aucune exposition** de la gestion des secrets (credentials INPI, clés) via MCP. Aucune opération destructrice non réversible exposée sans garde forte.
+
+**Sécurité (cf. ADR-011)** : OAuth 2.1 + PKCE ; **scopes** distincts lecture vs écriture ; tokens courts + refresh rotatif révocable ; audit logging de chaque appel d'outil (Serilog déjà en place) ; rate limiting réutilisé (global + auth-strict). Risque spécifique : **injection par le contenu** (tool poisoning) — règle : le serveur traite tout contenu retourné comme **donnée**, jamais comme instruction ; les outils d'écriture exigent une approbation explicite.
+
+**Modèle économique** : aucun coût par utilisateur côté Atlas (l'inférence est côté agent). Reste dans le **cœur open source** (cohérent ADR-006). Une frontière premium éventuelle (quotas en hébergé, outils agentiques avancés) pourra être posée plus tard sans toucher au socle.
+
+**Décisions ouvertes** :
+- Périmètre exact des outils d'écriture exposés en V1 (probable : favoris + abonnements ; exclure tout ce qui touche aux secrets et au compte).
+- Exposition : self-host (stdio/HTTP local) d'abord, instance hébergée ensuite ? Politique de quotas en hébergé.
+- Frontière premium éventuelle (à n'arbitrer qu'en phase 3-4).
+
+---
+
+### F-053 — Watchlists (listes d'entreprises)
+
+**Description** : l'utilisateur regroupe des entreprises en **listes nommées** (« Concurrence », « Portefeuille clients », « Cibles M&A »…). Une entreprise peut appartenir à plusieurs listes. Chaque liste offre une vue dédiée et, en option, **sa propre timeline de veille filtrée**. Un **import en masse de SIREN** (jusqu'à plusieurs centaines) permet de constituer une liste d'un coup. Cette feature couvre le **regroupement** ; les **notes et tags** par entreprise restent de la responsabilité de F-030.
+
+**Valeur user** : signal marché net (Pappers a lancé en 2026 un tableau de bord de suivi de portefeuille, plébiscité par les experts-comptables et les fonds d'investissement). **Angle différenciant Atlas** : une watchlist peut avoir **sa propre timeline de veille** (au-dessus de F-047) — RSS + RNE + BODACC filtrés sur les entreprises de la liste. Pappers ne combine pas listes et veille agrégée ; c'est précisément le trou de marché du projet (ADR-009).
+
+**Complexité** : ★★★ (1–2 semaines) en Modèle A. La couche listes est simple ; le morceau principal est l'**import en masse asynchrone**.
+
+**APIs externes** : aucune nouvelle source. L'import en masse utilise l'API **INPI RNE** existante (résolution des dénominations à partir des SIREN), avec le rate-limiting déjà en place.
+
+**Dépendances** : F-017 (favoris = set surveillé), F-030 (annotations & tags — dépendance à sens unique, voir « Frontière »), patron de F-014 (import asynchrone), F-047 (timeline mixte), ADR-004 (archi hexagonale).
+
+**Détails techniques** :
+- **Modèle A — les listes par-dessus les favoris (non-cassant)** : `CompanyFavorite` (F-017) reste la liste plate parcourue par F-019 (refresh quotidien) et F-047 (timeline). On garde ce rôle intact.
+- Entités : `Watchlist (Id, UserId, Name, CreatedAt)` privée, cascade FK RGPD ; `WatchlistEntry (WatchlistId, Siren, AddedAt)`, index unique `(WatchlistId, Siren)`. Ajouter une entreprise à une liste ⇒ upsert du `CompanyFavorite` correspondant.
+- **Import en masse** : réutilise le patron de F-014 (téléchargement de masse) — validation (Luhn), job Hangfire dédié respectant le rate-limiting INPI, notification (email + push) à la fin avec récap (N ajoutés, M doublons, K invalides).
+- **Timeline par liste** : filtre `watchlistId` au-dessus de F-047, sans nouvelle mécanique de veille.
+- Endpoints (esquisse) : `POST/GET /watchlists`, `PATCH/DELETE /watchlists/{id}`, `POST/DELETE /watchlists/{id}/entries[/{siren}]`, `POST /watchlists/{id}/import` (job async), `GET /watchlists/{id}/timeline`.
+
+**Frontière avec F-030** (fait foi pour les deux fiches) :
+- **F-030 possède** `UserAnnotation` (note privée par entité) **et les tags** (libellés sur la relation utilisateur ↔ entité).
+- **F-053 possède** `Watchlist` + `WatchlistEntry` (le regroupement) et l'import en masse.
+- **Dépendance à sens unique** : F-053 **consomme** les tags de F-030 pour le filtrage. Une watchlist sans tag fonctionne ; une annotation sans liste fonctionne. **Pas de circularité.**
+- **Set surveillé** = `CompanyFavorite` (F-017). Appartenir à une liste ⇒ être favori. F-019/F-047 restent branchés sur les favoris.
+- **F-030 peut être livré seul et en premier** (le plus rapide), F-053 se pose ensuite ou en parallèle.
+
+**RGPD** : listes et appartenances = données utilisateur. Cascade FK sur le compte (patron existant), incluses dans `/account/export` (art. 20), supprimées à la suppression du compte (art. 17). Privées par défaut (pas de partage en V1 ; le partage relève de F-035 espace équipe).
+
+**Accessibilité (rappel ADR-008)** : un tag n'est **jamais** identifié par la couleur seule (libellé + couleur optionnelle), règle portée par F-030. Listes et entrées navigables au clavier et annoncées au lecteur d'écran. L'écran d'import est accessible (rapport d'import lisible, pas seulement visuel).
+
+**Modèle économique** : aucun coût par utilisateur → cœur open source (cohérent ADR-006). Possibilité de **quotas en hébergé** (nombre de listes, taille), sur le modèle de la limite de sources de F-043.
+
+**Décisions ouvertes** :
+- Modèle A maintenant, Modèle B (favoris = « liste par défaut ») plus tard ? Confirmer qu'on ne généralise pas les favoris en V1.
+- Colonnes type CRM (statut, dernier contact, relance, à la Pappers) : hors cœur par défaut (proche de F-037). À acter : on les exclut, ou version légère portée par F-030 ?
+- Quotas en hébergé (nombre de listes / taille).
 
 ---
 
