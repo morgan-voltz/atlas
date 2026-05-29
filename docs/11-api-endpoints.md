@@ -3,7 +3,7 @@
 > **Périmètre** : tous les endpoints HTTP exposés par `Atlas.Api`, groupés par domaine fonctionnel.
 > Document **vivant** : à mettre à jour à chaque PR qui ajoute, modifie ou supprime un endpoint.
 
-**Dernière mise à jour** : 29 mai 2026 — après merge F-018 (PR à venir).
+**Dernière mise à jour** : 29 mai 2026 — après merge F-021 (PR à venir).
 
 ---
 
@@ -196,6 +196,7 @@ Cf. [`FavoritesEndpoints.cs`](../src/Atlas.Api/Endpoints/FavoritesEndpoints.cs).
 | `POST` | `/favorites/companies` | 🔐 | Marquer une entreprise en favori. Body `{ siren, name? }`. |
 | `DELETE` | `/favorites/companies/{siren}` | 🔐 | Retirer un favori. |
 | `GET` | `/favorites/companies` | 🔐 | Liste de mes favoris (`siren`, `name?`, `addedAt`), tri AddedAt desc. |
+| `GET` | `/favorites/companies/export` | 🔐 | F-021 — export CSV. Fichier `favoris-entreprises.csv`. |
 
 ### Favoris marques (F-018)
 
@@ -204,6 +205,7 @@ Cf. [`FavoritesEndpoints.cs`](../src/Atlas.Api/Endpoints/FavoritesEndpoints.cs).
 | `POST` | `/favorites/trademarks` | 🔐 | Marquer une marque en favori. Body `{ depositNumber, name? }`. |
 | `DELETE` | `/favorites/trademarks/{depositNumber}` | 🔐 | Retirer un favori. |
 | `GET` | `/favorites/trademarks` | 🔐 | Mes marques favorites (tri AddedAt desc). |
+| `GET` | `/favorites/trademarks/export` | 🔐 | F-021 — export CSV (RFC 4180, UTF-8 + BOM). Fichier `favoris-marques.csv`. |
 
 ### Favoris brevets (F-018)
 
@@ -212,6 +214,7 @@ Cf. [`FavoritesEndpoints.cs`](../src/Atlas.Api/Endpoints/FavoritesEndpoints.cs).
 | `POST` | `/favorites/patents` | 🔐 | Marquer un brevet en favori. Body `{ publicationNumber, title? }`. Numéro normalisé. |
 | `DELETE` | `/favorites/patents/{publicationNumber}` | 🔐 | Retirer un favori. |
 | `GET` | `/favorites/patents` | 🔐 | Mes brevets favoris (tri AddedAt desc). |
+| `GET` | `/favorites/patents/export` | 🔐 | F-021 — export CSV. Fichier `favoris-brevets.csv`. |
 
 ### Codes d'erreur favoris
 
