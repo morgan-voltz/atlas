@@ -1,0 +1,28 @@
+meta {
+  name: Subscriptions
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/feed/subscriptions
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+tests {
+  test("statut 200", function () {
+    expect(res.getStatus()).to.equal(200);
+  });
+  test("réponse = tableau", function () {
+    expect(res.getBody()).to.be.an("array");
+  });
+}
+
+docs {
+  F-043 — Mes abonnements de veille (sources ajoutées librement). Le user voit le titre de la
+  source, son URL, son statut et la date d'abonnement.
+}

@@ -1,0 +1,35 @@
+meta {
+  name: Catalog
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/veille/packs
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+tests {
+  test("statut 200", function () {
+    expect(res.getStatus()).to.equal(200);
+  });
+  test("réponse = tableau", function () {
+    expect(res.getBody()).to.be.an("array");
+  });
+  test("chaque pack a code + version", function () {
+    const list = res.getBody();
+    if (list.length > 0) {
+      expect(list[0]).to.have.property("code");
+      expect(list[0]).to.have.property("version");
+    }
+  });
+}
+
+docs {
+  F-042 — Catalogue des packs de veille disponibles (avec leur version courante).
+  Les packs sont seedés au démarrage (.NET Blog, CNIL, data.gouv.fr…).
+}

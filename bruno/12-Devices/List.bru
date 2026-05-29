@@ -1,0 +1,36 @@
+meta {
+  name: List
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/devices
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+tests {
+  test("statut 200", function () {
+    expect(res.getStatus()).to.equal(200);
+  });
+  test("token JAMAIS exposé", function () {
+    const list = res.getBody();
+    list.forEach(d => expect(d).to.not.have.property("token"));
+  });
+  test("champs attendus", function () {
+    const list = res.getBody();
+    if (list.length > 0) {
+      const d = list[0];
+      expect(d).to.have.all.keys("id", "platform", "label", "registeredAt", "lastSeenAt");
+    }
+  });
+}
+
+docs {
+  F-020 — Mes devices push enregistrés.
+  Tri `lastSeenAt` desc. **Le `token` n'est jamais renvoyé** (sécurité).
+}

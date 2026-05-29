@@ -1,0 +1,23 @@
+meta {
+  name: Unsubscribe
+  type: http
+  seq: 4
+}
+
+delete {
+  url: {{baseUrl}}/feed/subscriptions/{{subscriptionId}}
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+assert {
+  res.status: in [204, 404]
+}
+
+docs {
+  F-043 — Désabonnement d'une source ajoutée librement. Utilise `subscriptionId`
+  (capturée par `Add source`). 404 (`veille.subscription_not_found`) si déjà désabonné.
+}

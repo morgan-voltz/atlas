@@ -1,8 +1,9 @@
 # Collection Bruno — Atlas API
 
 Tests d'API versionnés avec [Bruno](https://www.usebruno.com/) (fichiers `.bru` en clair,
-git-friendly). Couvre tout le parcours backend de la V1 : auth, 2FA, connexion INPI,
-entreprises, marques, historique, compte/RGPD.
+git-friendly). Couvre tout le parcours backend : auth, 2FA, connexion INPI, entreprises,
+marques, historique, compte/RGPD, **favoris (F-017), devices push (F-020), veille
+(F-041 à F-048) et packs (F-042)**.
 
 ## Prérequis : démarrer le harness local
 
@@ -22,13 +23,33 @@ dotnet run --project src/Atlas.Api --launch-profile http
 L'API démarre en environnement `Development` :
 - clés JWT (RS256) et clé de chiffrement générées automatiquement ;
 - emails **non envoyés** — le lien de vérification est écrit dans les logs (`LoggingEmailSender`) ;
+- push **non envoyés** — `LoggingNotificationDispatcher` log à la place (sauf si `Fcm:*` / `Apns:*` / `Wns:*` configurés) ;
 - cache en mémoire (pas de Redis requis).
 
 ## Utilisation dans l'app Bruno
 
 1. Ouvrir le dossier `bruno/` dans Bruno (*Open Collection*).
 2. Sélectionner l'environnement **Local** (en haut à droite).
-3. Jouer les requêtes dans l'ordre des dossiers (`01-Auth` → `07-Account`).
+3. Jouer les requêtes dans l'ordre des dossiers (`01-Auth` → `14-Veille-Packs`).
+
+### Organisation des dossiers
+
+| Dossier | Feature | Endpoints |
+|---|---|---|
+| `01-Auth` | F-001 | Register, Verify Email, Login, Refresh, Logout |
+| `02-2FA` | F-002 | Setup, Enable, Disable, Verify Challenge |
+| `03-INPI` | F-003 | Connect, Status, Disconnect |
+| `04-Companies` | F-004 / F-005 | Search, Detail |
+| `05-Trademarks` | F-006 / F-007 | Search, Detail, Image |
+| `06-Search History` | F-008 | List |
+| `07-Account` | F-012 (RGPD) | Export, Delete (destructif) |
+| `08-Scenarios` | tests négatifs / sécurité | sans accès INPI |
+| `09-Flows` | E2E inscription → RGPD | sans accès INPI |
+| `10-2FA-Flow` | E2E cycle 2FA | sans accès INPI |
+| `11-Favorites` | **F-017** | Add, List, Remove |
+| `12-Devices` | **F-020** | Register, List, Unregister |
+| `13-Veille` | **F-041 / F-043 / F-044** | Recent items, Add source, Subscriptions, Unsubscribe, Timeline, Set item state |
+| `14-Veille-Packs` | **F-042** | Catalog, Mine, Apply, Sync |
 
 ### Étape manuelle : vérification de l'email
 
@@ -52,8 +73,13 @@ runtime réutilisée par toutes les requêtes protégées.
 | `userId` / `verificationToken` | Vérification email (copiés depuis les logs) |
 | `challengeToken` / `totpCode` | Parcours 2FA (TOTP à générer depuis le `secret` de Setup) |
 | `siren` | SIREN pour la fiche entreprise (défaut RENAULT) |
+| `companyName` | Nom snapshot pour le marquage favori (défaut Renault) |
 | `depositNumber` | Numéro de dépôt pour la notice de marque |
 | `inpiUsername` / `inpiPassword` | **Identifiants techniques API INPI** — lus depuis `bruno/.env` (cf. ci-dessous) |
+| `feedSourceUrl` | URL d'un flux RSS pour `13-Veille/Add source` (défaut .NET Blog) |
+| `feedItemId` / `subscriptionId` | Capturés runtime par `13-Veille/Recent items` et `Add source` |
+| `packCode` | Code de pack pour `Apply`/`Sync` (défaut `pi-cabinet`) |
+| `deviceToken` / `devicePlatform` / `deviceId` | Pour `12-Devices` ; `deviceId` capturé runtime par `Register` |
 
 ### Secrets : `bruno/.env` (jamais commité)
 
@@ -74,7 +100,8 @@ INPI_PASSWORD='...'   # quotes simples si caractères spéciaux ($ % !)
 > et utiliser les identifiants techniques fournis.
 
 > Tant qu'aucune connexion INPI n'est configurée, `04-Companies` et `05-Trademarks`
-> renvoient **409 `inpi.not_connected`** : c'est le comportement attendu.
+> renvoient **409 `inpi.not_connected`** : c'est le comportement attendu. Les favoris
+> (`11-Favorites`) et la veille (`13-Veille`, `14-Veille-Packs`) **n'ont pas besoin** d'INPI.
 
 ## Automatisation en ligne de commande
 
@@ -127,3 +154,29 @@ vérification d'email — ce qui automatise entièrement un compte vérifié san
 npx @usebruno/cli run 09-Flows --env Local
 npx @usebruno/cli run 10-2FA-Flow --env Local
 ```
+
+### Nouveaux dossiers Favoris / Devices / Veille / Packs
+
+Les dossiers `11-Favorites`, `12-Devices`, `13-Veille` et `14-Veille-Packs` testent les
+endpoints individuels. Les requêtes nécessitent une variable `accessToken` valide —
+exécuter d'abord `01-Auth/Login` (capture `accessToken`) ou un flow complet
+(`09-Flows`).
+
+```bash
+# Test ciblé d'un domaine après login
+npx @usebruno/cli run 11-Favorites --env Local --env-var accessToken=<JWT>
+npx @usebruno/cli run 12-Devices --env Local --env-var accessToken=<JWT>
+npx @usebruno/cli run 13-Veille --env Local --env-var accessToken=<JWT>
+npx @usebruno/cli run 14-Veille-Packs --env Local --env-var accessToken=<JWT>
+```
+
+Notes :
+- `13-Veille/Add source` valide l'URL (parsing + anti-SSRF) ; le polling effectif des
+  items se fait en background via le job Hangfire `feed-polling` (cron `*/30 * * * *`).
+  Pour forcer un polling immédiat en dev : `POST /dev/feed/poll`.
+- `12-Devices/Register` n'envoie **pas vraiment de push** en dev : sans `Fcm:*` / `Apns:*` /
+  `Wns:*` configurés, le `LoggingNotificationDispatcher` se contente de logger les
+  notifications dans la console de l'API.
+- `13-Veille/Timeline` renvoie un DTO union discriminé (`kind = "RssItem" | "FavoriteEvent"`) ;
+  les `FavoriteEvent` apparaissent uniquement après un cycle de `favorite-refresh`
+  (cron `0 3 * * *`) ou `bodacc-polling` (cron `0 4 * * *`) qui détecte un changement.

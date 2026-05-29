@@ -1,0 +1,32 @@
+meta {
+  name: Mine
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/veille/packs/mine
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+tests {
+  test("statut 200", function () {
+    expect(res.getStatus()).to.equal(200);
+  });
+  test("chaque inscription a code + version", function () {
+    const list = res.getBody();
+    if (list.length > 0) {
+      expect(list[0]).to.have.property("code");
+      expect(list[0]).to.have.property("version");
+    }
+  });
+}
+
+docs {
+  F-042 — Mes inscriptions aux packs (avec la version snapshot enregistrée à l'inscription).
+  Si la version du catalogue est plus récente : utiliser `Sync` pour mettre à jour.
+}

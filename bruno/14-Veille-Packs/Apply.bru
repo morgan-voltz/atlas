@@ -1,0 +1,25 @@
+meta {
+  name: Apply
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{baseUrl}}/veille/packs/{{packCode}}/apply
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+assert {
+  res.status: in [204, 404, 409]
+}
+
+docs {
+  F-042 — S'inscrire à un pack. Les sources d'un pack **ignorent la limite** par utilisateur
+  appliquée aux sources libres (F-043).
+  204 = inscrit, 409 (`veille.veille_pack_not_enrolled` côté variantes), 404 (`veille.veille_pack_not_found`)
+  = code de pack inconnu, 400 (`veille.invalid_veille_pack`) = code mal formé.
+}

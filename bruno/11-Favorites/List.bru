@@ -1,0 +1,35 @@
+meta {
+  name: List
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/favorites/companies
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+tests {
+  test("statut 200", function () {
+    expect(res.getStatus()).to.equal(200);
+  });
+  test("réponse = tableau", function () {
+    expect(res.getBody()).to.be.an("array");
+  });
+  test("chaque favori a un siren et une date", function () {
+    const list = res.getBody();
+    if (list.length > 0) {
+      expect(list[0]).to.have.property("siren");
+      expect(list[0]).to.have.property("addedAt");
+    }
+  });
+}
+
+docs {
+  F-017 — Mes favoris. Tri AddedAt desc.
+  DTO : `{ siren, name?, addedAt }` (le `name` est le snapshot capturé au moment du marquage).
+}

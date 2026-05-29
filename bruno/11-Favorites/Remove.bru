@@ -1,0 +1,23 @@
+meta {
+  name: Remove
+  type: http
+  seq: 3
+}
+
+delete {
+  url: {{baseUrl}}/favorites/companies/{{siren}}
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+assert {
+  res.status: in [204, 404]
+}
+
+docs {
+  F-017 — Retire un favori.
+  204 = supprimé, 404 (`favorites.company_not_favorite`) = SIREN non favori, 400 = SIREN invalide.
+}
