@@ -1,6 +1,6 @@
 namespace Atlas.Domain.Common;
 
-public abstract class Entity<TId>
+public abstract class Entity<TId> : IHasDomainEvents
     where TId : notnull
 {
     private readonly List<IDomainEvent> _domainEvents = [];

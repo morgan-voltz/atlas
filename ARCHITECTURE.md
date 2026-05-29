@@ -69,7 +69,10 @@ via `Atlas.Maui/Services/AtlasApiClient.cs` (le code MAUI est livré sur les ter
 ## Patterns clés
 
 - **`Result<T>` / `Result`** (`Atlas.Shared`) : les erreurs métier sont des valeurs, jamais des
-  exceptions.
+  exceptions. Combinateurs `Map` / `Bind` / `Match` / `Tap` / `Ensure` / `TryGetValue` pour
+  enchaîner sans boilerplate, plus une conversion implicite `Error` → `Result` /
+  `Result<T>`. `Result<T>.Value` lève `InvalidOperationException` si appelé en état d'échec
+  (anti-footgun — préférer `TryGetValue` ou `Match`).
 - **Value objects & strongly-typed IDs** : `Siren` (Luhn), `Siret`, `EmailAddress`, `UserId`,
   `DepositNumber`, `NiceClassification`, `FeedRuleId`, `VeillePackId`… encapsulent validation et
   invariants.
@@ -80,6 +83,11 @@ via `Atlas.Maui/Services/AtlasApiClient.cs` (le code MAUI est livré sur les ter
   `Atlas.Infrastructure.*`.
 - **Notifications MediatR** : `INotification` + multi-handlers pour les flux *fire-and-forget*
   (alertes email + push F-019, règle de surveillance matchée F-046, signalement social F-049).
+- **Domain events** : `IDomainEvent` (hérite de `MediatR.INotification` — seule
+  `MediatR.Contracts` est tirée par `Atlas.Domain`). Les entités lèvent via
+  `RaiseDomainEvent(...)` ; `AtlasDbContext.SaveChangesAsync` collecte les events depuis le
+  ChangeTracker, commit la transaction, puis publie via `IPublisher` (sémantique
+  after-commit — aucun event publié si la transaction échoue).
 
 ## Doctrine architecturale (ADR-001 → ADR-016)
 

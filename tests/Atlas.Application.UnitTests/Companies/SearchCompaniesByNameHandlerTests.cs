@@ -30,7 +30,7 @@ public class SearchCompaniesByNameHandlerTests
         var page = new PagedResult<CompanySummary>(
             [
                 new CompanySummary(Siren.Create("552032534").Value!, "RENAULT", "Boulogne-Billancourt", new Naf("2910Z", null)),
-                new CompanySummary(Siren.Create("775665019").Value!, "RENAULT TRUCKS", "Saint-Priest", null),
+                new CompanySummary(Siren.Create("954506077").Value!, "RENAULT TRUCKS", "Saint-Priest", null),
             ],
             Page: 1,
             PageSize: 20,

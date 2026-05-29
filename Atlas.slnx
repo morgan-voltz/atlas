@@ -25,5 +25,6 @@
     <Project Path="tests/Atlas.Infrastructure.Persistence.IntegrationTests/Atlas.Infrastructure.Persistence.IntegrationTests.csproj" />
     <Project Path="tests/Atlas.Infrastructure.Security.UnitTests/Atlas.Infrastructure.Security.UnitTests.csproj" />
     <Project Path="tests/Atlas.Infrastructure.Veille.IntegrationTests/Atlas.Infrastructure.Veille.IntegrationTests.csproj" />
+    <Project Path="tests/Atlas.Shared.UnitTests/Atlas.Shared.UnitTests.csproj" />
   </Folder>
 </Solution>

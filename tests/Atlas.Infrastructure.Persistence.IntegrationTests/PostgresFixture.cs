@@ -30,6 +30,8 @@ public sealed class PostgresFixture : IAsyncLifetime
 
         return new AtlasDbContext(options);
     }
+
+    public string GetConnectionString() => _container.GetConnectionString();
 }
 
 [CollectionDefinition(Name)]

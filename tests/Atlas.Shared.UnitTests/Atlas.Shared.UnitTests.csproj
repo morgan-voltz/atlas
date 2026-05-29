@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
@@ -13,9 +13,6 @@
     <PackageReference Include="xunit" />
     <PackageReference Include="xunit.runner.visualstudio" />
     <PackageReference Include="FluentAssertions" />
-    <PackageReference Include="MediatR" />
-    <PackageReference Include="NSubstitute" />
-    <PackageReference Include="Testcontainers.PostgreSql" />
   </ItemGroup>
 
   <ItemGroup>
@@ -23,7 +20,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\Atlas.Infrastructure.Persistence\Atlas.Infrastructure.Persistence.csproj" />
+    <ProjectReference Include="..\..\src\Atlas.Shared\Atlas.Shared.csproj" />
   </ItemGroup>
 
 </Project>

@@ -1,7 +1,9 @@
 namespace Atlas.Shared.Result;
 
-public abstract record Error(string Code, string Message);
-
+/// <summary>
+/// Résultat d'une opération métier sans valeur de retour : <see cref="Ok"/> ou <see cref="Fail(Error)"/>.
+/// Les erreurs métier sont des valeurs (jamais des exceptions, cf. <c>CLAUDE.md</c>).
+/// </summary>
 public sealed record Result
 {
     private Result(bool isSuccess, Error? error)
@@ -18,27 +20,47 @@ public sealed record Result
 
     public static Result Ok() => new(true, null);
 
-    public static Result Fail(Error error) => new(false, error);
-}
-
-public sealed record Result<T>
-{
-    private Result(bool isSuccess, T? value, Error? error)
+    public static Result Fail(Error error)
     {
-        IsSuccess = isSuccess;
-        Value = value;
-        Error = error;
+        ArgumentNullException.ThrowIfNull(error);
+        return new(false, error);
     }
 
-    public bool IsSuccess { get; }
+    /// <summary>Conversion implicite depuis une <see cref="Error"/> pour permettre <c>return error;</c>.</summary>
+    public static implicit operator Result(Error error) => Fail(error);
 
-    public bool IsFailure => !IsSuccess;
+    // ── Combinateurs (Lot 4 audit — purement additif, supprime le boilerplate `if (x.IsFailure) ...`) ──
 
-    public T? Value { get; }
+    /// <summary>Exécute <paramref name="next"/> si succès, propage l'erreur sinon. Permet d'enchaîner sans boilerplate.</summary>
+    public Result Bind(Func<Result> next)
+    {
+        ArgumentNullException.ThrowIfNull(next);
+        return IsSuccess ? next() : this;
+    }
 
-    public Error? Error { get; }
+    /// <summary>Variante générique de <see cref="Bind(Func{Result})"/> : enchaîne vers un <see cref="Result{T}"/>.</summary>
+    public Result<T> Bind<T>(Func<Result<T>> next)
+    {
+        ArgumentNullException.ThrowIfNull(next);
+        return IsSuccess ? next() : Result<T>.Fail(Error!);
+    }
 
-    public static Result<T> Ok(T value) => new(true, value, null);
+    /// <summary>Replie un <see cref="Result"/> en exécutant une branche succès ou erreur.</summary>
+    public T Match<T>(Func<T> onSuccess, Func<Error, T> onFailure)
+    {
+        ArgumentNullException.ThrowIfNull(onSuccess);
+        ArgumentNullException.ThrowIfNull(onFailure);
+        return IsSuccess ? onSuccess() : onFailure(Error!);
+    }
 
-    public static Result<T> Fail(Error error) => new(false, default, error);
+    /// <summary>Side-effect en cas de succès (logging, audit). Retourne <c>this</c> pour chaîner.</summary>
+    public Result Tap(Action onSuccess)
+    {
+        ArgumentNullException.ThrowIfNull(onSuccess);
+        if (IsSuccess)
+        {
+            onSuccess();
+        }
+        return this;
+    }
 }
