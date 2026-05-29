@@ -41,6 +41,16 @@ internal sealed class FeedItemRepository(AtlasDbContext dbContext) : IFeedItemRe
             .Take(max)
             .ToListAsync(ct);
 
+    public async Task<IReadOnlyList<FeedItem>> ListFetchedSinceAsync(
+        DateTimeOffset since,
+        int max,
+        CancellationToken ct = default) =>
+        await dbContext.FeedItems
+            .Where(item => item.FetchedAt > since)
+            .OrderBy(item => item.FetchedAt)
+            .Take(max)
+            .ToListAsync(ct);
+
     public async Task<PagedResult<TimelineEntry>> GetTimelineAsync(
         UserId userId,
         TimelineFilter filter,

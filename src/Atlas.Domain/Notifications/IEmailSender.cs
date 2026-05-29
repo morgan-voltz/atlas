@@ -1,5 +1,6 @@
 using Atlas.Domain.Favorites;
 using Atlas.Domain.Users;
+using Atlas.Domain.Veille;
 
 namespace Atlas.Domain.Notifications;
 
@@ -17,5 +18,12 @@ public interface IEmailSender
         string sirenValue,
         string? denomination,
         IReadOnlyList<CompanyFavoriteChange> changes,
+        CancellationToken ct = default);
+
+    /// <summary>Alerte F-046 : une règle de surveillance personnalisée a matché un ou plusieurs nouveaux items de veille.</summary>
+    Task SendFeedRuleMatchedAsync(
+        EmailAddress recipient,
+        string ruleName,
+        IReadOnlyList<FeedRuleMatch> matches,
         CancellationToken ct = default);
 }

@@ -1,6 +1,7 @@
 using Atlas.Domain.Favorites;
 using Atlas.Domain.Notifications;
 using Atlas.Domain.Users;
+using Atlas.Domain.Veille;
 
 namespace Atlas.Api.Dev;
 
@@ -51,6 +52,23 @@ internal sealed class CapturingEmailSender(
                 denomination ?? "(sans dénomination)",
                 sirenValue,
                 changes.Count);
+        }
+        return Task.CompletedTask;
+    }
+
+    public Task SendFeedRuleMatchedAsync(
+        EmailAddress recipient,
+        string ruleName,
+        IReadOnlyList<FeedRuleMatch> matches,
+        CancellationToken ct = default)
+    {
+        if (logger.IsEnabled(LogLevel.Information))
+        {
+            logger.LogInformation(
+                "[DEV] Règle de veille {RuleName} pour {Recipient} — {MatchCount} match(s).",
+                ruleName,
+                recipient.Value,
+                matches.Count);
         }
         return Task.CompletedTask;
     }

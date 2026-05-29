@@ -61,7 +61,7 @@ Légende identique au tableau MVP 1.
 | F-043 Ajout libre de sources | ✅ |
 | F-044 Timeline unifiée | ✅ |
 | F-045 Déduplication intelligente (SimHash) | ✅ |
-| F-046 Filtres et règles de surveillance | ⬜ |
+| F-046 Filtres et règles de surveillance | ✅ |
 | F-047 Combinaison veille + favoris (3 volets : RSS, RNE, BODACC) | ✅ |
 | F-048 Intégration BODACC | ✅ |
 | F-049 Marketplace des templates partagés | ⬜ |
@@ -69,9 +69,9 @@ Légende identique au tableau MVP 1.
 
 Les 🟡 correspondent surtout à : confirmation contre l'API INPI réelle (F-013, F-016),
 export XLSX et étendue de couverture (F-021), et discipline d'architecture partiellement en
-place (F-050 — ports `IFeedSummarizer` référencé dans F-054, à valider). Les ⬜ sont les
-deux vrais trous restants du cluster veille (F-046, F-049). UI MAUI restante pour
-F-017, F-020, F-044 (chantier client cross-cutting, suivi côté F-009/F-010 du MVP 1).
+place (F-050 — ports `IFeedSummarizer` référencé dans F-054, à valider). Le ⬜ restant
+du cluster veille est F-049 (marketplace templates). UI MAUI restante pour
+F-017, F-020, F-044, F-046 (chantier client cross-cutting, suivi côté F-009/F-010 du MVP 1).
 
 ---
 
@@ -653,6 +653,8 @@ Pour chaque feature, on documente :
 
 ### F-046 — Filtres et règles de surveillance personnalisées
 
+> **Statut** : ✅ Backend implémenté (MVP 2, 29 mai 2026). Entité `FeedRule` (UserId + critères AND : `KeywordPattern` / `SourceId` / `MentionedSiren` (Siren) + actions : `NotifyEmail` / `NotifyPush`), invariants `Create` / `Update` (au moins un critère, au moins une action, nom ≤ 200, keyword ≤ 200), `RegisterEvaluation` / `RegisterTrigger`. Port `IFeedRuleRepository`. 5 use cases MediatR (`CreateFeedRule`, `UpdateFeedRule`, `DeleteFeedRule`, `ListMyFeedRules`, `EvaluateFeedRules`). Notification `FeedRuleMatchedNotification` + 2 handlers (`SendFeedRuleMatchedEmailHandler`, `DispatchFeedRuleMatchedPushHandler`) calqués sur F-019, gating sur `NotifyEmail` / `NotifyPush` par règle. Extension `IEmailSender.SendFeedRuleMatchedAsync` + adapters logging / capturing. 4 endpoints `/feed/rules` (POST/GET/PATCH/DELETE). Job Hangfire : `EvaluateFeedRulesCommand` chaîné dans `FeedPollingJob.PollAsync()` après `MatchFavoritesInFeedItemsCommand` (F-047) — voit donc les `FeedItemFavoriteMatch` pour évaluer `MentionedSiren`. Évaluation incrémentale par watermark `LastEvaluatedAt`. Table `feed_rule` (cascade FK user RGPD). 248 tests verts (89 domain + 155 application + 4 archi), dont 17 sur `FeedRule` (invariants + matching AND + watermark), CreateFeedRule (4), DeleteFeedRule (3), EvaluateFeedRules (4 — flux complet match/no-match/watermark). **Reste** : adapter Brevo email (toujours `LoggingEmailSender`, comme F-019), UI MAUI (CRUD des règles), validateurs FluentValidation câblés dans le pipeline si nécessaire.
+
 **Description** : l'utilisateur configure des **filtres** sur sa timeline (par mot-clé, par entreprise favorite mentionnée, par source). Crée aussi des **règles** ("alerte-moi quand un nouvel item mentionne X").
 
 **Valeur user** : transformer la veille passive en veille active et ciblée.
@@ -751,7 +753,7 @@ Pour chaque feature, on documente :
 
 **🔴 Bloquant — vrais trous restants** (à livrer pour annoncer MVP 2 « fini »)
 
-1. **F-046 — Filtres et règles de surveillance personnalisées** : pas commencé. C'est le seul vrai trou côté backend du cluster veille. Sans F-046, la timeline F-044 reste passive ; toutes les règles d'alerte sont aujourd'hui dérivées de mécanismes ad hoc (F-019 favoris RNE, F-048 BODACC). Cf. aussi V2 F-027 (qui dépend de F-046 — frontière clarifiée dans V2).
+1. ~~**F-046 — Filtres et règles de surveillance personnalisées**~~ ✅ **Livré 29 mai 2026** (backend). Reste UI MAUI et adapter Brevo (commun avec F-019).
 2. **F-049 — Marketplace des templates partagés** : pas commencé. La fiche elle-même note « V2 light, posée en MVP 2 » — décision à arbitrer : on la garde dans le périmètre MVP 2, ou on la déporte officiellement en V2 ?
 3. **F-050 — Vérification de l'architecture premium** : ports `IFeedItemEnricher` / `IFeedRelevanceScorer` / `IFeedSummarizer` à confirmer dans `Atlas.Application.Premium` + test d'architecture qui les verrouille.
 
