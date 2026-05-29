@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using Atlas.Api.Reports;
 using Atlas.Application.Companies;
 using Atlas.Application.Companies.DownloadCompanyAttachment;
 using Atlas.Application.Companies.GetCompanyAttachments;
@@ -21,6 +22,8 @@ internal static class CompaniesEndpoints
         // F-013 — actes et bilans
         group.MapGet("/{siren}/attachments", GetAttachmentsAsync);
         group.MapGet("/{siren}/attachments/{attachmentId}/download", DownloadAttachmentAsync);
+        // F-022 — rapport PDF de fiche entreprise
+        group.MapGet("/{siren}/report.pdf", DownloadReportPdfAsync);
 
         return routes;
     }
@@ -97,5 +100,35 @@ internal static class CompaniesEndpoints
         AttachmentContent content = result.Value!;
         // Streamé directement vers le client. ASP.NET dispose le stream à la fin de la réponse.
         return Results.Stream(content.Stream, content.ContentType, content.FileName);
+    }
+
+    private static async Task<IResult> DownloadReportPdfAsync(
+        string siren,
+        ClaimsPrincipal principal,
+        ISender sender,
+        TimeProvider clock,
+        CancellationToken ct)
+    {
+        if (!principal.TryGetUserId(out Guid userId))
+        {
+            return Results.Unauthorized();
+        }
+
+        Result<CompanyDto> companyResult = await sender.Send(new GetCompanyBySirenQuery(userId, siren), ct);
+        if (companyResult.IsFailure)
+        {
+            return companyResult.Error!.ToProblem();
+        }
+
+        // Les attachments sont best-effort : si la liste échoue (404, INPI down), on génère
+        // le PDF avec une liste vide plutôt que de refuser tout le rapport.
+        Result<IReadOnlyList<CompanyAttachmentDto>> attachmentsResult =
+            await sender.Send(new GetCompanyAttachmentsQuery(userId, siren), ct);
+        IReadOnlyList<CompanyAttachmentDto> attachments = attachmentsResult.IsSuccess
+            ? attachmentsResult.Value!
+            : [];
+
+        byte[] pdf = CompanyReportRenderer.Render(companyResult.Value!, attachments, clock.GetUtcNow());
+        return Results.File(pdf, "application/pdf", $"atlas-{siren}.pdf");
     }
 }
