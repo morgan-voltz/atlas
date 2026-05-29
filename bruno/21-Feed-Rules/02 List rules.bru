@@ -1,0 +1,40 @@
+meta {
+  name: 02 List rules
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/feed/rules
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+tests {
+  test("statut 200", function () {
+    expect(res.getStatus()).to.equal(200);
+  });
+  test("réponse = tableau", function () {
+    expect(res.getBody()).to.be.an("array");
+  });
+  test("chaque règle a id + name + flags + isActive", function () {
+    const list = res.getBody();
+    if (list.length > 0) {
+      const rule = list[0];
+      expect(rule).to.have.property("id");
+      expect(rule).to.have.property("name");
+      expect(rule).to.have.property("notifyEmail");
+      expect(rule).to.have.property("notifyPush");
+      expect(rule).to.have.property("isActive");
+    }
+  });
+}
+
+docs {
+  F-046 — Liste mes règles de surveillance.
+  DTO : `{ id, name, keywordPattern?, sourceId?, mentionedSiren?, notifyEmail,
+            notifyPush, isActive, createdAt }`.
+}

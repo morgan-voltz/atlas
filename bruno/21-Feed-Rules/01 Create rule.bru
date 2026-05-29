@@ -1,0 +1,70 @@
+meta {
+  name: 01 Create rule
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/feed/rules
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "name": "Bruno test rule",
+    "keywordPattern": "dotnet",
+    "sourceId": null,
+    "mentionedSiren": null,
+    "notifyEmail": true,
+    "notifyPush": false
+  }
+}
+
+script:post-response {
+  if (res.getStatus() === 201) {
+    const body = res.getBody();
+    if (body && body.id) {
+      bru.setVar("ruleId", body.id);
+    }
+  }
+}
+
+tests {
+  test("statut 201", function () {
+    expect(res.getStatus()).to.equal(201);
+  });
+  test("Location pointe sur la nouvelle règle", function () {
+    const location = res.getHeaders()["location"] || res.getHeaders()["Location"];
+    expect(location).to.match(/\/feed\/rules\/[0-9a-fA-F-]{36}/);
+  });
+  test("body contient id, name et flags de notification", function () {
+    const body = res.getBody();
+    expect(body).to.have.property("id");
+    expect(body).to.have.property("name");
+    expect(body.name).to.equal("Bruno test rule");
+    expect(body).to.have.property("notifyEmail");
+    expect(body).to.have.property("notifyPush");
+  });
+}
+
+docs {
+  F-046 — Crée une règle de surveillance (critères AND : keywordPattern, sourceId,
+  mentionedSiren) avec déclencheurs email et/ou push.
+
+  Body : `{ name, keywordPattern?, sourceId?, mentionedSiren?, notifyEmail, notifyPush }`.
+  201 Created + Location header pointant sur `/feed/rules/{id}`. Body = `FeedRuleDto`.
+  400 `veille.invalid_feed_rule` si la règle ne respecte pas les invariants
+  (au moins un critère renseigné, longueur du nom, etc.).
+
+  Capture runtime : l'`id` de la règle créée est écrit dans la variable `ruleId`
+  pour permettre aux requêtes suivantes (Update, Delete) de la cibler.
+}

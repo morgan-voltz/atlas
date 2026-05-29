@@ -1,0 +1,39 @@
+meta {
+  name: Download confidential (403)
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{baseUrl}}/companies/{{siren}}/attachments/{{confidentialAttachmentId}}/download
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+tests {
+  test("statut 403", function () {
+    expect(res.getStatus()).to.equal(403);
+  });
+  test("ProblemDetails avec title companies.attachment_confidential", function () {
+    const body = res.getBody();
+    expect(body).to.have.property("title");
+    expect(body.title).to.equal("companies.attachment_confidential");
+  });
+}
+
+docs {
+  F-013 — Cas négatif : tentative de téléchargement d'un bilan **confidentiel**.
+
+  L'INPI renvoie le champ `confidentialite` sur certains bilans (PME / micro-entreprises
+  qui ont opté pour la confidentialité de leurs comptes). Atlas refuse le proxy de
+  ces documents.
+
+  Attendu : 403 ProblemDetails avec `title=companies.attachment_confidential`.
+
+  Renseigner `confidentialAttachmentId` avec un ID de bilan confidentiel (à trouver
+  via `List attachments` sur un SIREN qui a des comptes confidentiels — typiquement
+  une micro-entreprise).
+}

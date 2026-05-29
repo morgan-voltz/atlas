@@ -1,0 +1,37 @@
+meta {
+  name: 03 Round-trip (GET reflects PUT)
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/user/preferences/accessibility
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+tests {
+  test("statut 200", function () {
+    expect(res.getStatus()).to.equal(200);
+  });
+  test("HighContrast = true (depuis 02 Update)", function () {
+    expect(res.getBody().highContrast).to.equal(true);
+  });
+  test("ReduceMotion = true (depuis 02 Update)", function () {
+    expect(res.getBody().reduceMotion).to.equal(true);
+  });
+  test("FontPreference = DyslexiaFriendly (depuis 02 Update)", function () {
+    expect(res.getBody().fontPreference).to.equal("DyslexiaFriendly");
+  });
+}
+
+docs {
+  Lot 5c — Valide la persistance multi-requête : après `02 Update` (PUT), un GET
+  retourne exactement les valeurs envoyées. Couvre le mapping EF Core owned-type
+  + handler MediatR + chargement initial dans la même transaction logique.
+
+  À jouer **après** `02 Update` dans la même session (token authentifié identique).
+}

@@ -1,0 +1,42 @@
+meta {
+  name: Patents Add invalid (400)
+  type: http
+  seq: 8
+}
+
+post {
+  url: {{baseUrl}}/favorites/patents
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "publicationNumber": "",
+    "title": "Brevet invalide"
+  }
+}
+
+tests {
+  test("statut 400", function () {
+    expect(res.getStatus()).to.equal(400);
+  });
+  test("title indique favorites.invalid_publication_number", function () {
+    const body = res.getBody();
+    const code = (body && body.title) || "";
+    expect(code.toString()).to.match(/favorites\.invalid_publication_number/i);
+  });
+}
+
+docs {
+  F-018 — Cas négatif : numéro de publication brevet vide ou invalide.
+  Attendu : 400 ProblemDetails avec `title=favorites.invalid_publication_number`.
+}

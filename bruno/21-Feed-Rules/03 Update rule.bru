@@ -1,0 +1,56 @@
+meta {
+  name: 03 Update rule
+  type: http
+  seq: 3
+}
+
+patch {
+  url: {{baseUrl}}/feed/rules/{{ruleId}}
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "name": "Bruno test rule (renommée)",
+    "keywordPattern": "dotnet OR maui",
+    "sourceId": null,
+    "mentionedSiren": null,
+    "notifyEmail": true,
+    "notifyPush": true,
+    "isActive": false
+  }
+}
+
+tests {
+  test("statut 200", function () {
+    expect(res.getStatus()).to.equal(200);
+  });
+  test("name + flags + isActive reflètent la mise à jour", function () {
+    const body = res.getBody();
+    expect(body.name).to.equal("Bruno test rule (renommée)");
+    expect(body.notifyPush).to.equal(true);
+    expect(body.isActive).to.equal(false);
+  });
+}
+
+docs {
+  F-046 — Met à jour une règle existante. Body complet (les champs non envoyés sont
+  considérés comme remis à null / défaut).
+
+  200 + FeedRuleDto. 400 `veille.invalid_feed_rule` si invariant cassé.
+
+  Note : 404 (`veille.feed_rule_not_found`) et 403 (`veille.feed_rule_forbidden`)
+  retombent actuellement sur 400 par défaut dans `ErrorHttpMapping` — à corriger
+  dans une PR séparée du mapping HTTP.
+
+  Renseigner `ruleId` (capturé par `01 Create rule`).
+}

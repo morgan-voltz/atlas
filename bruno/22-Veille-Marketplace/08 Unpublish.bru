@@ -1,0 +1,33 @@
+meta {
+  name: 08 Unpublish
+  type: http
+  seq: 8
+}
+
+patch {
+  url: {{baseUrl}}/veille/packs/user/{{userPackCode}}/unpublish
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+tests {
+  test("statut 200", function () {
+    expect(res.getStatus()).to.equal(200);
+  });
+  test("isPublic = false après dépublication", function () {
+    const body = res.getBody();
+    expect(body).to.have.property("isPublic");
+    expect(body.isPublic).to.equal(false);
+  });
+}
+
+docs {
+  F-049 — Retire un pack utilisateur de la marketplace (passe `isPublic` à false).
+  200 + VeillePackMarketplaceDto. Le pack reste accessible à son auteur dans
+  `mine/authored` mais disparaît de `community`.
+
+  Erreurs identiques à Publish (veille_pack_not_found / forbidden / immutable).
+}

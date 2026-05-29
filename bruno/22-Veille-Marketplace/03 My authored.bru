@@ -1,0 +1,36 @@
+meta {
+  name: 03 My authored
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/veille/packs/mine/authored
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+tests {
+  test("statut 200", function () {
+    expect(res.getStatus()).to.equal(200);
+  });
+  test("réponse = tableau", function () {
+    expect(res.getBody()).to.be.an("array");
+  });
+  test("chaque pack a code + name + authorId", function () {
+    const list = res.getBody();
+    if (list.length > 0) {
+      expect(list[0]).to.have.property("code");
+      expect(list[0]).to.have.property("name");
+      expect(list[0]).to.have.property("authorId");
+    }
+  });
+}
+
+docs {
+  F-049 — Liste les packs **dont je suis l'auteur** (publiés OU brouillons).
+  Tableau de `VeillePackMarketplaceDto`.
+}

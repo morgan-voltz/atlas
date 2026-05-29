@@ -1,0 +1,36 @@
+meta {
+  name: Report not found (404)
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/companies/{{siren404}}/report.pdf
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+tests {
+  test("statut 404", function () {
+    expect(res.getStatus()).to.equal(404);
+  });
+  test("ProblemDetails (companies.not_found ou inpi.not_connected)", function () {
+    const body = res.getBody();
+    expect(body).to.have.property("title");
+    expect(body.title.toString()).to.match(/companies\.not_found|inpi\.not_connected/i);
+  });
+}
+
+docs {
+  F-022 — Cas négatif : SIREN inconnu ou compte INPI non lié.
+  L'endpoint enchaîne `GetCompanyBySirenQuery` puis `GetCompanyAttachmentsQuery`
+  (best-effort). Si la fiche entreprise n'est pas trouvée, le PDF n'est pas généré
+  et l'erreur métier remonte avec son code HTTP mappé.
+
+  Renseigner `siren404` dans Local.bru avec un SIREN valide Luhn mais inexistant côté INPI
+  (par exemple `000000000` ne passe pas la validation domaine, préférer un SIREN
+  syntaxiquement valide qui n'existe pas, ou un SIREN dissout).
+}

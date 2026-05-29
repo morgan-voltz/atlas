@@ -1,0 +1,31 @@
+meta {
+  name: 05 List excludes deleted rule
+  type: http
+  seq: 5
+}
+
+get {
+  url: {{baseUrl}}/feed/rules
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+tests {
+  test("statut 200", function () {
+    expect(res.getStatus()).to.equal(200);
+  });
+  test("la règle supprimée n'apparaît plus", function () {
+    const ruleId = bru.getVar("ruleId");
+    const list = res.getBody();
+    const found = list.find(r => r.id === ruleId);
+    expect(found, `règle ${ruleId} devrait avoir disparu`).to.be.undefined;
+  });
+}
+
+docs {
+  E2E Rules — étape 5/5. Confirme que la règle supprimée à l'étape 4 a bien
+  disparu de la liste (cycle complet : create → list → patch → delete → list).
+}

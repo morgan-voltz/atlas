@@ -1,0 +1,30 @@
+meta {
+  name: Detail not found (404)
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{baseUrl}}/patents/FR-9999999999
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+tests {
+  test("statut 404", function () {
+    expect(res.getStatus()).to.equal(404);
+  });
+  test("ProblemDetails avec title patents.not_found", function () {
+    const body = res.getBody();
+    expect(body).to.have.property("title");
+    expect(body.title).to.match(/patents\.not_found|not_found/i);
+  });
+}
+
+docs {
+  F-015 — Cas négatif : numéro de publication inconnu.
+  Attendu : 404 ProblemDetails (code métier `patents.not_found`).
+}

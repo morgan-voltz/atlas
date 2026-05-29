@@ -1,0 +1,37 @@
+meta {
+  name: 04 Publish
+  type: http
+  seq: 4
+}
+
+patch {
+  url: {{baseUrl}}/veille/packs/user/{{userPackCode}}/publish
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+tests {
+  test("statut 200", function () {
+    expect(res.getStatus()).to.equal(200);
+  });
+  test("isPublic = true après publication", function () {
+    const body = res.getBody();
+    expect(body).to.have.property("isPublic");
+    expect(body.isPublic).to.equal(true);
+  });
+}
+
+docs {
+  F-049 — Publie un pack utilisateur dans la marketplace communautaire.
+  200 + VeillePackMarketplaceDto avec `isPublic=true`.
+
+  Erreurs (retombent en 400 par défaut côté mapping HTTP, à corriger ailleurs) :
+    - `veille.veille_pack_not_found` si code inconnu.
+    - `veille.veille_pack_forbidden` si je ne suis pas l'auteur.
+    - `veille.veille_pack_immutable` si pack système (préfixe `system:`).
+
+  Renseigner `userPackCode` (capturé par `02 Create user pack`).
+}

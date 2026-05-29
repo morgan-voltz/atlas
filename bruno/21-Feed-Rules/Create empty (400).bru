@@ -1,0 +1,49 @@
+meta {
+  name: Create empty (400)
+  type: http
+  seq: 5
+}
+
+post {
+  url: {{baseUrl}}/feed/rules
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "name": "Règle sans critères",
+    "keywordPattern": null,
+    "sourceId": null,
+    "mentionedSiren": null,
+    "notifyEmail": false,
+    "notifyPush": false
+  }
+}
+
+tests {
+  test("statut 400", function () {
+    expect(res.getStatus()).to.equal(400);
+  });
+  test("title ou type indique veille.invalid_feed_rule", function () {
+    const body = res.getBody();
+    const code = (body && (body.title || body.type)) || "";
+    expect(code.toString()).to.match(/veille\.invalid_feed_rule|invalid_feed_rule/i);
+  });
+}
+
+docs {
+  F-046 — Cas négatif : aucun critère renseigné (keywordPattern, sourceId, mentionedSiren
+  tous null) ET aucun canal de notification activé.
+
+  Attendu : 400 ProblemDetails avec code `veille.invalid_feed_rule` (au moins un critère
+  + au moins un canal requis).
+}

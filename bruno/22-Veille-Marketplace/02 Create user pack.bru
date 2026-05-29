@@ -1,0 +1,66 @@
+meta {
+  name: 02 Create user pack
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/veille/packs/user
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "code": "{{userPackCode}}",
+    "name": "Pack Bruno test",
+    "description": "Créé depuis la collection Bruno pour valider F-049",
+    "subscriptionIds": []
+  }
+}
+
+script:post-response {
+  if (res.getStatus() === 201) {
+    const body = res.getBody();
+    if (body && body.code) {
+      bru.setVar("userPackCode", body.code);
+    }
+  }
+}
+
+tests {
+  test("statut 201", function () {
+    expect(res.getStatus()).to.equal(201);
+  });
+  test("Location pointe sur le nouveau pack utilisateur", function () {
+    const location = res.getHeaders()["location"] || res.getHeaders()["Location"];
+    expect(location).to.match(/\/veille\/packs\/user\//);
+  });
+  test("body contient code + name + authorId + isPublic=false", function () {
+    const body = res.getBody();
+    expect(body).to.have.property("code");
+    expect(body).to.have.property("name");
+    expect(body).to.have.property("authorId");
+    expect(body.isPublic).to.equal(false);
+  });
+}
+
+docs {
+  F-049 — Crée un pack utilisateur (en brouillon, non publié).
+
+  Body : `{ code, name, description?, subscriptionIds? }`.
+  201 Created + Location `/veille/packs/user/{code}`. Body = `VeillePackMarketplaceDto`.
+  409 `veille.veille_pack_code_already_used` si le code est déjà pris (retombe sur 400
+  par défaut dans le mapping HTTP — à corriger dans une PR séparée).
+
+  Renseigner `userPackCode` (par ex. `bruno-test-{{$randomInt}}` ou un code unique).
+  Le code créé est aussi capturé runtime pour les requêtes suivantes (Publish, Unpublish).
+}

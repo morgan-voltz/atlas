@@ -1,0 +1,32 @@
+meta {
+  name: 02 List contains rule
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/feed/rules
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+tests {
+  test("statut 200", function () {
+    expect(res.getStatus()).to.equal(200);
+  });
+  test("la règle créée est présente dans la liste", function () {
+    const ruleId = bru.getVar("ruleId");
+    const list = res.getBody();
+    const found = list.find(r => r.id === ruleId);
+    expect(found, `règle ${ruleId} non trouvée dans la liste`).to.not.be.undefined;
+    expect(found.name).to.equal("E2E rule Bruno");
+  });
+}
+
+docs {
+  E2E Rules — étape 2/5. Vérifie que la règle créée à l'étape 1 apparaît bien dans
+  `ListMyFeedRulesQuery`.
+}

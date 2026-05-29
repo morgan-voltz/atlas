@@ -1,0 +1,24 @@
+meta {
+  name: 04 Delete rule
+  type: http
+  seq: 4
+}
+
+delete {
+  url: {{baseUrl}}/feed/rules/{{ruleId}}
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+tests {
+  test("statut 204", function () {
+    expect(res.getStatus()).to.equal(204);
+  });
+}
+
+docs {
+  E2E Rules — étape 4/5. Supprime la règle créée aux étapes précédentes.
+}
