@@ -13,6 +13,7 @@
     <PackageReference Include="Hangfire.PostgreSql" />
     <PackageReference Include="Serilog.AspNetCore" />
     <PackageReference Include="Serilog.Sinks.Console" />
+    <PackageReference Include="QuestPDF" />
   </ItemGroup>
 
   <ItemGroup>

@@ -19,7 +19,12 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Serilog;
 
+// F-022 — active la licence community QuestPDF pour la génération PDF.
+Atlas.Api.Reports.CompanyReportRenderer.Configure();
+
+// TimeProvider est requis par certains endpoints (F-022). Service standard .NET 10.
 var builder = WebApplication.CreateBuilder(args);
+builder.Services.AddSingleton(TimeProvider.System);
 
 // Logging structuré Serilog (Lot 2b audit) + masquage proactif des propriétés sensibles.
 builder.Host.UseSerilog((context, _, loggerConfiguration) =>

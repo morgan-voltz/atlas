@@ -124,4 +124,9 @@
     <PackageVersion Include="Microsoft.Extensions.Logging.Debug" Version="10.0.0" />
   </ItemGroup>
 
+  <ItemGroup Label="Reports">
+    <!-- QuestPDF — community license (open-source / non commercial), licence engagée via QuestPDF.Settings.License au démarrage. -->
+    <PackageVersion Include="QuestPDF" Version="2024.12.3" />
+  </ItemGroup>
+
 </Project>

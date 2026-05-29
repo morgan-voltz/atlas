@@ -477,6 +477,8 @@ Pour chaque feature, on documente :
 
 ### F-022 — Rapport PDF de fiche entreprise
 
+> **Statut** : ✅ MVP implémenté (MVP 2, 29 mai 2026). Endpoint `GET /companies/{siren}/report.pdf` → PDF A4 (identité, NAF, adresse, dirigeants, table actes/bilans). Powered by **QuestPDF community edition** (licence engagée au démarrage). `CompanyReportRenderer` dans `Atlas.Api/Reports/` (couche présentation, QuestPDF référencé uniquement par Atlas.Api). Attachments best-effort (PDF généré même si la liste échoue). 3 smoke tests dans `Atlas.Api.IntegrationTests` (signature `%PDF`, payloads minimal/complet/vide). PR #43. **Reste** : enrichissement (logo, historique des modifications via snapshot F-019, bilans intégrés via F-013 download).
+
 **Description** : génération d'un PDF imprimable rassemblant les informations principales d'une entreprise + historique des modifications + bilans récents.
 
 **Valeur user** : documentation client pour les cabinets, présentation à un comité d'investissement.

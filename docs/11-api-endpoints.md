@@ -3,7 +3,7 @@
 > **Périmètre** : tous les endpoints HTTP exposés par `Atlas.Api`, groupés par domaine fonctionnel.
 > Document **vivant** : à mettre à jour à chaque PR qui ajoute, modifie ou supprime un endpoint.
 
-**Dernière mise à jour** : 29 mai 2026 — après merge F-021 (PR à venir).
+**Dernière mise à jour** : 29 mai 2026 — après merge F-022 (PR à venir).
 
 ---
 
@@ -122,6 +122,7 @@ Cf. [`CompaniesEndpoints.cs`](../src/Atlas.Api/Endpoints/CompaniesEndpoints.cs).
 | `GET` | `/companies/{siren}` | 🔐 | Fiche complète (identité, NAF, adresse, dirigeants…). Publie `SearchPerformedNotification`. |
 | `GET` | `/companies/{siren}/attachments` | 🔐 | F-013 — liste des actes et bilans (`{ id, type, name, depositedAt?, sizeBytes?, isConfidential }`). |
 | `GET` | `/companies/{siren}/attachments/{id}/download` | 🔐 | F-013 — téléchargement binaire du document (proxy INPI). |
+| `GET` | `/companies/{siren}/report.pdf` | 🔐 | F-022 — rapport PDF (identité, NAF, adresse, dirigeants, documents). |
 
 | Code | HTTP | Sens |
 |---|---|---|
