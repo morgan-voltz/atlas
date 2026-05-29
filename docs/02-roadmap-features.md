@@ -4,7 +4,7 @@
 > Chaque feature est décrite avec sa valeur utilisateur, sa complexité technique, les APIs externes requises et les dépendances vers d'autres features.
 
 **Version** : 1.0
-**Date de dernière mise à jour** : 27 mai 2026
+**Date de dernière mise à jour** : 29 mai 2026
 
 ---
 
@@ -923,6 +923,173 @@ Pour chaque feature, on documente :
 
 ---
 
+### F-054 — Indicateurs financiers descriptifs
+
+**Description** : sur la fiche d'une entreprise, Atlas affiche des **indicateurs financiers descriptifs** issus de ses comptes annuels — ratios (rentabilité, autonomie financière, solvabilité, liquidité) et surtout leur **évolution dans le temps**. Tout est factuel, calculé de façon transparente, jamais agrégé en une note unique. **Ligne strictement descriptive** : pas de note / score / cotation propriétaire qui mimerait une notation de crédit ou prédirait un défaut (la cotation Banque de France FIBEN, confidentielle, tient ce terrain réglementé). Nommage volontaire « indicateurs **descriptifs** », pas « scoring » ni « notation » : Atlas affiche des faits, pas un jugement de solvabilité.
+
+**Valeur user** : pour les personas **expert-comptable** et **investisseur**, voir d'un coup d'œil la trajectoire financière d'une boîte (et de ses concurrents / partenaires suivis), sans ouvrir et déchiffrer des PDF de comptes. Combiné aux watchlists (F-053) et à la veille (F-047), ça complète la vue « identité + PI + veille + finances » dans un seul outil.
+
+**Complexité** : ★★★ à ★★★★ selon la profondeur (tendances, postes bruts) — phasable. Le travail n'est ni l'ingestion ni le calcul (déterministes), mais la **réconciliation et la provenance** entre les deux sources : c'est là que se joue la qualité perçue.
+
+**APIs externes** :
+- **Jeu open data « Ratios Financiers BCE/INPI »** (data.gouv.fr / data.economie.gouv.fr) : ratios pré-calculés par la DNUM à partir des données RNE de l'INPI, par SIREN et date de clôture. Gratuit, en masse.
+- **API INPI comptes annuels** (« bilans-saisis ») : postes financiers structurés extraits par l'INPI de ses propres PDF, récupérables par identifiant. Gratuit.
+
+Aucun parsing de PDF nécessaire dans les deux cas.
+
+**Dépendances** : F-013 (`FinancialStatement`, téléchargement des bilans), F-017 / F-053 (favoris & watchlists — cible de la couche « profondeur »), patron des ports premium de F-050, ADR-004 (archi hexagonale), ADR-006 (open core).
+
+**Détails techniques** :
+- **Deux sources en couches, rôles distincts et complémentaires** (jamais le même chiffre produit deux fois) :
+  - **Couche « largeur » — Ratios BCE/INPI (baseline, instantané)** : ingérée en masse (job périodique `bce-ratios-ingest`). N'importe quelle entreprise ouverte affiche ses ratios immédiatement, sans appel externe. Avantage de fond : ce sont des ratios **calculés par le ministère selon une méthodologie publiée** — afficher de l'open data officiel renforce la ligne « descriptif, pas notation » (on ne fabrique pas de note maison).
+  - **Couche « profondeur / fraîcheur » — Bilans-saisis INPI (à la demande)** : pour une entreprise réellement suivie (favori / watchlist), on récupère les postes du bilan en clair. Trois gains que la BCE seule ne donne pas : afficher les **postes bruts** derrière les ratios, capter le **dépôt le plus récent** avant son entrée dans le prochain millésime BCE, calculer des **ratios ou tendances** absents du jeu BCE.
+- **Principe directeur** : une seule source de vérité par chiffre + **provenance toujours étiquetée** (« ratio open data BCE, millésime 2024 » vs « calculé sur le bilan déposé le 14/03/2025 »). Évite le chiffre orphelin contradictoire qui détruirait la confiance. Cohérent avec l'ADN de transparence / souveraineté du projet.
+- **Résilience** : deux sources évitent d'être l'otage d'une seule (si le jeu BCE change de cadence, les bilans-saisis prennent le relais ; si l'API comptes annuels est lente, la BCE assure le fond).
+- **Types de bilan C / K / S** (complet / simplifié / consolidé) : les formules de ratios en dépendent. À gérer explicitement côté calcul.
+- **Modèle & ports** :
+  - Réutilise `FinancialStatement` (doc 08 : `FiscalYear`, `ClosureDate`, `FilingDate`, `IsConfidential`, `DocumentUrl`).
+  - Nouveau : `FinancialIndicatorSet` (par `Siren` + `ClosureDate` + `Source` + provenance), porteur des ratios.
+  - Port `IFinancialDataProvider` (adapter `InpiBilanSaisiProvider`) pour la couche profondeur ; job Hangfire `bce-ratios-ingest` pour la couche largeur.
+  - Service de domaine déterministe `FinancialIndicatorService` (calcul des ratios). **Pas d'IA** → cœur libre.
+- **Endpoints (esquisse, à confirmer)** :
+  - `GET /companies/{siren}/financials` — ratios baseline (BCE) + statut de disponibilité / confidentialité.
+  - `GET /companies/{siren}/financials/detail` — postes bruts + ratios + tendances (bilans-saisis, à la demande).
+  - `GET /companies/{siren}/financials/analysis` — **(Premium)** synthèse narrative générée par IA.
+
+**Cadre légal & positionnement** : la **cotation Banque de France** (FIBEN) est la référence officielle d'appréciation de la solvabilité — une note avec probabilité de défaut, établie à dire d'expert, **confidentielle**, réservée à l'entreprise notée et aux acteurs du crédit. C'est du terrain réglementé. Atlas reste **strictement descriptif** : ratios factuels et leurs tendances, calculés de façon transparente à partir de données publiques. Jamais une note / score propriétaire qui mimerait une notation de crédit. Les quatre axes de la Banque de France (rentabilité, autonomie financière, solvabilité, liquidité) servent de **catégories de ratios descriptifs**, jamais d'ingrédients d'un verdict agrégé. Même philosophie que F-051 (suivi, pas conseil).
+
+**Confidentialité & couverture** : seuls les comptes **non confidentiels déposés depuis 2017** sont exploitables (micro-entreprises : confidentialité totale possible ; petites entreprises : compte de résultat confidentiable ; moyennes / grandes : pas de confidentialité). Le décret de février 2024 (directive UE 2023/2775) a relevé les seuils → davantage de PME peuvent opter pour la confidentialité. Conséquence : couverture **partielle**, à afficher honnêtement via le champ `IsConfidential` (« comptes non disponibles » plutôt qu'un vide trompeur).
+
+**RGPD** : données d'entreprises issues de l'open data public → pas de traitement de données personnelles spécifique. Rien de sensible à stocker côté utilisateur (contrairement à F-051, pas de clé à protéger).
+
+**Accessibilité (rappel ADR-008)** : une **tendance** (hausse / baisse) n'est jamais signalée par la couleur seule — toujours doublée d'un signe (`+` / `−`), d'une flèche ou d'un libellé. Tableaux de ratios lisibles au lecteur d'écran ; provenance annoncée.
+
+**Modèle économique** : calcul de ratios = déterministe → **cœur open source**, gratuit (aucun coût par utilisateur). Synthèse narrative IA = **premium** (coût LLM), via un port `IFinancialSummarizer` analogue à `IFeedSummarizer` (patron F-050). Aligné ADR-006 (« monétiser la commodité, pas le cœur »).
+
+**Découpage / jalons** :
+1. **Couche largeur** : ingestion du jeu BCE/INPI (job `bce-ratios-ingest`), endpoint `/financials`, ratios + statut confidentialité. *(Livrable autonome, couvre déjà l'essentiel.)*
+2. **Couche profondeur** : `InpiBilanSaisiProvider`, postes bruts + tendances pour les entreprises suivies, endpoint `/financials/detail`, avec provenance étiquetée.
+3. **Réconciliation** : règles de source-de-vérité-par-chiffre, gestion des types de bilan C / K / S.
+4. **(Premium)** synthèse narrative IA via `IFinancialSummarizer`.
+
+**Décisions ouvertes** :
+- **Ordre de livraison** des deux couches (recommandé : largeur d'abord — autonome et utile seule).
+- **Profondeur de l'historique** affiché (3 ans ? 5 ans ?).
+- **Cadence** d'ingestion du jeu BCE (suivre les millésimes publiés).
+- **Liste exacte des ratios** retenus par axe (rentabilité / autonomie / solvabilité / liquidité), et leur définition documentée (transparence).
+- Documenter publiquement les **formules de ratios** utilisées (gage de transparence et de la ligne « descriptif »).
+
+---
+
+### F-032 — Marchés publics remportés (DECP)
+
+> **Réactivée le 29 mai 2026** — promue de V3+ vers V2. Le motif initial de report (« trop spécifique BTP / consulting / IT public ») ne tient plus : (a) la donnée DECP est désormais **consolidée et propre** (jeu unique sur data.gouv.fr + API tabulaire, le scraping multi-sources n'est plus nécessaire), (b) elle se branche sur le **pattern existant de F-048** (coût marginal faible, purement additif).
+
+**Description** : pour une entreprise, Atlas affiche les **marchés publics qu'elle a remportés** (en tant que titulaire) : acheteur, objet, montant, durée, date de notification, code CPV. Quand une entreprise **suivie** (favori / watchlist) remporte un nouveau marché, un **événement** apparaît dans sa timeline — sur le même principe que les annonces BODACC (F-048).
+
+**Valeur user** : le DECP apporte un signal que ni Pappers ni Societe.com n'exploitent à fond : l'**activité réelle**. Pas « cette boîte existe et a tel bilan » mais « cette boîte **gagne effectivement** des marchés publics, pour tel montant, auprès de tel acheteur ». Croisé avec l'identité (RNE), la PI, la veille et les finances (F-054), ça complète la vue « que fait vraiment cette entreprise ». Personas : **Investisseur / M&A**, **veille concurrentielle** (qui rafle les marchés dans mon secteur ?), et tout profil travaillant avec / autour du secteur public. Contrairement à la crainte initiale, ce n'est pas « niche BTP » — la commande publique achète dans **tous** les secteurs (IT, conseil, services, fournitures, travaux).
+
+**Complexité** : ★★★ — surtout grâce à la réutilisation du pattern F-048 (polling → `FavoriteEvent` → timeline) et à la consolidation de la source.
+
+**APIs externes** :
+- **DECP consolidé** (data.gouv.fr) : jeu unique retraité, formats **Parquet / CSV**, mis à jour quasi quotidiennement, régi par l'arrêté du 22 décembre 2022 (étendu mars 2024). Couvre les marchés notifiés depuis 2020 (7 millésimes).
+- **API tabulaire data.gouv.fr** : consommation directe du jeu (≈ 100 req/s) « pour alimenter une application sans configurer de base ».
+
+Gratuit, sans authentification. Le **scraping n'est plus nécessaire** (corrige la note « DECP via scraping » du pack Investisseur, doc 07).
+
+**Dépendances** : F-017 (favoris), F-053 (watchlists), F-047 (timeline mixte) & patron de F-048 (polling BODACC → `FavoriteEvent`), ADR-004 (archi hexagonale), ADR-006 (open core).
+
+**Détails techniques** :
+- **Deux modes, une source** (calqués sur l'existant) :
+  - **Mode événement** (pattern F-048) : job `decp-polling` repère les nouveaux marchés attribués aux SIREN suivis → crée un `FavoriteEvent` de type « marché public attribué » → fusionné dans la timeline (F-047), dédupliqué via `FavoriteEvent.ExternalId` (comme BODACC).
+  - **Mode fiche** : section « Marchés publics remportés » alimentée à la demande ou depuis l'ingestion.
+- **Source : ingestion vs API tabulaire (décision ouverte)** :
+  - **Ingestion périodique** du jeu consolidé (filtré / indexé par SIREN titulaire) dans la base Atlas → rapide en lecture, autonome, idéal pour le mode événement (job Hangfire `decp-polling` sur le modèle de `bodacc-polling`).
+  - **API tabulaire à la demande** : interroger par SIREN au moment de l'affichage de la fiche → zéro stockage, mais dépendant de la dispo de l'API.
+  - Probable : ingestion pour les événements + API tabulaire pour le détail de fiche.
+- **Matching titulaire → entreprise** : le titulaire est identifié en **SIRET** (établissement) ; on mappe sur le **SIREN** (9 premiers chiffres) pour matcher les entreprises favorites / watchlists. Trivial, mais à faire explicitement (une entreprise peut remporter un marché via un établissement secondaire).
+- **Architecture (hexagonale, ADR-004)** : adapter `DecpSource` implémentant `IExternalContentSource` (mode événement) comme `BodaccSource` ; éventuel port `IPublicProcurementProvider` pour les requêtes de fiche (mode fiche) ; extension de `FavoriteEvent` avec un nouveau type / `Kind` (« marché public »). **Aucune modification du domaine existant.**
+
+**Cadre légal & positionnement** : la piste facile — open data pur, données publiées par obligation légale (code de la commande publique, articles L2196-2 / L3131-1). Afficher des marchés attribués = exposer des **faits publics**. Aucune ligne sensible à tenir, aucun RGPD spécifique (données d'entreprises et de contrats publics). On reste **descriptif** : on liste, on n'évalue pas (pas de « score puissance publique » agrégé).
+
+**Couverture & qualité (caveats honnêtes)** :
+- **Seuil** : seuls les marchés **> 40 000 € HT** sont publiés. En dessous, rien.
+- **Périmètre** : seulement les entreprises qui **remportent** des marchés publics → beaucoup de favoris n'en auront aucun (afficher « aucun marché public connu » proprement, pas un vide ambigu).
+- **Qualité variable** : malgré l'obligation, certains acheteurs publient mal / incomplètement ; le jeu consolidé corrige beaucoup mais pas tout (champs parfois vides — déjà noté en doc 03 §3.1).
+
+**Hors périmètre (explicite)** :
+- **Avis d'appels d'offres** (avant attribution) : c'est le **BOAMP** (doc 03 §3.2), source différente — hors périmètre de cette fiche.
+- Marchés **européens** (TED, doc 03 §3.3) : extension future éventuelle.
+
+**Accessibilité (rappel ADR-008)** : montants, dates et acheteurs en tableau lisible au lecteur d'écran (`SemanticProperties.Description`). Aucune information (ex. type de marché) transmise par la couleur seule.
+
+**Modèle économique** : aucun coût par utilisateur (open data, déterministe) → **cœur open source**, gratuit. Cohérent ADR-006.
+
+**Découpage / jalons** :
+1. **Source & matching** : ingestion du jeu consolidé (ou accès tabulaire), mapping SIRET → SIREN. *(Fondation testable.)*
+2. **Mode fiche** : section « Marchés publics remportés » sur la fiche entreprise.
+3. **Mode événement** : `DecpSource` + job `decp-polling` → `FavoriteEvent` → timeline (pattern F-048).
+
+**Décisions ouvertes** :
+- **Source** : ingestion périodique vs API tabulaire à la demande (ou les deux, fiche + événements).
+- **Ordre de livraison** : mode fiche d'abord (autonome) ou mode événement d'abord ?
+- **Seuil de notabilité** d'un événement (tout marché, ou au-dessus d'un montant ?).
+- **Extension future** : BOAMP (avis avant attribution) et TED (UE) — à garder hors périmètre pour l'instant.
+
+---
+
+### F-055 — Signaux de risque (descriptif)
+
+**Description** : Atlas regroupe, pour une entreprise, des **signaux de risque factuels** dans une vue cohérente — procédures collectives (BODACC, F-048), correspondances avec une **liste de sanctions / gel des avoirs** officielle, et **mentions presse** (timeline F-047). Strictement **descriptif** : Atlas **affiche des faits** (« en redressement judiciaire selon BODACC », « correspondance potentielle sur la liste de gel DG Trésor — à vérifier », « N articles la mentionnent »). Atlas **n'attribue aucun score de risque** et **ne qualifie jamais** une entreprise de « à risque ». L'utilisateur évalue lui-même.
+
+**Valeur user** : pour la due diligence et la compliance légère (personas **Compliance / KYC** et **Investisseur / M&A**) — rassembler en un endroit les signaux qu'il faut aujourd'hui aller chercher dans cinq sources. Surface d'alerte, pas verdict.
+
+**Constat qui définit le périmètre** : l'essentiel des signaux est **déjà dans le produit**. Procédures collectives = BODACC (F-048), mentions presse = timeline (F-047, volet 1). Cette feature n'est **pas un nouveau moteur** — c'est **assembler l'existant + ajouter une seule source neuve** : le screening sanctions officiel.
+
+**Complexité** : ★★★ — assemblage (BODACC + presse déjà là) + ingestion d'une source sanctions + matching conservateur.
+
+**APIs externes** :
+- **Registre national des gels des avoirs — DG Trésor** : liste officielle des personnes/entités sanctionnées (ONU + UE + national), en **fichiers interopérables + API, mise à jour quotidienne**. Gratuit, officiel, souverain.
+- **Liste consolidée des sanctions financières de l'UE**.
+- **BODACC** (déjà intégré, F-048) et **presse** (veille existante, F-047).
+- **Écarté** : OpenSanctions (gratuit en non-commercial seulement → licence requise en usage business). C'est aussi pourquoi le **PEP** reste hors cœur gratuit.
+
+**Dépendances** : F-048 (BODACC — procédures collectives), F-047 (timeline + mentions presse), F-017 / F-053 (favoris & watchlists), **ADR-012** (doctrine descriptif + matching conservateur — gouverne cette fiche), ADR-004. Optionnel : F-031 Judilibre (contentieux, V3+).
+
+**Hors périmètre (explicite)** :
+- **Aucun score de risque**, aucun label « entreprise à risque », aucun verdict (ADR-012).
+- **Aucun screening PEP** dans le cœur gratuit (données surtout licenciées).
+- **Aucune base d'adverse media propriétaire** (World-Check, Dow Jones…).
+- **Aucune certification de conformité AML** : Atlas *expose des signaux*, il ne certifie rien.
+- Bénéficiaires effectifs exclus (CJUE Sovim).
+
+**Détails techniques** :
+- **Source sanctions (la seule vraie nouveauté)** : nouvel adapter (port `IExternalContentSource` ou `ISanctionsListProvider`) ingérant les listes DG Trésor + UE périodiquement, via un job Hangfire sur le modèle de `bodacc-polling`.
+- **Matching conservateur** (principe d'exactitude, ADR-012 §5) : rapprocher sur nom + identifiants/date de naissance quand disponibles ; **ne jamais affirmer automatiquement** une correspondance ; afficher « correspondance potentielle, à vérifier ». Une fausse correspondance sanctions est **diffamatoire et grave**.
+- **Assemblage (réutilisation pure)** : vue « signaux de risque » combinant `FavoriteEvent` BODACC (procédures collectives), correspondances sanctions, `FeedItemFavoriteMatch` (mentions presse). Possibilité de créer des `FavoriteEvent` de type « signal de risque » pour la timeline (F-047). **Aucun nouveau moteur de veille.**
+
+**Cadre légal & positionnement** : **gouverné par ADR-012** — descriptif, matching conservateur, jamais de verdict. Les listes de sanctions sont de l'**open data officiel** (réutilisation libre). Atlas **expose** des signaux ; il ne certifie aucune conformité AML et ne qualifie aucune entité. Le matching conservateur protège l'exactitude (RGPD art. 5.1.d) et contre la diffamation.
+
+**Accessibilité (rappel ADR-008)** :
+- Un signal n'est **jamais** transmis par la couleur seule (pas de « rouge = risque ») : icône + libellé explicite.
+- Signaux en liste/tableau lisibles au lecteur d'écran ; formulation « à vérifier » explicite.
+
+**Modèle économique** : déterministe, sources gratuites → **cœur open source** (ADR-006). Le PEP (données licenciées) serait, le cas échéant, une option premium ou hors périmètre.
+
+**Découpage / jalons** :
+1. **Source sanctions** : ingestion DG Trésor + UE, matching conservateur, affichage « correspondance potentielle ». *(Seule vraie nouveauté.)*
+2. **Vue assemblée** : « signaux de risque » réunissant BODACC + sanctions + presse.
+3. **Alertes / timeline** (optionnel) : événements « signal de risque ».
+4. **Contentieux** (futur) : Judilibre (F-031).
+
+**Décisions ouvertes** :
+- **Contentieux maintenant ou plus tard** (dépend de F-031 Judilibre).
+- **Vue dédiée vs enrichissement de la fiche** existante.
+- **Seuils d'alerte** sur signaux.
+- **PEP** : hors périmètre tant qu'il n'y a pas de source gratuite exploitable.
+
+---
+
 ## V3+ — Won't have (yet)
 
 Features identifiées comme valables mais explicitement reportées hors du périmètre actuel. À reconsidérer en fonction de la traction.
@@ -937,33 +1104,96 @@ Features identifiées comme valables mais explicitement reportées hors du péri
 
 ---
 
-### F-032 — Intégration DECP (commande publique)
+### F-033 — Indicateurs environnementaux descriptifs
 
-**Description** : pour une entreprise donnée, afficher les marchés publics qu'elle a gagnés.
+> **Reframé & figé le 29 mai 2026** — remplace le stub V3+ « Score ESG / Bilan carbone ». **Le mot « score » est abandonné** : le scoring ESG est une industrie controversée et non normalisée. Atlas **affiche la donnée déclarée**, il n'invente pas de note (même logique que F-054 : ratios ≠ notation). Statut **V3+ *data-gated*** : la donnée n'est pas encore là à grande échelle.
 
-**Pourquoi reporté** : très spécifique (utile uniquement pour certains segments comme BTP, consulting, IT public).
+**Description** : sur la fiche d'une entreprise, Atlas affiche ses **indicateurs environnementaux déclarés** quand ils existent — au premier chef ses **émissions de gaz à effet de serre** (scopes 1, 2, 3) issues du **BEGES** publié en open data par l'**ADEME**. Descriptif, factuel, jamais agrégé en un score propriétaire.
 
-**APIs externes** : DECP (data.gouv.fr).
+**Valeur user** : pour les personas **investisseur** et **compliance**, et la pression ESG croissante des donneurs d'ordre — voir l'empreinte déclarée d'une entreprise sans aller fouiller des rapports. Mais c'est aujourd'hui **data-limité** (voir couverture).
+
+**Pourquoi V3+ *data-gated*** (et pas promu comme le DECP) : le paquet **Omnibus** (en vigueur le 18 mars 2026) a **resserré la CSRD** — seuils relevés à **1000 salariés ET 450 M€** de CA, **~80 %** des entreprises initialement visées sorties du champ, PME cotées exclues, vagues suivantes repoussées à **2028** (exercice 2027). Conséquence : la donnée ESG issue de la CSRD reste **rare et repoussée**. Le motif d'origine de F-033 (« à revoir quand la CSRD sera déployée ») est **renforcé**, pas levé. **Mais** une donnée est exploitable **dès maintenant**, indépendante de la CSRD : le **BEGES**, obligatoire pour les entreprises de **plus de 500 salariés** (scopes 1, 2 et 3 significatif), publié en **open data par l'ADEME**. C'est la porte d'entrée pragmatique.
+
+**Complexité** : ★★★, **conditionnée à la disponibilité de la donnée**. Le travail est l'ingestion ADEME + l'affichage descriptif ; le facteur limitant est la couverture, pas le code.
+
+**APIs externes** :
+- **ADEME — Bilan GES** (open data) : émissions déclarées des entreprises françaises > 500 salariés. Source réaliste **aujourd'hui** (déjà cataloguée doc 03 §8.2).
+- **Futur** : rapports CSRD (vague 1 déjà publiés par les très grandes entreprises) et, à terme, l'**ESAP** (European Single Access Point) qui agrégera les données de durabilité.
+
+**Dépendances** : F-004 (fiche entreprise), ADR-006 (open core), ADR-004 (archi hexagonale).
+
+**Hors périmètre (explicite)** :
+- **Aucun score / notation / rating ESG** propriétaire.
+- **Aucune donnée inventée** ou estimée là où rien n'est déclaré.
+
+**Détails techniques** :
+- Adapter d'ingestion des données ADEME BEGES, rapprochées par **SIREN**.
+- Affichage descriptif (émissions par scope, évolution si plusieurs millésimes).
+- Déterministe → **cœur open source**, aucun coût par utilisateur.
+- Aucune dépendance lourde ; persistance EF Core / PostgreSQL existante.
+
+**Couverture (caveat honnête)** : seules les entreprises **assujetties au BEGES** (> 500 salariés) déclarent → **la grande majorité des entreprises n'aura aucune donnée**. À afficher proprement (« non disponible »), comme la confidentialité pour F-054 ou le caractère coté pour F-051. C'est ce qui justifie le statut **data-gated**.
+
+**Cadre légal & positionnement** : open data public, descriptif (données déclarées) → risque faible, pas de RGPD spécifique. Même ligne que le financier : on **montre la donnée**, on ne **note** pas.
+
+**Accessibilité (rappel ADR-008)** : émissions et évolutions en tableau lisible au lecteur d'écran ; aucune information (ex. tendance) transmise par la couleur seule.
+
+**Modèle économique** : déterministe, source gratuite → **cœur open source** (cohérent ADR-006).
+
+**Découpage / jalons** :
+1. **ADEME BEGES** : ingestion + matching SIREN + affichage descriptif des émissions. *(Cœur de la feature, livrable seul.)*
+2. **Enrichissement futur** : rapports CSRD / ESAP quand la donnée sera disponible à plus grande échelle.
+
+**Décisions ouvertes** :
+- **Quand rouvrir** : suivre la maturité de la donnée (calendrier CSRD post-Omnibus, déploiement ESAP).
+- **Autres jeux ADEME** éventuels à intégrer.
 
 ---
 
-### F-033 — Score ESG / Bilan carbone
+### F-034 — Graphe de co-mandats des dirigeants (descriptif)
 
-**Description** : intégration du bilan GES (gaz à effet de serre) d'une entreprise quand disponible publiquement.
+> **Reframé & figé le 29 mai 2026** — remplace le stub V3+ initial (« détection de sociétés écrans / conflits d'intérêt »). Ce cadrage est **abandonné** : inférence accusatoire → profilage + diffamation (cf. ADR-012). On ne garde que le **graphe de co-mandats descriptif**, **conditionnel à la DPIA**.
 
-**Pourquoi reporté** : niche, peu d'entreprises publient ces données aujourd'hui. À revoir quand la CSRD sera pleinement déployée (2025–2028).
+**Description** : autour d'une entreprise que l'utilisateur **consulte ou suit**, Atlas affiche un **graphe de co-mandats** — les dirigeants de l'entreprise, leurs autres mandats, et les entreprises qui **partagent un dirigeant** — sur une profondeur limitée (1 à 2 sauts). Strictement **descriptif** : Atlas montre des **faits du registre**, jamais une qualification (« société écran », « conflit d'intérêt ») et **n'attribue aucun score de risque** à une personne. L'utilisateur explore et tire ses propres conclusions.
 
-**APIs externes** : ADEME Bilan GES.
+**Valeur user** : pour la due diligence et la compréhension des liens entre entreprises suivies (personas **Investisseur / M&A**, **veille concurrentielle**) — voir d'un coup d'œil « qui est aussi aux commandes d'où ». Outil d'**exploration de faits publics**, pas de jugement.
 
----
+**Pourquoi V3+ conditionnel** : **mise en service bloquée tant que la DPIA n'est pas réalisée** (ADR-012, gating dur). Le poids n'est pas la traversée du graphe (triviale en SQL borné) mais la couche légale (DPIA + LIA + opposition + transparence), la **résolution d'identité conservatrice** (homonymes), et l'**accessibilité** d'un graphe (ADR-008, critère bloquant).
 
-### F-034 — Graphe relationnel des dirigeants
+**Complexité** : ★★★★
 
-**Description** : visualisation en graphe des dirigeants d'une entreprise et de leurs autres mandats. Détection de structures complexes (sociétés écrans, conflits d'intérêt).
+**APIs externes** : **INPI RNE** (dirigeants — déjà récupérés ; F-019 n'en stocke qu'un hash, cette feature nécessite de stocker les **identités** dans le voisinage borné → **nouveau traitement**, gaté par ADR-012). Éventuellement le jeu open data « dirigeants » pour constituer le voisinage.
 
-**Pourquoi reporté** : très puissant mais complexe à construire (BDD graphe type Neo4j, algos de pathfinding, UX dédiée).
+**Dépendances** : **ADR-012** (cadre RGPD — prérequis impératif), F-004, F-019, F-017 / F-053 (favoris & watchlists bornent le périmètre), ADR-004, ADR-008.
 
-**APIs externes** : INPI RNE (mais agrégation massive nécessaire).
+**Hors périmètre (explicite — voir ADR-012)** :
+- **Aucune qualification ni inférence** (pas de « société écran », pas de « conflit d'intérêt », pas de score de risque sur une personne).
+- **Aucune agrégation massive** exposée publiquement (pas de base graphe de tous les dirigeants de France). Une version « massive » future exigerait **un nouvel ADR** et une DPIA bien plus lourde.
+- **Aucun bénéficiaire effectif** (régime restreint, CJUE Sovim).
+
+**Détails techniques** :
+- **Modèle (PostgreSQL, pas Neo4j)** : deux tables **nœuds** (`Personne`, `Entreprise`) et **arêtes** (`Mandat` : qui dirige quoi, à quel titre, depuis quand). Traversée bornée par **`WITH RECURSIVE`** (1–2 sauts), performant à cette échelle, **déjà dans la stack** — aucune nouvelle infrastructure.
+- **Construction à la demande** autour de l'entreprise focus (éphémère ou cache — décision ouverte).
+- **Résolution d'identité conservatrice** (ADR-012 §5) : ne relier qu'avec confiance élevée (nom + **date de naissance** du RNE), afficher l'incertitude sinon. *Pas de lien vaut mieux qu'un lien erroné.*
+- **Architecture (ADR-004)** : réutilise `ICompanyDataProvider` (RNE) ; service de domaine de construction du voisinage borné + service de résolution d'identité ; persistance EF Core / PostgreSQL existante.
+
+**Cadre légal & positionnement** : entièrement régi par **ADR-012**. Descriptif uniquement ; base légale **intérêt légitime** (réutilisation open data, cadre CNIL) avec LIA ; **DPIA prérequis de mise en service** ; **droit d'opposition / effacement** + note de transparence (art. 14) ; résolution d'identité conservatrice.
+
+**Accessibilité (ADR-008, bloquant)** : un graphe visuel est hostile au lecteur d'écran et au daltonisme. **Obligatoire** : équivalent **tabulaire/textuel** complet (« X détient des mandats dans A, B, C ») et aucune information transmise par la couleur ou la position seules. À concevoir dès le départ.
+
+**Modèle économique** : construction déterministe, aucun coût d'inférence par utilisateur → **cœur open source** par défaut (ADR-006). Limite de profondeur/quota possible en hébergé.
+
+**Découpage / jalons** :
+1. **Couche légale (prérequis, ADR-012)** : DPIA + LIA + mécanisme d'opposition/effacement + note de transparence. **Bloquant — rien ne se livre avant.**
+2. **Modèle & résolution** : tables nœuds/arêtes, résolution d'identité conservatrice (nom + date de naissance, seuil de confiance).
+3. **Traversée bornée & API** : construction à la demande (1–2 sauts), endpoint dédié.
+4. **Visualisation + équivalent accessible** : rendu graphe **et** vue tabulaire/textuelle.
+
+**Décisions ouvertes** :
+- **Profondeur** : 1 ou 2 sauts ?
+- **Persistance** : graphe éphémère (reconstruit à chaque consultation) ou mis en cache ?
+- **Source du voisinage** : RNE live vs jeu open data « dirigeants ».
+- **Cœur vs premium** : déterministe donc cœur par défaut, mais feature lourde — à confirmer.
 
 ---
 

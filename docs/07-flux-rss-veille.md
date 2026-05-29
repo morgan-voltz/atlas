@@ -1306,7 +1306,7 @@ Certains de ces flux RSS sont **utilisés comme sources de données** dans le pr
 - BODACC (ventes de fonds, dissolutions)
 - INPI (nouveaux dépôts brevets sur secteur)
 - Bpifrance Le Lab
-- DECP via scraping (nouveaux marchés publics)
+- DECP consolidé / API tabulaire data.gouv.fr (nouveaux marchés publics — cf. F-032)
 
 #### Pack "Veille concurrentielle B2B"
 - BODACC (paramétré sur secteur)

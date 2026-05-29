@@ -309,6 +309,39 @@ Chaque API est documentée selon un template uniforme :
 
 > **À noter** : le casier judiciaire des personnes morales (B3) n'est **pas disponible en open data**. Accès uniquement par démarche officielle.
 
+### 4.5 DG Trésor — Registre national des gels des avoirs
+
+| | |
+|---|---|
+| URL de base | https://gels-avoirs.dgtresor.gouv.fr/ (API & fichiers) |
+| Documentation | https://www.economie.gouv.fr/dgtresor/sanctions-financieres |
+| Responsable | Direction générale du Trésor (DG Trésor) |
+| Périmètre | Liste officielle des personnes physiques et entités frappées par une mesure de **gel des avoirs** (sanctions ONU + UE + nationales transposées en droit français). |
+| Auth | Aucune |
+| Format | Fichiers interopérables (CSV, XML, JSON) + API |
+| Rate limits | Souples (mise à jour quotidienne du registre) |
+| Coût | Gratuit |
+| Pertinence | ⭐⭐⭐⭐ (segment compliance / KYC, **F-055**) |
+| Complexité | ★★★ (matching nom + identifiants — exigence d'exactitude, ADR-012) |
+| Cas d'usage | Screening sanctions souverain et officiel pour **F-055** (signaux de risque descriptif). Matching **conservateur** uniquement (« correspondance potentielle à vérifier » — jamais d'affirmation automatique : une fausse correspondance sanctions est diffamatoire). |
+| Notes | Source officielle de référence en France. Alternative gratuite et souveraine à OpenSanctions (qui est gratuit en non-commercial seulement). |
+
+### 4.6 Liste consolidée des sanctions financières de l'UE
+
+| | |
+|---|---|
+| URL de base | https://webgate.ec.europa.eu/fsd/fsf (fichier consolidé) |
+| Documentation | https://finance.ec.europa.eu/eu-and-world/sanctions-restrictive-measures_en |
+| Responsable | Commission européenne (FISMA) |
+| Périmètre | Liste consolidée des **sanctions financières** adoptées par l'UE (gels d'avoirs, interdictions de mise à disposition de fonds). Couvre les régimes ONU transposés au niveau UE et les régimes autonomes de l'UE. |
+| Auth | Aucune (compte EU Login optionnel pour notifications) |
+| Format | XML, CSV |
+| Coût | Gratuit |
+| Pertinence | ⭐⭐⭐⭐ (segment compliance / KYC, **F-055**) |
+| Complexité | ★★★ |
+| Cas d'usage | Complément européen à la liste DG Trésor pour **F-055**. Mêmes règles de matching conservateur. |
+| Notes | À croiser avec la DG Trésor (qui transpose en droit français mais peut décaler de quelques jours). |
+
 ---
 
 ## 5. APIs propriété industrielle internationale

@@ -401,7 +401,7 @@ Obligatoire (art. 35 RGPD) si le traitement est susceptible d'engendrer **un ris
 **Pour ton SaaS au démarrage** : probablement pas obligatoire. **Mais à reconsidérer** si tu introduis :
 - Du scoring de risque d'entreprises basé sur agrégation automatique
 - Du matching automatique de marques avec décision juridique
-- Du graphe relationnel des dirigeants
+- Du graphe relationnel des dirigeants → **ADR-012 (doc 01) érige la DPIA en prérequis de mise en service** pour F-034 ; à réaliser avant tout livrable, conformément au gating.
 
 ---
 
