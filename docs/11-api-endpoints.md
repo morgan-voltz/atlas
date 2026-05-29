@@ -3,7 +3,7 @@
 > **Périmètre** : tous les endpoints HTTP exposés par `Atlas.Api`, groupés par domaine fonctionnel.
 > Document **vivant** : à mettre à jour à chaque PR qui ajoute, modifie ou supprime un endpoint.
 
-**Dernière mise à jour** : 29 mai 2026 — après merge F-016 (PR à venir).
+**Dernière mise à jour** : 29 mai 2026 — après merge F-018 (PR à venir).
 
 ---
 
@@ -197,11 +197,35 @@ Cf. [`FavoritesEndpoints.cs`](../src/Atlas.Api/Endpoints/FavoritesEndpoints.cs).
 | `DELETE` | `/favorites/companies/{siren}` | 🔐 | Retirer un favori. |
 | `GET` | `/favorites/companies` | 🔐 | Liste de mes favoris (`siren`, `name?`, `addedAt`), tri AddedAt desc. |
 
+### Favoris marques (F-018)
+
+| Méthode | Path | Auth | Description |
+|---|---|---|---|
+| `POST` | `/favorites/trademarks` | 🔐 | Marquer une marque en favori. Body `{ depositNumber, name? }`. |
+| `DELETE` | `/favorites/trademarks/{depositNumber}` | 🔐 | Retirer un favori. |
+| `GET` | `/favorites/trademarks` | 🔐 | Mes marques favorites (tri AddedAt desc). |
+
+### Favoris brevets (F-018)
+
+| Méthode | Path | Auth | Description |
+|---|---|---|---|
+| `POST` | `/favorites/patents` | 🔐 | Marquer un brevet en favori. Body `{ publicationNumber, title? }`. Numéro normalisé. |
+| `DELETE` | `/favorites/patents/{publicationNumber}` | 🔐 | Retirer un favori. |
+| `GET` | `/favorites/patents` | 🔐 | Mes brevets favoris (tri AddedAt desc). |
+
+### Codes d'erreur favoris
+
 | Code | HTTP | Sens |
 |---|---|---|
 | `favorites.company_already_favorite` | 409 | SIREN déjà en favori |
 | `favorites.company_not_favorite` | 404 | Tentative de retrait sur un SIREN non favori |
 | `favorites.invalid_siren` | 400 | SIREN mal formé |
+| `favorites.trademark_already_favorite` | 409 | Marque déjà en favori |
+| `favorites.trademark_not_favorite` | 404 | Marque non favori |
+| `favorites.invalid_deposit_number` | 400 | Numéro de dépôt vide |
+| `favorites.patent_already_favorite` | 409 | Brevet déjà en favori |
+| `favorites.patent_not_favorite` | 404 | Brevet non favori |
+| `favorites.invalid_publication_number` | 400 | Numéro de publication invalide |
 
 ---
 

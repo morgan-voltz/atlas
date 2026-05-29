@@ -48,6 +48,10 @@ public sealed class AtlasDbContext(DbContextOptions<AtlasDbContext> options)
 
     public DbSet<FavoriteEvent> FavoriteEvents => Set<FavoriteEvent>();
 
+    public DbSet<TrademarkFavorite> TrademarkFavorites => Set<TrademarkFavorite>();
+
+    public DbSet<PatentFavorite> PatentFavorites => Set<PatentFavorite>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         ArgumentNullException.ThrowIfNull(modelBuilder);
