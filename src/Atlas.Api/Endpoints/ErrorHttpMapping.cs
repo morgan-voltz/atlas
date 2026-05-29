@@ -50,6 +50,8 @@ internal static class ErrorHttpMapping
         "companies.attachment_confidential" => StatusCodes.Status403Forbidden,
         "trademarks.not_found" => StatusCodes.Status404NotFound,
         "trademarks.image_not_found" => StatusCodes.Status404NotFound,
+        "patents.invalid_publication_number" => StatusCodes.Status400BadRequest,
+        "patents.not_found" => StatusCodes.Status404NotFound,
         "veille.subscription_not_found" => StatusCodes.Status404NotFound,
         "veille.veille_pack_not_found" => StatusCodes.Status404NotFound,
         "veille.feed_item_not_found" => StatusCodes.Status404NotFound,

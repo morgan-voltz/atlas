@@ -23,4 +23,10 @@ public interface IIntellectualPropertyProvider
         DepositNumber depositNumber,
         InpiAccessCredentials credentials,
         CancellationToken ct = default);
+
+    /// <summary>Notice d'un brevet par numéro de publication (F-015).</summary>
+    Task<Result<PatentDetail>> GetPatentByPublicationNumberAsync(
+        PublicationNumber publicationNumber,
+        InpiAccessCredentials credentials,
+        CancellationToken ct = default);
 }

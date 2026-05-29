@@ -3,7 +3,7 @@
 > **Périmètre** : tous les endpoints HTTP exposés par `Atlas.Api`, groupés par domaine fonctionnel.
 > Document **vivant** : à mettre à jour à chaque PR qui ajoute, modifie ou supprime un endpoint.
 
-**Dernière mise à jour** : 29 mai 2026 — après merge F-013 (PR à venir).
+**Dernière mise à jour** : 29 mai 2026 — après merge F-015 (PR à venir).
 
 ---
 
@@ -146,6 +146,21 @@ Cf. [`TrademarksEndpoints.cs`](../src/Atlas.Api/Endpoints/TrademarksEndpoints.cs
 |---|---|---|
 | `trademarks.not_found` | 404 | Numéro de dépôt inconnu |
 | `trademarks.image_not_found` | 404 | Pas d'image associée |
+
+---
+
+## Brevets — `/patents` (F-015)
+
+Cf. [`PatentsEndpoints.cs`](../src/Atlas.Api/Endpoints/PatentsEndpoints.cs). 🔐 et nécessite INPI connecté.
+
+| Méthode | Path | Auth | Description |
+|---|---|---|---|
+| `GET` | `/patents/{publicationNumber}` | 🔐 | Notice brevet : titre, déposant, inventeurs, dates, statut, abrégé. Le numéro est normalisé (majuscules, sans espace). |
+
+| Code | HTTP | Sens |
+|---|---|---|
+| `patents.invalid_publication_number` | 400 | Format invalide (longueur 4-32, lettres/chiffres/`-`/`.`/`/`) |
+| `patents.not_found` | 404 | Numéro de publication inconnu |
 
 ---
 

@@ -26,6 +26,8 @@ internal sealed class InpiPiTrademarkProvider(
     private const string SearchPath = "services/apidiffusion/api/marques/search";
     private const string NoticePath = "services/apidiffusion/api/marques/notice/";
     private const string ImagePath = "services/apidiffusion/api/marques/image/";
+    // F-015 : couverture brevets via le même backend PI (auth XSRF + cookies identique).
+    private const string PatentNoticePath = "services/apidiffusion/api/brevets/notice/";
 
     private static readonly TimeSpan SessionMargin = TimeSpan.FromMinutes(1);
 
@@ -46,6 +48,12 @@ internal sealed class InpiPiTrademarkProvider(
         InpiAccessCredentials credentials,
         CancellationToken ct = default) =>
         ExecuteAsync(credentials, (session, innerCt) => TryGetImageAsync(depositNumber, session, innerCt), ct);
+
+    public Task<Result<PatentDetail>> GetPatentByPublicationNumberAsync(
+        PublicationNumber publicationNumber,
+        InpiAccessCredentials credentials,
+        CancellationToken ct = default) =>
+        ExecuteAsync(credentials, (session, innerCt) => TryGetPatentAsync(publicationNumber, session, innerCt), ct);
 
     private async Task<Result<T>> ExecuteAsync<T>(
         InpiAccessCredentials credentials,
@@ -163,6 +171,41 @@ internal sealed class InpiPiTrademarkProvider(
             byte[] content = await response.Content.ReadAsByteArrayAsync(ct);
             string contentType = response.Content.Headers.ContentType?.MediaType ?? "application/octet-stream";
             return (Result<TrademarkImage>.Ok(new TrademarkImage(content, contentType)), false);
+        }
+    }
+
+    // ── F-015 : brevet par numéro ───────────────────────────────────────────────────
+
+    private async Task<(Result<PatentDetail> Result, bool Unauthorized)> TryGetPatentAsync(
+        PublicationNumber publicationNumber,
+        PiSession session,
+        CancellationToken ct)
+    {
+        using HttpRequestMessage request = Authenticated(
+            HttpMethod.Get, PatentNoticePath + Uri.EscapeDataString(publicationNumber.Value), session);
+
+        (HttpResponseMessage? response, bool unauthorized, Error? transportError) = await SendAsync(request, ct);
+        if (response is null)
+        {
+            return (Result<PatentDetail>.Fail(transportError!), unauthorized);
+        }
+
+        using (response)
+        {
+            if (response.StatusCode == HttpStatusCode.NotFound)
+            {
+                return (Result<PatentDetail>.Fail(PatentErrors.NotFound(publicationNumber)), false);
+            }
+
+            if (!response.IsSuccessStatusCode)
+            {
+                return (Result<PatentDetail>.Fail(InpiErrors.Unavailable), false);
+            }
+
+            PiPatentNotice? body = await response.Content.ReadFromJsonAsync<PiPatentNotice>(ct);
+            return body is null
+                ? (Result<PatentDetail>.Fail(InpiErrors.Unavailable), false)
+                : (Result<PatentDetail>.Ok(PiPatentMapper.Map(body, publicationNumber)), false);
         }
     }
 
