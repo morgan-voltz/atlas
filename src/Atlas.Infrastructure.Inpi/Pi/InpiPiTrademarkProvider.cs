@@ -1,5 +1,6 @@
 using System.Net;
 using System.Net.Http.Json;
+using System.Text.Json;
 using System.Text.Json.Serialization;
 using Atlas.Domain.Inpi;
 using Atlas.Domain.IntellectualProperty;
@@ -29,6 +30,13 @@ internal sealed class InpiPiTrademarkProvider(
     // F-015 : couverture brevets via le même backend PI (auth XSRF + cookies identique).
     private const string PatentNoticePath = "services/apidiffusion/api/brevets/notice/";
     private const string PatentSearchPath = "services/apidiffusion/api/brevets/search";
+
+    // Lot 13 — collections par défaut (cf. docs/INPI/APIDiffusionV2.json TrademarkQuery / PatentQuery
+    // + métadonnées live INPI). Pour les marques, FMARK = marques françaises, CTMARK = marques
+    // communautaires (EUIPO), TMINT = marques internationales (OMPI). Pour les brevets : FR, EP
+    // (Office européen des brevets), WO (PCT/OMPI), CCP (certificats complémentaires de protection).
+    private static readonly string[] DefaultTrademarkCollections = ["FMARK", "CTMARK", "TMINT"];
+    private static readonly string[] DefaultPatentCollections = ["FR", "EP", "WO", "CCP"];
 
     private static readonly TimeSpan SessionMargin = TimeSpan.FromMinutes(1);
 
@@ -94,8 +102,15 @@ internal sealed class InpiPiTrademarkProvider(
         PiSession session,
         CancellationToken ct)
     {
+        // Lot 13 — contrat v2 : position 0-based + size + collections explicite + query SolR.
+        int position = Math.Max(0, (query.Page - 1) * query.PageSize);
+        var payload = new TrademarkQueryRequest(
+            Collections: DefaultTrademarkCollections,
+            Query: BuildTrademarkSolrQuery(query.Term),
+            Position: position,
+            Size: query.PageSize);
         using HttpRequestMessage request = Authenticated(
-            HttpMethod.Post, SearchPath, session, JsonContent.Create(new PiSearchRequest(query.Term, query.Page, query.PageSize)));
+            HttpMethod.Post, SearchPath, session, JsonContent.Create(payload));
 
         (HttpResponseMessage? response, bool unauthorized, Error? transportError) = await SendAsync(request, ct);
         if (response is null)
@@ -110,7 +125,18 @@ internal sealed class InpiPiTrademarkProvider(
                 return (Result<PagedResult<TrademarkSummary>>.Fail(InpiErrors.Unavailable), false);
             }
 
-            PiTrademarkSearchResponse? body = await response.Content.ReadFromJsonAsync<PiTrademarkSearchResponse>(ct);
+            // Lot 13 — l'INPI peut renvoyer 200 avec un body vide / non-JSON quand le moteur
+            // SolR a un soubresaut. On capture la JsonException et on retourne unavailable
+            // au lieu de leaker une stack trace dans la réponse API.
+            PiTrademarkSearchResponse? body;
+            try
+            {
+                body = await response.Content.ReadFromJsonAsync<PiTrademarkSearchResponse>(ct);
+            }
+            catch (JsonException)
+            {
+                return (Result<PagedResult<TrademarkSummary>>.Fail(InpiErrors.Unavailable), false);
+            }
             var items = (body?.Results ?? []).Select(PiTrademarkMapper.Map).ToList();
             long total = body?.Total ?? items.Count;
             var page = new PagedResult<TrademarkSummary>(items, query.Page, query.PageSize, total);
@@ -188,9 +214,16 @@ internal sealed class InpiPiTrademarkProvider(
         PiSession session,
         CancellationToken ct)
     {
+        // Lot 13 — contrat v2 : position 0-based + size + collections explicite + query SolR
+        // multi-critères (TIT / DEPOSANT / INV) joints par AND.
+        int position = Math.Max(0, (query.Page - 1) * query.PageSize);
+        var payload = new PatentQueryRequest(
+            Collections: DefaultPatentCollections,
+            Query: BuildPatentSolrQuery(query.Title, query.Applicant, query.Inventor),
+            Position: position,
+            Size: query.PageSize);
         using HttpRequestMessage request = Authenticated(
-            HttpMethod.Post, PatentSearchPath, session,
-            JsonContent.Create(new PiPatentSearchRequest(query.Title, query.Inventor, query.Applicant, query.Page, query.PageSize)));
+            HttpMethod.Post, PatentSearchPath, session, JsonContent.Create(payload));
 
         (HttpResponseMessage? response, bool unauthorized, Error? transportError) = await SendAsync(request, ct);
         if (response is null)
@@ -205,7 +238,16 @@ internal sealed class InpiPiTrademarkProvider(
                 return (Result<PagedResult<PatentSummary>>.Fail(InpiErrors.Unavailable), false);
             }
 
-            PiPatentSearchResponse? body = await response.Content.ReadFromJsonAsync<PiPatentSearchResponse>(ct);
+            // Lot 13 — robustesse face à body vide / non-JSON (cf. trademark search).
+            PiPatentSearchResponse? body;
+            try
+            {
+                body = await response.Content.ReadFromJsonAsync<PiPatentSearchResponse>(ct);
+            }
+            catch (JsonException)
+            {
+                return (Result<PagedResult<PatentSummary>>.Fail(InpiErrors.Unavailable), false);
+            }
             var items = (body?.Results ?? []).Select(PiPatentMapper.MapSummary).ToList();
             long total = body?.Total ?? items.Count;
             var page = new PagedResult<PatentSummary>(items, query.Page, query.PageSize, total);
@@ -416,6 +458,10 @@ internal sealed class InpiPiTrademarkProvider(
             "Cookie",
             $"access_token={session.AccessToken}; XSRF-TOKEN={session.XsrfToken}");
         request.Headers.TryAddWithoutValidation("X-XSRF-TOKEN", session.XsrfToken);
+        // Lot 13 : la spec INPI v2 documente `produces: [application/xml, application/json]`
+        // avec XML par défaut. Atlas mappe la réponse en JSON, donc on impose Accept JSON
+        // pour ne pas avoir à parser du XML côté domain.
+        request.Headers.TryAddWithoutValidation("Accept", "application/json");
         return request;
     }
 
@@ -442,8 +488,69 @@ internal sealed class InpiPiTrademarkProvider(
         [property: JsonPropertyName("username")] string Username,
         [property: JsonPropertyName("password")] string Password);
 
-    private sealed record PiSearchRequest(
+    /// <summary>
+    /// Lot 13 — Conforme à <c>TrademarkQuery</c> de la spec INPI v2 (cf.
+    /// <c>docs/INPI/APIDiffusionV2.json</c>) : pagination par <c>position</c> / <c>size</c>,
+    /// <c>collections</c> obligatoire (sans quoi la 500 « SolR no body » remonte), <c>query</c>
+    /// au format SolR INPI (<c>[Mark=...]</c>).
+    /// </summary>
+    private sealed record TrademarkQueryRequest(
+        [property: JsonPropertyName("collections")] string[] Collections,
         [property: JsonPropertyName("query")] string Query,
-        [property: JsonPropertyName("page")] int Page,
+        [property: JsonPropertyName("position")] int Position,
         [property: JsonPropertyName("size")] int Size);
+
+    /// <summary>
+    /// Lot 13 — Conforme à <c>PatentQuery</c> de la spec INPI v2. Identique en shape à
+    /// <see cref="TrademarkQueryRequest"/> ; les champs SolR (<c>TIT</c>, <c>DEPOSANT</c>,
+    /// <c>INV</c>) et les collections (<c>FR</c> / <c>EP</c> / <c>WO</c> / <c>CCP</c>) sont
+    /// différents.
+    /// </summary>
+    private sealed record PatentQueryRequest(
+        [property: JsonPropertyName("collections")] string[] Collections,
+        [property: JsonPropertyName("query")] string Query,
+        [property: JsonPropertyName("position")] int Position,
+        [property: JsonPropertyName("size")] int Size);
+
+    /// <summary>
+    /// Conversion d'un terme libre (saisi par l'utilisateur) en clause SolR INPI pour la
+    /// recherche marques sur le champ <c>Mark</c>. Échappe les caractères SolR spéciaux
+    /// (<c>[ ] : \</c>) qui sinon casseraient le parseur (cf. spec § « 500 SolR corrompue »).
+    /// </summary>
+    private static string BuildTrademarkSolrQuery(string term) =>
+        $"[Mark={EscapeSolrValue(term)}]";
+
+    /// <summary>
+    /// Conversion d'une requête multi-critères brevet en SolR INPI avec opérateur AND.
+    /// Tous critères vides → fallback <c>[TIT=*]</c> (liste exhaustive paginée), pour ne
+    /// pas envoyer une requête vide qui serait 500.
+    /// </summary>
+    private static string BuildPatentSolrQuery(string? title, string? applicant, string? inventor)
+    {
+        List<string> parts = [];
+        if (!string.IsNullOrWhiteSpace(title))
+        {
+            parts.Add($"[TIT={EscapeSolrValue(title)}]");
+        }
+        if (!string.IsNullOrWhiteSpace(applicant))
+        {
+            parts.Add($"[DEPOSANT={EscapeSolrValue(applicant)}]");
+        }
+        if (!string.IsNullOrWhiteSpace(inventor))
+        {
+            parts.Add($"[INV={EscapeSolrValue(inventor)}]");
+        }
+        return parts.Count == 0 ? "[TIT=*]" : string.Join(" AND ", parts);
+    }
+
+    /// <summary>
+    /// Échappement minimal des caractères réservés SolR INPI. La syntaxe INPI utilise des
+    /// crochets <c>[CHAMP=valeur]</c>, donc on doit au moins échapper <c>[</c>, <c>]</c>,
+    /// <c>:</c> et <c>\</c> pour que la valeur reste interne aux crochets.
+    /// </summary>
+    private static string EscapeSolrValue(string raw) => raw
+        .Replace("\\", "\\\\", StringComparison.Ordinal)
+        .Replace("[", "\\[", StringComparison.Ordinal)
+        .Replace("]", "\\]", StringComparison.Ordinal)
+        .Replace(":", "\\:", StringComparison.Ordinal);
 }

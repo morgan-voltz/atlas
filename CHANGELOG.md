@@ -396,6 +396,65 @@ appel authentifié réel (cf. roadmap, statuts 🟡).
   pour la carte-aperçu (§7) et la carte-section (§8). Référencée depuis la
   table « Documents fondateurs » de `CLAUDE.md` et depuis les fiches F-009
   et F-010.
+- **Lot 13 — Refactor du contrat de recherche PI conforme à la spec INPI v2** :
+  l'API INPI a remplacé l'ancien contrat (`{query, page, pageSize}`) par
+  `TrademarkQuery` / `PatentQuery` (cf. `docs/INPI/APIDiffusionV2.json`
+  v1.1.0, local et gitignored). Atlas envoyait l'ancien format depuis
+  toujours, ce qui retournait 405 Method Not Allowed côté INPI.
+  - **Body marques `TrademarkQueryRequest`** (record interne) :
+    - `collections: ["FMARK", "CTMARK", "TMINT"]` par défaut (marques
+      françaises + EUIPO + OMPI), valeurs confirmées par
+      `GET /api/marques/metadata` live.
+    - `query` au format SolR INPI : `[Mark=<terme>]` au lieu du terme brut.
+    - Pagination par `position` (0-based offset = `(page-1) * pageSize`)
+      + `size`, au lieu de `page` / `pageSize`.
+  - **Body brevets `PatentQueryRequest`** :
+    - `collections: ["FR", "EP", "WO", "CCP"]` par défaut.
+    - `query` SolR multi-critères joints par `AND` :
+      `[TIT=<title>] AND [DEPOSANT=<applicant>] AND [INV=<inventor>]`.
+    - Fallback `[TIT=*]` si aucun critère renseigné (pour ne pas envoyer
+      une requête vide qui serait 500).
+  - **Builder SolR + escape** : `BuildTrademarkSolrQuery`,
+    `BuildPatentSolrQuery`, et `EscapeSolrValue` qui échappe `\\`, `[`,
+    `]`, `:` (caractères réservés SolR INPI). Empêche un terme avec
+    crochets de casser le parseur.
+  - **Header `Accept: application/json`** ajouté à toutes les requêtes
+    data dans `Authenticated()`. La spec INPI v2 documente
+    `produces: [xml, json]` avec **XML par défaut** — sans ce header,
+    Atlas recevrait du XML qu'il ne sait pas désérialiser.
+  - **Robustesse JSON** : `ReadFromJsonAsync` enveloppé dans un
+    `try/catch JsonException` côté search marques et brevets — si
+    l'INPI renvoie 200 avec un body vide ou non-JSON (cas observé en
+    live), Atlas retourne `InpiErrors.Unavailable` (502 propre) au lieu
+    d'une exception fuyante qui leakait une stack trace dans la réponse
+    API. Fragilité préexistante corrigée en passant.
+  - **Tests d'intégration WireMock (+3)** :
+    `SearchTrademarks_body_matches_v2_TrademarkQuery_contract` —
+    inspecte le body envoyé et vérifie `query="[Mark=danone]"`,
+    `position=10` (page 2 × pageSize 10), `size=10`,
+    `collections=["FMARK","CTMARK","TMINT"]`, header
+    `Accept: application/json`.
+    `SearchPatents_body_matches_v2_PatentQuery_contract` — vérifie
+    `query="[TIT=electric battery] AND [DEPOSANT=RENAULT]"`,
+    `collections=["FR","EP","WO","CCP"]`.
+    `SearchPatents_with_no_criteria_falls_back_to_TIT_wildcard` —
+    cas dégénéré, fallback `[TIT=*]`.
+  - **Validation manuelle curl live post-Lot 13** : trademark search →
+    502 `inpi.unavailable` (INPI continue de renvoyer 500 SolR sur le
+    backend ; mappage Atlas propre, le format de body est conforme spec) ;
+    patent search → 502 `inpi.unavailable` (au lieu d'une 500
+    `JsonException` qui leakait la stack avant la robustesse JSON). Le
+    500 SolR côté INPI est tracé pour investigation séparée (peut-être
+    syntaxe SolR subtile à comprendre, peut-être bug temporaire backend
+    INPI).
+  - **Anciens DTOs supprimés / déplacés** : `PiSearchRequest` retiré du
+    fichier provider (remplacé par `TrademarkQueryRequest`).
+    `PiPatentSearchRequest` retiré de `DTOs/PiPatentSearch.cs`
+    (remplacé par `PatentQueryRequest`). Mapper de réponse et response
+    DTO (`PiPatentSearchResponse`, `PiTrademarkSearchResponse`) inchangés
+    pour l'instant — la structure réelle de la réponse v2 sera validée
+    quand le 500 INPI sera résolu.
+  - 20 tests d'intégration Inpi verts (17 existants + 3 nouveaux Lot 13).
 - **Lot 12 — Fix cookie XSRF-TOKEN double-submit sur requêtes data PI** :
   suite directe du diagnostic curl live post-Lot 11. L'auth PI réussit
   désormais (JWT bien obtenu, avec rôles `ROLE_API_MARQUES` /

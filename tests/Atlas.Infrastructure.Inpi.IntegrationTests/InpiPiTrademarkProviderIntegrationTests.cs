@@ -1,3 +1,4 @@
+using System.Text.Json;
 using Atlas.Domain.Inpi;
 using Atlas.Domain.IntellectualProperty;
 using Atlas.Infrastructure.Inpi.Common;
@@ -182,6 +183,120 @@ public sealed class InpiPiTrademarkProviderIntegrationTests : IDisposable
 
         result.IsFailure.Should().BeTrue();
         result.Error!.Code.Should().Be("inpi.invalid_credentials");
+    }
+
+    /// <summary>
+    /// Lot 13 — Valide que le body POST <c>/marques/search</c> respecte le contrat
+    /// <c>TrademarkQuery</c> de la spec INPI v2 (<c>docs/INPI/APIDiffusionV2.json</c>) :
+    /// <c>collections</c> obligatoire (sans quoi le backend INPI retourne 500 « SolR no body »),
+    /// <c>query</c> au format SolR INPI (<c>[Mark=...]</c>) et non le terme brut, pagination
+    /// par <c>position</c> 0-based et <c>size</c>.
+    /// </summary>
+    [Fact]
+    public async Task SearchTrademarks_body_matches_v2_TrademarkQuery_contract()
+    {
+        StubLogin();
+        _server
+            .Given(Request.Create().WithPath("/services/apidiffusion/api/marques/search").UsingPost())
+            .RespondWith(JsonResponse(200, SearchJson));
+
+        // Page 2 + pageSize 10 → position = 10.
+        Result<PagedResult<TrademarkSummary>> result = await CreateProvider()
+            .SearchTrademarksAsync(new TrademarkSearchQuery("danone", 2, 10), Credentials, CancellationToken.None);
+
+        result.IsSuccess.Should().BeTrue();
+
+        WireMock.IRequestMessage searchRequest = _server.LogEntries
+            .Where(e => e.RequestMessage?.AbsolutePath?.EndsWith("/marques/search", StringComparison.Ordinal) == true)
+            .Select(e => e.RequestMessage!)
+            .Single();
+
+        searchRequest.Body.Should().NotBeNullOrWhiteSpace();
+        JsonDocument body = JsonDocument.Parse(searchRequest.Body!);
+
+        body.RootElement.GetProperty("query").GetString().Should().Be("[Mark=danone]",
+            "le terme libre est wrappé en clause SolR sur le champ Mark.");
+        body.RootElement.GetProperty("position").GetInt32().Should().Be(10,
+            "position = (page-1) * pageSize, soit (2-1)*10 = 10 en 0-based.");
+        body.RootElement.GetProperty("size").GetInt32().Should().Be(10);
+
+        JsonElement collections = body.RootElement.GetProperty("collections");
+        collections.ValueKind.Should().Be(JsonValueKind.Array);
+        var values = collections.EnumerateArray().Select(e => e.GetString()).ToList();
+        values.Should().BeEquivalentTo(["FMARK", "CTMARK", "TMINT"],
+            "défaut conforme aux métadonnées live INPI (marques FR + EUIPO + OMPI).");
+
+        // Header Accept doit être application/json pour ne pas recevoir du XML.
+        searchRequest.Headers!.Should().ContainKey("Accept");
+        searchRequest.Headers!["Accept"].Single().Should().Be("application/json");
+    }
+
+    /// <summary>
+    /// Lot 13 — Valide le builder SolR pour brevets : critères title / applicant / inventor
+    /// joints par AND avec les champs INPI corrects (<c>TIT</c>, <c>DEPOSANT</c>, <c>INV</c>),
+    /// collections par défaut <c>FR/EP/WO/CCP</c>, position 0-based.
+    /// </summary>
+    [Fact]
+    public async Task SearchPatents_body_matches_v2_PatentQuery_contract()
+    {
+        StubLogin();
+        _server
+            .Given(Request.Create().WithPath("/services/apidiffusion/api/brevets/search").UsingPost())
+            .RespondWith(JsonResponse(200, "{\"results\":[],\"total\":0}"));
+
+        // PatentSearchQuery(Title, Inventor, Applicant, Page, PageSize)
+        Result<PagedResult<PatentSummary>> result = await CreateProvider()
+            .SearchPatentsAsync(
+                new PatentSearchQuery("electric battery", Inventor: null, Applicant: "RENAULT", 1, 20),
+                Credentials,
+                CancellationToken.None);
+
+        result.IsSuccess.Should().BeTrue();
+
+        WireMock.IRequestMessage searchRequest = _server.LogEntries
+            .Where(e => e.RequestMessage?.AbsolutePath?.EndsWith("/brevets/search", StringComparison.Ordinal) == true)
+            .Select(e => e.RequestMessage!)
+            .Single();
+
+        searchRequest.Body.Should().NotBeNullOrWhiteSpace();
+        JsonDocument body = JsonDocument.Parse(searchRequest.Body!);
+
+        // Title + Applicant fournis, Inventor null → 2 clauses jointes par AND.
+        body.RootElement.GetProperty("query").GetString()
+            .Should().Be("[TIT=electric battery] AND [DEPOSANT=RENAULT]");
+        body.RootElement.GetProperty("position").GetInt32().Should().Be(0);
+        body.RootElement.GetProperty("size").GetInt32().Should().Be(20);
+
+        var collections = body.RootElement.GetProperty("collections")
+            .EnumerateArray().Select(e => e.GetString()).ToList();
+        collections.Should().BeEquivalentTo(["FR", "EP", "WO", "CCP"]);
+    }
+
+    /// <summary>
+    /// Lot 13 — Cas dégénéré brevets : aucun critère → fallback <c>[TIT=*]</c> pour ne pas
+    /// envoyer une requête vide qui serait 500 côté INPI.
+    /// </summary>
+    [Fact]
+    public async Task SearchPatents_with_no_criteria_falls_back_to_TIT_wildcard()
+    {
+        StubLogin();
+        _server
+            .Given(Request.Create().WithPath("/services/apidiffusion/api/brevets/search").UsingPost())
+            .RespondWith(JsonResponse(200, "{\"results\":[],\"total\":0}"));
+
+        await CreateProvider()
+            .SearchPatentsAsync(
+                new PatentSearchQuery(null, null, null, 1, 20),
+                Credentials,
+                CancellationToken.None);
+
+        WireMock.IRequestMessage searchRequest = _server.LogEntries
+            .Where(e => e.RequestMessage?.AbsolutePath?.EndsWith("/brevets/search", StringComparison.Ordinal) == true)
+            .Select(e => e.RequestMessage!)
+            .Single();
+
+        JsonDocument body = JsonDocument.Parse(searchRequest.Body!);
+        body.RootElement.GetProperty("query").GetString().Should().Be("[TIT=*]");
     }
 
     /// <summary>
