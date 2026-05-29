@@ -4,6 +4,7 @@ using Atlas.Infrastructure.Messaging.Email;
 using Atlas.Infrastructure.Messaging.Push;
 using Atlas.Infrastructure.Messaging.Push.Apns;
 using Atlas.Infrastructure.Messaging.Push.Fcm;
+using Atlas.Infrastructure.Messaging.Push.Wns;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
@@ -26,9 +27,11 @@ public static class DependencyInjection
 
         services.Configure<FcmOptions>(configuration.GetSection(FcmOptions.SectionName));
         services.Configure<ApnsOptions>(configuration.GetSection(ApnsOptions.SectionName));
+        services.Configure<WnsOptions>(configuration.GetSection(WnsOptions.SectionName));
 
         FcmOptions fcm = configuration.GetSection(FcmOptions.SectionName).Get<FcmOptions>() ?? new FcmOptions();
         ApnsOptions apns = configuration.GetSection(ApnsOptions.SectionName).Get<ApnsOptions>() ?? new ApnsOptions();
+        WnsOptions wns = configuration.GetSection(WnsOptions.SectionName).Get<WnsOptions>() ?? new WnsOptions();
 
         bool fcmEnabled = !string.IsNullOrWhiteSpace(fcm.ProjectId)
             && !string.IsNullOrWhiteSpace(fcm.ServiceAccountJson);
@@ -36,6 +39,8 @@ public static class DependencyInjection
             && !string.IsNullOrWhiteSpace(apns.KeyId)
             && !string.IsNullOrWhiteSpace(apns.PrivateKeyPem)
             && !string.IsNullOrWhiteSpace(apns.BundleId);
+        bool wnsEnabled = !string.IsNullOrWhiteSpace(wns.PackageSid)
+            && !string.IsNullOrWhiteSpace(wns.ClientSecret);
 
         if (fcmEnabled)
         {
@@ -68,7 +73,21 @@ public static class DependencyInjection
             });
         }
 
-        if (fcmEnabled || apnsEnabled)
+        if (wnsEnabled)
+        {
+            services.AddHttpClient<IWnsAccessTokenProvider, WnsAccessTokenProvider>((_, client) =>
+            {
+                client.Timeout = TimeSpan.FromSeconds(wns.TimeoutSeconds);
+            });
+
+            // L'URL du push WNS est l'ChannelUri de chaque device — pas de BaseAddress partagée.
+            services.AddHttpClient<IPlatformPushDispatcher, WnsNotificationDispatcher>((_, client) =>
+            {
+                client.Timeout = TimeSpan.FromSeconds(wns.TimeoutSeconds);
+            });
+        }
+
+        if (fcmEnabled || apnsEnabled || wnsEnabled)
         {
             services.AddScoped<INotificationDispatcher, CompositeNotificationDispatcher>();
         }
