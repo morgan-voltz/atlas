@@ -406,7 +406,15 @@ internal sealed class InpiPiTrademarkProvider(
         HttpContent? content = null)
     {
         var request = new HttpRequestMessage(method, url) { Content = content };
-        request.Headers.TryAddWithoutValidation("Cookie", $"access_token={session.AccessToken}");
+        // Lot 12 : pattern double-submit cookie de Spring Security — le serveur compare le
+        // header `X-XSRF-TOKEN` à la valeur du cookie `XSRF-TOKEN`. Sans le cookie XSRF-TOKEN
+        // côté requête, la session est considérée comme « not found » et toute requête
+        // post-login (recherche, notice, image) reçoit 403 « Could not verify the provided
+        // CSRF token because your session was not found. ». Régression INPI confirmée par
+        // diagnostic curl post-Lot 11 le 2026-05-29.
+        request.Headers.TryAddWithoutValidation(
+            "Cookie",
+            $"access_token={session.AccessToken}; XSRF-TOKEN={session.XsrfToken}");
         request.Headers.TryAddWithoutValidation("X-XSRF-TOKEN", session.XsrfToken);
         return request;
     }
