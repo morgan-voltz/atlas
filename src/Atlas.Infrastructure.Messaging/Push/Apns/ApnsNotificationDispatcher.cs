@@ -152,7 +152,7 @@ internal sealed class ApnsNotificationDispatcher(
         {
             string raw = await response.Content.ReadAsStringAsync(ct);
             // APNs renvoie { "reason": "BadDeviceToken" } en JSON.
-            using JsonDocument doc = JsonDocument.Parse(raw);
+            using var doc = JsonDocument.Parse(raw);
             return doc.RootElement.TryGetProperty("reason", out JsonElement reason)
                 && reason.GetString() is "BadDeviceToken" or "DeviceTokenNotForTopic";
         }
