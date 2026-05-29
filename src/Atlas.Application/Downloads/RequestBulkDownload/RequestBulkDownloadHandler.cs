@@ -40,7 +40,7 @@ internal sealed class RequestBulkDownloadHandler(
             validated.Add(parsed.Value.Value);
         }
 
-        BulkDownloadJob job = BulkDownloadJob.Request(
+        var job = BulkDownloadJob.Request(
             new UserId(request.UserId),
             validated,
             clock.UtcNow,
