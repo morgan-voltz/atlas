@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="fr"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Apercu des themes - Atlas</title>
+<style>
+  * { box-sizing: border-box; }
+  body { margin:0; font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+         background:#222; color:#eee; }
+  .bar { position:sticky; top:0; z-index:10; background:#1a1a1a; padding:14px 18px;
+         border-bottom:1px solid #333; display:flex; flex-wrap:wrap; gap:14px; align-items:center; }
+  .bar h1 { font-size:15px; margin:0 10px 0 0; font-weight:600; letter-spacing:.04em; }
+  .group { display:flex; gap:6px; flex-wrap:wrap; align-items:center; }
+  .group .lbl { font-size:11px; text-transform:uppercase; letter-spacing:.08em; color:#999; margin-right:4px; }
+  button.pill { border:1px solid #444; background:#2a2a2a; color:#ddd; border-radius:20px;
+        padding:6px 14px; font-size:13px; cursor:pointer; }
+  button.pill[aria-pressed="true"] { background:#fff; color:#111; border-color:#fff; font-weight:600; }
+  button.pill.a11y { border-style:dashed; }
+  .stage { display:flex; justify-content:center; padding:28px 16px 60px; }
+  /* Le "device" est entierement pilote par les tokens du theme */
+  .device { width:380px; max-width:100%; border-radius:22px; overflow:hidden;
+        background:var(--background); color:var(--onBackground);
+        box-shadow:0 20px 60px rgba(0,0,0,.5); border:1px solid var(--outline); }
+  .topbar { background:var(--primary); color:var(--onPrimary); padding:16px 18px;
+        display:flex; align-items:center; justify-content:space-between; }
+  .topbar .t { font-size:16px; font-weight:700; }
+  .topbar .av { width:30px; height:30px; border-radius:50%; background:var(--onPrimary);
+        opacity:.9; }
+  .body { padding:16px; }
+  .search { display:flex; gap:8px; margin-bottom:16px; }
+  .search input { flex:1; border:1.5px solid var(--outline); background:var(--surface);
+        color:var(--onSurface); border-radius:10px; padding:11px 12px; font-size:14px; }
+  .search input::placeholder { color:var(--onSurfaceVariant); }
+  .search button { background:var(--primary); color:var(--onPrimary); border:none;
+        border-radius:10px; padding:0 16px; font-weight:600; font-size:14px; cursor:pointer; }
+  .card { background:var(--surface); border:1px solid var(--outline); border-radius:14px;
+        padding:15px; margin-bottom:14px; }
+  .card h2 { margin:0 0 2px; font-size:16px; color:var(--onSurface); }
+  .card .siren { font-family:ui-monospace,monospace; font-size:12px; color:var(--onSurfaceVariant); }
+  .meta { font-size:13px; color:var(--onSurfaceVariant); margin:8px 0 12px; line-height:1.5; }
+  .chips { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:12px; }
+  .chip { font-size:11px; font-weight:600; padding:3px 9px; border-radius:12px; }
+  .chip.s { background:var(--success); color:var(--onSuccess); }
+  .chip.w { background:var(--warning); color:var(--onWarning); }
+  .chip.e { background:var(--error); color:var(--onError); }
+  .chip.i { background:var(--info); color:var(--onInfo); }
+  .row { display:flex; gap:10px; }
+  .btn-primary { flex:1; background:var(--primary); color:var(--onPrimary); border:none;
+        border-radius:10px; padding:11px; font-weight:600; font-size:14px; cursor:pointer; }
+  .btn-ghost { flex:1; background:var(--primaryContainer); color:var(--onPrimaryContainer);
+        border:none; border-radius:10px; padding:11px; font-weight:600; font-size:14px; cursor:pointer; }
+  .timeline { margin-top:4px; }
+  .ti { background:var(--surfaceVariant); border-radius:10px; padding:11px 12px; margin-bottom:8px; }
+  .ti .h { font-size:13px; font-weight:600; color:var(--onSurface); }
+  .ti .d { font-size:12px; color:var(--onSurfaceVariant); margin-top:2px; }
+  .focus-demo { margin-top:6px; }
+  .focus-demo button { background:var(--surface); color:var(--onSurface);
+        border:1.5px solid var(--outline); border-radius:10px; padding:10px 14px;
+        font-size:14px; cursor:pointer; outline:3px solid var(--focus); outline-offset:2px; }
+  .ratios { max-width:380px; margin:0 auto; font-size:12px; color:#bbb; }
+  .ratios table { width:100%; border-collapse:collapse; margin-top:10px; }
+  .ratios td { padding:5px 8px; border-bottom:1px solid #333; }
+  .ratios td:last-child { text-align:right; font-family:ui-monospace,monospace; color:#7fe08a; }
+  .note { max-width:380px; margin:18px auto 0; font-size:12px; color:#888; line-height:1.6; text-align:center; }
+</style></head>
+<body>
+<div class="bar">
+  <h1>Apercu des themes - Atlas</h1>
+  <div class="group" id="themes"><span class="lbl">Theme</span></div>
+  <div class="group" id="modes"><span class="lbl">Mode</span></div>
+</div>
+
+<div class="stage">
+  <div>
+    <div class="device" id="device">
+      <div class="topbar"><span class="t">Atlas</span><span class="av"></span></div>
+      <div class="body">
+        <div class="search">
+          <input placeholder="Rechercher une entreprise, un SIREN..." aria-label="Recherche">
+          <button>OK</button>
+        </div>
+        <div class="card">
+          <h2>Boulangerie Martin SARL</h2>
+          <div class="siren">SIREN 552 032 534</div>
+          <div class="meta">Boulangerie et patisserie (NAF 10.71C)<br>12 rue des Lilas, 75011 Paris</div>
+          <div class="chips">
+            <span class="chip s">Active</span>
+            <span class="chip i">2 marques</span>
+            <span class="chip w">RCS a jour</span>
+            <span class="chip e">1 procedure</span>
+          </div>
+          <div class="row">
+            <button class="btn-primary">Surveiller</button>
+            <button class="btn-ghost">Favori</button>
+          </div>
+        </div>
+        <div class="timeline">
+          <div class="ti"><div class="h">Nouveau dirigeant nomme</div><div class="d">BODACC - il y a 2 jours</div></div>
+          <div class="ti"><div class="h">Depot de marque "MARTIN BIO"</div><div class="d">INPI - il y a 5 jours</div></div>
+        </div>
+        <div class="focus-demo"><button>Bouton avec focus visible</button></div>
+      </div>
+    </div>
+    <div class="ratios">
+      <table id="ratios"></table>
+    </div>
+    <p class="note">Ceci est une demo : tout l'ecran est pilote par les tokens du theme actif,
+       exactement comme l'app MAUI. Les ratios affiches sont calcules en direct.</p>
+  </div>
+</div>
+
+<script>
+const THEMES = {"Atlas": {"label": "Atlas", "kind": "aesthetic", "light": {"background": "#F6F9FC", "surface": "#FFFFFF", "surfaceVariant": "#E7EFF8", "onBackground": "#13202E", "onSurface": "#13202E", "onSurfaceVariant": "#42596F", "outline": "#7E97AE", "primary": "#1B4F7E", "onPrimary": "#FFFFFF", "primaryContainer": "#D4E4F4", "onPrimaryContainer": "#0B2236", "success": "#1E7A40", "onSuccess": "#FFFFFF", "warning": "#8A5A00", "onWarning": "#FFFFFF", "error": "#B5281F", "onError": "#FFFFFF", "info": "#1B5E8A", "onInfo": "#FFFFFF", "focus": "#1565C0"}, "dark": {"background": "#0D1722", "surface": "#16222F", "surfaceVariant": "#21303F", "onBackground": "#E8EEF4", "onSurface": "#E8EEF4", "onSurfaceVariant": "#AABBCC", "outline": "#5A7490", "primary": "#7FB2E0", "onPrimary": "#08121C", "primaryContainer": "#1E4060", "onPrimaryContainer": "#D4E4F4", "success": "#5FC98A", "onSuccess": "#08121C", "warning": "#E0B25C", "onWarning": "#08121C", "error": "#F08A82", "onError": "#08121C", "info": "#74C0E8", "onInfo": "#08121C", "focus": "#8FC4F5"}}, "Ocean": {"label": "Ocean", "kind": "aesthetic", "light": {"background": "#F2FAFB", "surface": "#FFFFFF", "surfaceVariant": "#DDF0F2", "onBackground": "#0F2326", "onSurface": "#0F2326", "onSurfaceVariant": "#3E5D60", "outline": "#5E9499", "primary": "#11696F", "onPrimary": "#FFFFFF", "primaryContainer": "#C8E8EA", "onPrimaryContainer": "#06292B", "success": "#1E7A40", "onSuccess": "#FFFFFF", "warning": "#8A5A00", "onWarning": "#FFFFFF", "error": "#B5281F", "onError": "#FFFFFF", "info": "#11696F", "onInfo": "#FFFFFF", "focus": "#0E7C9C"}, "dark": {"background": "#08191B", "surface": "#102528", "surfaceVariant": "#173438", "onBackground": "#E3F1F2", "onSurface": "#E3F1F2", "onSurfaceVariant": "#A2C0C3", "outline": "#557D83", "primary": "#58C4CC", "onPrimary": "#06191B", "primaryContainer": "#13474C", "onPrimaryContainer": "#C8E8EA", "success": "#5FC98A", "onSuccess": "#06191B", "warning": "#E0B25C", "onWarning": "#06191B", "error": "#F08A82", "onError": "#06191B", "info": "#6FD0DC", "onInfo": "#06191B", "focus": "#7FE0E8"}}, "Foret": {"label": "Foret", "kind": "aesthetic", "light": {"background": "#F4FAF3", "surface": "#FFFFFF", "surfaceVariant": "#DDF0DA", "onBackground": "#15251A", "onSurface": "#15251A", "onSurfaceVariant": "#45604A", "outline": "#649A69", "primary": "#246B36", "onPrimary": "#FFFFFF", "primaryContainer": "#CDE9CC", "onPrimaryContainer": "#0C2A14", "success": "#246B36", "onSuccess": "#FFFFFF", "warning": "#8A5A00", "onWarning": "#FFFFFF", "error": "#B5281F", "onError": "#FFFFFF", "info": "#1B5E8A", "onInfo": "#FFFFFF", "focus": "#2E7D32"}, "dark": {"background": "#0C1A0E", "surface": "#142717", "surfaceVariant": "#1C3620", "onBackground": "#E4F1E3", "onSurface": "#E4F1E3", "onSurfaceVariant": "#A8C3A9", "outline": "#57815C", "primary": "#6FC97E", "onPrimary": "#08160B", "primaryContainer": "#1A4523", "onPrimaryContainer": "#CDE9CC", "success": "#6FC97E", "onSuccess": "#08160B", "warning": "#E0B25C", "onWarning": "#08160B", "error": "#F08A82", "onError": "#08160B", "info": "#74C0E8", "onInfo": "#08160B", "focus": "#8FE09B"}}, "Ambre": {"label": "Ambre", "kind": "aesthetic", "light": {"background": "#FEF8F2", "surface": "#FFFFFF", "surfaceVariant": "#F8E6D2", "onBackground": "#2B1C0E", "onSurface": "#2B1C0E", "onSurfaceVariant": "#6B5238", "outline": "#A67C50", "primary": "#A8551A", "onPrimary": "#FFFFFF", "primaryContainer": "#F6D9BC", "onPrimaryContainer": "#3A1F08", "success": "#1E7A40", "onSuccess": "#FFFFFF", "warning": "#8A5A00", "onWarning": "#FFFFFF", "error": "#B5281F", "onError": "#FFFFFF", "info": "#1B5E8A", "onInfo": "#FFFFFF", "focus": "#C25E12"}, "dark": {"background": "#1F160D", "surface": "#2A1F13", "surfaceVariant": "#3A2C1B", "onBackground": "#F1E5D6", "onSurface": "#F1E5D6", "onSurfaceVariant": "#C8B49B", "outline": "#8A6D47", "primary": "#E0A35C", "onPrimary": "#1F160D", "primaryContainer": "#5A3818", "onPrimaryContainer": "#F6D9BC", "success": "#9BC07A", "onSuccess": "#1F160D", "warning": "#E0B25C", "onWarning": "#1F160D", "error": "#F08A82", "onError": "#1F160D", "info": "#74C0E8", "onInfo": "#1F160D", "focus": "#F0B870"}}, "Amethyste": {"label": "Amethyste", "kind": "aesthetic", "light": {"background": "#F9F6FC", "surface": "#FFFFFF", "surfaceVariant": "#ECE2F5", "onBackground": "#211530", "onSurface": "#211530", "onSurfaceVariant": "#564166", "outline": "#9B82B4", "primary": "#6A3BA0", "onPrimary": "#FFFFFF", "primaryContainer": "#E4D4F2", "onPrimaryContainer": "#2A1640", "success": "#1E7A40", "onSuccess": "#FFFFFF", "warning": "#8A5A00", "onWarning": "#FFFFFF", "error": "#B5281F", "onError": "#FFFFFF", "info": "#1B5E8A", "onInfo": "#FFFFFF", "focus": "#7B3FF2"}, "dark": {"background": "#160E20", "surface": "#221831", "surfaceVariant": "#2F2342", "onBackground": "#ECE4F4", "onSurface": "#ECE4F4", "onSurfaceVariant": "#BBAACC", "outline": "#7A6692", "primary": "#BB93E0", "onPrimary": "#140C1E", "primaryContainer": "#43295F", "onPrimaryContainer": "#E4D4F2", "success": "#5FC98A", "onSuccess": "#140C1E", "warning": "#E0B25C", "onWarning": "#140C1E", "error": "#F08A82", "onError": "#140C1E", "info": "#74C0E8", "onInfo": "#140C1E", "focus": "#C9A5EC"}}, "Contraste": {"label": "Contraste eleve", "kind": "a11y", "aaa": true, "light": {"background": "#FFFFFF", "surface": "#FFFFFF", "surfaceVariant": "#EDEDED", "onBackground": "#000000", "onSurface": "#000000", "onSurfaceVariant": "#1A1A1A", "outline": "#000000", "primary": "#00339A", "onPrimary": "#FFFFFF", "primaryContainer": "#CFDCF7", "onPrimaryContainer": "#001A5C", "success": "#005C27", "onSuccess": "#FFFFFF", "warning": "#5E3F00", "onWarning": "#FFFFFF", "error": "#8E0006", "onError": "#FFFFFF", "info": "#003D80", "onInfo": "#FFFFFF", "focus": "#00339A"}, "dark": {"background": "#000000", "surface": "#000000", "surfaceVariant": "#1A1A1A", "onBackground": "#FFFFFF", "onSurface": "#FFFFFF", "onSurfaceVariant": "#E6E6E6", "outline": "#FFFFFF", "primary": "#9EC2FF", "onPrimary": "#000000", "primaryContainer": "#0A2A66", "onPrimaryContainer": "#D6E4FF", "success": "#6FE69B", "onSuccess": "#000000", "warning": "#FFD466", "onWarning": "#000000", "error": "#FF9C95", "onError": "#000000", "info": "#8FD0FF", "onInfo": "#000000", "focus": "#FFFFFF"}}, "Sepia": {"label": "Sepia (faible lumiere bleue)", "kind": "a11y", "light": {"background": "#F4ECD8", "surface": "#FBF5E6", "surfaceVariant": "#EADFC4", "onBackground": "#352B17", "onSurface": "#352B17", "onSurfaceVariant": "#5E4D30", "outline": "#9C824F", "primary": "#8A5226", "onPrimary": "#FFFFFF", "primaryContainer": "#E6D2A8", "onPrimaryContainer": "#3A2810", "success": "#496326", "onSuccess": "#FFFFFF", "warning": "#7E5200", "onWarning": "#FFFFFF", "error": "#94301C", "onError": "#FFFFFF", "info": "#36505E", "onInfo": "#FFFFFF", "focus": "#8A5226"}, "dark": {"background": "#211B12", "surface": "#2B2418", "surfaceVariant": "#3A3122", "onBackground": "#ECE0C8", "onSurface": "#ECE0C8", "onSurfaceVariant": "#C4B48E", "outline": "#8B764B", "primary": "#D6A56B", "onPrimary": "#211B12", "primaryContainer": "#574122", "onPrimaryContainer": "#E6D2A8", "success": "#9BC07A", "onSuccess": "#211B12", "warning": "#E0B25C", "onWarning": "#211B12", "error": "#E8A08C", "onError": "#211B12", "info": "#8FB0C0", "onInfo": "#211B12", "focus": "#E6C68E"}}};
+const TOKENS = ["background","surface","surfaceVariant","onBackground","onSurface",
+  "onSurfaceVariant","outline","primary","onPrimary","primaryContainer","onPrimaryContainer",
+  "success","onSuccess","warning","onWarning","error","onError","info","onInfo","focus"];
+let curTheme = "Atlas", curDark = false;
+
+function lin(c){c/=255;return c<=0.03928?c/12.92:Math.pow((c+0.055)/1.055,2.4);}
+function lum(hex){const h=hex.replace('#','');
+  return 0.2126*lin(parseInt(h.slice(0,2),16))+0.7152*lin(parseInt(h.slice(2,4),16))+0.0722*lin(parseInt(h.slice(4,6),16));}
+function ratio(a,b){const l1=lum(a),l2=lum(b);const hi=Math.max(l1,l2),lo=Math.min(l1,l2);return (hi+0.05)/(lo+0.05);}
+
+function apply(){
+  const pal = THEMES[curTheme][curDark?"dark":"light"];
+  const d = document.getElementById('device');
+  TOKENS.forEach(t => d.style.setProperty('--'+t, pal[t]));
+  // ratios
+  const pairs = [["Texte principal","onSurface","surface"],
+                 ["Texte secondaire","onSurfaceVariant","surface"],
+                 ["Primaire / fond","primary","background"],
+                 ["Texte sur primaire","onPrimary","primary"]];
+  document.getElementById('ratios').innerHTML = pairs.map(([lbl,a,b])=>{
+    const r = ratio(pal[a],pal[b]).toFixed(2);
+    return `<tr><td>${lbl}</td><td>${r}:1</td></tr>`;}).join('');
+  // pressed states
+  document.querySelectorAll('#themes .pill').forEach(b=>b.setAttribute('aria-pressed', b.dataset.k===curTheme));
+  document.querySelectorAll('#modes .pill').forEach(b=>b.setAttribute('aria-pressed', (b.dataset.m==='dark')===curDark));
+}
+
+const tc = document.getElementById('themes');
+Object.entries(THEMES).forEach(([k,t])=>{
+  const b=document.createElement('button');
+  b.className='pill'+(t.kind==='a11y'?' a11y':''); b.dataset.k=k; b.textContent=t.label;
+  b.onclick=()=>{curTheme=k;apply();}; tc.appendChild(b);
+});
+const mc = document.getElementById('modes');
+[["light","Clair"],["dark","Sombre"]].forEach(([m,lbl])=>{
+  const b=document.createElement('button'); b.className='pill'; b.dataset.m=m; b.textContent=lbl;
+  b.onclick=()=>{curDark=(m==='dark');apply();}; mc.appendChild(b);
+});
+apply();
+</script>
+</body></html>

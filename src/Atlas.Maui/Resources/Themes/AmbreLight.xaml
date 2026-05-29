@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<ResourceDictionary xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+                    x:Class="Atlas.Maui.Resources.Themes.AmbreLight">
+    <!-- Theme Ambre - light | genere depuis palettes.py, ne pas editer a la main -->
+    <Color x:Key="background">#FEF8F2</Color>
+    <Color x:Key="surface">#FFFFFF</Color>
+    <Color x:Key="surfaceVariant">#F8E6D2</Color>
+    <Color x:Key="onBackground">#2B1C0E</Color>
+    <Color x:Key="onSurface">#2B1C0E</Color>
+    <Color x:Key="onSurfaceVariant">#6B5238</Color>
+    <Color x:Key="outline">#A67C50</Color>
+    <Color x:Key="primary">#A8551A</Color>
+    <Color x:Key="onPrimary">#FFFFFF</Color>
+    <Color x:Key="primaryContainer">#F6D9BC</Color>
+    <Color x:Key="onPrimaryContainer">#3A1F08</Color>
+    <Color x:Key="success">#1E7A40</Color>
+    <Color x:Key="onSuccess">#FFFFFF</Color>
+    <Color x:Key="warning">#8A5A00</Color>
+    <Color x:Key="onWarning">#FFFFFF</Color>
+    <Color x:Key="error">#B5281F</Color>
+    <Color x:Key="onError">#FFFFFF</Color>
+    <Color x:Key="info">#1B5E8A</Color>
+    <Color x:Key="onInfo">#FFFFFF</Color>
+    <Color x:Key="focus">#C25E12</Color>
+    <SolidColorBrush x:Key="backgroundBrush" Color="{StaticResource background}" />
+    <SolidColorBrush x:Key="surfaceBrush" Color="{StaticResource surface}" />
+    <SolidColorBrush x:Key="surfaceVariantBrush" Color="{StaticResource surfaceVariant}" />
+    <SolidColorBrush x:Key="onBackgroundBrush" Color="{StaticResource onBackground}" />
+    <SolidColorBrush x:Key="onSurfaceBrush" Color="{StaticResource onSurface}" />
+    <SolidColorBrush x:Key="onSurfaceVariantBrush" Color="{StaticResource onSurfaceVariant}" />
+    <SolidColorBrush x:Key="outlineBrush" Color="{StaticResource outline}" />
+    <SolidColorBrush x:Key="primaryBrush" Color="{StaticResource primary}" />
+    <SolidColorBrush x:Key="onPrimaryBrush" Color="{StaticResource onPrimary}" />
+    <SolidColorBrush x:Key="primaryContainerBrush" Color="{StaticResource primaryContainer}" />
+    <SolidColorBrush x:Key="onPrimaryContainerBrush" Color="{StaticResource onPrimaryContainer}" />
+    <SolidColorBrush x:Key="successBrush" Color="{StaticResource success}" />
+    <SolidColorBrush x:Key="onSuccessBrush" Color="{StaticResource onSuccess}" />
+    <SolidColorBrush x:Key="warningBrush" Color="{StaticResource warning}" />
+    <SolidColorBrush x:Key="onWarningBrush" Color="{StaticResource onWarning}" />
+    <SolidColorBrush x:Key="errorBrush" Color="{StaticResource error}" />
+    <SolidColorBrush x:Key="onErrorBrush" Color="{StaticResource onError}" />
+    <SolidColorBrush x:Key="infoBrush" Color="{StaticResource info}" />
+    <SolidColorBrush x:Key="onInfoBrush" Color="{StaticResource onInfo}" />
+    <SolidColorBrush x:Key="focusBrush" Color="{StaticResource focus}" />
+</ResourceDictionary>
