@@ -396,6 +396,40 @@ appel authentifié réel (cf. roadmap, statuts 🟡).
   pour la carte-aperçu (§7) et la carte-section (§8). Référencée depuis la
   table « Documents fondateurs » de `CLAUDE.md` et depuis les fiches F-009
   et F-010.
+- **Lot 5d — Câblage des polices facilitantes et `IMotionCoordinator`** :
+  termine la couverture WCAG 2.2 AA des préférences accessibilité côté
+  client MAUI initiées par les Lots 5b et 5c.
+  - **Polices facilitantes câblées** : `MauiProgram` enregistre
+    `OpenDyslexic-Regular.ttf` (alias `OpenDyslexicRegular`) et
+    `AtkinsonHyperlegible-Regular.ttf` (alias `AtkinsonHyperlegibleRegular`)
+    en plus d'OpenSans. La préférence utilisateur `FontPreference`
+    (Lot 5c) résout désormais effectivement la famille de police via
+    `ThemeManager.ResolveFontFamily(...)` et met à jour la ressource
+    racine `AppFontFamily` à chaque `Apply()`.
+  - **`Resources/Styles/Styles.xaml`** : les Setter `FontFamily="OpenSansRegular"`
+    en dur sont remplacés par `{DynamicResource AppFontFamily}` — un swap
+    de la ressource racine se propage immédiatement à tous les Label,
+    Button, Entry, SearchBar, Picker, etc.
+  - **`App.xaml`** : nouvelle ressource racine `<x:String x:Key="AppFontFamily">OpenSansRegular</x:String>`
+    qui devient le point de bascule unique pour la police effective.
+  - **Assets `.ttf` non commités** : les binaires sont sous licence
+    SIL Open Font License 1.1, redistribution autorisée mais hors
+    périmètre du repo. Un README dédié
+    (`src/Atlas.Maui/Resources/Fonts/README-fonts-facilitantes.md`)
+    documente noms exacts attendus, sources officielles
+    (opendyslexic.org, brailleinstitute.org), licence à joindre et
+    procédure de dépôt. Tant que les fichiers sont absents, MAUI
+    retombe sur OpenSans au runtime sans casser l'app.
+  - **`IMotionCoordinator` + `MotionCoordinator`** : nouveau port
+    accessibilité dans `Atlas.Maui.Theming`. Façade des extensions
+    d'animation MAUI (`FadeToAsync`, `TranslateToAsync`, `ScaleToAsync`)
+    qui consulte `ThemeManager.ReduceMotion` à chaque appel et applique
+    l'état final instantanément quand l'utilisateur a désactivé les
+    animations. Enregistré en singleton DI. À utiliser pour toute
+    animation MAUI non essentielle au lieu d'appeler directement les
+    extensions `VisualElement`.
+  - Build Release vert sur les 3 cibles MAUI (`net10.0-android` 1m54s,
+    `net10.0-ios` 15s, `net10.0-maccatalyst` 23s).
 - **Lot 5c — Préférences d'accessibilité utilisateur, bout-en-bout** :
   pipeline complet backend + client MAUI pour les préférences
   d'accessibilité portées par l'utilisateur, synchronisées multi-device
@@ -556,21 +590,21 @@ appel authentifié réel (cf. roadmap, statuts 🟡).
     `ResultOfT.cs`, `IJwtIssuer.cs` éclaté en `AccessToken.cs` + `IJwtIssuer.cs`,
     domain events câblés via `IPublisher` MediatR dans `SaveChangesAsync`,
     projet `Atlas.Shared.UnitTests` créé (19 tests), 2 nouveaux tests d'archi.
-  - **Lot 5 (pré-prod produit) — Lots 5a, 5b et 5c livrés** : adapter
-    Brevo ; base URL `AtlasApiClient` externalisée (override
-    `Preferences` + défauts par plateforme) ; build iOS / MacCatalyst
-    Release débloqué ; **accessibilité MAUI WCAG 2.2 AA** sur les 4 vues
-    XAML (`SemanticProperties`, `FontAutoScalingEnabled`, tokens
-    sémantiques dynamiques, tailles tactiles 44 px, annonces lecteur
-    d'écran) ; **préférences accessibilité utilisateur bout-en-bout**
-    (domain `UserAccessibilityPreferences` owned type + endpoints
-    `/user/preferences/accessibility` GET/PUT + migration EF + page MAUI
-    + application runtime via `ThemeManager.SetAccessibility(...)` —
-    HighContrast force le thème « Contraste » du kit, ReduceMotion en
-    flag global, FontPreference persistée mais asset `.ttf` non encore
-    embarqué). Reste pour Lot 5d+ : assets fonts facilitantes
-    embarqués (OpenDyslexic / Atkinson Hyperlegible — SIL OFL 1.1),
-    tests utilisateurs réels avec associations (Valentin Haüy, APF…).
+  - **Lot 5 (pré-prod produit) — Lots 5a, 5b, 5c et 5d livrés** :
+    adapter Brevo ; base URL `AtlasApiClient` externalisée ; build iOS
+    / MacCatalyst Release débloqué ; **accessibilité MAUI WCAG 2.2 AA**
+    sur les 4 vues XAML ; **préférences accessibilité utilisateur
+    bout-en-bout** (Domain owned type + endpoints
+    `/user/preferences/accessibility` + migration + page MAUI +
+    application runtime via `ThemeManager.SetAccessibility(...)`) ;
+    **polices facilitantes câblées** (MauiProgram enregistre
+    OpenDyslexic + Atkinson Hyperlegible, Styles globaux pointent sur
+    `{DynamicResource AppFontFamily}`, swap immédiat selon
+    `ThemeManager.FontPreference`) ; **`IMotionCoordinator`** branché
+    sur `ReduceMotion` pour façonner les animations MAUI. Reste hors
+    code : tests utilisateurs réels avec associations (Valentin Haüy,
+    APF…), dépôt manuel des binaires `.ttf` SIL OFL 1.1
+    (`src/Atlas.Maui/Resources/Fonts/README-fonts-facilitantes.md`).
 
 ### Modifié
 

@@ -9,6 +9,14 @@
                 <ResourceDictionary Source="Resources/Styles/Colors.xaml" />
                 <ResourceDictionary Source="Resources/Styles/Styles.xaml" />
             </ResourceDictionary.MergedDictionaries>
+
+            <!--
+                Lot 5d : police effective de l'application. Mise à jour à chaud par
+                ThemeManager.Apply() selon ThemeManager.FontPreference.
+                Référencée par les Setter FontFamily des Style globaux via
+                {DynamicResource AppFontFamily}, ce qui propage le swap partout.
+            -->
+            <x:String x:Key="AppFontFamily">OpenSansRegular</x:String>
         </ResourceDictionary>
     </Application.Resources>
 </Application>
