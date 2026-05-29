@@ -126,7 +126,7 @@ internal sealed class WnsNotificationDispatcher(
 
         var settings = new XmlWriterSettings { OmitXmlDeclaration = true };
         var sb = new StringBuilder();
-        using (XmlWriter writer = XmlWriter.Create(sb, settings))
+        using (var writer = XmlWriter.Create(sb, settings))
         {
             writer.WriteStartElement("toast");
             if (!string.IsNullOrEmpty(launchJson))
