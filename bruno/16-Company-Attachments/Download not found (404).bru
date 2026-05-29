@@ -1,0 +1,31 @@
+meta {
+  name: Download not found (404)
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/companies/{{siren}}/attachments/this-id-does-not-exist/download
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+tests {
+  test("statut 404", function () {
+    expect(res.getStatus()).to.equal(404);
+  });
+  test("ProblemDetails avec title companies.attachment_not_found", function () {
+    const body = res.getBody();
+    expect(body).to.have.property("title");
+    expect(body.title).to.equal("companies.attachment_not_found");
+  });
+}
+
+docs {
+  F-013 — Cas négatif : tentative de téléchargement d'un attachment inconnu.
+
+  Attendu : 404 ProblemDetails avec `title=companies.attachment_not_found`.
+}

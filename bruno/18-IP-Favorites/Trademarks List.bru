@@ -1,0 +1,35 @@
+meta {
+  name: Trademarks List
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/favorites/trademarks
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+tests {
+  test("statut 200", function () {
+    expect(res.getStatus()).to.equal(200);
+  });
+  test("réponse = tableau", function () {
+    expect(res.getBody()).to.be.an("array");
+  });
+  test("chaque favori a depositNumber + addedAt", function () {
+    const list = res.getBody();
+    if (list.length > 0) {
+      expect(list[0]).to.have.property("depositNumber");
+      expect(list[0]).to.have.property("addedAt");
+    }
+  });
+}
+
+docs {
+  F-018 — Mes favoris marque. Tri AddedAt desc.
+  DTO : `{ depositNumber, name?, addedAt }`.
+}

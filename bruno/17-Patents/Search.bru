@@ -1,0 +1,48 @@
+meta {
+  name: Search
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/patents?title={{patentTitle}}&inventor={{patentInventor}}&applicant={{patentApplicant}}&page=1&pageSize=20
+  auth: bearer
+  params:query {
+    title: {{patentTitle}}
+    inventor: {{patentInventor}}
+    applicant: {{patentApplicant}}
+    page: 1
+    pageSize: 20
+  }
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+tests {
+  test("statut 200", function () {
+    expect(res.getStatus()).to.equal(200);
+  });
+  test("forme PagedResult", function () {
+    const body = res.getBody();
+    expect(body).to.have.property("items");
+    expect(body).to.have.property("page");
+    expect(body).to.have.property("pageSize");
+    expect(body).to.have.property("totalCount");
+    expect(body.items).to.be.an("array");
+  });
+}
+
+docs {
+  F-016 — Recherche brevet multi-critères (titre, inventeur, déposant).
+
+  Au moins **un** critère doit être renseigné, sinon 400 `patents.empty_search`.
+  Pagination clampée côté API (page ≥ 1, pageSize ≤ 100).
+
+  Requiert : compte INPI connecté.
+  Réponse : PagedResult<PatentSummaryDto> = `{ items, page, pageSize, totalCount }`.
+  Chaque item : `{ publicationNumber, title?, applicants?, filingDate?, status? }`.
+
+  Renseigner `patentTitle` / `patentInventor` / `patentApplicant` dans Local.bru avant de jouer.
+}

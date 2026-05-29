@@ -1,0 +1,23 @@
+meta {
+  name: Trademarks Remove
+  type: http
+  seq: 3
+}
+
+delete {
+  url: {{baseUrl}}/favorites/trademarks/{{depositNumber}}
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+assert {
+  res.status: in [204, 404]
+}
+
+docs {
+  F-018 — Retire une marque des favoris.
+  204 = supprimé. 404 (`favorites.trademark_not_favorite`) = pas en favori (idempotent côté UX).
+}

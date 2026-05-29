@@ -2,8 +2,10 @@
 
 Tests d'API versionnés avec [Bruno](https://www.usebruno.com/) (fichiers `.bru` en clair,
 git-friendly). Couvre tout le parcours backend : auth, 2FA, connexion INPI, entreprises,
-marques, historique, compte/RGPD, **favoris (F-017), devices push (F-020), veille
-(F-041 à F-048), packs (F-042) et téléchargements en masse (F-014)**.
+marques, historique, compte/RGPD, **favoris (F-017 + F-018 marques/brevets), devices push
+(F-020), veille (F-041 à F-048), packs (F-042), téléchargements en masse (F-014), actes /
+bilans individuels (F-013), brevets (F-015 / F-016), exports CSV favoris (F-021) et rapport
+PDF de fiche entreprise (F-022)**.
 
 ## Prérequis : démarrer le harness local
 
@@ -51,6 +53,11 @@ L'API démarre en environnement `Development` :
 | `13-Veille` | **F-041 / F-043 / F-044** | Recent items, Add source, Subscriptions, Unsubscribe, Timeline, Set item state |
 | `14-Veille-Packs` | **F-042** | Catalog, Mine, Apply, Sync |
 | `15-Downloads` | **F-014** | Request bulk (empty/invalid/too-many/accepted), Get status, Not found, Download archive |
+| `16-Company-Attachments` | **F-013** | List, Download (PDF), Download not found (404) |
+| `17-Patents` | **F-015 / F-016** | Search (multi-critères), Search empty (400), Detail |
+| `18-IP-Favorites` | **F-018** | Trademarks Add/List/Remove + Patents Add/List/Remove |
+| `19-Favorites-Export` | **F-021** | Companies CSV, Trademarks CSV, Patents CSV |
+| `20-Company-Report` | **F-022** | Report PDF |
 
 ### Étape manuelle : vérification de l'email
 
@@ -82,6 +89,9 @@ runtime réutilisée par toutes les requêtes protégées.
 | `packCode` | Code de pack pour `Apply`/`Sync` (défaut `pi-cabinet`) |
 | `deviceToken` / `devicePlatform` / `deviceId` | Pour `12-Devices` ; `deviceId` capturé runtime par `Register` |
 | `bulkJobId` | Capturé runtime par `15-Downloads/04 Request bulk (accepted)` et réutilisé par les calls suivants |
+| `attachmentId` | ID d'un acte ou bilan (F-013) — à renseigner depuis la liste retournée par `16-Company-Attachments/List` |
+| `publicationNumber` | Numéro de publication brevet (F-015 / F-018) — par ex. issu de `17-Patents/Search` |
+| `patentTitle` / `patentInventor` / `patentApplicant` | Critères de recherche brevet (F-016) — au moins un requis |
 
 ### Secrets : `bruno/.env` (jamais commité)
 

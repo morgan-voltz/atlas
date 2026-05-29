@@ -1,0 +1,41 @@
+meta {
+  name: List attachments
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/companies/{{siren}}/attachments
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+tests {
+  test("statut 200", function () {
+    expect(res.getStatus()).to.equal(200);
+  });
+  test("réponse = tableau", function () {
+    expect(res.getBody()).to.be.an("array");
+  });
+  test("chaque attachment a id, type, name", function () {
+    const list = res.getBody();
+    if (list.length > 0) {
+      expect(list[0]).to.have.property("id");
+      expect(list[0]).to.have.property("type");
+      expect(list[0]).to.have.property("name");
+    }
+  });
+}
+
+docs {
+  F-013 — Liste les actes (statuts, modifications) et bilans déposés à l'INPI pour une entreprise.
+
+  Requiert : compte INPI connecté (sinon 409 `inpi.not_connected`).
+  Réponse 200 : tableau de `{ id, type, name, depositedAt?, sizeBytes?, isConfidential }`.
+  Type ∈ { Acte, Bilan, Other }. Mapping JSON défensif (accepte tableau direct OU
+  objet avec sous-collections actes/comptesAnnuels/bilans).
+  404 si entreprise inconnue côté INPI.
+}

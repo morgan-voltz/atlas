@@ -396,6 +396,32 @@ appel authentifié réel (cf. roadmap, statuts 🟡).
   pour la carte-aperçu (§7) et la carte-section (§8). Référencée depuis la
   table « Documents fondateurs » de `CLAUDE.md` et depuis les fiches F-009
   et F-010.
+- **Lot 7 — Couverture Bruno des features MVP 2 manquantes** : 16 requêtes
+  Bruno ajoutées dans 5 nouveaux dossiers, complète la collection backend
+  pour préparer F-028 (API publique) et débloquer le test manuel des
+  features livrées récemment.
+  - **`16-Company-Attachments` (F-013)** — `List attachments`,
+    `Download` (PDF stream, signature `%PDF`, Content-Type
+    `application/pdf`), `Download not found (404)` qui valide le
+    `ProblemDetails.title=companies.attachment_not_found`.
+  - **`17-Patents` (F-015 + F-016)** — `Search` multi-critères
+    (PagedResult), `Search empty (400)` qui valide
+    `patents.empty_search`, `Detail` par numéro de publication.
+  - **`18-IP-Favorites` (F-018)** — 6 requêtes : Trademarks Add / List /
+    Remove + Patents Add / List / Remove. Valide les codes `204` /
+    `404` / `409` et la structure DTO `{ depositNumber|publicationNumber,
+    name|title?, addedAt }`.
+  - **`19-Favorites-Export` (F-021)** — 3 exports CSV (companies,
+    trademarks, patents). Valide `text/csv; charset=utf-8`,
+    `Content-Disposition: attachment; filename=favoris-*.csv`, BOM
+    UTF-8 (compat Excel FR) ou en-tête CRLF/RFC 4180.
+  - **`20-Company-Report` (F-022)** — `Report PDF` : valide
+    `application/pdf`, `Content-Disposition` avec
+    `atlas-<siren>.pdf`, signature `%PDF`.
+  - **Variables d'environnement étendues** (`environments/Local.bru`) :
+    `attachmentId`, `publicationNumber`, `patentTitle`,
+    `patentInventor`, `patentApplicant`. README mis à jour avec les 5
+    nouveaux dossiers et leur table d'endpoints.
 - **Lot 6 — Tests d'architecture étendus (Lot 3 résiduel de l'audit)** :
   ferme la dette d'audit côté contrôle automatique. NetArchTest + parsing
   `.csproj` couvrent désormais tous les projets de la solution.
