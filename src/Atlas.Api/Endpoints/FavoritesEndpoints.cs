@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using Atlas.Application.Common;
 using Atlas.Application.Favorites;
 using Atlas.Application.Favorites.AddCompanyFavorite;
 using Atlas.Application.Favorites.AddPatentFavorite;
@@ -25,6 +26,8 @@ internal static class FavoritesEndpoints
         companies.MapPost("", AddCompanyAsync);
         companies.MapDelete("{siren}", RemoveCompanyAsync);
         companies.MapGet("", GetMyCompaniesAsync);
+        // F-021 — export CSV
+        companies.MapGet("/export", ExportCompaniesAsync);
 
         // F-018 — favoris marques
         RouteGroupBuilder trademarks = routes.MapGroup("/favorites/trademarks")
@@ -34,6 +37,7 @@ internal static class FavoritesEndpoints
         trademarks.MapPost("", AddTrademarkAsync);
         trademarks.MapDelete("{depositNumber}", RemoveTrademarkAsync);
         trademarks.MapGet("", GetMyTrademarksAsync);
+        trademarks.MapGet("/export", ExportTrademarksAsync);
 
         // F-018 — favoris brevets
         RouteGroupBuilder patents = routes.MapGroup("/favorites/patents")
@@ -43,6 +47,7 @@ internal static class FavoritesEndpoints
         patents.MapPost("", AddPatentAsync);
         patents.MapDelete("{publicationNumber}", RemovePatentAsync);
         patents.MapGet("", GetMyPatentsAsync);
+        patents.MapGet("/export", ExportPatentsAsync);
 
         return routes;
     }
@@ -96,6 +101,26 @@ internal static class FavoritesEndpoints
         return result.IsSuccess ? Results.Ok(result.Value) : result.Error!.ToProblem();
     }
 
+    private static async Task<IResult> ExportCompaniesAsync(
+        ClaimsPrincipal principal,
+        ISender sender,
+        CancellationToken ct)
+    {
+        if (!principal.TryGetUserId(out Guid userId))
+        {
+            return Results.Unauthorized();
+        }
+
+        Result<IReadOnlyList<CompanyFavoriteDto>> result = await sender.Send(new GetMyCompanyFavoritesQuery(userId), ct);
+        if (result.IsFailure)
+        {
+            return result.Error!.ToProblem();
+        }
+
+        byte[] csv = FavoritesExports.CompaniesToCsv(result.Value!);
+        return Results.File(csv, "text/csv; charset=utf-8", "favoris-entreprises.csv");
+    }
+
     // ── Trademarks (F-018) ──────────────────────────────────────────────────────────
 
     private static async Task<IResult> AddTrademarkAsync(
@@ -144,6 +169,26 @@ internal static class FavoritesEndpoints
         Result<IReadOnlyList<TrademarkFavoriteDto>> result =
             await sender.Send(new GetMyTrademarkFavoritesQuery(userId), ct);
         return result.IsSuccess ? Results.Ok(result.Value) : result.Error!.ToProblem();
+    }
+
+    private static async Task<IResult> ExportTrademarksAsync(
+        ClaimsPrincipal principal,
+        ISender sender,
+        CancellationToken ct)
+    {
+        if (!principal.TryGetUserId(out Guid userId))
+        {
+            return Results.Unauthorized();
+        }
+
+        Result<IReadOnlyList<TrademarkFavoriteDto>> result = await sender.Send(new GetMyTrademarkFavoritesQuery(userId), ct);
+        if (result.IsFailure)
+        {
+            return result.Error!.ToProblem();
+        }
+
+        byte[] csv = FavoritesExports.TrademarksToCsv(result.Value!);
+        return Results.File(csv, "text/csv; charset=utf-8", "favoris-marques.csv");
     }
 
     // ── Patents (F-018) ─────────────────────────────────────────────────────────────
@@ -195,6 +240,26 @@ internal static class FavoritesEndpoints
             await sender.Send(new GetMyPatentFavoritesQuery(userId), ct);
         return result.IsSuccess ? Results.Ok(result.Value) : result.Error!.ToProblem();
     }
+
+    private static async Task<IResult> ExportPatentsAsync(
+        ClaimsPrincipal principal,
+        ISender sender,
+        CancellationToken ct)
+    {
+        if (!principal.TryGetUserId(out Guid userId))
+        {
+            return Results.Unauthorized();
+        }
+
+        Result<IReadOnlyList<PatentFavoriteDto>> result = await sender.Send(new GetMyPatentFavoritesQuery(userId), ct);
+        if (result.IsFailure)
+        {
+            return result.Error!.ToProblem();
+        }
+
+        byte[] csv = FavoritesExports.PatentsToCsv(result.Value!);
+        return Results.File(csv, "text/csv; charset=utf-8", "favoris-brevets.csv");
+    }
 }
 
 internal sealed record AddCompanyFavoriteRequest(string Siren, string? Name);
@@ -202,3 +267,30 @@ internal sealed record AddCompanyFavoriteRequest(string Siren, string? Name);
 internal sealed record AddTrademarkFavoriteRequest(string DepositNumber, string? Name);
 
 internal sealed record AddPatentFavoriteRequest(string PublicationNumber, string? Title);
+
+internal static class FavoritesExports
+{
+    public static byte[] CompaniesToCsv(IEnumerable<CompanyFavoriteDto> items) =>
+        CsvWriter.WriteToBytes(items, new List<CsvColumn<CompanyFavoriteDto>>
+        {
+            new("SIREN", x => x.Siren),
+            new("Dénomination", x => x.Name),
+            new("AjoutéLe", x => x.AddedAt),
+        });
+
+    public static byte[] TrademarksToCsv(IEnumerable<TrademarkFavoriteDto> items) =>
+        CsvWriter.WriteToBytes(items, new List<CsvColumn<TrademarkFavoriteDto>>
+        {
+            new("NuméroDépôt", x => x.DepositNumber),
+            new("Nom", x => x.Name),
+            new("AjoutéLe", x => x.AddedAt),
+        });
+
+    public static byte[] PatentsToCsv(IEnumerable<PatentFavoriteDto> items) =>
+        CsvWriter.WriteToBytes(items, new List<CsvColumn<PatentFavoriteDto>>
+        {
+            new("NuméroPublication", x => x.PublicationNumber),
+            new("Titre", x => x.Title),
+            new("AjoutéLe", x => x.AddedAt),
+        });
+}
