@@ -19,8 +19,12 @@ public static class MauiProgram
                 fonts.AddFont("OpenSans-Semibold.ttf", "OpenSansSemibold");
             });
 
+        // BaseUrl résolue par plateforme + override Preferences (cf. AtlasApiOptions).
+        builder.Services.AddSingleton<AtlasApiOptions>();
+
         // HttpClient singleton : conserve le cookie de refresh (httpOnly) entre les appels d'une session.
-        builder.Services.AddSingleton(_ => new HttpClient { BaseAddress = new Uri(AtlasApiOptions.BaseUrl) });
+        builder.Services.AddSingleton(sp =>
+            new HttpClient { BaseAddress = new Uri(sp.GetRequiredService<AtlasApiOptions>().BaseUrl) });
         builder.Services.AddSingleton(SecureStorage.Default);
         builder.Services.AddSingleton<ITokenStore, SecureStorageTokenStore>();
         builder.Services.AddSingleton<IAtlasApiClient, AtlasApiClient>();

@@ -396,6 +396,22 @@ appel authentifié réel (cf. roadmap, statuts 🟡).
   pour la carte-aperçu (§7) et la carte-section (§8). Référencée depuis la
   table « Documents fondateurs » de `CLAUDE.md` et depuis les fiches F-009
   et F-010.
+- **Lot 5a — Pré-prod produit, client MAUI** : 2 items résiduels de pré-prod
+  produit ferment leur ticket avant la suite UI.
+  - **`AtlasApiClient` base URL configurable** : `AtlasApiOptions` passe de
+    constante statique à classe d'instance résolvant la base URL par deux
+    couches — (1) override utilisateur via `Preferences` (clé
+    `Atlas.BaseUrl`, utile staging / self-hosted), (2) défaut par plateforme
+    via `#if` (Android émulateur `10.0.2.2`, iOS / MacCatalyst / Windows
+    `localhost`). L'asymétrie connue de l'émulateur Android n'est plus dans
+    le client par hasard.
+  - **Build iOS / MacCatalyst Release débloqué** : `[SuppressMessage]` ciblé
+    `CA1711` posé sur `Atlas.Maui.AppDelegate` (iOS + MacCatalyst) avec
+    justification explicite (« Apple UIKit/AppKit convention requires the
+    'Delegate' suffix on UIApplicationDelegate-derived types »). Build
+    Release MAUI sur les 3 cibles (`net10.0-android` 1m27s,
+    `net10.0-ios` 9s, `net10.0-maccatalyst` 17s) → vert. Débloque le
+    packaging IPA / PKG pré-prod.
 - **Lot 4 — Dette structurée résolue (audit profond)** : convergence des 4 points
   P2 / P3 du Lot 4.
   - **Combinateurs `Result` / `Result<T>`** ajoutés dans `Atlas.Shared` (purement
@@ -456,12 +472,13 @@ appel authentifié réel (cf. roadmap, statuts 🟡).
     `ResultOfT.cs`, `IJwtIssuer.cs` éclaté en `AccessToken.cs` + `IJwtIssuer.cs`,
     domain events câblés via `IPublisher` MediatR dans `SaveChangesAsync`,
     projet `Atlas.Shared.UnitTests` créé (19 tests), 2 nouveaux tests d'archi.
-  - **Lot 5 (pré-prod produit)** : adapter Brevo livré (cf. ci-dessus),
-    mais accessibilité MAUI à compléter (WCAG 2.2 AA non encore réglée sur
-    les vues), build iOS / MacCatalyst toujours cassé par CA1711 sur
-    `AppDelegate` (convention Apple incompressible) — non bloquant pour
-    la CI backend mais à régler avant packaging MSIX / PKG, base URL
-    `AtlasApiClient` à externaliser de la configuration émulateur.
+  - **Lot 5 (pré-prod produit) — Lot 5a livré** : adapter Brevo livré ;
+    base URL `AtlasApiClient` externalisée (override `Preferences` +
+    défauts par plateforme) ; build iOS / MacCatalyst Release débloqué
+    (`[SuppressMessage]` CA1711 ciblé avec justification Apple). Reste
+    pour Lot 5b : accessibilité MAUI WCAG 2.2 AA sur les 5 vues
+    existantes (LoginPage, CompanySearchPage, CompanyDetailPage,
+    SearchHistoryPage, MainPage).
 
 ### Modifié
 
