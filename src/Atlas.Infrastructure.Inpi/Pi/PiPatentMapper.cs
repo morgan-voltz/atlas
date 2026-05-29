@@ -4,7 +4,7 @@ using Atlas.Infrastructure.Inpi.Pi.DTOs;
 
 namespace Atlas.Infrastructure.Inpi.Pi;
 
-/// <summary>Mapping défensif PI brevets → domaine (F-015). Tous les champs sont optionnels.</summary>
+/// <summary>Mapping défensif PI brevets → domaine (F-015 + F-016). Tous les champs sont optionnels.</summary>
 internal static class PiPatentMapper
 {
     public static PatentDetail Map(PiPatentNotice notice, PublicationNumber fallback)
@@ -31,6 +31,22 @@ internal static class PiPatentMapper
             TryParseDate(notice.DatePublication),
             string.IsNullOrWhiteSpace(notice.Statut) ? null : notice.Statut.Trim(),
             string.IsNullOrWhiteSpace(notice.Abrege) ? null : notice.Abrege.Trim());
+    }
+
+    public static PatentSummary MapSummary(PiPatentSummary item)
+    {
+        ArgumentNullException.ThrowIfNull(item);
+
+        PublicationNumber number = string.IsNullOrWhiteSpace(item.NumeroPublication)
+            ? PublicationNumber.FromTrustedValue("(inconnu)")
+            : PublicationNumber.FromTrustedValue(item.NumeroPublication.Trim().ToUpperInvariant());
+
+        return new PatentSummary(
+            number,
+            string.IsNullOrWhiteSpace(item.Titre) ? "(sans titre)" : item.Titre.Trim(),
+            string.IsNullOrWhiteSpace(item.Deposant) ? null : item.Deposant.Trim(),
+            TryParseDate(item.DateDepot),
+            string.IsNullOrWhiteSpace(item.Statut) ? null : item.Statut.Trim());
     }
 
     private static DateOnly? TryParseDate(string? raw) =>

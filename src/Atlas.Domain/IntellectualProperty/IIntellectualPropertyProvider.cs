@@ -29,4 +29,10 @@ public interface IIntellectualPropertyProvider
         PublicationNumber publicationNumber,
         InpiAccessCredentials credentials,
         CancellationToken ct = default);
+
+    /// <summary>Recherche brevet multi-critères (titre / inventeur / déposant), paginée (F-016).</summary>
+    Task<Result<PagedResult<PatentSummary>>> SearchPatentsAsync(
+        PatentSearchQuery query,
+        InpiAccessCredentials credentials,
+        CancellationToken ct = default);
 }
