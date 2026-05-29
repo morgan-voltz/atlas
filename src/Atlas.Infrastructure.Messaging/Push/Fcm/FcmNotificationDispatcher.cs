@@ -20,7 +20,7 @@ internal sealed class FcmNotificationDispatcher(
     IDeviceRegistrationRepository devices,
     IUnitOfWork unitOfWork,
     IOptions<FcmOptions> options,
-    ILogger<FcmNotificationDispatcher> logger) : INotificationDispatcher
+    ILogger<FcmNotificationDispatcher> logger) : IPlatformPushDispatcher
 {
     private readonly FcmOptions _options = options.Value;
 
