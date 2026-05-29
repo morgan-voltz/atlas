@@ -35,6 +35,17 @@ appel authentifié réel (cf. roadmap, statuts 🟡).
   GitHub Pages.
 - **F-012 — Conformité RGPD** : export des données (JSON) et suppression de compte avec
   effacement en cascade.
+- **F-013 — Téléchargement individuel d'actes et bilans (MVP 2)** : extension
+  `ICompanyDataProvider` avec `GetAttachmentsAsync` + `DownloadAttachmentAsync`
+  (auth Bearer + retry 401 unifié dans `ExecuteAsync<T>` du `RneCompanyProvider`).
+  Endpoints `GET /companies/{siren}/attachments` et
+  `GET /companies/{siren}/attachments/{id}/download` (proxy binaire via
+  `Results.Stream`). Entité `CompanyAttachment` (Id, `AttachmentType` enum
+  `Acte` / `Bilan` / `Other`, Name, DepositedAt?, SizeBytes?, IsConfidential).
+  Mapping JSON **défensif** : accepte tableau direct OU objet avec sous-collections
+  `actes` / `comptesAnnuels` / `bilans`. Bilans confidentiels (champ `confidentialite`)
+  → 403 `companies.attachment_confidential`. Reste : confirmation par un appel
+  authentifié réel + couverture Bruno.
 - **F-014 — Téléchargement en masse de documents (MVP 2)** : un utilisateur soumet
   jusqu'à 50 SIREN via `POST /downloads/bulk` ; le backend valide chaque SIREN (Luhn),
   crée un `BulkDownloadJob` (`Pending`) et enfile un job Hangfire qui télécharge les
@@ -48,6 +59,46 @@ appel authentifié réel (cf. roadmap, statuts 🟡).
   filtrés à la source. Cascade FK RGPD sur `bulk_download_jobs`. Le push / email
   de finalisation, le job de purge automatique et l'adapter S3 sont reportés à un
   lot ultérieur.
+- **F-015 — Recherche brevet par numéro de publication (MVP 2)** : endpoint
+  `GET /patents/{publicationNumber}` qui interroge l'INPI PI brevets via
+  `IIntellectualPropertyProvider.GetPatentAsync`. Route paramétrée placée **après**
+  la route de recherche (F-016) pour éviter la collision de routing. Mapping
+  best-effort `PiPatentMapper.MapDetail`. Reste : confirmation contre la structure
+  JSON exacte de l'INPI réel + couverture Bruno.
+- **F-016 — Recherche brevet avancée (titre / inventeur / déposant, MVP 2)** :
+  `PatentSearchQuery(Title?, Inventor?, Applicant?, Page, PageSize)` +
+  `PatentSummary` + `IIntellectualPropertyProvider.SearchPatentsAsync`. Endpoint
+  `GET /patents?title=&inventor=&applicant=&page=&pageSize=` (route précédant la
+  route paramétrée de F-015). Validation : ≥ 1 critère renseigné sinon
+  `400 patents.empty_search`. Pagination clampée. Adapter via
+  `POST /services/apidiffusion/api/brevets/search`. Mapping best-effort
+  `PiPatentMapper.MapSummary`. Reste : confirmation contre la syntaxe SolR exacte
+  + structure de réponse paginée de l'INPI réel.
+- **F-018 — Favoris : suivi d'une marque ou d'un brevet (MVP 2)** : entités
+  `TrademarkFavorite` (UserId, DepositNumber, NameSnapshot?, AddedAt) et
+  `PatentFavorite` (UserId, PublicationNumber, TitleSnapshot?, AddedAt) avec ports
+  repositories + erreurs métier. 6 use cases Application (Add / Remove / GetMine ×
+  2 entités). 6 endpoints `POST/DELETE/GET /favorites/trademarks` et
+  `/favorites/patents` sous le même groupe `/favorites/*`. Persistence : tables
+  `trademark_favorites` et `patent_favorites` (index unique
+  `(user, dépôt / publication)`, cascade FK RGPD). Tests handlers (10) + cascade
+  RGPD étendue.
+- **F-021 — Export CSV des listes de favoris (MVP 2)** : helper
+  `Atlas.Application.Common.CsvWriter` (RFC 4180, UTF-8 + BOM, CRLF, échappement
+  des quotes / virgules / sauts de ligne). 3 endpoints d'export favoris :
+  `GET /favorites/{companies,trademarks,patents}/export` → `text/csv` avec
+  `Content-Disposition: attachment`. Pas de dépendance NuGet ajoutée. Reste :
+  export XLSX (ClosedXML), export des résultats de recherche RNE / PI (paginé),
+  export de la veille (timeline).
+- **F-022 — Rapport PDF de fiche entreprise (MVP 2)** : endpoint
+  `GET /companies/{siren}/report.pdf` → PDF A4 (identité, NAF, adresse, dirigeants,
+  table actes/bilans). Powered by **QuestPDF community edition** (licence engagée
+  au démarrage). `CompanyReportRenderer` dans `Atlas.Api/Reports/` (couche
+  présentation, QuestPDF référencé uniquement par `Atlas.Api`). Attachments
+  best-effort (PDF généré même si la liste échoue). 3 smoke tests dans
+  `Atlas.Api.IntegrationTests` (signature `%PDF`, payloads minimal / complet /
+  vide). Reste : enrichissement (logo, historique des modifications via snapshots
+  F-019, bilans intégrés via F-013 download).
 - **F-041 — Moteur d'agrégation RSS/Atom (MVP 2)** : contexte Veille (port
   `IExternalContentSource`, entités `FeedSource`/`FeedItem`), provider RSS/Atom
   (CodeHollow.FeedReader), polling récurrent via **Hangfire** (stockage PostgreSQL),
@@ -123,6 +174,41 @@ appel authentifié réel (cf. roadmap, statuts 🟡).
   bornée à 500 entrées de chaque source en mémoire pour MVP ; les events
   sont exclus si un filtre RSS-only est actif (`sourceId`, `unread`,
   `favoritesOnly`, `mentionsFavoritesOnly`). Reste : BODACC (F-048).
+- **F-046 — Filtres et règles de surveillance personnalisées (MVP 2)** : entité
+  `FeedRule` (`UserId` + critères évalués en **AND** : `KeywordPattern` /
+  `SourceId` / `MentionedSiren` + actions : `NotifyEmail` / `NotifyPush`).
+  Invariants `Create` / `Update` : nom 1-200, keyword ≤ 200, au moins un critère
+  et au moins une action. Watermark `LastEvaluatedAt` pour l'évaluation
+  incrémentale ; compteur monotone `TimesTriggered` + `LastTriggeredAt`. Port
+  `IFeedRuleRepository`. 5 use cases MediatR (`CreateFeedRule`, `UpdateFeedRule`,
+  `DeleteFeedRule`, `ListMyFeedRules`, `EvaluateFeedRules`). Notification
+  `FeedRuleMatchedNotification` + 2 handlers email / push calqués sur F-019,
+  gating sur `NotifyEmail` / `NotifyPush` par règle. Extension
+  `IEmailSender.SendFeedRuleMatchedAsync` + adapters logging / capturing
+  (l'adapter Brevo restera commun avec F-019). 4 endpoints `/feed/rules` (POST /
+  GET / PATCH / DELETE) sécurisés via auth utilisateur. Table `feed_rule`
+  (cascade FK user RGPD, 2 index : `user_id`, `is_active`). Job Hangfire :
+  `EvaluateFeedRulesCommand` chaîné dans `FeedPollingJob.PollAsync()` après
+  `MatchFavoritesInFeedItemsCommand` (F-047) — voit donc les
+  `FeedItemFavoriteMatch` nécessaires au critère `MentionedSiren`. 28 tests
+  couvrent l'entité (17), `CreateFeedRule` (4), `DeleteFeedRule` (3) et le flux
+  complet `EvaluateFeedRules` (4). Reste : adapter Brevo email, UI MAUI (CRUD
+  des règles).
+- **F-050 — Préparation à la couche premium (architecture)** : matérialise la
+  frontière open core / premium prévue par ADR-006. 3 ports premium déclarés
+  côté domaine dans `Atlas.Domain.Veille.Premium` (interfaces uniquement,
+  aucune implémentation) : `IFeedItemEnricher` (+ record `FeedItemEnrichment`),
+  `IFeedRelevanceScorer` (score 0-100 par item × user) et `IFeedSummarizer`
+  (synthèse narrative d'un batch — patron pour `IFinancialSummarizer` de F-054).
+  Projet `Atlas.Application.Premium` matérialisé via une classe `AssemblyMarker`
+  publique pour permettre aux tests d'architecture de cibler son assembly.
+  +3 tests dans `Atlas.Architecture.Tests` verrouillant la séparation : (a)
+  `Atlas.Application` (cœur) ne référence pas `Atlas.Application.Premium`, (b)
+  `Atlas.Domain` ne référence pas `Atlas.Application.Premium`, (c)
+  `Atlas.Application.Premium` ne référence pas `Atlas.Infrastructure.*` ni
+  `Atlas.Api`. Le cœur open source reste intact ; les adapters viendront dans
+  des projets `Atlas.Infrastructure.*Premium` dédiés, câblés en composition
+  root dans `Atlas.Api`.
 - **F-020 — Adapter Firebase Cloud Messaging (Android + Web Push)** : OAuth2
   par service account (JWT RS256 signé avec la clé privée du service account
   Firebase, échange contre un access token, cache 55 min thread-safe). POST
