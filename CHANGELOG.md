@@ -236,6 +236,23 @@ appel authentifié réel (cf. roadmap, statuts 🟡).
   forbidden si caller ≠ auteur). Reste : UI MAUI (CRUD + browse + like /
   report), workflow admin de revue des reports, recommandations / search
   facetté.
+- **Adapter email Brevo** (provider France RGPD-compliant, cf. CLAUDE.md) :
+  `BrevoEmailSender` (`Atlas.Infrastructure.Messaging.Email.Brevo`) câblé via
+  `AddHttpClient<IEmailSender, BrevoEmailSender>` quand `Email:Brevo:ApiKey`
+  est renseigné — sans clé, fallback transparent sur le
+  `LoggingEmailSender` de dev. POST `https://api.brevo.com/v3/smtp/email`
+  avec header `api-key` (et non Bearer). 3 templates inline (subject +
+  HTML + plain text) pour les 3 méthodes existantes de l'`IEmailSender` :
+  vérification d'email (F-001), évolution favori (F-019), règle de
+  surveillance matchée (F-046). Échec non-2xx ou exception réseau : logué
+  en `Warning` / `Error` mais **jamais propagé** — un email perdu ne doit
+  pas casser un job métier (refresh favoris, évaluation règles). Garde-fou
+  amont : si `SenderEmail` n'est pas configuré, l'envoi est sauté avec
+  log d'erreur (la clé sans expéditeur est une mauvaise configuration).
+  6 tests unitaires (`FakeHttpMessageHandler`) couvrent le payload Brevo
+  des 3 templates, l'échec HTTP non bloquant, l'exception réseau
+  swallowée et le skip sans `SenderEmail`. Débloque les annonces
+  « alertes email opérationnelles » pour F-019 et F-046.
 - **F-020 — Adapter Firebase Cloud Messaging (Android + Web Push)** : OAuth2
   par service account (JWT RS256 signé avec la clé privée du service account
   Firebase, échange contre un access token, cache 55 min thread-safe). POST
