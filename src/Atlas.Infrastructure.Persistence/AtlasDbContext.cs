@@ -55,6 +55,8 @@ public sealed class AtlasDbContext(DbContextOptions<AtlasDbContext> options)
 
     public DbSet<BulkDownloadJob> BulkDownloadJobs => Set<BulkDownloadJob>();
 
+    public DbSet<FeedRule> FeedRules => Set<FeedRule>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         ArgumentNullException.ThrowIfNull(modelBuilder);

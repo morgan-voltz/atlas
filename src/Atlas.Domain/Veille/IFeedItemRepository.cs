@@ -23,6 +23,13 @@ public interface IFeedItemRepository
     Task<IReadOnlyList<FeedItem>> GetUnclusteredAsync(int max, CancellationToken ct = default);
 
     /// <summary>
+    /// Items <see cref="FeedItem.FetchedAt"/> strictement &gt; <paramref name="since"/>,
+    /// plafonnés à <paramref name="max"/>, plus anciens d'abord. Sert à l'évaluation incrémentale
+    /// des règles de surveillance (F-046).
+    /// </summary>
+    Task<IReadOnlyList<FeedItem>> ListFetchedSinceAsync(DateTimeOffset since, int max, CancellationToken ct = default);
+
+    /// <summary>
     /// Timeline d'un utilisateur (F-044) : items des sources auxquelles il est abonné, filtrés et paginés,
     /// avec l'état de lecture/favori/archivage de l'utilisateur.
     /// </summary>

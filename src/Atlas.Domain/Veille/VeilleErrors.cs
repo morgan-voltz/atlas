@@ -26,6 +26,12 @@ public static class VeilleErrors
 
     public static readonly DomainError VeillePackNotEnrolled = new VeillePackNotEnrolledError();
 
+    public static DomainError InvalidFeedRule(string reason) => new InvalidFeedRuleError(reason);
+
+    public static readonly DomainError FeedRuleNotFound = new FeedRuleNotFoundError();
+
+    public static readonly DomainError FeedRuleForbidden = new FeedRuleForbiddenError();
+
     private sealed record InvalidFeedSourceError(string Reason)
         : DomainError("veille.invalid_feed_source", $"Source de veille invalide : {Reason}");
 
@@ -58,4 +64,13 @@ public static class VeilleErrors
 
     private sealed record VeillePackNotEnrolledError()
         : DomainError("veille.veille_pack_not_enrolled", "Vous n'avez pas appliqué ce pack de veille.");
+
+    private sealed record InvalidFeedRuleError(string Reason)
+        : DomainError("veille.invalid_feed_rule", $"Règle de surveillance invalide : {Reason}");
+
+    private sealed record FeedRuleNotFoundError()
+        : DomainError("veille.feed_rule_not_found", "Règle de surveillance introuvable.");
+
+    private sealed record FeedRuleForbiddenError()
+        : DomainError("veille.feed_rule_forbidden", "Vous n'êtes pas autorisé à modifier cette règle.");
 }

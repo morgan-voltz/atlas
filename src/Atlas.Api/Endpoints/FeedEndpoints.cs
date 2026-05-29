@@ -3,6 +3,11 @@ using Atlas.Application.Veille.AddUserFeedSource;
 using Atlas.Application.Veille.GetMySubscriptions;
 using Atlas.Application.Veille.GetRecentFeedItems;
 using Atlas.Application.Veille.GetTimeline;
+using Atlas.Application.Veille.Rules;
+using Atlas.Application.Veille.Rules.CreateFeedRule;
+using Atlas.Application.Veille.Rules.DeleteFeedRule;
+using Atlas.Application.Veille.Rules.ListMyFeedRules;
+using Atlas.Application.Veille.Rules.UpdateFeedRule;
 using Atlas.Application.Veille.SetFeedItemState;
 using Atlas.Application.Veille.Unsubscribe;
 using Atlas.Shared.Result;
@@ -36,7 +41,99 @@ internal static class FeedEndpoints
         group.MapGet("/timeline", GetTimelineAsync);
         group.MapPatch("/items/{id:guid}/state", SetItemStateAsync);
 
+        // F-046 — règles de surveillance personnalisées (critères AND, alerte email + push).
+        group.MapPost("/rules", CreateRuleAsync);
+        group.MapGet("/rules", ListRulesAsync);
+        group.MapPatch("/rules/{id:guid}", UpdateRuleAsync);
+        group.MapDelete("/rules/{id:guid}", DeleteRuleAsync);
+
         return routes;
+    }
+
+    private static async Task<IResult> CreateRuleAsync(
+        ClaimsPrincipal principal,
+        CreateFeedRuleRequest request,
+        ISender sender,
+        CancellationToken ct)
+    {
+        if (!principal.TryGetUserId(out Guid userId))
+        {
+            return Results.Unauthorized();
+        }
+
+        Result<FeedRuleDto> result = await sender.Send(
+            new CreateFeedRuleCommand(
+                userId,
+                request.Name,
+                request.KeywordPattern,
+                request.SourceId,
+                request.MentionedSiren,
+                request.NotifyEmail,
+                request.NotifyPush),
+            ct);
+
+        return result.IsSuccess
+            ? Results.Created($"/feed/rules/{result.Value!.Id}", result.Value)
+            : result.Error!.ToProblem();
+    }
+
+    private static async Task<IResult> ListRulesAsync(
+        ClaimsPrincipal principal,
+        ISender sender,
+        CancellationToken ct)
+    {
+        if (!principal.TryGetUserId(out Guid userId))
+        {
+            return Results.Unauthorized();
+        }
+
+        Result<IReadOnlyList<FeedRuleDto>> result =
+            await sender.Send(new ListMyFeedRulesQuery(userId), ct);
+
+        return result.IsSuccess ? Results.Ok(result.Value) : result.Error!.ToProblem();
+    }
+
+    private static async Task<IResult> UpdateRuleAsync(
+        ClaimsPrincipal principal,
+        Guid id,
+        UpdateFeedRuleRequest request,
+        ISender sender,
+        CancellationToken ct)
+    {
+        if (!principal.TryGetUserId(out Guid userId))
+        {
+            return Results.Unauthorized();
+        }
+
+        Result<FeedRuleDto> result = await sender.Send(
+            new UpdateFeedRuleCommand(
+                userId,
+                id,
+                request.Name,
+                request.KeywordPattern,
+                request.SourceId,
+                request.MentionedSiren,
+                request.NotifyEmail,
+                request.NotifyPush,
+                request.IsActive),
+            ct);
+
+        return result.IsSuccess ? Results.Ok(result.Value) : result.Error!.ToProblem();
+    }
+
+    private static async Task<IResult> DeleteRuleAsync(
+        ClaimsPrincipal principal,
+        Guid id,
+        ISender sender,
+        CancellationToken ct)
+    {
+        if (!principal.TryGetUserId(out Guid userId))
+        {
+            return Results.Unauthorized();
+        }
+
+        Result result = await sender.Send(new DeleteFeedRuleCommand(userId, id), ct);
+        return result.IsSuccess ? Results.NoContent() : result.Error!.ToProblem();
     }
 
     private static async Task<IResult> GetTimelineAsync(
@@ -130,4 +227,21 @@ internal static class FeedEndpoints
     private sealed record AddFeedSourceRequest(string Url, string? Name);
 
     private sealed record SetFeedItemStateRequest(bool? IsRead, bool? IsFavorite, bool? IsArchived);
+
+    private sealed record CreateFeedRuleRequest(
+        string Name,
+        string? KeywordPattern,
+        Guid? SourceId,
+        string? MentionedSiren,
+        bool NotifyEmail,
+        bool NotifyPush);
+
+    private sealed record UpdateFeedRuleRequest(
+        string Name,
+        string? KeywordPattern,
+        Guid? SourceId,
+        string? MentionedSiren,
+        bool NotifyEmail,
+        bool NotifyPush,
+        bool IsActive);
 }

@@ -1,6 +1,7 @@
 using Atlas.Application.Veille.ClusterPendingFeedItems;
 using Atlas.Application.Veille.MatchFavoritesInFeedItems;
 using Atlas.Application.Veille.PollFeedSources;
+using Atlas.Application.Veille.Rules.EvaluateFeedRules;
 using Atlas.Shared.Result;
 using MediatR;
 
@@ -70,6 +71,26 @@ public sealed class FeedPollingJob(ISender sender, ILogger<FeedPollingJob> logge
         else if (logger.IsEnabled(LogLevel.Warning))
         {
             logger.LogWarning("Veille : échec du matching favoris ({Code}).", matching.Error!.Code);
+        }
+
+        // Évaluation des règles de surveillance personnalisées (F-046) sur les nouveaux items.
+        // Dernier maillon : doit voir les FeedItemFavoriteMatch créés par F-047 pour matcher MentionedSiren.
+        Result<FeedRuleEvaluationSummary> rulesEval = await sender.Send(new EvaluateFeedRulesCommand());
+        if (rulesEval.IsSuccess)
+        {
+            FeedRuleEvaluationSummary summary = rulesEval.Value!;
+            if (logger.IsEnabled(LogLevel.Information))
+            {
+                logger.LogInformation(
+                    "Veille : règles évaluées — {Rules} règle(s) traitée(s), {Triggered} déclenchée(s), {Matches} match(s) au total.",
+                    summary.RulesProcessed,
+                    summary.RulesTriggered,
+                    summary.MatchesTotal);
+            }
+        }
+        else if (logger.IsEnabled(LogLevel.Warning))
+        {
+            logger.LogWarning("Veille : échec de l'évaluation des règles ({Code}).", rulesEval.Error!.Code);
         }
     }
 }

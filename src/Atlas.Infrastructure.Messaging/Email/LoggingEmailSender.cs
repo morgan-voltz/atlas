@@ -1,6 +1,7 @@
 using Atlas.Domain.Favorites;
 using Atlas.Domain.Notifications;
 using Atlas.Domain.Users;
+using Atlas.Domain.Veille;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
@@ -53,6 +54,28 @@ internal sealed class LoggingEmailSender(
                 sirenValue,
                 changes.Count,
                 summary);
+        }
+
+        return Task.CompletedTask;
+    }
+
+    public Task SendFeedRuleMatchedAsync(
+        EmailAddress recipient,
+        string ruleName,
+        IReadOnlyList<FeedRuleMatch> matches,
+        CancellationToken ct = default)
+    {
+        ArgumentNullException.ThrowIfNull(matches);
+
+        if (logger.IsEnabled(LogLevel.Information))
+        {
+            string firstTitle = matches.Count > 0 ? matches[0].Title : "(aucun item)";
+            logger.LogInformation(
+                "[DEV] Règle de veille {RuleName} pour {Recipient} — {MatchCount} match(s), ex. : {FirstTitle}",
+                ruleName,
+                recipient.Value,
+                matches.Count,
+                firstTitle);
         }
 
         return Task.CompletedTask;

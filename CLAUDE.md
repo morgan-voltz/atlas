@@ -229,6 +229,15 @@ dotnet list package --outdated                        # vérifier les versions N
 
 ## Workflow de PR (Definition of Done)
 
+**Tout changement de code passe par une PR sur GitHub, jamais en push direct sur `main`.** Les docs seules peuvent aller en direct exceptionnellement, mais le réflexe par défaut reste la PR. La séquence est :
+
+1. **Branche dédiée** depuis `main` à jour : `feat/F-NNN-titre-court`, `fix/...`, `docs/...` (Conventional Commits + numéro de feature concerné). Pas de travail sur `main`.
+2. **Commit(s)** sur la branche en suivant Conventional Commits (cf. ci-dessous et `docs/05-strategie-repos.md`).
+3. **Push** de la branche et **ouverture d'une PR** vers `main` (`gh pr create`), avec un titre court (< 70 chars), une description qui cite le numéro `F-XXX` et un test plan.
+4. **Attendre que la CI passe au vert** sur la PR (cf. `.github/workflows/ci.yml` — build backend Release + tests unitaires + tests d'archi + tests d'intégration Docker). Si rouge, corriger sur la branche, pas en bypass.
+5. **Merge uniquement quand la CI est verte** (`gh pr merge --squash` par défaut). Supprimer la branche après merge.
+6. Vérifier post-merge que le **build CI sur `main`** reste vert.
+
 Avant qu'une PR soit mergée dans `main`, vérifier que :
 
 La PR a une description claire qui mentionne le numéro de feature concerné (`F-XXX` du backlog dans `docs/02-roadmap-features.md`).

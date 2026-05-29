@@ -1,6 +1,7 @@
 using Atlas.Domain.Favorites;
 using Atlas.Domain.Notifications;
 using Atlas.Domain.Users;
+using Atlas.Domain.Veille;
 
 namespace Atlas.Api.IntegrationTests;
 
@@ -30,5 +31,11 @@ public sealed class CapturingEmailSender : IEmailSender
         string sirenValue,
         string? denomination,
         IReadOnlyList<CompanyFavoriteChange> changes,
+        CancellationToken ct = default) => Task.CompletedTask;
+
+    public Task SendFeedRuleMatchedAsync(
+        EmailAddress recipient,
+        string ruleName,
+        IReadOnlyList<FeedRuleMatch> matches,
         CancellationToken ct = default) => Task.CompletedTask;
 }
