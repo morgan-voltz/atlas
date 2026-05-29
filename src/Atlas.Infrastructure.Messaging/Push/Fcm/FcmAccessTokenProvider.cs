@@ -96,7 +96,7 @@ internal sealed class FcmAccessTokenProvider(
         string payloadB64 = Base64UrlEncode(JsonSerializer.SerializeToUtf8Bytes(payload));
         string toSign = $"{headerB64}.{payloadB64}";
 
-        using RSA rsa = RSA.Create();
+        using var rsa = RSA.Create();
         rsa.ImportFromPem(account.PrivateKey);
         byte[] signature = rsa.SignData(
             Encoding.UTF8.GetBytes(toSign),
