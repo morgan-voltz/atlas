@@ -1,0 +1,42 @@
+meta {
+  name: Trademarks Add invalid (400)
+  type: http
+  seq: 7
+}
+
+post {
+  url: {{baseUrl}}/favorites/trademarks
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "depositNumber": "",
+    "name": "Marque invalide"
+  }
+}
+
+tests {
+  test("statut 400", function () {
+    expect(res.getStatus()).to.equal(400);
+  });
+  test("title indique favorites.invalid_deposit_number", function () {
+    const body = res.getBody();
+    const code = (body && body.title) || "";
+    expect(code.toString()).to.match(/favorites\.invalid_deposit_number/i);
+  });
+}
+
+docs {
+  F-018 — Cas négatif : numéro de dépôt vide ou invalide.
+  Attendu : 400 ProblemDetails avec `title=favorites.invalid_deposit_number`.
+}

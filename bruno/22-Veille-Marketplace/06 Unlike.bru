@@ -1,0 +1,25 @@
+meta {
+  name: 06 Unlike
+  type: http
+  seq: 6
+}
+
+delete {
+  url: {{baseUrl}}/veille/packs/{{communityPackCode}}/like
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+tests {
+  test("statut 204", function () {
+    expect(res.getStatus()).to.equal(204);
+  });
+}
+
+docs {
+  F-049 — Retire un « like » sur un pack public.
+  204 No Content. Idempotent : un unlike sur un pack non liké ne lève pas d'erreur.
+}

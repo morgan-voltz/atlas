@@ -1,0 +1,39 @@
+meta {
+  name: 01 List community
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/veille/packs/community?page=1&pageSize=20
+  auth: bearer
+  params:query {
+    page: 1
+    pageSize: 20
+  }
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+tests {
+  test("statut 200", function () {
+    expect(res.getStatus()).to.equal(200);
+  });
+  test("forme PagedResult", function () {
+    const body = res.getBody();
+    expect(body).to.have.property("items");
+    expect(body).to.have.property("page");
+    expect(body).to.have.property("pageSize");
+    expect(body).to.have.property("totalCount");
+    expect(body.items).to.be.an("array");
+  });
+}
+
+docs {
+  F-049 — Liste des packs **publiés** par la communauté.
+  PagedResult<VeillePackMarketplaceDto> = `{ items, page, pageSize, totalCount }`.
+  Item : `{ code, name, description?, authorId, authorName?, sourceCount, likesCount,
+            isPublic, isOwnPack, isLikedByMe, ... }`.
+}

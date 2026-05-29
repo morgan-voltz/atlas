@@ -1,0 +1,26 @@
+meta {
+  name: 04 Delete rule
+  type: http
+  seq: 4
+}
+
+delete {
+  url: {{baseUrl}}/feed/rules/{{ruleId}}
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+tests {
+  test("statut 204", function () {
+    expect(res.getStatus()).to.equal(204);
+  });
+}
+
+docs {
+  F-046 — Supprime une règle de surveillance.
+  204 = supprimé. Délégué au repository — la règle disparaît silencieusement
+  des prochaines évaluations cron.
+}

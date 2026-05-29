@@ -13,6 +13,21 @@ auth:bearer {
   token: {{accessToken}}
 }
 
+script:post-response {
+  // Capture runtime : premier attachment non confidentiel → attachmentId réutilisable par Download.
+  if (res.getStatus() === 200) {
+    const list = res.getBody() || [];
+    const openItem = list.find(a => a && a.isConfidential !== true);
+    if (openItem && openItem.id) {
+      bru.setVar("attachmentId", openItem.id);
+    }
+    const confidentialItem = list.find(a => a && a.isConfidential === true);
+    if (confidentialItem && confidentialItem.id) {
+      bru.setVar("confidentialAttachmentId", confidentialItem.id);
+    }
+  }
+}
+
 tests {
   test("statut 200", function () {
     expect(res.getStatus()).to.equal(200);

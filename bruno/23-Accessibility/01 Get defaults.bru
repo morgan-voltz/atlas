@@ -1,0 +1,42 @@
+meta {
+  name: 01 Get defaults
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/user/preferences/accessibility
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+tests {
+  test("statut 200", function () {
+    expect(res.getStatus()).to.equal(200);
+  });
+  test("HighContrast / ReduceMotion / FontPreference présents", function () {
+    const body = res.getBody();
+    expect(body).to.have.property("highContrast");
+    expect(body).to.have.property("reduceMotion");
+    expect(body).to.have.property("fontPreference");
+  });
+  test("FontPreference est une chaîne (sérialisation JsonStringEnumConverter)", function () {
+    const body = res.getBody();
+    expect(body.fontPreference).to.be.a("string");
+    expect(["Default", "DyslexiaFriendly", "HighReadability"]).to.include(body.fontPreference);
+  });
+}
+
+docs {
+  Lot 5c — Préférences d'accessibilité utilisateur (cf. docs/06-accessibilite.md §6.3).
+
+  200 + `{ highContrast, reduceMotion, fontPreference }`.
+  Valeurs par défaut pour un nouveau compte : `{ false, false, "Default" }`.
+
+  `fontPreference` ∈ { "Default", "DyslexiaFriendly", "HighReadability" } —
+  sérialisé en chaîne par décoration `[JsonConverter(JsonStringEnumConverter<T>)]`
+  sur l'enum côté domaine (Lot 5c fix-CI).
+}

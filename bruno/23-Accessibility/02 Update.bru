@@ -1,0 +1,44 @@
+meta {
+  name: 02 Update
+  type: http
+  seq: 2
+}
+
+put {
+  url: {{baseUrl}}/user/preferences/accessibility
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "highContrast": true,
+    "reduceMotion": true,
+    "fontPreference": "DyslexiaFriendly"
+  }
+}
+
+tests {
+  test("statut 204", function () {
+    expect(res.getStatus()).to.equal(204);
+  });
+}
+
+docs {
+  Lot 5c — Met à jour les préférences accessibilité de l'utilisateur courant.
+
+  Body : `{ highContrast, reduceMotion, fontPreference }`.
+  `fontPreference` ∈ { "Default", "DyslexiaFriendly", "HighReadability" }
+  (chaîne sérialisée — un nombre ou une valeur inconnue retombe en 400).
+
+  204 No Content. Les valeurs sont owned-type sur User (cf. Lot 5c Persistence,
+  migration `AddUserAccessibilityPreferences`).
+}

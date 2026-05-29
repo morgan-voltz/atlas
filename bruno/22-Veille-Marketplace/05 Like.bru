@@ -1,0 +1,33 @@
+meta {
+  name: 05 Like
+  type: http
+  seq: 5
+}
+
+post {
+  url: {{baseUrl}}/veille/packs/{{communityPackCode}}/like
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+tests {
+  test("statut 204", function () {
+    expect(res.getStatus()).to.equal(204);
+  });
+}
+
+docs {
+  F-049 — Ajoute un « like » sur un pack public.
+  204 No Content. Idempotent côté UX : un second like ne re-crée pas l'entrée
+  (PK `(userId, packCode)`).
+
+  Erreurs :
+    - `veille.veille_pack_not_found` si code inconnu (retombe en 400 par défaut).
+    - `veille.veille_pack_not_public` si pack non publié.
+
+  Renseigner `communityPackCode` — par ex. un pack système (`pi-cabinet`) ou un pack
+  utilisateur publié par soi-même (réutilisable depuis `userPackCode` après `04 Publish`).
+}

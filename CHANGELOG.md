@@ -396,6 +396,58 @@ appel authentifié réel (cf. roadmap, statuts 🟡).
   pour la carte-aperçu (§7) et la carte-section (§8). Référencée depuis la
   table « Documents fondateurs » de `CLAUDE.md` et depuis les fiches F-009
   et F-010.
+- **Lot 8 — Couverture Bruno fermée à 100 % (rules / marketplace / a11y +
+  variantes négatives + capture runtime + E2E)** : suite directe de l'audit
+  Bruno profond livré post-Lot 7. Ferme les 14 endpoints non couverts +
+  ajoute les variantes négatives identifiées + capture runtime sur Lot 7
+  + premier E2E flow F-046.
+  - **`21-Feed-Rules` (F-046, 4 endpoints + cas négatif)** :
+    `01 Create rule` (201, capture `ruleId`),
+    `02 List rules`, `03 Update rule`, `04 Delete rule`,
+    `Create empty (400)` qui valide `veille.invalid_feed_rule`.
+  - **`22-Veille-Marketplace` (F-049, 8 endpoints)** :
+    `01 List community` (PagedResult),
+    `02 Create user pack` (201 + capture `userPackCode`),
+    `03 My authored`, `04 Publish` (`isPublic=true`),
+    `05 Like`, `06 Unlike` (204 idempotent),
+    `07 Report` (202 Accepted),
+    `08 Unpublish` (`isPublic=false`).
+  - **`23-Accessibility` (Lot 5c, 3 requêtes)** :
+    `01 Get defaults` (200, vérifie `{ false, false, "Default" }`,
+    contrôle la sérialisation `JsonStringEnumConverter` en chaîne),
+    `02 Update` (204),
+    `03 Round-trip (GET reflects PUT)` qui valide la persistance EF
+    owned-type.
+  - **`24-Rules-Flow` (E2E F-046, 5 étapes)** : create → list contains
+    → patch → delete → list excludes. Valide le cycle complet d'une
+    règle de surveillance avec capture / réutilisation de `ruleId`.
+  - **Variantes négatives ajoutées aux dossiers Lot 7** :
+    `16-Company-Attachments/Download confidential (403)` —
+    `companies.attachment_confidential`, cas doctrinal documenté ;
+    `17-Patents/Detail not found (404)` ;
+    `18-IP-Favorites/Trademarks Add invalid (400)` +
+    `Patents Add invalid (400)` (`favorites.invalid_deposit_number` /
+    `favorites.invalid_publication_number`) ;
+    `19-Favorites-Export/Empty CSV (header only)` (cas limite ETL) ;
+    `20-Company-Report/Report not found (404)`.
+  - **Capture runtime sur Lot 7** : `script:post-response` ajouté à
+    `16-Company-Attachments/List` (capture `attachmentId` du premier
+    item ouvert + `confidentialAttachmentId` du premier confidentiel)
+    et à `17-Patents/Search` (capture `publicationNumber`). Le user
+    n'a plus à copier-coller pour enchaîner List → Download ou
+    Search → Detail.
+  - **Variables d'environnement étendues** : `confidentialAttachmentId`,
+    `siren404` (défaut `123456782`, SIREN Luhn-valide mais inexistant),
+    `ruleId`, `userPackCode` (défaut `bruno-test-pack`),
+    `communityPackCode` (défaut `pi-cabinet`).
+  - **Dette annexe documentée** (non corrigée dans cette PR — pure
+    Bruno) : `veille.feed_rule_not_found`,
+    `veille.feed_rule_forbidden`, `veille.veille_pack_immutable`,
+    `veille.veille_pack_forbidden`, `veille.veille_pack_not_public`,
+    `veille.veille_pack_code_already_used` ne sont **pas** mappés
+    dans `ErrorHttpMapping` et retombent en 400 par défaut. À corriger
+    dans une PR backend dédiée (vers 404 / 403 / 409 selon le sens).
+  - Couverture endpoints : passe de **74 %** à **100 %** (55/55).
 - **Lot 7 — Couverture Bruno des features MVP 2 manquantes** : 16 requêtes
   Bruno ajoutées dans 5 nouveaux dossiers, complète la collection backend
   pour préparer F-028 (API publique) et débloquer le test manuel des

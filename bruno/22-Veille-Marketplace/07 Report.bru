@@ -1,0 +1,41 @@
+meta {
+  name: 07 Report
+  type: http
+  seq: 7
+}
+
+post {
+  url: {{baseUrl}}/veille/packs/{{communityPackCode}}/report
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "reason": "Contenu hors sujet, sources non sourcées."
+  }
+}
+
+tests {
+  test("statut 202", function () {
+    expect(res.getStatus()).to.equal(202);
+  });
+}
+
+docs {
+  F-049 — Signale un pack publié (modération communautaire).
+  202 Accepted. Le rapport est persisté pour examen ; aucune action automatique
+  sur le pack — la modération est manuelle côté admin.
+
+  Erreurs :
+    - 400 `veille.invalid_veille_pack_report` si raison vide ou trop longue.
+    - `veille.veille_pack_not_found` si code inconnu (retombe en 400).
+}

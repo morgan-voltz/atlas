@@ -1,0 +1,50 @@
+meta {
+  name: 01 Create rule
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/feed/rules
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "name": "E2E rule Bruno",
+    "keywordPattern": "atlas",
+    "sourceId": null,
+    "mentionedSiren": null,
+    "notifyEmail": true,
+    "notifyPush": false
+  }
+}
+
+script:post-response {
+  if (res.getStatus() === 201) {
+    bru.setVar("ruleId", res.getBody().id);
+  }
+}
+
+tests {
+  test("statut 201", function () {
+    expect(res.getStatus()).to.equal(201);
+  });
+  test("ruleId capturé", function () {
+    expect(bru.getVar("ruleId")).to.be.a("string");
+  });
+}
+
+docs {
+  E2E Rules — étape 1/5. Crée une règle de surveillance et capture son `id` dans
+  la variable runtime `ruleId` pour les étapes suivantes.
+}

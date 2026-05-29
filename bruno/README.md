@@ -53,11 +53,15 @@ L'API démarre en environnement `Development` :
 | `13-Veille` | **F-041 / F-043 / F-044** | Recent items, Add source, Subscriptions, Unsubscribe, Timeline, Set item state |
 | `14-Veille-Packs` | **F-042** | Catalog, Mine, Apply, Sync |
 | `15-Downloads` | **F-014** | Request bulk (empty/invalid/too-many/accepted), Get status, Not found, Download archive |
-| `16-Company-Attachments` | **F-013** | List, Download (PDF), Download not found (404) |
-| `17-Patents` | **F-015 / F-016** | Search (multi-critères), Search empty (400), Detail |
-| `18-IP-Favorites` | **F-018** | Trademarks Add/List/Remove + Patents Add/List/Remove |
-| `19-Favorites-Export` | **F-021** | Companies CSV, Trademarks CSV, Patents CSV |
-| `20-Company-Report` | **F-022** | Report PDF |
+| `16-Company-Attachments` | **F-013** | List (capture `attachmentId` / `confidentialAttachmentId`), Download (PDF), Download not found (404), Download confidential (403) |
+| `17-Patents` | **F-015 / F-016** | Search (capture `publicationNumber`), Search empty (400), Detail, Detail not found (404) |
+| `18-IP-Favorites` | **F-018** | Trademarks Add/List/Remove (+ Add invalid 400) + Patents Add/List/Remove (+ Add invalid 400) |
+| `19-Favorites-Export` | **F-021** | Companies CSV, Trademarks CSV, Patents CSV, Empty CSV (header only) |
+| `20-Company-Report` | **F-022** | Report PDF, Report not found (404) |
+| `21-Feed-Rules` | **F-046** | 01 Create rule, 02 List, 03 Update, 04 Delete + Create empty (400) |
+| `22-Veille-Marketplace` | **F-049** | 01 List community, 02 Create user pack, 03 My authored, 04 Publish, 05 Like, 06 Unlike, 07 Report, 08 Unpublish |
+| `23-Accessibility` | **Lot 5c** | 01 Get defaults, 02 Update, 03 Round-trip (GET reflects PUT) |
+| `24-Rules-Flow` | E2E F-046 | 01 Create → 02 List contains → 03 Patch → 04 Delete → 05 List excludes |
 
 ### Étape manuelle : vérification de l'email
 
@@ -89,9 +93,13 @@ runtime réutilisée par toutes les requêtes protégées.
 | `packCode` | Code de pack pour `Apply`/`Sync` (défaut `pi-cabinet`) |
 | `deviceToken` / `devicePlatform` / `deviceId` | Pour `12-Devices` ; `deviceId` capturé runtime par `Register` |
 | `bulkJobId` | Capturé runtime par `15-Downloads/04 Request bulk (accepted)` et réutilisé par les calls suivants |
-| `attachmentId` | ID d'un acte ou bilan (F-013) — à renseigner depuis la liste retournée par `16-Company-Attachments/List` |
-| `publicationNumber` | Numéro de publication brevet (F-015 / F-018) — par ex. issu de `17-Patents/Search` |
+| `attachmentId` / `confidentialAttachmentId` | IDs d'attachments (F-013) — capturés runtime par `16-Company-Attachments/List` (premier item ouvert + premier confidentiel) |
+| `publicationNumber` | Numéro de publication brevet (F-015 / F-018) — capturé runtime par `17-Patents/Search` |
 | `patentTitle` / `patentInventor` / `patentApplicant` | Critères de recherche brevet (F-016) — au moins un requis |
+| `siren404` | SIREN Luhn-valide mais inexistant côté INPI (défaut `123456782`) — utilisé pour `20-Company-Report/Report not found (404)` |
+| `ruleId` | ID de règle de surveillance (F-046) — capturé runtime par `21-Feed-Rules/01 Create rule` et `24-Rules-Flow/01` |
+| `userPackCode` | Code de pack utilisateur (F-049) — défaut `bruno-test-pack`, capturé par `22-Veille-Marketplace/02 Create user pack` |
+| `communityPackCode` | Code d'un pack publié à liker / unliker / signaler (F-049) — défaut `pi-cabinet` (pack système) |
 
 ### Secrets : `bruno/.env` (jamais commité)
 

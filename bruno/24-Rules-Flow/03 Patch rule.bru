@@ -1,0 +1,49 @@
+meta {
+  name: 03 Patch rule
+  type: http
+  seq: 3
+}
+
+patch {
+  url: {{baseUrl}}/feed/rules/{{ruleId}}
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "name": "E2E rule Bruno (renommée)",
+    "keywordPattern": "atlas OR dotnet",
+    "sourceId": null,
+    "mentionedSiren": null,
+    "notifyEmail": false,
+    "notifyPush": true,
+    "isActive": true
+  }
+}
+
+tests {
+  test("statut 200", function () {
+    expect(res.getStatus()).to.equal(200);
+  });
+  test("changements pris en compte (name + pattern + flags)", function () {
+    const body = res.getBody();
+    expect(body.name).to.equal("E2E rule Bruno (renommée)");
+    expect(body.keywordPattern).to.equal("atlas OR dotnet");
+    expect(body.notifyEmail).to.equal(false);
+    expect(body.notifyPush).to.equal(true);
+  });
+}
+
+docs {
+  E2E Rules — étape 3/5. Met à jour la règle (nouveau nom, nouveau pattern,
+  bascule des flags de notification).
+}

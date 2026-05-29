@@ -1,0 +1,41 @@
+meta {
+  name: Empty CSV (header only)
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{baseUrl}}/favorites/companies/export
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+tests {
+  test("statut 200", function () {
+    expect(res.getStatus()).to.equal(200);
+  });
+  test("Content-Type text/csv même sur liste vide", function () {
+    const contentType = res.getHeaders()["content-type"] || "";
+    expect(contentType.toLowerCase()).to.include("text/csv");
+  });
+  test("Le CSV contient au moins l'en-tête SIREN", function () {
+    const body = res.getBody();
+    const text = typeof body === "string" ? body : Buffer.from(body).toString("utf-8");
+    // Trim BOM éventuel
+    const trimmed = text.replace(/^﻿/, "");
+    expect(trimmed).to.include("SIREN");
+  });
+}
+
+docs {
+  F-021 — Cas limite : aucun favori → CSV avec **uniquement l'en-tête**.
+  Pas d'erreur métier (un Excel ou ETL doit pouvoir ingérer un fichier
+  vide-de-données sans casser).
+
+  Reproductible en jouant cette requête **avant** d'avoir ajouté un favori
+  entreprise dans la session (par exemple juste après inscription, ou après
+  `11-Favorites/Remove`).
+}
