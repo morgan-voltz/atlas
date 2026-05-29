@@ -3,7 +3,7 @@
 > **Périmètre** : tous les endpoints HTTP exposés par `Atlas.Api`, groupés par domaine fonctionnel.
 > Document **vivant** : à mettre à jour à chaque PR qui ajoute, modifie ou supprime un endpoint.
 
-**Dernière mise à jour** : 29 mai 2026 — après merge F-020 APNs (PR #34).
+**Dernière mise à jour** : 29 mai 2026 — après merge F-020 WNS (PR à venir).
 
 ---
 
@@ -200,7 +200,7 @@ Cf. [`DevicesEndpoints.cs`](../src/Atlas.Api/Endpoints/DevicesEndpoints.cs).
 | `devices.invalid_token` | 400 | Token vide |
 | `devices.invalid_platform` | 400 | Plateforme inconnue |
 
-**Dispatch des notifications** : `INotificationDispatcher` → `CompositeNotificationDispatcher` → fan-out vers `FcmNotificationDispatcher` (Android + Web Push) et `ApnsNotificationDispatcher` (iOS + macOS) selon les plateformes configurées. Cleanup auto des tokens morts (FCM 404/UNREGISTERED, APNs 410/BadDeviceToken).
+**Dispatch des notifications** : `INotificationDispatcher` → `CompositeNotificationDispatcher` → fan-out vers `FcmNotificationDispatcher` (Android + Web Push), `ApnsNotificationDispatcher` (iOS + macOS) et `WnsNotificationDispatcher` (Windows desktop), selon les plateformes configurées (`Fcm:*`, `Apns:*`, `Wns:*`). Cleanup auto des tokens morts (FCM 404/UNREGISTERED, APNs 410/BadDeviceToken, WNS 410/404).
 
 ---
 

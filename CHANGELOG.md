@@ -117,6 +117,30 @@ appel authentifié réel (cf. roadmap, statuts 🟡).
   avec Bearer token. **Cleanup auto** des tokens morts : 404 (`NOT_FOUND`)
   ou 400 (`UNREGISTERED` / `INVALID_ARGUMENT`) → suppression silencieuse du
   `DeviceRegistration` + `SaveChanges`.
+- **F-020 — Adapter Windows Notification Service (Windows desktop)** :
+  - **OAuth2 `client_credentials`** sur `https://login.live.com/accesstoken.srf`
+    (pas de JWT signé, contrairement à FCM et APNs). Body form-encoded :
+    `grant_type=client_credentials`, `client_id={PackageSid}`,
+    `client_secret={ClientSecret}`, `scope=notify.windows.com`. Cache jusqu'à
+    5 min avant expiration (TTL Microsoft = ~24 h). Refresh thread-safe.
+  - **POST sur l'`ChannelUri`** stocké dans `DeviceRegistration.Token` —
+    chaque device a son propre endpoint (`db5p.notify.windows.com/?token=…`),
+    pas de `BaseAddress` partagée.
+  - **Payload XML ToastGeneric** : `<toast><visual><binding template="ToastGeneric">
+    <text>Title</text><text>Body</text></binding></visual></toast>`. Données
+    utilisateur sérialisées en JSON dans l'attribut `launch` (récupérable
+    côté app via `ToastNotificationActivatedEventArgs.Argument`).
+  - Headers : `Authorization: Bearer …`, `X-WNS-Type: wns/toast`,
+    `X-WNS-RequestForStatus: true`, `Content-Type: text/xml; charset=utf-8`.
+  - **Cleanup auto** : 410 Gone ou 404 NotFound → suppression silencieuse du
+    device + `SaveChanges`. Bonus : si `ChannelUri` n'est pas une URL absolue
+    parseable, suppression immédiate (donnée corrompue).
+- **F-020 — Plateformes push toutes livrées** : avec WNS, le push couvre
+  maintenant **toutes les plateformes cibles** du backend — Android (FCM),
+  Web (FCM Web Push), iOS (APNs), macOS (APNs) et Windows desktop (WNS).
+  `CompositeNotificationDispatcher` fan-out vers les 3 adapters configurés
+  selon `Fcm:*`, `Apns:*` et `Wns:*`. Reste : client MAUI (récupération du
+  token natif par plateforme + `POST /devices` au démarrage).
 - **F-020 — Adapter Apple Push Notification service (iOS + macOS)** : JWT
   **ES256** (ECDSA P-256) signé avec la clé privée `.p8` Apple Developer
   (header `kid` = Key ID, claim `iss` = Team ID). Cache 30 min, refresh
