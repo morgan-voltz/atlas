@@ -31,7 +31,7 @@ internal sealed class CreateUserVeillePackHandler(
             await subscriptionRepository.GetByUserAsync(userId, cancellationToken);
 
         HashSet<Guid> requestedIds = [.. (request.SubscriptionIds ?? [])];
-        List<FeedSourceId> sourceIds = userSubscriptions
+        var sourceIds = userSubscriptions
             .Where(s => requestedIds.Contains(s.Id.Value))
             .Select(s => s.SourceId)
             .Distinct()

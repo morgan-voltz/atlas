@@ -35,7 +35,7 @@ internal sealed class LikeVeillePackHandler(
             return Result.Ok();
         }
 
-        VeillePackLike like = VeillePackLike.Create(pack.Id, userId, clock.UtcNow);
+        var like = VeillePackLike.Create(pack.Id, userId, clock.UtcNow);
         await likeRepository.AddAsync(like, cancellationToken);
         pack.IncrementLikes();
 
