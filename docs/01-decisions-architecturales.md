@@ -573,6 +573,346 @@ Atlas adopte une doctrine **descriptive, bornée et conditionnée à une DPIA** 
 
 ---
 
+## ADR-013 — Substrat de surveillance des entités (snapshot/diff + flux d'items)
+
+**Statut** : ✅ Accepté
+**Date** : 29 mai 2026
+
+### Contexte
+
+Quatre features de surveillance suivent une structure très proche : **F-019** (modifications RNE des favoris), **F-048** (annonces BODACC), **F-057** (re-screening sanctions), **F-031** (jurisprudence Judilibre rattachée à l'entité). Toutes itèrent un *set surveillé* (favoris / watchlists), interrogent une source par entité, détectent ce qui est « nouveau », et émettent un événement vers la timeline et les notifications.
+
+Laissées telles quelles, ces features **réécrivent chacune** la même tuyauterie d'orchestration — d'où une duplication coûteuse et une dérive garantie (le même bug à corriger à quatre endroits, quatre niveaux de qualité). Mais une analyse fine montre qu'**elles ne se ramènent pas toutes au même modèle** : le critère décisif est la **détection des disparitions**.
+
+- Certaines dimensions exigent de détecter des **retraits / modifications** : un dirigeant qui part (RNE), une entité qui **sort** d'une liste de sanctions (délistage). → il faut comparer à un **état stocké**.
+- D'autres sont des **flux append-only** : une annonce BODACC ou une décision Judilibre **ne disparaît jamais**. → un simple **dédoublonnage des items déjà vus** suffit ; stocker et re-différer un « état » serait du volume non borné inutile.
+
+Forcer les quatre dans une abstraction unique mutilerait la moitié des cas (perte des disparitions, ou stockage non borné). Ne rien factoriser laisserait la duplication proliférer.
+
+### Décision
+
+Mettre en place un **substrat de surveillance** à **deux stratégies** + **un runner d'orchestration partagé**.
+
+**Deux stratégies** (le *quoi*), départagées par le critère des disparitions :
+
+1. **État + diff** (`IStateMonitor<TState>`) — pour les dimensions où les retraits comptent (**RNE**, **sanctions**). On garde un cliché vivant de l'état courant par entité, on le compare au précédent, on émet les ajouts / modifications / **retraits**.
+2. **Flux d'items** (`IItemStreamMonitor<TItem>`) — pour les dimensions append-only (**BODACC**, **Judilibre**). On récupère les items, on filtre ceux déjà vus (dédup par `ExternalId`), on émet les nouveaux.
+
+**Un runner d'orchestration partagé** (le *comment*), qui porte **une seule fois** tout le boilerplate commun :
+- itération du **set surveillé** ;
+- **dédup cross-users** (un seul appel source par SIREN partagé, puis fan-out vers les N users qui le suivent — patron déjà inventé par F-048) ;
+- **isolation des échecs** (un user dont l'INPI a expiré ne bloque pas les autres — déjà fait par F-019) ;
+- **idempotence** (relancer le job ne ré-émet pas) ;
+- gestion des **credentials** (source authentifiée RNE vs anonyme BODACC) ;
+- **émission** de l'événement → notification → timeline / push ;
+- **observabilité** (entités vérifiées, événements émis, échecs, latence).
+
+**Placement hexagonal** (respecte les règles vérifiées par NetArchTest) :
+- les **stratégies et leurs ports** → `Atlas.Domain` ;
+- les **fetchers concrets** (savent appeler RNE, BODACC, sanctions, Judilibre) → `Atlas.Infrastructure.*` ;
+- le **runner** (orchestration) → `Atlas.Application` ;
+- le **job Hangfire** qui déclenche le runner → **adapter entrant**.
+
+**Règle d'extraction (anti-abstraction prématurée)** : la **décision de cible** est prise maintenant, mais l'**extraction effective** du runner se fait **à la troisième instance** (lors de la construction de **F-057**), à partir de code qui existe et passe ses tests — pas d'une abstraction devinée d'avance. F-019 et F-048 restent autonomes jusque-là.
+
+**Garde-fous** :
+- **ne pas fusionner** les deux stratégies sous une interface unique « universelle » (ce serait retomber dans l'abstraction qui ment) ;
+- **partager le runner, garder les fetchers concrets** : on ne mutualise pas ce qui varie (comment on appelle une source, ce qui compte comme un changement) ;
+- **ne pas pré-câbler** de sources hypothétiques.
+
+#### Croquis des contrats (illustratif — à finaliser à l'extraction)
+
+```csharp
+// ── Domain ──────────────────────────────────────────────
+
+// Stratégie 1 : état + diff (retraits détectés). Ex. RNE, sanctions.
+public interface IStateMonitor<TState>
+{
+    MonitoredDimension Dimension { get; }                 // p.ex. RneIdentity, Sanctions
+    bool RequiresCredentials { get; }                     // RNE = true, sanctions = false
+    Task<TState?> FetchCurrentStateAsync(Siren siren, MonitorContext ctx, CancellationToken ct);
+    IReadOnlyList<MonitoredChange> Diff(TState? previous, TState current);
+}
+
+// Stratégie 2 : flux d'items append-only (dédup). Ex. BODACC, Judilibre.
+public interface IItemStreamMonitor<TItem>
+{
+    MonitoredDimension Dimension { get; }
+    bool RequiresCredentials { get; }
+    Task<IReadOnlyList<TItem>> FetchItemsAsync(Siren siren, MonitorContext ctx, CancellationToken ct);
+    ExternalId ExternalIdOf(TItem item);                  // clé de dédup
+    MonitoredChange ToChange(TItem item);
+}
+
+// Sortie commune aux deux stratégies → devient un événement de timeline.
+public sealed record MonitoredChange(
+    MonitoredDimension Dimension,
+    ChangeKind Kind,            // Added / Modified / Removed (Removed impossible côté flux)
+    string Title,
+    string Summary,
+    ExternalId? ExternalId);
+
+// ── Application ─────────────────────────────────────────
+// Le runner partagé : itère le set surveillé, dédup cross-users, isole les échecs,
+// idempotent, émet l'événement, observe. Ne connaît que les ports ci-dessus.
+```
+
+### Rationale
+
+- **Le critère des disparitions** est technique, pas esthétique : il découle de la **nature des données**, donc le découpage en deux stratégies n'est pas arbitraire.
+- **Évite les deux échecs symétriques** : l'abstraction unique « tout est flux » perd les disparitions (régression métier) ; l'abstraction unique « tout est état » stocke un historique non borné (gaspillage). Deux stratégies, chacune à sa place.
+- **Élimine la vraie duplication** : le boilerplate d'orchestration (le coûteux, le bug-prone) est mutualisé une fois.
+- **Coût d'ajout d'une source** réduit à : un petit fetcher concret + le choix de sa stratégie.
+- **Règle de trois respectée** : on abstrait du code éprouvé (3 instances réelles), pas une supposition.
+
+### Conséquences
+
+- **Positives** : un seul endroit pour l'orchestration (donc pour ses bugs), observabilité homogène, ajout de source bon marché, respect strict de l'hexagonal.
+- **Négatives** : deux types à comprendre au lieu d'un (coût cognitif réel mais faible, car clairement nommés et distincts) ; discipline requise pour ne pas les fusionner « plus tard ».
+- **À prévoir** :
+  - **Décision ouverte (déclenchée par cet ADR)** : l'entité **`FavoriteEvent`** porte de plus en plus de types (`RneChanged`, `BodaccPublished`, + sanctions, PI, marchés, jurisprudence) et provient désormais de favoris **et** de watchlists, bientôt de consultations à la demande. Son nom **ne dit plus la vérité**. Faut-il la faire évoluer vers un **`EntityEvent`** plus large ? Renommage coûteux → à trancher **au moment de l'extraction (F-057)**, pas avant.
+  - Extraire le runner lors de **F-057** ; refactorer F-019 et F-048 pour l'utiliser dans la foulée (tests d'architecture + tests métier au vert comme filet).
+  - Nommer `MonitoredDimension`, `MonitoredChange`, le runner, dans le **doc 08** (pas de synonyme silencieux).
+
+---
+
+## ADR-014 — Matching conservateur unifié (la doctrine ADR-012 incarnée dans le type)
+
+**Statut** : ✅ Accepté
+**Date** : 29 mai 2026
+
+### Contexte
+
+Quatre features ont besoin de **rapprocher** une entité connue avec un référentiel : **F-047** (mentions d'une entreprise dans la presse), **F-055** (rapprochement avec des listes de sanctions), **F-031** (jurisprudence où une entité apparaît), **F-026** (antériorité — similarité de marques).
+
+Algorithmiquement, ce ne sont **pas** la même chose. Elles se rangent en **trois familles distinctes** :
+- **Nom-dans-texte** (F-047, F-031) : chercher un nom *connu* dans un texte *libre*. Risque : homonymes, variantes de raison sociale.
+- **Nom-contre-liste** (F-055) : rapprocher un nom d'une *liste structurée* (alias, translittérations) — du *record linkage*. Risque : faux positif diffamatoire.
+- **Similarité de marques** (F-026) : ressemblance phonétique / visuelle / conceptuelle + recoupement des classes de Nice. Mécanique entièrement à part.
+
+Vouloir un « matcher universel » referait l'erreur de la sur-abstraction (F-026 et F-047 ne partagent quasiment aucune mécanique). Mais ne rien partager laisserait **se réimplémenter quatre fois ce qui, lui, est réellement commun** : non pas l'algorithme, mais la **doctrine ADR-012** — produire un rapprochement avec un **niveau de confiance**, une **base explicable** (auditabilité), et **toujours** la formulation « **à vérifier** », **jamais** une affirmation ni un verdict. Réimplémentée quatre fois, cette doctrine dériverait en quatre niveaux de prudence et quatre présentations.
+
+### Décision
+
+Factoriser **ce qui est commun (la doctrine)** et isoler **ce qui varie (l'algorithme)**, en **trois couches** :
+
+1. **Le contrat de doctrine** (`MatchCandidate`, dans `Atlas.Domain`) — type partagé par **les quatre** features, portant un **niveau de confiance**, une **base explicable**, et une disposition qui **ne peut être que « candidat / à vérifier »**. La doctrine ADR-012 est **encodée dans le type** : il n'existe **aucune** disposition « confirmé / avéré / verdict ». Émettre un verdict devient **structurellement impossible** — l'état illégal est *irreprésentable*.
+
+2. **Le noyau de normalisation des noms** (`ICompanyNameNormalizer`, Domain) — partagé par les **trois matchers à base de noms** (F-047, F-055, F-031) : suffixes (SA/SAS/SARL), accents, casse, variantes de raison sociale. **Pas** F-026.
+
+3. **Les matchers par famille** — `INameInTextMatcher`, `INameAgainstListMatcher`, `ITrademarkSimilarityMatcher` — chacun avec sa mécanique propre.
+
+**Cas F-026** : *conforme à la posture, moteur distinct*. Il **respecte le contrat de doctrine** (couche 1 — il propose des candidats à vérifier, jamais un verdict de disponibilité), mais son **moteur reste totalement séparé** (et en partie premium). On ne le force pas dans le noyau des noms.
+
+**Placement hexagonal** : contrat de doctrine + noyau de normalisation + ports des matchers → `Atlas.Domain` ; matchers déterministes → Domain, matchers s'appuyant sur une source externe (p.ex. similarité EUIPO) → `Atlas.Infrastructure.*` ; les briques **IA** (sémantique de F-026, résumés) → `Atlas.Application.Premium` (cohérent ADR-006).
+
+**Timing (règle de trois)** : le **contrat de doctrine** se définit **maintenant** — ce n'est pas une extraction prématurée mais un *contrat*, avec quatre clients déjà identifiés. Le **noyau de normalisation** s'extrait à l'arrivée du **troisième** matcher à base de noms (F-047 existe ; F-055 et F-031 viendront), à partir de code éprouvé.
+
+**Garde-fous** : ne pas construire de « matcher universel » ; ne pas forcer F-026 dans le noyau des noms ; **ne jamais ajouter** de disposition « confirmé » au contrat (son absence *est* la décision).
+
+#### Croquis du contrat (illustratif)
+
+```csharp
+// Domain — le contrat de doctrine, partagé par les 4 features.
+// Encode l'ADR-012 DANS le type : un rapprochement ne peut être qu'un CANDIDAT à vérifier.
+public sealed record MatchCandidate(
+    EntityRef   Subject,      // l'entité suivie (ce qu'on cherchait)
+    MatchTarget Target,       // ce qui a été trouvé (item presse, entrée de liste, décision, marque)
+    MatchConfidence Confidence,
+    MatchBasis  Basis);       // POURQUOI ça a matché — pour la piste d'audit
+// Volontairement : aucun « IsConfirmed », aucune disposition « Verdict ».
+// La seule sortie possible d'un matcher est un candidat à vérifier.
+
+public enum MatchConfidence { Low, Medium, High }   // jamais « Certain »
+
+public sealed record MatchBasis(
+    string Method,    // "dénomination exacte" | "alias de liste" | "phonétique" | …
+    string Evidence,  // l'élément concret trouvé
+    string Source);   // source + date
+
+// Domain — noyau partagé par les matchers à base de noms (F-047, F-055, F-031). Pas F-026.
+public interface ICompanyNameNormalizer
+{
+    NormalizedName Normalize(string rawDenomination);
+}
+
+// Ports par famille (mécaniques distinctes, même posture)
+public interface INameInTextMatcher        { /* F-047, F-031 */ }
+public interface INameAgainstListMatcher   { /* F-055 */ }
+public interface ITrademarkSimilarityMatcher { /* F-026 — moteur à part, même posture */ }
+```
+
+### Rationale
+
+- **Le commun, c'est la doctrine, pas l'algorithme.** On factorise la doctrine (le type), on isole les algorithmes (les matchers) — exactement la distinction reine de l'ADR-013 : *partager ce qui est commun, isoler ce qui varie*.
+- **Encoder la doctrine dans le type** rend l'état illégal irreprésentable : le compilateur fait respecter l'ADR-012, ce qui est infiniment plus robuste qu'un rappel en revue de code.
+- **Évite les deux échecs** : pas de matcher universel (sur-abstraction), pas de quatre réimplémentations divergentes (sous-abstraction + dérive de prudence).
+- **Auditabilité native** : `MatchBasis` est toujours présent → chaque rapprochement dit *pourquoi*, partout pareil.
+
+### Conséquences
+
+- **Positives** : ADR-012 garantie **structurellement** et **uniformément** ; auditabilité homogène ; ajout d'un matcher à base de noms bon marché (réutilise contrat + normalisation) ; F-026 bénéficie de la posture sans tordre le contrat.
+- **Négatives** : discipline pour **ne jamais** ajouter une disposition « confirmé » (son absence est le cœur de la décision) ; trois familles à garder distinctes.
+- **À prévoir** :
+  - Nommer `MatchCandidate`, `MatchConfidence`, `MatchBasis`, `ICompanyNameNormalizer` dans le **doc 08**.
+  - Extraire le noyau de normalisation au **3ᵉ** matcher à base de noms.
+  - Garder les briques IA (sémantique F-026, résumés) dans `Application.Premium`.
+  - Définir un **rendu UI homogène** du « à vérifier » (jamais présenté comme un fait).
+  - Cet ADR est l'**incarnation technique de la doctrine de rapprochement d'ADR-012** : à référencer croisé.
+
+---
+
+## ADR-015 — Couche d'assemblage du dossier entreprise (sections auto-descriptives + résolution snapshot-first)
+
+**Statut** : ✅ Accepté
+**Date** : 29 mai 2026
+
+### Contexte
+
+Le dossier 360 (**F-056**) compose ~8 sections (identité, finances, marchés, PI, cotation, structure, risque, événements). Ces sections n'ont **rien de comparable** par leur profil :
+- **bon marché et fraîches en direct** : événements BODACC, marchés DECP ;
+- **chères et lentes** : tout l'INPI (identité, bilans, PI) — credentials par utilisateur, rate-limité ;
+- **déjà pré-calculées** : pour une entité **suivie**, l'état RNE, les sanctions, les items BODACC/Judilibre existent déjà dans les **snapshots de l'ADR-013** ;
+- **conditionnelles** : structure (F-034, sous DPIA), finances (comptes parfois confidentiels), cotation (sans objet si non cotée).
+
+Un assemblage naïf écrase **trois tensions** :
+1. **La fraîcheur n'est pas atomique.** Le dossier est un *patchwork* où chaque morceau est frais à une date différente. Le présenter comme une photo cohérente à un instant T serait mentir.
+2. **La latence.** Assembler les 8 en synchrone laisse la source la plus lente (l'INPI) prendre toute la réponse en otage.
+3. **L'absence honnête.** « Section vide » a **quatre sens** incompatibles : *rien à signaler*, *pas pu récupérer*, *sans objet*, *restreint*. Les confondre, c'est présenter une absence comme un fait — le piège déjà neutralisé en F-059.
+
+### Décision
+
+**1. Sections indépendantes et auto-descriptives.** Chaque section se résout en `{ état, as-of, provenance, donnée? }`. L'**état est porteur de doctrine** : `Available` / `Stale` / `Unavailable` / `NotApplicable` / `Restricted` — il **distingue les quatre sens** de « vide ». Une section qui échoue ou expire tombe en `Unavailable` ; elle **ne fait jamais échouer le dossier entier**. Le dossier **rend toujours ce qu'il a**.
+
+**2. Résolution « snapshot-first ».** Le substrat de surveillance (**ADR-013**) **maintient déjà** les snapshots de plusieurs dimensions pour les entités **suivies**. Le dossier d'une entité suivie **lit ces snapshots** plutôt que de refaire les appels coûteux. Pour une entité **non suivie** : assemblage à la demande avec cache court. Conséquence structurante : **le dossier 360 et le substrat de surveillance partagent la même donnée** — les snapshots ne servent pas qu'à émettre des événements, ils sont aussi le **pré-assemblage** du dossier. Une seule machinerie, deux usages.
+
+**3. La fraîcheur par section est de premier rang.** Chaque section porte sa **date « as of »** et sa **provenance** — l'auditabilité (le fil rouge du produit) appliquée à la structure même du dossier.
+
+**4. Le transport est secondaire et évolutif.** Parce que les sections sont indépendantes, renvoyer le dossier **composé d'un coup** ou **progressivement** (section par section) est un choix **non architectural**. En v1 : **réponse composée avec timeout par section** (simple ; le chemin snapshot rend les entités suivies rapides de toute façon). Le **progressif/streaming** en évolution ultérieure, quand les contrats de section seront stables — on ne paie pas cette complexité avant d'en avoir besoin.
+
+**Placement hexagonal** : `CompanyDossier` est un **read-model côté Application** (pas un agrégat de domaine — `Company`/`UniteLegale` le restent). Chaque **résolveur de section** est un petit service Application qui, soit **lit un snapshot** (ADR-013), soit **appelle le use case** de la source, avec timeout, et **mappe tout échec en `Unavailable`**.
+
+#### Croquis (illustratif)
+
+```csharp
+// Application — read-model du dossier (pas un agrégat de domaine).
+public sealed record CompanyDossier(Siren Subject, IReadOnlyList<DossierSection> Sections);
+
+public sealed record DossierSection(
+    DossierSectionKind Kind,    // Identity, Financials, PublicContracts, Ip, Listing, Structure, Risk, Events
+    SectionState State,         // état PORTEUR DE DOCTRINE
+    DateTimeOffset? AsOf,       // fraîcheur PROPRE à la section
+    string? Provenance,         // source + base, pour l'audit
+    object? Data);              // présent si State ∈ { Available, Stale }
+
+public enum SectionState
+{
+    Available,     // donnée fraîche
+    Stale,         // présente mais périmée (à rafraîchir)
+    Unavailable,   // pas pu récupérer (échec / INPI non connecté)
+    NotApplicable, // sans objet (p.ex. cotation d'une non-cotée)
+    Restricted     // existe mais non servi (structure sous DPIA, comptes confidentiels…)
+}
+
+// Chaque résolveur : snapshot-first si entité suivie, sinon à la demande ;
+// timeout par section ; tout échec → Unavailable (jamais d'exception qui casse le dossier).
+public interface IDossierSectionResolver
+{
+    DossierSectionKind Kind { get; }
+    Task<DossierSection> ResolveAsync(Siren siren, DossierContext ctx, CancellationToken ct);
+}
+```
+
+### Rationale
+
+- **Fraîcheur par section** = représentation honnête d'un patchwork ; l'auditabilité appliquée au dossier lui-même.
+- **Sections indépendantes** = isolation de la latence (la source lente ne gate plus tout) **et** dégradation propre.
+- **État porteur de doctrine** = les quatre sens de « vide » distingués ; aucune absence présentée comme un fait (même garde-fou que F-059).
+- **Snapshot-first** = réutilise le substrat ADR-013 ; le dossier et la surveillance partagent la donnée → entités suivies quasi instantanées, **zéro duplication de fetch**. C'est la **cohérence d'architecture** qui paie : deux features qu'on croyait séparées reposent sur le même socle.
+- **Transport secondaire** = on n'achète pas la complexité du streaming tant qu'elle n'est pas nécessaire.
+
+### Conséquences
+
+- **Positives** : le dossier rend toujours quelque chose ; fraîcheur et absence honnêtes ; entités suivies quasi instantanées ; pas de double fetch ; transport évolutif sans refonte.
+- **Négatives** : chaque section doit **déclarer correctement son état** (discipline) ; la fraîcheur par section est davantage à exposer dans l'UI — mais c'est la chose honnête.
+- **À prévoir** :
+  - Nommer `CompanyDossier`, `DossierSection`, `SectionState`, `IDossierSectionResolver` dans le **doc 08**.
+  - Le chemin snapshot-first **dépend de la mise en place du substrat ADR-013**.
+  - L'UI doit rendre la **fraîcheur par section** et les **cinq états** honnêtement (ne jamais afficher `Unavailable`/`Restricted` comme un « rien à signaler »).
+  - Cet ADR est le **backbone d'assemblage de F-056** — à référencer croisé.
+
+---
+
+## ADR-016 — Sécurité & doctrine de la surface agentique (MCP)
+
+**Statut** : ✅ Accepté
+**Date** : 29 mai 2026
+
+### Contexte
+
+Le serveur MCP (**F-052**) expose Atlas à des **agents** via un nouvel adapter entrant `Atlas.Mcp`, par-dessus les use cases MediatR existants. F-052 a posé la feature (*read-first / write-guarded*, jamais de credentials ni de suppression de compte exposés) et **ADR-011** l'authentification (OAuth 2.1 via OpenIddict, PKCE, scopes, resource indicators RFC8707, jetons courts).
+
+Reste à décider l'**architecture de sécurité et de préservation de doctrine** de cette surface — car le consommateur n'est plus un humain qui lit, mais un agent qui **interprète et agit**. Deux faits cadrent la décision :
+
+1. **MCP est un protocole d'interopérabilité, pas un cadre de sécurité** : le travail de sûreté retombe sur l'auteur du serveur, et **croît avec le privilège exposé** (un serveur en lecture seule a une couche fine ; un serveur qui mute, une couche épaisse). Menaces nommées en 2026 : *confused deputy*, *tool poisoning / rug pull*, **injection de prompt indirecte via le contenu retourné**, *token passthrough*, scopes excessifs.
+2. On a passé trois ADR (012, 014, 015) à encoder « **descriptif, jamais de verdict** » dans les types et les états. Un agent peut **aplatir** cette doctrine (« correspondance à vérifier » → « entreprise sanctionnée ») dans son résumé à l'utilisateur.
+
+### Décision
+
+Quatre principes pour la surface agentique.
+
+**1. Surface curée, lecture d'abord (confinement).** L'adapter MCP **n'expose jamais les handlers 1:1**. C'est un **allowlist délibéré** : outils de **lecture** d'abord ; quelques **écritures** sous scope explicite **et** approbation humaine ; les use cases destructifs ou sensibles (suppression de compte, lecture/écriture de credentials, gestion INPI) **structurellement inatteignables**. **Pas d'outil « omnibus »** à entrée libre (le plus dangereux). Schéma d'entrée **le plus étroit possible** par outil. Scopes en **moindre privilège progressif** (socle `mcp:lecture-base`, élévation ciblée). *Garder la surface étroite, c'est garder la couche de sécurité fine et le rayon d'explosion minimal.*
+
+**2. La doctrine voyage avec la donnée.** Parce que `MatchCandidate` n'a **aucun** champ « confirmé » (ADR-014) et que `SectionState` est explicite (ADR-015), **la sérialisation MCP hérite de la doctrine gratuitement**. À garantir : (a) **ne jamais aplatir** ces champs dans le mapping MCP ; (b) garder le caveat **inline par item** (pas en métadonnée détachable) ; (c) **réaffirmer la doctrine dans les descriptions d'outils** (« retourne des correspondances à vérifier, jamais des faits établis ; une section indisponible/restreinte n'est pas « rien à signaler » »).
+
+**3. Le contenu externe est de la donnée, jamais une instruction.** Les outils renvoient du **texte externe** (presse, décisions, observations RNE, annonces) — surface d'**injection de prompt indirecte**. Parade : ce contenu est retourné **clairement délimité comme donnée**, **jamais exécuté** ni traité comme consigne ; et la **surface d'écriture est si étroite** qu'un agent détourné ne peut pas faire de dégâts. L'étroitesse (principe 1) **est** le confinement de l'injection.
+
+**4. Délégation utilisateur ; les credentials ne traversent jamais.** L'adapter s'exécute **strictement avec l'identité déléguée de l'utilisateur** (OAuth, ADR-011), **jamais** avec un privilège serveur plus large (défense *confused deputy*). Les credentials INPI restent **côté serveur**, déchiffrés en mémoire le temps de la requête — l'agent ne les voit jamais. `Atlas.Mcp` est un **OAuth Resource Server** ; OpenIddict est le serveur d'autorisation ; on **valide l'audience** du jeton (pas de *token passthrough*).
+
+**Transverse** : nos propres **descriptions d'outils sont versionnées et signées** (défense *rug pull* / poisoning de nos outils) ; **chaque appel d'outil est audité** (qui, quel outil, quels paramètres, quel résultat).
+
+**Placement hexagonal** : `Atlas.Mcp` est un **adapter entrant** (primaire), parallèle à `Atlas.Api` et `Atlas.Maui`, appelant les **mêmes use cases MediatR** (zéro changement domaine, cf. F-052). La **curation (allowlist), le mapping des scopes et la sérialisation préservant la doctrine** vivent dans l'adapter.
+
+#### Croquis (illustratif)
+
+```csharp
+// Atlas.Mcp — adapter entrant. Surface CURÉE (allowlist explicite, pas d'exposition 1:1).
+[McpServerTool(Name = "get_company_dossier")]
+[Description("Retourne un dossier DESCRIPTIF d'une entreprise (faits sourcés et datés). " +
+             "Les correspondances sont des CANDIDATS À VÉRIFIER, jamais des faits établis. " +
+             "Une section peut être indisponible / restreinte / sans objet : " +
+             "ne pas l'interpréter comme « rien à signaler ».")]
+public async Task<CompanyDossierToolResult> GetCompanyDossierAsync(
+    [Description("SIREN à 9 chiffres")] string siren,   // schéma d'entrée étroit, typé
+    CancellationToken ct)
+{
+    // S'exécute avec l'identité DÉLÉGUÉE de l'utilisateur (OAuth). Credentials INPI : côté serveur, jamais exposés.
+    var dossier = await _mediator.Send(new GetCompanyDossierQuery(siren), ct);
+    // Le mapping PRÉSERVE SectionState, AsOf, Provenance et les MatchCandidate (« à vérifier ») inline.
+    return Map(dossier);
+}
+// PAS d'outil omnibus. Les écritures sont des outils séparés, sous scope explicite + approbation humaine.
+```
+
+### Rationale
+
+- **MCP = interop, pas sécurité** → la sûreté est notre travail, et elle **scale avec le privilège** : d'où la surface étroite/lecture-d'abord comme stratégie première.
+- **Le travail sur les types paie une seconde fois** : la doctrine encodée dans `MatchCandidate`/`SectionState` (ADR-014/015) est **héritée au fil** — il suffit de ne pas la jeter dans le mapping.
+- **La doctrine descriptive et la sécurité s'alignent** : un outil qui *montre des faits* est intrinsèquement moins dangereux qu'un outil qui *agit*. Le positionnement produit **est** une posture de sécurité.
+- **Moindre privilège + identité déléguée** neutralisent le *confused deputy* ; **surface d'écriture étroite** confine l'injection indirecte.
+
+### Conséquences
+
+- **Positives** : couche de sécurité fine, rayon d'explosion minimal, doctrine qui survit au passage à l'agent, cohérence avec le positionnement produit, aboutissement logique des ADR-012/014/015.
+- **Négatives** : **discipline de curation** — chaque nouvel outil doit être ajouté délibérément (schéma étroit + description porteuse de doctrine), jamais auto-exposé ; les écritures coûtent une UX d'approbation.
+- **À prévoir** :
+  - Nommer les **scopes** et la **taxonomie d'outils** (doc 08) ; **audit** des appels d'outils.
+  - **Versionner/signer** nos descriptions d'outils ; surveiller l'évolution du spec MCP (révision attendue).
+  - UX d'**approbation humaine** pour les écritures.
+  - Références croisées : **F-052** (feature), **ADR-011** (auth), **ADR-012/014/015** (doctrine héritée).
+
+---
+
 ## Décisions à prendre ultérieurement
 
 Les sujets suivants sont **identifiés** mais **non encore tranchés**. Ils seront documentés dans des ADR ultérieurs.

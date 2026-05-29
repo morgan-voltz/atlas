@@ -812,6 +812,75 @@ Les **value objects** sont des types immuables sans identité propre, qui encaps
 | Auteur de modification | `UpdatedBy` (UserId) | Quand pertinent |
 | Soft delete | `DeletedAt` (nullable) | Quand applicable |
 
+### 12.4 Substrat de surveillance (ADR-013)
+
+Le substrat de surveillance formalise la tuyauterie commune aux features qui suivent des entités au fil du temps (F-019 RNE, F-048 BODACC, F-057 sanctions, F-031 Judilibre). Deux stratégies départagées par le **critère des disparitions**, plus un runner partagé.
+
+| Terme | Définition | Côté |
+|---|---|---|
+| **`MonitoredDimension`** (enum) | Quel volet est surveillé (`RneIdentity`, `BodaccAnnouncements`, `Sanctions`, `Judilibre`, …). | Domain |
+| **`MonitoredChange`** (record) | Sortie commune des deux stratégies — devient un événement de timeline. Porte `Dimension`, `Kind` (`Added` / `Modified` / `Removed`), `Title`, `Summary`, `ExternalId?`. | Domain |
+| **`ChangeKind`** (enum) | `Added` / `Modified` / `Removed`. **`Removed` est impossible côté flux** (un item append-only ne disparaît pas). | Domain |
+| **`IStateMonitor<TState>`** | Stratégie n°1 : **état + diff**. Pour les dimensions où les **retraits comptent** (RNE, sanctions). `FetchCurrentStateAsync` + `Diff` retourne ajouts / modifs / retraits. | Domain (port) |
+| **`IItemStreamMonitor<TItem>`** | Stratégie n°2 : **flux d'items append-only** (BODACC, Judilibre). `FetchItemsAsync` + `ExternalIdOf` (clé de dédup) + `ToChange`. | Domain (port) |
+| **`MonitorContext`** | Contexte d'un cycle de surveillance : credentials (RNE) ou anonyme (BODACC), horloge, observabilité. | Domain |
+| **`MonitorRunner`** | Runner d'orchestration partagé : itère le set surveillé, dédup cross-users, isole les échecs, idempotent, émet l'événement, observe. **Extrait à la troisième instance (F-057)**, pas avant. | Application |
+| **`ExternalId`** | Identifiant stable issu de la source (numéro d'annonce BODACC, identifiant Judilibre, entrée+version de liste sanctions). Sert à la dédup `(UserId, ExternalId)`. | Domain (VO) |
+
+**Garde-fou** : ne **jamais** fusionner les deux stratégies sous une interface unique « universelle » — perdre les retraits (régression métier) ou stocker un historique non borné (gaspillage) sont les deux échecs à éviter.
+
+### 12.5 Matching conservateur (ADR-014)
+
+Incarnation technique de la doctrine ADR-012 : produire des rapprochements **à vérifier**, jamais des verdicts. L'absence de disposition « confirmé » est **encodée dans le type** — l'état illégal est *irreprésentable*.
+
+| Terme | Définition | Côté |
+|---|---|---|
+| **`MatchCandidate`** (record) | **Contrat de doctrine partagé par les 4 matchers** (F-026, F-047, F-055, F-031). Porte `Subject` (l'entité suivie), `Target` (ce qu'on a trouvé), `Confidence`, `Basis`. **Aucune disposition « confirmé / verdict »** — un matcher ne peut sortir qu'un candidat à vérifier. | Domain |
+| **`MatchConfidence`** (enum) | `Low` / `Medium` / `High`. **Jamais `Certain`**. | Domain |
+| **`MatchBasis`** (record) | Pourquoi ça a matché (`Method` : « dénomination exacte », « alias de liste », « phonétique »… ; `Evidence` : l'élément concret trouvé ; `Source` : source + date). Piste d'audit native. | Domain |
+| **`MatchTarget`** (union / record) | Ce qui a été trouvé : item presse, entrée de liste sanctions, décision Judilibre, marque similaire. | Domain |
+| **`NormalizedName`** | Forme normalisée d'une dénomination (suffixes SA/SAS/SARL gommés, accents et casse, variantes), utilisée par les matchers à base de noms. | Domain (VO) |
+| **`ICompanyNameNormalizer`** | Noyau de normalisation **partagé par les 3 matchers à base de noms** (F-047, F-055, F-031). **Pas F-026**. Extraction prévue à l'arrivée du 3ᵉ matcher. | Domain (port) |
+| **`INameInTextMatcher`** | Famille n°1 : chercher un nom **connu** dans un texte libre (F-047 presse, F-031 jurisprudence). | Domain (port) |
+| **`INameAgainstListMatcher`** | Famille n°2 : rapprocher un nom d'une liste structurée — *record linkage* (F-055 sanctions, F-057 re-screening). | Domain (port) |
+| **`ITrademarkSimilarityMatcher`** | Famille n°3 : similarité phonétique / visuelle / conceptuelle de marques + classes de Nice (F-026 antériorité). **Moteur entièrement à part** mais respecte la posture du contrat de doctrine. | Domain / Premium (port) |
+
+**Garde-fou** : ne **jamais** ajouter de disposition « confirmé » au contrat (son absence *est* la décision). Ne **pas** forcer F-026 dans le noyau des noms.
+
+### 12.6 Dossier entreprise — assemblage 360 (ADR-015)
+
+Le dossier 360 (F-056) est un **read-model de composition côté Application** qui assemble des sections indépendantes auto-descriptives. Backbone : **résolution snapshot-first** (lit le substrat ADR-013 pour les entités suivies, à la demande sinon) ; **état porteur de doctrine** par section.
+
+| Terme | Définition | Côté |
+|---|---|---|
+| **`CompanyDossier`** | Read-model du dossier d'une entreprise. `Subject : Siren` + liste de `DossierSection`. **N'est PAS un agrégat de domaine** (`Company` / `UniteLegale` le restent). | Application (read-model) |
+| **`DossierSection`** | Une section du dossier — auto-descriptive (`Kind`, `State`, `AsOf?`, `Provenance?`, `Data?`). | Application (record) |
+| **`DossierSectionKind`** (enum) | `Identity` / `Financials` / `PublicContracts` / `Ip` / `Listing` / `Structure` / `Risk` / `Events`. | Application |
+| **`SectionState`** (enum, porteur de doctrine) | `Available` (donnée fraîche), `Stale` (présente mais périmée), `Unavailable` (échec / INPI non connecté), `NotApplicable` (sans objet — cotation d'une non-cotée), `Restricted` (existe mais non servi — structure DPIA, comptes confidentiels). **Distingue les 4 sens de « vide »**. | Application |
+| **`AsOf`** | Date « as of » **par section** — la fraîcheur du dossier n'est **pas atomique**, c'est un patchwork qu'on présente honnêtement. | Application |
+| **`Provenance`** | Source + base de la donnée affichée — auditabilité au niveau de la section. | Application |
+| **`IDossierSectionResolver`** | Un résolveur par section : lit un snapshot ADR-013 (entité suivie) ou appelle le use case (à la demande), avec **timeout**, et **mappe tout échec en `Unavailable`** — jamais d'exception qui casse le dossier. | Application (port) |
+| **`DossierContext`** | Contexte d'assemblage : identité utilisateur (pour ses credentials INPI le cas échéant), horloge, timeout par section. | Application |
+| **`IDossierSummarizer`** | Port **premium** (F-050) — synthèse narrative IA du dossier, descriptive, sans verdict. | Domain (port) / Premium (impl) |
+
+**Garde-fou** : chaque section doit **déclarer correctement son état**. L'UI doit afficher la fraîcheur par section et les 5 états honnêtement — jamais afficher `Unavailable` / `Restricted` comme « rien à signaler ».
+
+### 12.7 Surface agentique MCP (ADR-016)
+
+L'adapter MCP (`Atlas.Mcp`, F-052) est une **surface curée lecture-d'abord**, parallèle à `Atlas.Api` et `Atlas.Maui`, qui appelle les mêmes use cases MediatR. Le travail de sécurité scale avec le privilège : l'étroitesse de la surface **est** la première couche de défense.
+
+| Terme | Définition | Côté |
+|---|---|---|
+| **`Atlas.Mcp`** | Adapter entrant MCP — projet (ou module) distinct. **Allowlist explicite d'outils**, pas d'exposition 1:1 des handlers, schémas d'entrée étroits. | Adapter |
+| **`McpToolDescriptor`** | Métadonnée d'un outil exposé : nom, description **porteuse de doctrine**, schéma d'entrée minimal, scope requis. **Versionné et signé** (défense contre *rug pull* / poisoning). | Adapter |
+| **Scopes MCP** | Taxonomie par groupe d'outils, en **moindre privilège progressif**. Socle `mcp:lecture-base` ; élévations ciblées `mcp:favoris.ecriture`, `mcp:veille.ecriture`. Jamais de scope « tout-en-un ». | Adapter / OAuth |
+| **« Doctrine inline »** | Principe : `MatchCandidate` et `SectionState` ne sont **jamais aplatis** dans le mapping MCP — le caveat voyage **inline par item** (pas en métadonnée détachable). | Mapping |
+| **« Contenu externe = donnée, jamais instruction »** | Principe : le texte externe retourné (presse, décisions, observations RNE, annonces) est **clairement délimité comme donnée**, jamais traité comme consigne — parade à l'**injection de prompt indirecte**. | Mapping |
+| **`AuditedToolCall`** | Trace d'audit par appel d'outil : qui (`UserId`), quel outil, quels paramètres, quel résultat (résumé). Extension du Serilog existant. | Logging |
+| **« Délégation utilisateur »** | L'adapter s'exécute strictement avec l'identité OAuth de l'utilisateur (ADR-011). Les credentials INPI restent **côté serveur**, déchiffrés en mémoire le temps de la requête — l'agent ne les voit **jamais**. | OAuth / KMS |
+
+**Garde-fous** : pas d'outil « omnibus » à entrée libre. Surface d'écriture étroite + approbation humaine pour chaque écriture. Validation d'audience du jeton (pas de *token passthrough*).
+
 ---
 
 ## 13. Faux-amis et pièges fréquents

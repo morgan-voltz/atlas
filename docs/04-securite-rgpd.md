@@ -609,6 +609,55 @@ Les entreprises ayant indiqué `diffusionINSEE = "N"` ou `est_diffusible = false
 
 ---
 
+## 12bis. Surface agentique MCP — confinement et audit
+
+> Doctrine canonique : **ADR-016** (sécurité & doctrine de la surface agentique). Voir aussi **ADR-011** (OAuth 2.1 + PKCE), **ADR-012/014/015** (doctrine de rapprochement et d'absence honnête héritée).
+
+Le serveur MCP (**F-052**) est un **adapter entrant** au-dessus des use cases existants. Le consommateur n'est plus un humain qui lit, mais un agent qui interprète et agit. Quatre garde-fous structurants.
+
+### 12bis.1 Taxonomie des scopes (lecture-d'abord, écriture explicite et bornée)
+
+| Scope | Sens | Outils exposés (exemples) |
+|---|---|---|
+| `mcp:lecture-base` | Socle obligatoire — accès aux recherches et lectures non sensibles. | `search_companies`, `get_company`, `search_trademarks`, `get_trademark`, `get_company_dossier` (F-056), `get_veille_timeline` |
+| `mcp:favoris.ecriture` | Mutations encadrées sur le périmètre favoris/watchlists. | `add_favorite`, `remove_favorite` |
+| `mcp:veille.ecriture` | Mutations encadrées sur la veille de l'utilisateur. | `subscribe_feed_source`, `apply_veille_pack` |
+
+**Principes** : (a) **lecture d'abord** — les écritures sont des outils séparés, sous scope explicite et **approbation humaine** ; (b) **pas d'outil omnibus** à entrée libre (le plus dangereux) — chaque outil a un **schéma d'entrée le plus étroit possible** ; (c) certains use cases sont **structurellement inatteignables** : suppression de compte, lecture/écriture de credentials INPI, gestion de mot de passe — pas exposés, point.
+
+### 12bis.2 Confinement du contenu externe (anti-injection de prompt indirecte)
+
+Les outils MCP retournent du **texte externe** (articles de presse, décisions de justice, observations RNE, annonces BODACC). Cette donnée est un **vecteur d'injection de prompt indirecte** : un agent qui lit le résultat peut être détourné par une consigne cachée dans le contenu.
+
+**Doctrine** : le contenu externe est **clairement délimité comme donnée**, **jamais** exécuté ni interprété comme consigne. La parade structurelle, c'est l'**étroitesse de la surface d'écriture** — même si un agent est détourné, il ne peut pas faire de dégâts sans un outil d'écriture qu'il a le scope d'appeler.
+
+**La doctrine voyage avec la donnée** : `MatchCandidate` n'a aucun champ « confirmé » (ADR-014), `SectionState` est explicite (ADR-015) — la sérialisation MCP **hérite gratuitement** de ces garde-fous, à condition de **ne jamais aplatir** ces champs dans le mapping et de garder le caveat **inline par item**.
+
+### 12bis.3 Audit logging par outil
+
+Chaque appel d'outil est tracé via Serilog (extension de la pipeline existante) :
+
+- **Qui** : `UserId` (identité OAuth déléguée, jamais le serveur).
+- **Quel outil** : nom canonique + version du `McpToolDescriptor`.
+- **Quels paramètres** : SIREN consulté, dénomination cherchée, etc. (avec masquage `SensitiveDataMaskingEnricher` existant).
+- **Quel résultat** : résumé (taille, état de section pour le dossier, nombre de candidats pour les matchers). Pas le contenu intégral des items externes (volume).
+
+L'audit doit être **exportable** au compliance officer / au DPO pour analyse a posteriori.
+
+### 12bis.4 Délégation utilisateur — les credentials ne traversent jamais
+
+L'adapter MCP est un **OAuth Resource Server** (cf. ADR-011 — OpenIddict est le serveur d'autorisation). Validation systématique de l'**audience** du jeton (parade `token passthrough`).
+
+Conséquence dure : les **credentials INPI** du compte de l'utilisateur (chiffrés au repos en AES-256-GCM, cf. §5) sont **déchiffrés en mémoire le temps d'une requête** et **jamais** retournés à l'agent ni exposés via un outil MCP. L'agent agit avec l'identité de l'utilisateur, jamais avec un privilège serveur plus large (parade *confused deputy*).
+
+### 12bis.5 Garde-fous transverses
+
+- **Descriptions d'outils versionnées et signées** — défense contre *rug pull* / poisoning de nos propres outils (un attaquant ne peut pas réécrire silencieusement une description pour la rendre malveillante).
+- **Évolution du spec MCP surveillée** : la spécification 2026 est encore mouvante — une révision majeure (notamment sur les transports et les permissions) est à anticiper. À traiter comme une dépendance d'écosystème.
+- **UX d'approbation humaine** : chaque outil d'écriture demande une confirmation explicite à l'utilisateur, jamais un consentement déduit.
+
+---
+
 ## 13. Checklist par sprint
 
 À utiliser comme **garde-fou** à chaque livraison de fonctionnalité.
