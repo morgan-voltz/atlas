@@ -476,6 +476,8 @@ Pour chaque feature, on documente :
 
 > **Statut** : ✅ Backend implémenté + **adapter Brevo livré (29 mai 2026)**. `CompanyFavoriteSnapshot` (un cliché vivant par `(UserId, SIREN)`) + `DiffWith(UniteLegale)` détecte les changements de dénomination / forme juridique / NAF / adresse / dirigeants (hash). Job Hangfire `favorite-refresh` cron `0 3 * * *` (désactivable). Notification MediatR `CompanyFavoriteChangedNotification` → 2 handlers : email (via `IEmailSender.SendFavoriteChangeAsync`) et push (via `INotificationDispatcher`, cf. F-020). Users sans compte INPI connecté passés silencieusement. **Adapter email Brevo** (provider France RGPD-compliant) : `BrevoEmailSender` (HttpClient typé, `POST /v3/smtp/email` avec header `api-key`) avec template HTML + texte, switch DI sur `Email:Brevo:ApiKey` (sans clé → fallback `LoggingEmailSender` dev). Reste : templates email enrichis (logo, branding).
 
+> **Architecture liée** : F-019 est la **première implémentation** du patron formalisé par **ADR-013** (substrat de surveillance — stratégie `IStateMonitor<UniteLegale>` : retraits détectés, état comparé). F-048 (BODACC) est la première instance du patron `IItemStreamMonitor<TItem>` (flux append-only). L'extraction effective du runner mutualisé est planifiée pour F-057 (3ᵉ instance).
+
 **Description** : un job quotidien re-fetch les fiches favorites. Si une modification est détectée (changement d'adresse, de dirigeant, dépôt d'un bilan, etc.), l'utilisateur reçoit un email résumant les changements.
 
 **Valeur user** : première fonction de veille — passage d'un outil de consultation à un outil pro-actif.
@@ -654,6 +656,8 @@ Pour chaque feature, on documente :
 
 > **Statut** : ✅ Backend implémenté (MVP 2, 29 mai 2026). Entité `FeedRule` (UserId + critères AND : `KeywordPattern` / `SourceId` / `MentionedSiren` (Siren) + actions : `NotifyEmail` / `NotifyPush`), invariants `Create` / `Update` (au moins un critère, au moins une action, nom ≤ 200, keyword ≤ 200), `RegisterEvaluation` / `RegisterTrigger`. Port `IFeedRuleRepository`. 5 use cases MediatR (`CreateFeedRule`, `UpdateFeedRule`, `DeleteFeedRule`, `ListMyFeedRules`, `EvaluateFeedRules`). Notification `FeedRuleMatchedNotification` + 2 handlers (`SendFeedRuleMatchedEmailHandler`, `DispatchFeedRuleMatchedPushHandler`) calqués sur F-019, gating sur `NotifyEmail` / `NotifyPush` par règle. Extension `IEmailSender.SendFeedRuleMatchedAsync` + adapters logging / capturing. 4 endpoints `/feed/rules` (POST/GET/PATCH/DELETE). Job Hangfire : `EvaluateFeedRulesCommand` chaîné dans `FeedPollingJob.PollAsync()` après `MatchFavoritesInFeedItemsCommand` (F-047) — voit donc les `FeedItemFavoriteMatch` pour évaluer `MentionedSiren`. Évaluation incrémentale par watermark `LastEvaluatedAt`. Table `feed_rule` (cascade FK user RGPD). 248 tests verts (89 domain + 155 application + 4 archi), dont 17 sur `FeedRule` (invariants + matching AND + watermark), CreateFeedRule (4), DeleteFeedRule (3), EvaluateFeedRules (4 — flux complet match/no-match/watermark). Adapter email **Brevo** livré le 29 mai 2026 (commun avec F-019) ; le `BrevoEmailSender` envoie les notifications de règle matchée via `SendFeedRuleMatchedAsync`. Reste : UI MAUI (CRUD des règles), validateurs FluentValidation câblés dans le pipeline si nécessaire.
 
+> **Architecture liée** : `FeedRule` est le **support d'activation** des `WatchRule` futures. **F-057** étendra cette mécanique pour activer la surveillance sanctions par watchlist (« surveillance sanctions » comme `WatchRule`), réutilisant le moteur d'évaluation existant.
+
 **Description** : l'utilisateur configure des **filtres** sur sa timeline (par mot-clé, par entreprise favorite mentionnée, par source). Crée aussi des **règles** ("alerte-moi quand un nouvel item mentionne X").
 
 **Valeur user** : transformer la veille passive en veille active et ciblée.
@@ -673,6 +677,8 @@ Pour chaque feature, on documente :
 
 > **Statut** : ✅ MVP intégral livré (3 volets, MVP 2, 29 mai 2026). **Volet 1 — tagging RSS → favoris** : à l'ingestion d'un item RSS, scan titre + résumé pour les noms d'entreprises favorites (matching mot entier case-insensitive, ≥ 3 caractères). Persisté dans `FeedItemFavoriteMatch`. Timeline étendue avec `MentionedFavorites` et filtre `?mentionsFavoritesOnly=true`. **Volet 2 — événements RNE** : `FavoriteEvent` (entité + repo) créée par un 3ᵉ handler MediatR sur `CompanyFavoriteChangedNotification` (F-019). DTO timeline discriminé `Kind = "RssItem" | "FavoriteEvent"` avec fusion mémoire bornée. **Volet 3 — BODACC (cf. F-048)** : annonces légales pour les SIREN favoris, dédupliquées via `FavoriteEvent.ExternalId`. La timeline mixte est désormais opérationnelle : RSS + RNE + BODACC, tout au même endroit, trié chronologiquement.
 
+> **Architecture liée** : le volet 1 (tagging RSS → favoris) est la **première implémentation** de `INameInTextMatcher` formalisé par **ADR-014** (matching conservateur unifié — la doctrine ADR-012 incarnée dans `MatchCandidate`). À l'arrivée de F-031 et F-055/F-057, le noyau de normalisation des noms (`ICompanyNameNormalizer`) sera extrait à partir du code d'ici.
+
 **Description** : feature **différenciante phare** : la timeline affiche **aussi** les évolutions des entreprises favorites du user (mises à jour RNE, dépôts BODACC, articles RSS mentionnant le nom de l'entreprise). Tout au même endroit.
 
 **Valeur user** : c'est LE feature qui justifie le projet face à un Feedly ou un Pappers seuls. **L'argument commercial central de la veille.**
@@ -691,6 +697,8 @@ Pour chaque feature, on documente :
 ### F-048 — Intégration BODACC dans la veille
 
 > **Statut** : ✅ Backend implémenté (MVP 2, 29 mai 2026). Nouveau projet `Atlas.Infrastructure.Bodacc` avec adapter `OpendatasoftBodaccProvider` interrogeant l'API publique `bodacc-datadila.opendatasoft.com` (anonyme, pas d'INPI requis). Job Hangfire `bodacc-polling` cron `0 4 * * *` (après F-019), **déduplication cross-users** (1 appel API par SIREN partagé). Chaque annonce non encore connue → `FavoriteEvent` type `BodaccPublished` avec `ExternalId = AnnouncementId BODACC`. Index unique partiel `(user_id, external_id) WHERE external_id IS NOT NULL` pour dédup efficace. Apparaît dans la timeline via la fusion F-047 volet 2. **Reste** : (a) configuration fine côté user (mots-clés, secteurs, types d'annonces) — actuellement toutes les annonces sont remontées, (b) validation contre l'API réelle (schéma documenté mais non testé en prod).
+
+> **Architecture liée** : F-048 est la **première implémentation** du patron `IItemStreamMonitor<BodaccAnnouncement>` formalisé par **ADR-013** (substrat de surveillance — flux append-only, dédup par `ExternalId`). Le patron polling + dédup cross-users inventé ici est généralisé par le runner mutualisé qui sera extrait au moment de F-057.
 
 **Description** : intégration du BODACC comme source de veille parmi d'autres, avec configuration fine (mots-clés, secteurs d'activité, tribunaux, types d'annonces).
 
@@ -907,6 +915,8 @@ Gratuit, sans authentification. Le **scraping n'est plus nécessaire** (corrige 
 
 **Modèle économique** : aucun coût par utilisateur (open data, déterministe) → **cœur open source**, gratuit. Cohérent ADR-006.
 
+> **Architecture liée** : à l'implémentation, F-032 émet un `FavoriteEvent PublicContractAwarded` dans la timeline F-047 (patron F-048) — alimente la **taxonomie de signaux de F-058** (volet « signal commercial »).
+
 **Découpage / jalons** :
 1. **Source & matching** : ingestion du jeu consolidé (ou accès tabulaire), mapping SIRET → SIREN. *(Fondation testable.)*
 2. **Mode fiche** : section « Marchés publics remportés » sur la fiche entreprise.
@@ -1065,6 +1075,8 @@ Aucun parsing de PDF nécessaire dans les deux cas.
 
 **Dépendances** : F-018 (favoris marque / brevet), F-020 (push), F-046 (couche infrastructure des règles user — réutilisation).
 
+> **Architecture liée** : à l'implémentation, F-027 et F-032 émettront des `FavoriteEvent` typés (`IpFiled`, `PublicContractAwarded`) dans la timeline F-047 — c'est ce qui alimente la **taxonomie de signaux de F-058**.
+
 ---
 
 ### F-055 — Signaux de risque (descriptif)
@@ -1147,6 +1159,8 @@ Aucun parsing de PDF nécessaire dans les deux cas.
 
 **Dépendances** : F-006.
 
+> **Architecture liée** : F-026 **respecte la posture** de **ADR-014** (matching conservateur unifié — produit des `MatchCandidate`, jamais de verdict de disponibilité), mais son **moteur reste totalement séparé** des 3 matchers à base de noms (F-047, F-055, F-031) : similarité phonétique / visuelle / conceptuelle + classes de Nice = mécanique entièrement à part. Les briques IA (sémantique, résumés) vivent dans `Atlas.Application.Premium` (F-050).
+
 ---
 
 **Grappe 5 — Exposition tiers** *(F-028, F-052 — Atlas devient une plateforme : ouverte aux intégrateurs et aux agents IA)*
@@ -1187,7 +1201,7 @@ Aucun parsing de PDF nécessaire dans les deux cas.
 - **Transports** : stdio (auto-hébergement local) et HTTP/Streamable HTTP (instance distante).
 - **Aucune exposition** de la gestion des secrets (credentials INPI, clés) via MCP. Aucune opération destructrice non réversible exposée sans garde forte.
 
-**Sécurité (cf. ADR-011)** : OAuth 2.1 + PKCE ; **scopes** distincts lecture vs écriture ; tokens courts + refresh rotatif révocable ; audit logging de chaque appel d'outil (Serilog déjà en place) ; rate limiting réutilisé (global + auth-strict). Risque spécifique : **injection par le contenu** (tool poisoning) — règle : le serveur traite tout contenu retourné comme **donnée**, jamais comme instruction ; les outils d'écriture exigent une approbation explicite.
+**Sécurité (cf. ADR-011 + ADR-016)** : OAuth 2.1 + PKCE ; **scopes** distincts lecture vs écriture ; tokens courts + refresh rotatif révocable ; audit logging de chaque appel d'outil (Serilog déjà en place) ; rate limiting réutilisé (global + auth-strict). **Doctrine et architecture de la surface agentique formalisées par ADR-016** : surface curée lecture-d'abord (allowlist, pas d'exposition 1:1, schémas étroits), doctrine inline avec donnée (`MatchCandidate`/`SectionState` préservés intacts, jamais aplatis dans le mapping MCP), contenu externe = donnée jamais instruction (parade injection prompt indirecte), délégation utilisateur (credentials ne traversent jamais). Outil **`get_company_dossier`** ajouté pour F-056 (dossier 360 en lecture seule, descriptif).
 
 **Modèle économique** : aucun coût par utilisateur côté Atlas (l'inférence est côté agent). Reste dans le **cœur open source** (cohérent ADR-006). Une frontière premium éventuelle (quotas en hébergé, outils agentiques avancés) pourra être posée plus tard sans toucher au socle.
 
@@ -1202,13 +1216,263 @@ Aucun parsing de PDF nécessaire dans les deux cas.
 
 Features identifiées comme valables mais explicitement reportées hors du périmètre actuel. À reconsidérer en fonction de la traction.
 
-### F-031 — Intégration Judilibre (décisions de justice)
+### F-056 — Vue 360 / Dossier entreprise
 
-**Description** : recherche de décisions judiciaires liées à une entreprise (contentieux), à une marque (oppositions, contrefaçon), à un brevet (litiges).
+> **Méta-feature d'assemblage figée le 29 mai 2026**. Statut **V3+** (sections sous-jacentes en V2 ou V3+). Ce **n'est pas une nouvelle source de données** : c'est une **couche de composition** par-dessus l'existant. Backbone architectural : **ADR-015** (sections auto-descriptives + résolution snapshot-first). Issue du persona Investisseur / M&A — sert aussi expert-comptable, avocat, compliance.
 
-**Pourquoi reporté** : l'API Judilibre est mature mais le matching entre entités (le défendeur dans une décision est-il bien "mon" entreprise ?) est non-trivial.
+**Description** : une **vue consolidée d'une entreprise** qui assemble, en un seul dossier descriptif, sourcé et daté, les données déjà servies par les features par-source — identité & dirigeants (F-004), événements légaux (F-047/F-048), indicateurs financiers (F-054), marchés publics (F-032), propriété industrielle (F-018/F-025), cotation (F-051), structure de co-mandats (F-034, sous ADR-012), signaux de risque (F-055). Chaque élément reste **tracé à sa source et à sa date** — c'est la matérialisation concrète de la thèse du produit : *croiser ce que personne ne croise*.
 
-**APIs externes** : Judilibre (api.piste.gouv.fr).
+**Valeur user** : aujourd'hui, comprendre une entreprise oblige à consulter chaque dimension séparément. Le dossier 360 fait ce croisement **à la place de l'utilisateur** : l'investisseur obtient un portrait de cible, l'expert-comptable un état de client, l'avocat un socle de due diligence — **le même assemblage, des lentilles différentes**. C'est aussi le **cas d'usage roi de l'accès agentique** : un agent monte le dossier via le serveur MCP (F-052, outil `get_company_dossier`).
+
+**Complexité** : ★★★★ — méta-feature : peu de code « neuf » au sens données, mais une vraie ingénierie de **composition, de cache et de dégradation**, plus l'exposition MCP et la synthèse premium.
+
+**APIs externes** : **aucune en propre**. Elle réutilise les sources des features composées (RNE, BCE/INPI, INPI PI, DECP, BODACC, DG Trésor/UE, GLEIF). C'est tout l'intérêt.
+
+**Dépendances** : F-004 (identité), F-047/F-048 (événements/BODACC), F-019 (snapshot — patron d'**ADR-013**), **F-054** (finances), **F-032** (marchés), **F-018/F-025** (PI), **F-051** (cotation), **F-034** (structure, sous ADR-012), **F-055** (risque), **F-052** (exposition MCP, sous **ADR-016**). Backbone architectural : **ADR-015** (sections auto-descriptives + 5 états + résolution snapshot-first).
+
+**Hors-périmètre (explicite)** :
+- **Aucune nouvelle source** : si une donnée n'est pas déjà servie par une feature, elle n'apparaît pas ici.
+- **Aucune synthèse-verdict** : pas de note, de valorisation, de score de risque ni de recommandation — le dossier **assemble des faits**, il ne juge pas.
+- Pas de comparaison multi-entreprises ni de portefeuille (F-053 le couvre).
+
+**Détails techniques** :
+- **Read-model de composition côté Application** (ADR-015) : un `CompanyDossier` composé de `DossierSection` indépendantes (`IdentitySection`, `FinancialsSection`, `PublicContractsSection`, `IpSection`, `ListingSection`, `StructureSection`, `RiskSection`, `EventsSection`). **Pas un nouvel agrégat de domaine** — `Company`/`UniteLegale` restent les agrégats.
+- **5 états par section** (`SectionState`, ADR-015) : `Available` / `Stale` / `Unavailable` / `NotApplicable` / `Restricted` — l'**absence est honnête** (la section qui échoue ou expire tombe en `Unavailable`, jamais en succès silencieux).
+- **Composition extensible** : chaque section est produite par un use case existant ; ajouter une section = brancher un use case, sans toucher au cœur (hexagonal, ADR-004). Les sections **s'allument** au fil de la disponibilité des features.
+- **Assemblage hybride snapshot-first** (ADR-015 + ADR-013) :
+  - sources **légères / ouvertes** (BODACC, DECP, sanctions) : en direct ou cache court ;
+  - appels **INPI coûteux** (identité, bilans, PI) : pour une entreprise **suivie**, le dossier **lit les snapshots** du substrat de surveillance (ADR-013) — quasi pré-assemblé et rapide ; pour une entreprise **non suivie**, assemblage **à la demande** avec cache court.
+- **Résilience par section** : timeout par section ; tout échec → `Unavailable` (jamais d'exception qui casse le dossier).
+- **Endpoints (esquisse)** : `GET /companies/{siren}/dossier` (réponse composée v1) ; MCP `get_company_dossier` (lecture seule, ADR-016).
+
+**Cadre légal** : le dossier **n'introduit aucun traitement nouveau** — il compose des données déjà encadrées par leurs features respectives. Il **hérite** de leurs garde-fous. Section **structure (F-034)** sous **ADR-012** (jamais de BE) ; section **finances (F-054)** respecte la **confidentialité des comptes** ; posture d'ensemble : **dossier de faits**, pas d'avis.
+
+**Accessibilité (ADR-008, bloquant)** : structure sémantique claire (titres de sections, navigation), chaque section autonome et lisible au lecteur d'écran, **équivalent tabulaire** de la section structure (réutilisé de F-034). L'UI doit rendre la **fraîcheur par section** et les **5 états** honnêtement (jamais afficher `Unavailable` / `Restricted` comme « rien à signaler »).
+
+**Modèle économique (ADR-006)** :
+- **Cœur / OSS** : l'assemblage déterministe des sections sourcées. Aucun coût d'inférence → gratuit.
+- **Premium** : **synthèse narrative IA** optionnelle du dossier (port `IDossierSummarizer`, patron F-050) — **descriptive**, sans verdict ni valorisation.
+
+**Découpage / jalons** :
+1. **Squelette de composition** : `CompanyDossier` + contrat de section + dégradation propre, sur les sections **déjà bâties** (identité, événements).
+2. **Branchements progressifs** : finances, marchés, PI, risque, cotation, structure — chaque section ajoutée quand sa feature est prête.
+3. **Assemblage hybride** : intégration au snapshot ADR-013 pour les entreprises suivies + cache court pour les autres.
+4. **Exposition MCP** (F-052) : outil `get_company_dossier` en lecture seule, sous ADR-016.
+5. **Premium** : synthèse IA descriptive optionnelle (F-050).
+
+**Décisions ouvertes** :
+- **Périmètre de la synthèse premium** : par section ou globale ?
+- **Fraîcheur affichée** : date « as of » par section (recommandé).
+- **Entreprise non suivie** : profondeur de l'assemblage à la demande.
+- **Nom canonique** : `CompanyDossier` / « Dossier entreprise 360 » — à arrêter pour le doc 08.
+
+---
+
+### F-031 — Jurisprudence rattachée à l'entité (Judilibre)
+
+> **Réactivée & recadrée le 29 mai 2026** — remplace le stub V3+ initial (motif « matching d'entité non-trivial »). Le **corpus s'est enrichi** (Cour de cassation ~535k décisions, arrêts de CA civils/commerciaux depuis avril 2022, TJ en déploiement, API gratuite via PISTE) et le **rapprochement est faisable** : les **personnes morales y gardent leur nom** (les personnes physiques sont pseudonymisées). On **garde le numéro F-031** (comme F-032/DECP). Origine : graine du persona **Avocat / juriste d'affaires**.
+> **Doctrine** : sous **ADR-012** (descriptif, matching conservateur, aucun verdict) — incarnation par **ADR-014** (`MatchCandidate`, `INameInTextMatcher`). Garde-fou avocat : **Atlas ne rend jamais d'avis juridique**.
+
+**Description** : faire remonter les **décisions de justice** où une **entité suivie / consultée** (personne morale) **apparaît**, par rapprochement de sa **dénomination** avec Judilibre. Une **liste descriptive et sourcée** (juridiction, date, identifiant, lien), en **matching conservateur** — « **mention potentielle à vérifier** », jamais une affirmation ni une interprétation.
+
+**Valeur user** : pour l'**avocat / juriste d'affaires**, la jurisprudence **rattachée à l'entité** (les moteurs de jurisprudence ne partent jamais de l'entreprise — Atlas, si). Alimente aussi la **section « jurisprudence » du dossier 360 (F-056)** et le flux des **signaux légaux (F-058)**.
+
+**Complexité** : ★★★ — le délicat : l'**adapter PISTE** (OAuth2) et la **conservativité du rapprochement** sur la dénomination. Le reste réutilise les patrons existants (timeline, événements, dossier).
+
+**APIs externes** : **Judilibre via PISTE** (OAuth2, gratuit, sandbox + production), déjà catalogué au **doc 03 §4.1**. Établit le **patron d'adapter PISTE OAuth2** réutilisable (cf. autres sources PISTE).
+
+**Dépendances** : **F-047** (timeline/événement), **F-056** (section « jurisprudence » du dossier), **F-053/F-017** (set suivi), **F-058** (signal légal), **ADR-012** (doctrine), **ADR-013** (substrat de surveillance — stratégie `IItemStreamMonitor<JudilibreDecision>` append-only), **ADR-014** (`INameInTextMatcher` partagé avec F-047).
+
+**Hors-périmètre (explicite)** :
+- **Aucun rapprochement de personnes physiques** : pseudonymisées dans Judilibre — respecté.
+- **Aucun « score de contentieux »**, aucune interprétation, aucun **avis juridique**.
+- **Couverture limitée** au corpus Judilibre (Cassation + CA civil/commercial depuis 2022 + TJ en déploiement ; **hors pénal**).
+
+**Détails techniques** :
+- **`JudilibreProvider`** : client PISTE (OAuth2, cache de token), recherche **plein texte** filtrée (juridiction, date, type).
+- **Rapprochement conservateur** (ADR-012 + ADR-014) : recherche par **dénomination exacte/quasi-exacte** via `INameInTextMatcher`, **biais vers le faux négatif** (une fausse association « cette boîte était dans ce litige » est **diffamatoire**) ; sortie en `MatchCandidate` formulée « **mention potentielle à vérifier** ».
+- **Mode événement** (ADR-013) : `IItemStreamMonitor<JudilibreDecision>` (append-only, dédup par identifiant de décision) → nouveau type de `FavoriteEvent` `JudilibreDecision` → timeline. Polling au patron de F-048 / F-019.
+- **Mode dossier** : section « jurisprudence » dans F-056, à la demande.
+- **Respect de la pseudonymisation** : on n'exploite **que** les personnes morales.
+
+**Cadre légal** : Judilibre = **open data officiel et gratuit** ; réutilisation sous **CGU**. Pseudonymisation des personnes physiques respectée. **Matching conservateur** (risque diffamatoire) ; **ADR-012** ; descriptif ; **jamais d'avis juridique**.
+
+**Accessibilité (ADR-008)** : listes pleinement accessibles, mention « à vérifier » explicite (jamais portée par la seule couleur), navigation clavier.
+
+**Modèle économique (ADR-006)** : recherche / rapprochement **déterministe**, API PISTE **gratuite** → **cœur / OSS**. Option **premium** : **résumé descriptif** d'une décision par IA (patron F-050).
+
+**Découpage / jalons** :
+1. **Adapter PISTE + recherche à la demande** par dénomination → section dossier F-056.
+2. **Mode événement** : polling au patron `IItemStreamMonitor` → `FavoriteEvent JudilibreDecision` → timeline.
+3. **Premium (option)** : résumé descriptif de décision (F-050).
+
+**Décisions ouvertes** :
+- **Strictness du rapprochement** : seuil et traitement des variantes de raison sociale.
+- **Périmètre de corpus** affiché.
+- **Fréquence** du mode événement.
+- **Résumé premium** : dans le périmètre ou non ?
+
+---
+
+### F-057 — Re-screening continu (surveillance des sanctions)
+
+> **Statut** : V3+, **candidate naturelle au tout début de V3**. Surnom de travail : « le F-019 des sanctions ». Origine : graine du persona **Compliance / KYC**.
+> **Doctrine** : sous **ADR-012** (descriptif, matching conservateur, aucun verdict) — incarnation par **ADR-014** (`INameAgainstListMatcher`). Hérite des frontières dures de F-055. **Substrat technique** : **ADR-013** (`IStateMonitor<SanctionsScreeningState>`, retraits détectés).
+
+**Description** : une **surveillance continue** des entités **déjà suivies** (favoris F-017 / watchlists F-053) contre les **listes officielles de sanctions** (DG Trésor + liste consolidée UE, sources de F-055). Quand une entité **apparaît** (ou **disparaît**) d'une liste au fil de ses mises à jour, Atlas le **détecte et l'alerte** — timeline + push — avec une **piste d'audit** complète (date, liste, entrée, base du rapprochement).
+
+C'est le pendant **temporel** de F-055 : F-055 répond à « cette entité est-elle sur une liste *maintenant* ? » ; F-057 répond à « **préviens-moi quand ça change** ». Mécanisme de F-019 (snapshot + diff + job) appliqué à l'**état de correspondance sanctions**.
+
+**Valeur user** : pour le persona **Compliance / KYC**, le **re-screening** est une **obligation LCB-FT cœur**. Le faire en continu, **souverainement**, **descriptivement** et avec une **piste d'audit défendable**, c'est exactement le positionnement qu'aucun fournisseur cloud à score boîte noire ne sert proprement.
+
+**Complexité** : ★★★ — peu de neuf : réutilise le snapshot/diff de **F-019**, le patron polling + dédup cross-users de **F-048**, les sources et le matching de **F-055**, la timeline **F-047**, le push **F-020**. Le délicat n'est pas le code, c'est la **conservativité du matching** et le **cadre légal**.
+
+**APIs externes** : celles de **F-055** — **Registre national des gels DG Trésor** + **liste consolidée UE**. Aucune nouvelle source.
+
+**Dépendances** : **F-055** (sources + logique de rapprochement), **F-019** (patron snapshot/diff + job), **F-047** (`FavoriteEvent` + timeline), **F-048** (patron polling + dédup `ExternalId`), **F-053/F-017** (le set suivi), **F-046** (`WatchRule` d'activation), **F-020** (push), **ADR-012** (doctrine), **ADR-013** (substrat — c'est la **3ᵉ instance** qui déclenche l'extraction effective du runner), **ADR-014** (`INameAgainstListMatcher`).
+
+**Hors-périmètre (explicite)** :
+- **Pas de score, pas de verdict, pas de label « à risque »** (ADR-012). Une correspondance = **« correspondance potentielle à vérifier »**, jamais une affirmation.
+- **Pas de PEP ni d'adverse-media propriétaire** ; **pas de bénéficiaires effectifs**. Le périmètre reste celui de F-055.
+- **Pas de certification de conformité** — Atlas alerte, l'entité assujettie reste responsable de sa décision.
+- **v1 = entités légales** uniquement (par dénomination). Personnes physiques (dirigeants) hors v1 — diffamation trop risquée.
+
+**Détails techniques** :
+- **4ᵉ volet de la timeline**, dans la lignée de F-048 ; **ADR-013** appliqué :
+  - **`IStateMonitor<SanctionsScreeningState>`** (Domain) — état = ensemble des correspondances courantes (formes normalisées / hash, comme le hash dirigeants de F-019).
+  - **Diff** : `DiffWith(...)` retourne les correspondances **ajoutées** et **levées** (retraits → c'est pourquoi `IStateMonitor` et non `IItemStreamMonitor`).
+  - **Runner mutualisé** (Application, ADR-013) : itère le set, dédup cross-users (un seul calcul de rapprochement par SIREN partagé), isolation des échecs, idempotence.
+  - **Job Hangfire** `sanctions-rescreening`, cron `0 5 * * *` (après `favorite-refresh` 03:00 et `bodacc-polling` 04:00).
+  - **Événement** : nouveau type `FavoriteEvent` `SanctionsScreeningChanged` (`ExternalId` = identifiant d'entrée de liste + version).
+- **Listes locales rafraîchies** : cache local des listes officielles ; le re-screening tourne contre le cache.
+- **Matching conservateur** (ADR-014, `INameAgainstListMatcher`) : sortie en `MatchCandidate` toujours formulée « **à vérifier** ».
+- **Audit** : les événements sont **persistés** (date, liste, entrée, base du rapprochement) — c'est la valeur compliance, à exposer comme **journal défendable**.
+
+**Cadre légal** : listes **officielles, gratuites, publiques** (DG Trésor, UE) → réutilisation OK. Le rapprochement manipule des **données personnelles** et touche à des allégations sensibles → **ADR-012**, matching conservateur, et l'utilisateur compliance est **responsable de traitement** de son screening (DPIA probable côté usage). **Aucune certification AML**.
+
+**Accessibilité (ADR-008)** : alertes pleinement lisibles au lecteur d'écran, mention « correspondance potentielle à vérifier » explicite (jamais portée par la seule couleur), journal d'audit consultable de façon accessible.
+
+**Modèle économique (ADR-006)** : déterministe contre listes gratuites → **cœur / OSS**. Quotas hébergé possibles (nombre d'entités sous surveillance), patron de F-043.
+
+**Découpage / jalons** :
+1. **Snapshot + diff** : `SanctionsScreeningSnapshot` + `DiffWith`, sur le rapprochement de F-055.
+2. **Job + événement** : `sanctions-rescreening` → `FavoriteEvent SanctionsScreeningChanged` (détectée / levée), dédup `ExternalId`.
+3. **Activation par règle** : `WatchRule` « surveillance sanctions » au niveau favori / watchlist (F-046).
+4. **Journal d'audit** : exposition consultable et exportable.
+
+**Décisions ouvertes** :
+- **Opt-in par watchlist vs automatique pour tous les favoris** (recommandé : opt-in).
+- **Personnes physiques** : v1 entité seule ; cas dirigeants à examiner plus tard sous garde-fou renforcé.
+- **Levées (délistage)** : alerter aussi recommandé.
+- **Stockage d'audit** : `FavoriteEvent` ou journal de screening dédié ?
+- **Fréquence** : quotidienne (aligne F-019/F-048) ou calée sur la mise à jour réelle des listes ?
+- **`FavoriteEvent` → `EntityEvent`** : décision ouverte d'ADR-013 à trancher au moment de l'extraction du runner.
+
+---
+
+### F-058 — Signaux concurrentiels & digest sectoriel
+
+> **Statut** : V3+, **s'allume progressivement** — le volet « signaux PI » dépend de F-027 (V2). Origine : graine du persona **Veille concurrentielle B2B**.
+> **Doctrine** : descriptif — on **fait remonter des faits**, on ne classe pas les concurrents par « menace ». Matching presse sous **ADR-014** (`INameInTextMatcher`).
+
+**Description** : deux volets complémentaires posés sur la timeline mixte (F-047) :
+
+1. **Signaux concurrentiels de premier rang** — élever les événements **structurés** au rang de signaux **typés** : un **dépôt PI** (F-027), un **marché public remporté** (F-032), un **événement légal** (BODACC F-048, RNE F-019) deviennent des `FavoriteEvent` **classés par type de signal**, filtrables (« montre-moi les mouvements **produit** = PI » vs « leurs mouvements **commerciaux** = marchés »).
+2. **Digest sectoriel** — une **synthèse périodique** (hebdo par défaut) « ce qui a bougé dans mon secteur » sur une **watchlist** : un récapitulatif groupé des signaux de la semaine, livré en email / push / in-app.
+
+**Valeur user** : pour le persona **Veille concurrentielle B2B** — transformer une timeline brute en **intelligence actionnable** (signaux typés + briefing hebdomadaire) de façon **souveraine** et **descriptive**, là où les plateformes CI (Crayon, Klue, Contify) font de l'auto-résumé IA sur l'empreinte **web**. Atlas le fait sur la **donnée officielle**.
+
+**Complexité** : ★★★ — réutilise la timeline F-047, le patron `FavoriteEvent`, la dédup F-045, les canaux de notification et les ports premium F-050. Le neuf : la **taxonomie de signaux**, le **job de digest** + le groupement, et le **branchement de la synthèse IA**.
+
+**APIs externes** : aucune nouvelle. Réutilise les sources de **F-027** (INPI/EUIPO/OMPI PI), **F-032** (DECP), **F-048** (BODACC), F-041 (RSS).
+
+**Dépendances** : **F-047** (timeline + `FavoriteEvent`), **F-027** (dépôts PI — V2, conditionne le volet « signal produit »), **F-032** (DECP — marchés), **F-048/F-019** (événements légaux), **F-053** (watchlist = mes concurrents), **F-050** (`IFeedSummarizer` pour la synthèse premium), **F-046** (filtres/règles), **F-020** (push), **ADR-014** (matching presse `INameInTextMatcher`).
+
+**Hors-périmètre (explicite)** :
+- **Pas de score de menace, pas de classement concurrentiel, pas de verdict stratégique** : le digest résume des faits, il ne conseille pas.
+- **Pas de scraping** des sites / prix / offres d'emploi des concurrents (gap assumé face à Crayon — le modèle RSS + officiel ne scrape pas).
+- **Pas de battlecards ni de win/loss** (territoire des plateformes CI) — hors sujet.
+
+**Détails techniques** :
+- **Taxonomie** : étendre les types de `FavoriteEvent` avec des **signaux concurrentiels** — `IpFiled` (depuis F-027), `PublicContractAwarded` (depuis F-032), en plus de `RneChanged` / `BodaccPublished` existants. Brancher F-027 et F-032 pour **émettre** ces events dans la timeline (patron F-048, `ExternalId` pour la dédup).
+- **Filtrage** : extension des filtres de timeline / des règles F-046 — `?signalTypes=IpFiled,PublicContractAwarded`.
+- **Digest** : job Hangfire récurrent (p. ex. `sector-digest-weekly`) qui, par user/watchlist **opt-in**, agrège les `FavoriteEvent` de la période pour les SIREN de la liste, les **groupe** par entité / type de signal, et produit une `Notification` digest.
+  - **Cœur** : récap déterministe groupé.
+  - **Premium** : mise en récit IA via `IFeedSummarizer` (patron F-050) — **descriptive** (« X a déposé 3 marques et remporté le marché Y »), jamais d'interprétation (« X est en train de gagner »).
+- Réutilise la **timeline de watchlist** (F-053) comme socle d'agrégation.
+
+**Cadre légal** : faits **publics/officiels** (dépôts, marchés, annonces légales) → descriptif. **Matching presse conservateur** sous **ADR-014** (homonymes de raison sociale, volet 1 de F-047). Données de dirigeants sous **ADR-012**. Aucun traitement sensible nouveau.
+
+**Accessibilité (ADR-008)** : digest **lisible** (email + in-app), type de signal **jamais** porté par la seule couleur (libellé explicite), filtres de timeline accessibles au clavier et annoncés au lecteur d'écran.
+
+**Modèle économique (ADR-006 + ADR-009)** : typage des signaux + digest **déterministe** = **cœur / OSS** (cohérent open-core). **Synthèse narrative IA** = **premium** (coût LLM, port F-050). Quotas hébergé possibles (taille de watchlist surveillée, fréquence).
+
+**Découpage / jalons** :
+1. **Taxonomie + branchements** : types de signaux, émission depuis F-032 (marchés) puis F-027 (PI) en `FavoriteEvent`.
+2. **Filtrage** par type de signal sur la timeline.
+3. **Digest déterministe** par watchlist (job + `Notification` groupée).
+4. **Synthèse IA premium** (F-050).
+
+**Décisions ouvertes** :
+- **Cadence du digest** : hebdo par défaut, configurable (quotidien/mensuel) ?
+- **Portée** : par watchlist uniquement, ou un digest global « tous mes suivis » ?
+- **Signal = classification persistée** sur l'event, **ou** simple couche de présentation au-dessus des types existants ?
+- **Opt-in** du digest (recommandé) et choix du canal.
+
+---
+
+### F-059 — Veille d'échéances PI (docketing assistif souverain)
+
+> **Statut** : **V3+ conditionnel** — conditionnée non par une DPIA (comme F-034) mais par un **cadrage de responsabilité** explicite : c'est le prérequis bloquant ici. Origine : graine du persona **Cabinet de Propriété Industrielle** — la fonction **la plus à enjeu** du métier.
+> **Frontière fondatrice** : Atlas **fait remonter** des échéances de façon **assistive** ; il n'est **pas** le registre de docketing autoritaire du cabinet et ne **garantit aucune** date. C'est l'équivalent docketing du « pas d'avis juridique ».
+
+**Description** : une **couche de veille des échéances** posée sur le portefeuille PI (F-018/F-025) : renouvellements de marques, annuités de brevets, fenêtres d'opposition, dates de priorité. Atlas **calcule/lit** les échéances à venir et **rappelle** l'utilisateur à des délais configurables — **souverainement** (auto-hébergeable) et **ouvertement** (règles open-source).
+
+C'est **assistif**, pas autoritaire : Atlas aide à ne rien rater, mais le **devoir de docketing reste celui du cabinet**, et aucune date n'est garantie.
+
+**Valeur user** : pour le **Cabinet PI**, l'oubli d'une échéance est la faute cardinale. Aujourd'hui le marché est binaire — suites fermées chères grands comptes (Anaqua, PATTSY) **ou** docketing open-source isolé (phpIP) non relié au registre vivant. Un docketing **assistif, souverain, ouvert et connecté** à la donnée et à la veille n'existe pas.
+
+**Complexité** : ★★★★ — le volume de code n'est pas énorme, mais l'**ingénierie de prudence** l'est : préférence lecture / calcul, signalement des dates calculées, moteur de règles par juridiction **gouverné**, et une **UX qui rend la non-autorité impossible à manquer**.
+
+**APIs externes** : celles de F-018/F-027 — **INPI PI**, **EUIPO** (TMview/eSearch), **OMPI**. Aucune nouvelle — on lit les dates des notices déjà récupérées.
+
+**Dépendances** : **F-018** (favoris PI), **F-025** (portefeuille IP), **F-007/F-016** (notices marque/brevet portant les dates), **F-019** (patron job + rappels), **F-047** (timeline), **F-020** (push), **F-046** (`WatchRule`/`Alert`).
+
+**Hors-périmètre (le cœur de la prudence)** :
+- **Pas le registre de docketing autoritaire** : Atlas ne se substitue pas au système de référence du cabinet.
+- **Aucune garantie** d'exhaustivité ni d'exactitude des dates ; le cabinet **conserve son devoir** professionnel.
+- **Aucune action** : pas de renouvellement automatique, pas de paiement d'annuité, pas de dépôt — Atlas **rappelle**, il n'**agit** pas.
+- **Couverture honnêtement limitée** aux juridictions dont la date est lue ou la règle encodée (démarrer **FR / UE**).
+
+**Détails techniques** :
+- **Modèle** : `IpDeadline` (type : `TrademarkRenewal` / `PatentAnnuity` / `OppositionWindow` / `PriorityDeadline`), portant **la date, sa source (lue vs calculée), et la base de calcul** le cas échéant.
+- **Préférence lecture > calcul** : si la notice fournit la date d'expiration, on la **lit** (pas de risque de règle erronée) ; sinon **calcul** via la règle de juridiction, **marqué « calculé — à vérifier »**.
+- **Moteur de règles** : règles de renouvellement/annuité **encodées par juridiction**, comme un **artefact open-source auditable** et **extensible par la communauté** — mais **gouverné/curé**, car une règle fausse est dangereuse.
+- **Job Hangfire** : calcule les échéances à venir du portefeuille, émet des **rappels** (`Alert` issue d'une `WatchRule`) aux délais configurés → timeline + email + push.
+- **Auditabilité** : chaque échéance affiche **d'où elle vient** (date lue de la notice, ou règle + base de calcul + date) — défendable et vérifiable.
+
+**Cadre légal & responsabilité (prérequis bloquant)** :
+- **Disclaimer de non-autorité au niveau du design** (pas en petites lignes) : outil d'**assistance**, le cabinet reste responsable de son docketing ; aucune garantie.
+- **Dates calculées toujours marquées** comme telles et « à vérifier ».
+- **Couverture juridictionnelle affichée** clairement (ce qui est couvert / ce qui ne l'est pas).
+- Données de titres dépendant de l'INPI PI (auth complexe, lacunes possibles) → ne jamais présenter une absence de donnée comme « aucune échéance ».
+
+**Accessibilité (ADR-008)** : échéancier et rappels pleinement accessibles ; l'**urgence** (proche de l'échéance) **jamais** signalée par la seule couleur (libellé + date explicites) ; configuration des délais navigable au clavier.
+
+**Modèle économique (ADR-006)** : lecture/calcul **déterministe** → **cœur / OSS**. Le **moteur de règles** est open-source (et communautaire, sous gouvernance). **Quotas hébergé** possibles (taille de portefeuille surveillé).
+
+**Découpage / jalons** :
+1. **Lecture + rappels** sur les **renouvellements de marques FR/UE** dont la date figure dans la notice. *(Le plus sûr, livrable autonome.)*
+2. **Annuités de brevets** (lecture quand fournie).
+3. **Calcul en repli gouverné** : règles par juridiction, dates marquées « calculées ».
+4. **Fenêtres d'opposition / dates de priorité** (les plus courtes, les plus critiques — en dernier, avec le plus de prudence).
+
+**Décisions ouvertes** :
+- **Lecture vs calcul** : jusqu'où encoder des règles (risque) plutôt que se limiter aux dates **lues** ?
+- **Juridictions de la v1** : FR + UE seulement ?
+- **Gouvernance des règles communautaires** : qui valide une règle avant publication ?
+- **Délais de rappel par défaut** et personnalisation.
+- **UX de non-autorité** : comment rendre le disclaimer **impossible à ignorer** sans alourdir l'usage ?
 
 ---
 
