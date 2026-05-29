@@ -64,13 +64,13 @@ Légende identique au tableau MVP 1.
 | F-046 Filtres et règles de surveillance | ✅ |
 | F-047 Combinaison veille + favoris (3 volets : RSS, RNE, BODACC) | ✅ |
 | F-048 Intégration BODACC | ✅ |
-| F-049 Marketplace des templates partagés | ⬜ |
+| F-049 Marketplace des templates partagés | ✅ |
 | F-050 Préparation à la couche premium (architecture) | ✅ |
 
 Les 🟡 correspondent surtout à : confirmation contre l'API INPI réelle (F-013, F-016) et
-export XLSX et étendue de couverture (F-021). Le ⬜ restant du cluster veille est F-049
-(marketplace templates). UI MAUI restante pour F-017, F-020, F-044, F-046 (chantier client
-cross-cutting, suivi côté F-009/F-010 du MVP 1).
+export XLSX et étendue de couverture (F-021). **Le cluster veille est complet côté backend.**
+UI MAUI restante pour F-017, F-020, F-044, F-046, F-049 (chantier client cross-cutting,
+suivi côté F-009/F-010 du MVP 1).
 
 ---
 
@@ -708,6 +708,8 @@ Pour chaque feature, on documente :
 
 ### F-049 — Marketplace des templates partagés (V2 light, posée en MVP 2)
 
+> **Statut** : ✅ Backend implémenté (MVP 2, 29 mai 2026). `VeillePack` étendu avec `AuthorUserId : UserId?` + `Visibility` enum (`System` / `Private` / `Public`) + compteur dénormalisé `LikesCount`. Nouvelle factory `CreateUserPack` (initialement `Private`). Méthodes `Publish` / `Unpublish` / `IncrementLikes` / `DecrementLikes` (avec plancher à 0). 2 nouvelles entités : `VeillePackLike` (index unique `(UserId, VeillePackId)`, cascade FK RGPD) et `VeillePackReport` (Pending / ReviewedNoAction / ReviewedRemoved, raison ≤ 500). Ports `IVeillePackLikeRepository`, `IVeillePackReportRepository` + extensions `GetPublicMarketplaceAsync` (paginé, trié `LikesCount desc, CreatedAt desc`) et `GetByAuthorAsync` sur `IVeillePackRepository`. 8 use cases MediatR (CreateUserVeillePack, Publish, Unpublish, Like, Unlike, Report, ListPublicMarketplace, GetMyAuthoredPacks). 8 endpoints sous `/veille/packs/*` (POST `/user`, PATCH `/user/{code}/publish|unpublish`, POST/DELETE `/{code}/like`, POST `/{code}/report`, GET `/community`, GET `/mine/authored`). Migration `AddVeillePackMarketplace` (3 colonnes sur `veille_pack` avec normalisation `System` des packs existants + 2 nouvelles tables, cascades FK RGPD). Modèle *report &amp; review* (modération a posteriori, pas de pré-modération). 21 tests (11 domaine + 10 handlers : Create / Like / Publish). **Reste** : UI MAUI (CRUD pack user + browse community + bouton like / report), workflow admin de revue des reports (endpoint et UI), recommandations / search facetté.
+
 **Description** : les utilisateurs peuvent partager leurs templates de veille curés. D'autres users peuvent les adopter en un clic.
 
 **Valeur user** : effet réseau, capitalisation collective, croissance organique. Les pros aiment partager leur expertise.
@@ -753,7 +755,7 @@ Pour chaque feature, on documente :
 **🔴 Bloquant — vrais trous restants** (à livrer pour annoncer MVP 2 « fini »)
 
 1. ~~**F-046 — Filtres et règles de surveillance personnalisées**~~ ✅ **Livré 29 mai 2026** (backend). Reste UI MAUI et adapter Brevo (commun avec F-019).
-2. **F-049 — Marketplace des templates partagés** : pas commencé. La fiche elle-même note « V2 light, posée en MVP 2 » — décision à arbitrer : on la garde dans le périmètre MVP 2, ou on la déporte officiellement en V2 ?
+2. ~~**F-049 — Marketplace des templates partagés**~~ ✅ **Livré 29 mai 2026** (backend, périmètre V2 light gardé en MVP 2). Reste UI MAUI (création / browse / like / report) et workflow admin de revue des reports.
 3. ~~**F-050 — Vérification de l'architecture premium**~~ ✅ **Livré 29 mai 2026** : 3 ports déclarés dans `Atlas.Domain.Veille.Premium` + 3 tests d'archi verrouillant la séparation cœur / premium (cf. fiche F-050).
 
 **🟡 Important non-bloquant** (peut basculer en post-MVP 2 sans casser la promesse)

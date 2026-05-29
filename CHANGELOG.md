@@ -209,6 +209,33 @@ appel authentifié réel (cf. roadmap, statuts 🟡).
   `Atlas.Api`. Le cœur open source reste intact ; les adapters viendront dans
   des projets `Atlas.Infrastructure.*Premium` dédiés, câblés en composition
   root dans `Atlas.Api`.
+- **F-049 — Marketplace des templates de veille partagés (MVP 2)** : entité
+  `VeillePack` étendue avec auteur (`AuthorUserId : UserId?` nullable pour les
+  packs système F-042) + visibilité (`Visibility` enum `System` / `Private` /
+  `Public`) + compteur dénormalisé `LikesCount`. Nouvelle factory
+  `VeillePack.CreateUserPack` qui crée en brouillon (`Private`). Méthodes
+  `Publish` / `Unpublish` (refusées sur les packs système),
+  `IncrementLikes` / `DecrementLikes` (plancher à 0). 2 nouvelles entités :
+  `VeillePackLike` (index unique `(UserId, VeillePackId)`, cascades FK RGPD
+  user + pack) et `VeillePackReport` (workflow *report &amp; review* :
+  `Pending` → `ReviewedNoAction` / `ReviewedRemoved`, raison ≤ 500 chars).
+  Ports `IVeillePackLikeRepository` + `IVeillePackReportRepository`. Extensions
+  `IVeillePackRepository.GetPublicMarketplaceAsync` (paginé, tri
+  `LikesCount desc, CreatedAt desc`) et `GetByAuthorAsync`. 8 use cases
+  MediatR : `CreateUserVeillePack`, `PublishVeillePack`, `UnpublishVeillePack`,
+  `LikeVeillePack`, `UnlikeVeillePack`, `ReportVeillePack`,
+  `ListPublicMarketplace`, `GetMyAuthoredPacks`. 8 endpoints sous
+  `/veille/packs/*` : `POST /user`, `PATCH /user/{code}/publish`,
+  `PATCH /user/{code}/unpublish`, `POST/DELETE /{code}/like`,
+  `POST /{code}/report`, `GET /community`, `GET /mine/authored`. Migration
+  `AddVeillePackMarketplace` (3 colonnes sur `veille_pack` + normalisation
+  `System` des packs existants + 2 nouvelles tables, cascades FK RGPD).
+  21 tests (11 entité — invariants Create system/user, transitions Publish /
+  Unpublish, idempotence, plancher likes, workflow Report ; 10 handlers —
+  Create avec filtrage des subs non-possédées, Like idempotent, Publish
+  forbidden si caller ≠ auteur). Reste : UI MAUI (CRUD + browse + like /
+  report), workflow admin de revue des reports, recommandations / search
+  facetté.
 - **F-020 — Adapter Firebase Cloud Messaging (Android + Web Push)** : OAuth2
   par service account (JWT RS256 signé avec la clé privée du service account
   Firebase, échange contre un access token, cache 55 min thread-safe). POST

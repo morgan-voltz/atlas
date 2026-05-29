@@ -57,6 +57,10 @@ public sealed class AtlasDbContext(DbContextOptions<AtlasDbContext> options)
 
     public DbSet<FeedRule> FeedRules => Set<FeedRule>();
 
+    public DbSet<VeillePackLike> VeillePackLikes => Set<VeillePackLike>();
+
+    public DbSet<VeillePackReport> VeillePackReports => Set<VeillePackReport>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         ArgumentNullException.ThrowIfNull(modelBuilder);
