@@ -419,7 +419,9 @@ Le package NuGet principal est `StackExchange.Redis` pour le backend Redis, et `
 
 ### 4.11 Atlas.Infrastructure.Storage
 
-Ce projet gère le stockage de fichiers, principalement les PDF des bilans et fascicules de brevets téléchargés depuis l'INPI. Son framework cible est `net10.0`. Il référence `Atlas.Domain`, `Atlas.Application` et `Atlas.Shared`. Il a deux backends : un compatible S3 utilisant `AWSSDK.S3` (qui fonctionne avec Scaleway Object Storage et MinIO via configuration de l'endpoint), et un local pour le développement.
+Ce projet gère le stockage de fichiers, principalement les archives ZIP de bilans / actes produites par F-014 (téléchargement en masse) et, à terme, les PDF de fascicules de brevets. Son framework cible est `net10.0`. Il référence `Atlas.Domain`, `Atlas.Application` et `Atlas.Shared`.
+
+Il implémente le port `IFileStorage` défini dans `Atlas.Domain.Storage` (méthodes `SaveAsync` / `OpenReadAsync` / `DeleteAsync`, sans notion de TTL côté port — l'expiration est portée par les entités applicatives). À ce jour un seul adapter est livré : `LocalFileStorage` (filesystem local, configurable via `Storage:Local:RootPath`, sanitization du chemin pour éviter le path traversal). Un adapter S3-compatible (Scaleway Object Storage / MinIO / AWS S3 via `AWSSDK.S3`) est prévu pour la production et viendra dans un lot ultérieur.
 
 ### 4.12 Atlas.Api
 

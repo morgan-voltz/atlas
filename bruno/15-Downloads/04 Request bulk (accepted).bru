@@ -1,0 +1,52 @@
+meta {
+  name: 04 Request bulk (accepted)
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{baseUrl}}/downloads/bulk
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "sirens": ["{{siren}}"]
+  }
+}
+
+vars:post-response {
+  bulkJobId: res.body.jobId
+}
+
+tests {
+  test("statut 202", function () {
+    expect(res.getStatus()).to.equal(202);
+  });
+  test("body contient jobId GUID", function () {
+    const body = res.getBody();
+    expect(body).to.have.property("jobId");
+    expect(body.jobId).to.match(/^[0-9a-f-]{36}$/i);
+  });
+  test("Location pointe vers /downloads/bulk/{jobId}", function () {
+    const loc = res.getHeader("location");
+    expect(loc).to.match(/\/downloads\/bulk\/[0-9a-f-]{36}$/i);
+  });
+}
+
+docs {
+  F-014 — Crée un job de téléchargement en masse.
+  Renvoie 202 Accepted + Location + `{ jobId }`. Le job est enqueue Hangfire ;
+  utiliser le call suivant pour suivre son statut.
+  Requiert un compte INPI connecté côté backend (sinon le job passera en Failed
+  avec `inpi.not_connected`).
+}

@@ -1,0 +1,45 @@
+meta {
+  name: 03 Request bulk (too many - 400)
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{baseUrl}}/downloads/bulk
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+headers {
+  Content-Type: application/json
+}
+
+script:pre-request {
+  // Construit 51 SIREN identiques (Renault, valide Luhn) → dépasse MaxSirens = 50.
+  const sirens = Array(51).fill("552032534");
+  bru.setVar("manySirens", JSON.stringify(sirens));
+}
+
+body:json {
+  {
+    "sirens": {{manySirens}}
+  }
+}
+
+tests {
+  test("statut 400", function () {
+    expect(res.getStatus()).to.equal(400);
+  });
+  test("code downloads.too_many_sirens", function () {
+    expect(res.getBody().type).to.equal("downloads.too_many_sirens");
+  });
+}
+
+docs {
+  F-014 — Plus de 50 SIREN refusés (400 `downloads.too_many_sirens`).
+  La limite est `BulkDownloadJob.MaxSirens = 50`.
+}
