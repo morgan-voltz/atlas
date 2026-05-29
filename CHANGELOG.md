@@ -110,6 +110,30 @@ appel authentifié réel (cf. roadmap, statuts 🟡).
   bornée à 500 entrées de chaque source en mémoire pour MVP ; les events
   sont exclus si un filtre RSS-only est actif (`sourceId`, `unread`,
   `favoritesOnly`, `mentionsFavoritesOnly`). Reste : BODACC (F-048).
+- **F-020 — Adapter Firebase Cloud Messaging (Android + Web Push)** : OAuth2
+  par service account (JWT RS256 signé avec la clé privée du service account
+  Firebase, échange contre un access token, cache 55 min thread-safe). POST
+  FCM HTTP v1 (`https://fcm.googleapis.com/v1/projects/{ProjectId}/messages:send`)
+  avec Bearer token. **Cleanup auto** des tokens morts : 404 (`NOT_FOUND`)
+  ou 400 (`UNREGISTERED` / `INVALID_ARGUMENT`) → suppression silencieuse du
+  `DeviceRegistration` + `SaveChanges`.
+- **F-020 — Adapter Apple Push Notification service (iOS + macOS)** : JWT
+  **ES256** (ECDSA P-256) signé avec la clé privée `.p8` Apple Developer
+  (header `kid` = Key ID, claim `iss` = Team ID). Cache 30 min, refresh
+  thread-safe. POST HTTP/2 sur `api.push.apple.com` (ou sandbox selon
+  `Apns:UseSandbox`), `/3/device/{token}`, headers `authorization: bearer …`,
+  `apns-topic` (= BundleId), `apns-push-type=alert`, `apns-priority=10`.
+  Payload `aps` (`{alert.title, alert.body, sound}`) + data utilisateur à plat
+  à la racine. **Cleanup auto** : 410 Gone (Unregistered) ou 400 avec
+  `reason: BadDeviceToken`/`DeviceTokenNotForTopic`.
+- **Refactor push multi-plateformes (F-020)** : nouvelle interface interne
+  `IPlatformPushDispatcher` (FCM, APNs, futurs WNS…), nouveau
+  `CompositeNotificationDispatcher` qui implémente `INotificationDispatcher`
+  et **fan-out vers tous les dispatchers enregistrés**. Une exception dans un
+  dispatcher n'invalide pas les autres (isolation try/catch + log).
+  DI bascule automatiquement : ≥ 1 plateforme configurée → composite ;
+  aucune → fallback `LoggingNotificationDispatcher` (comportement dev).
+  Aucun changement Program.cs requis pour activer FCM ou APNs.
 - **F-020 — Notifications push (ports + endpoints, adapters à venir par plateforme)** :
   - Entité `DeviceRegistration` (UserId, `DevicePlatform` enum
     `FcmAndroid` / `ApnsIos` / `WindowsWns` / `MacOsApns`, token unique global, label),
