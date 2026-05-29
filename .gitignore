@@ -480,3 +480,8 @@ $RECYCLE.BIN/
 
 # Vim temporary swap files
 *.swp
+
+# Spec OpenAPI / docs INPI gardées strictement en local (NDA implicite,
+# évite de pousser sur le repo public les détails de contrat propriétaires).
+infos inpi
+docs/INPI/
