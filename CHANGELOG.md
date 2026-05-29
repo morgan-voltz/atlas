@@ -385,8 +385,40 @@ appel authentifié réel (cf. roadmap, statuts 🟡).
   divulgation progressive jamais d'amputation, pertinence avant exhaustivité),
   page vs carte, architecture de navigation à **5 destinations plafonnées**
   (Accueil / Recherche / Veille / Favoris / Profil) — c'est la ligne qu'on ne
-  franchit plus. Référencée depuis la table « Documents fondateurs » de
-  `CLAUDE.md` et depuis les fiches F-009 et F-010.
+  franchit plus. **Kit de composants** (atomic design, §6 → §9 du doc) :
+  atomes (champ étiqueté, badge descriptif, ligne de provenance, chiffre
+  clé), cartes (carte-section repliable de la fiche, carte-aperçu compacte
+  réutilisée sur 5 surfaces — résultats / favoris / watchlist / flux / veille),
+  états (chargement squelette, vide d'onboarding vs vide de couverture,
+  erreur locale, « à jour / tout vu » qui clôt le flux contre le scroll
+  infini). Specs détaillées (anatomie en slots, états, comportement,
+  responsive, contrat d'accessibilité, garde-fous doctrine, hors-périmètre)
+  pour la carte-aperçu (§7) et la carte-section (§8). Référencée depuis la
+  table « Documents fondateurs » de `CLAUDE.md` et depuis les fiches F-009
+  et F-010.
+- **Audit profond — clos (29 mai 2026)** : l'audit lecture-seule de la
+  solution (`docs/audit/`, daté du 2026-05-28, 9 rapports : Shared / Domain /
+  Application / Persistence / Infra-adapters / Api / Tests / MAUI + synthèse)
+  est **clos** côté snapshot. **Les 2 P0 sont livrés** (Lot 0 — pipeline CI
+  GitHub Actions ; Lot 1 — cascades FK RGPD sur les 3 tables veille +
+  mapping HTTP `veille.*`). **Lots 2a (crypto + anti-SSRF + Security.UnitTests
+  37 tests) et 2b (rate limiting + en-têtes sécurité + CORS strict + Serilog
+  + masquage) livrés**. Les rapports sont supprimés (récupérables via git
+  history) ; les items P1/P2 résiduels sont à instruire au fil :
+  - **Lot 3 (tests d'archi étendus)** : 7 tests en place (incluant la
+    séparation cœur / `Atlas.Application.Premium` posée par F-050) — manque
+    encore la couverture archi de `Atlas.Shared`, `Atlas.Maui`,
+    `Atlas.Infrastructure.{Veille,Inpi,Security,Messaging}`.
+  - **Lot 4 (dette structurée)** : combinateurs `Result.Map` / `Bind` /
+    `Match` non implémentés, `Result.cs` héberge encore 3 types (`Error` +
+    `Result` + `Result<T>`), `UserRegisteredDomainEvent` levé mais aucun
+    dispatcher câblé.
+  - **Lot 5 (pré-prod produit)** : adapter Brevo livré (cf. ci-dessus),
+    mais accessibilité MAUI à compléter (WCAG 2.2 AA non encore réglée sur
+    les vues), build iOS / MacCatalyst toujours cassé par CA1711 sur
+    `AppDelegate` (convention Apple incompressible) — non bloquant pour
+    la CI backend mais à régler avant packaging MSIX / PKG, base URL
+    `AtlasApiClient` à externaliser de la configuration émulateur.
 
 ### Modifié
 
