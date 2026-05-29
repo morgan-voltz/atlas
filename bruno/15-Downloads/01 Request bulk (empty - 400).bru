@@ -1,0 +1,38 @@
+meta {
+  name: 01 Request bulk (empty - 400)
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/downloads/bulk
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "sirens": []
+  }
+}
+
+tests {
+  test("statut 400", function () {
+    expect(res.getStatus()).to.equal(400);
+  });
+  test("code downloads.empty_sirens", function () {
+    expect(res.getBody().type).to.equal("downloads.empty_sirens");
+  });
+}
+
+docs {
+  F-014 — Liste vide refusée (400 `downloads.empty_sirens`).
+}

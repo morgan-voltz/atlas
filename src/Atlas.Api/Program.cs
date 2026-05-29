@@ -12,6 +12,7 @@ using Atlas.Infrastructure.Messaging;
 using Atlas.Infrastructure.Persistence;
 using Atlas.Infrastructure.Security;
 using Atlas.Infrastructure.Security.Jwt;
+using Atlas.Infrastructure.Storage;
 using Atlas.Infrastructure.Veille;
 using Hangfire;
 using Hangfire.PostgreSql;
@@ -44,9 +45,12 @@ builder.Services.AddMessagingInfrastructure(builder.Configuration);
 builder.Services.AddInpiInfrastructure(builder.Configuration);
 builder.Services.AddBodaccInfrastructure(builder.Configuration);
 builder.Services.AddVeilleInfrastructure(builder.Configuration);
+builder.Services.AddStorageInfrastructure(builder.Configuration);
 builder.Services.AddScoped<FeedPollingJob>();
 builder.Services.AddScoped<FavoriteRefreshJob>();
 builder.Services.AddScoped<BodaccPollingJob>();
+// F-014 — job Hangfire à la demande (Enqueue depuis l'endpoint).
+builder.Services.AddScoped<Atlas.Api.Downloads.BulkDownloadJob>();
 
 // Jobs en arrière-plan (Hangfire, stockage PostgreSQL). Désactivable via BackgroundJobs:Enabled=false
 // (les tests d'intégration le coupent : ils utilisent une autre base que la chaîne de connexion app).
@@ -60,6 +64,17 @@ if (backgroundJobsEnabled)
         .UseRecommendedSerializerSettings()
         .UsePostgreSqlStorage(storage => storage.UseNpgsqlConnection(hangfireConnection)));
     builder.Services.AddHangfireServer();
+
+    // Adapter Hangfire de l'enqueueur F-014.
+    builder.Services.AddScoped<Atlas.Application.Downloads.IBulkDownloadEnqueuer,
+        Atlas.Api.Downloads.HangfireBulkDownloadEnqueuer>();
+}
+else
+{
+    // Fallback no-op : l'endpoint POST /downloads/bulk reste fonctionnel (le job est créé en
+    // base au statut Pending), mais aucun job n'est exécuté. Utilisé par les tests d'intégration.
+    builder.Services.AddSingleton<Atlas.Application.Downloads.IBulkDownloadEnqueuer,
+        Atlas.Api.Downloads.LoggingBulkDownloadEnqueuer>();
 }
 
 // DEV UNIQUEMENT : capture du token de vérification d'email pour l'automatisation des tests.
@@ -141,6 +156,7 @@ app.MapFavoritesEndpoints();
 app.MapDevicesEndpoints();
 app.MapFeedEndpoints();
 app.MapVeillePackEndpoints();
+app.MapDownloadsEndpoints();
 
 if (backgroundJobsEnabled)
 {

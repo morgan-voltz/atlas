@@ -1,0 +1,28 @@
+meta {
+  name: 06 Get status (not found - 404)
+  type: http
+  seq: 6
+}
+
+get {
+  url: {{baseUrl}}/downloads/bulk/00000000-0000-0000-0000-000000000000
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+tests {
+  test("statut 404", function () {
+    expect(res.getStatus()).to.equal(404);
+  });
+  test("code downloads.not_found", function () {
+    expect(res.getBody().type).to.equal("downloads.not_found");
+  });
+}
+
+docs {
+  F-014 — Job inconnu ou propriété d'un autre utilisateur → 404 (pas 403,
+  pour ne pas révéler l'existence d'un job d'autrui).
+}

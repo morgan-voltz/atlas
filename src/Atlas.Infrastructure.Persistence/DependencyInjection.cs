@@ -1,4 +1,5 @@
 using Atlas.Domain.Common;
+using Atlas.Domain.Downloads;
 using Atlas.Domain.Favorites;
 using Atlas.Domain.Inpi;
 using Atlas.Domain.Notifications;
@@ -43,6 +44,7 @@ public static class DependencyInjection
         services.AddScoped<IFavoriteEventRepository, FavoriteEventRepository>();
         services.AddScoped<ITrademarkFavoriteRepository, TrademarkFavoriteRepository>();
         services.AddScoped<IPatentFavoriteRepository, PatentFavoriteRepository>();
+        services.AddScoped<IBulkDownloadJobRepository, BulkDownloadJobRepository>();
 
         return services;
     }

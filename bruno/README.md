@@ -3,7 +3,7 @@
 Tests d'API versionnés avec [Bruno](https://www.usebruno.com/) (fichiers `.bru` en clair,
 git-friendly). Couvre tout le parcours backend : auth, 2FA, connexion INPI, entreprises,
 marques, historique, compte/RGPD, **favoris (F-017), devices push (F-020), veille
-(F-041 à F-048) et packs (F-042)**.
+(F-041 à F-048), packs (F-042) et téléchargements en masse (F-014)**.
 
 ## Prérequis : démarrer le harness local
 
@@ -50,6 +50,7 @@ L'API démarre en environnement `Development` :
 | `12-Devices` | **F-020** | Register, List, Unregister |
 | `13-Veille` | **F-041 / F-043 / F-044** | Recent items, Add source, Subscriptions, Unsubscribe, Timeline, Set item state |
 | `14-Veille-Packs` | **F-042** | Catalog, Mine, Apply, Sync |
+| `15-Downloads` | **F-014** | Request bulk (empty/invalid/too-many/accepted), Get status, Not found, Download archive |
 
 ### Étape manuelle : vérification de l'email
 
@@ -80,6 +81,7 @@ runtime réutilisée par toutes les requêtes protégées.
 | `feedItemId` / `subscriptionId` | Capturés runtime par `13-Veille/Recent items` et `Add source` |
 | `packCode` | Code de pack pour `Apply`/`Sync` (défaut `pi-cabinet`) |
 | `deviceToken` / `devicePlatform` / `deviceId` | Pour `12-Devices` ; `deviceId` capturé runtime par `Register` |
+| `bulkJobId` | Capturé runtime par `15-Downloads/04 Request bulk (accepted)` et réutilisé par les calls suivants |
 
 ### Secrets : `bruno/.env` (jamais commité)
 
@@ -180,3 +182,8 @@ Notes :
 - `13-Veille/Timeline` renvoie un DTO union discriminé (`kind = "RssItem" | "FavoriteEvent"`) ;
   les `FavoriteEvent` apparaissent uniquement après un cycle de `favorite-refresh`
   (cron `0 3 * * *`) ou `bodacc-polling` (cron `0 4 * * *`) qui détecte un changement.
+- `15-Downloads/04 Request bulk (accepted)` enqueue un job Hangfire qui appelle l'INPI
+  pour récupérer les actes et bilans des SIREN demandés. Sans compte INPI connecté,
+  le job passe rapidement en `Failed` avec `inpi.not_connected` — c'est visible dans le
+  call `05 Get status`. Avec INPI connecté, prévoir quelques secondes avant que le
+  statut ne passe à `Ready`, puis lancer `07 Download archive`.

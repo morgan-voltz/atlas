@@ -1,0 +1,38 @@
+meta {
+  name: 02 Request bulk (invalid SIREN - 400)
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/downloads/bulk
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "sirens": ["ABCD"]
+  }
+}
+
+tests {
+  test("statut 400", function () {
+    expect(res.getStatus()).to.equal(400);
+  });
+  test("code downloads.invalid_siren", function () {
+    expect(res.getBody().type).to.equal("downloads.invalid_siren");
+  });
+}
+
+docs {
+  F-014 — SIREN non-Luhn refusé avant enqueue (400 `downloads.invalid_siren`).
+}

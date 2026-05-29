@@ -1,0 +1,34 @@
+meta {
+  name: 05 Get status
+  type: http
+  seq: 5
+}
+
+get {
+  url: {{baseUrl}}/downloads/bulk/{{bulkJobId}}
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+tests {
+  test("statut 200", function () {
+    expect(res.getStatus()).to.equal(200);
+  });
+  test("statut dans {Pending, Running, Ready, Failed}", function () {
+    expect(res.getBody().status).to.be.oneOf(["Pending", "Running", "Ready", "Failed"]);
+  });
+  test("sirens et expiresAt présents", function () {
+    const body = res.getBody();
+    expect(body.sirens).to.be.an("array");
+    expect(body).to.have.property("expiresAt");
+  });
+}
+
+docs {
+  F-014 — Statut d'un job (polling client).
+  States : Pending (créé), Running (job Hangfire en cours), Ready (archive
+  disponible), Failed (erreur, voir `errorMessage`).
+}

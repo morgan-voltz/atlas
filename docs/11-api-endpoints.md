@@ -3,7 +3,7 @@
 > **Périmètre** : tous les endpoints HTTP exposés par `Atlas.Api`, groupés par domaine fonctionnel.
 > Document **vivant** : à mettre à jour à chaque PR qui ajoute, modifie ou supprime un endpoint.
 
-**Dernière mise à jour** : 29 mai 2026 — après merge F-022 (PR à venir).
+**Dernière mise à jour** : 29 mai 2026 — après merge F-014 (PR à venir).
 
 ---
 
@@ -335,6 +335,31 @@ Cf. [`VeillePackEndpoints.cs`](../src/Atlas.Api/Endpoints/VeillePackEndpoints.cs
 
 ---
 
+## Téléchargements en masse — `/downloads` (F-014)
+
+Cf. [`DownloadsEndpoints.cs`](../src/Atlas.Api/Endpoints/DownloadsEndpoints.cs). Tous 🔐 et nécessitent INPI connecté (pour le job d'arrière-plan).
+
+| Méthode | Path | Auth | Description |
+|---|---|---|---|
+| `POST` | `/downloads/bulk` | 🔐 | Crée un job pour une liste de SIREN (≤ 50). Body `{ "sirens": ["…", "…"] }`. Renvoie `202` avec `Location: /downloads/bulk/{jobId}` et `{ jobId }`. |
+| `GET` | `/downloads/bulk/{jobId}` | 🔐 | Statut du job : `Pending` → `Running` → `Ready` ou `Failed`. Renvoie `archiveKey`, `errorMessage`, `requestedAt`, `completedAt`, `expiresAt`. |
+| `GET` | `/downloads/bulk/{jobId}/archive` | 🔐 | Stream binaire ZIP. Disponible uniquement si statut `Ready` et non expiré. |
+
+**TTL d'archive** : 24 h à compter de la création du job. Après expiration, `GET /archive` renvoie `410 Gone`.
+
+**Arborescence du ZIP** : un dossier par SIREN, contenant les documents publics retournés par INPI RNE (les confidentiels sont filtrés à la source). Un SIREN qui échoue n'arrête pas les autres (best-effort par entreprise).
+
+| Code | HTTP | Sens |
+|---|---|---|
+| `downloads.empty_sirens` | 400 | Liste vide |
+| `downloads.too_many_sirens` | 400 | Plus de 50 SIREN |
+| `downloads.invalid_siren` | 400 | Un SIREN ne passe pas Luhn |
+| `downloads.not_found` | 404 | Job inconnu, ou propriété d'un autre utilisateur |
+| `downloads.not_ready` | 409 | Archive demandée alors que le job n'est pas `Ready` |
+| `downloads.expired` | 410 | Archive expirée (TTL dépassé) |
+
+---
+
 ## Endpoints de développement — `/dev/*` 🧪
 
 Actifs **uniquement** si `ASPNETCORE_ENVIRONMENT=Development`. Cf. [`DevEndpoints.cs`](../src/Atlas.Api/Endpoints/DevEndpoints.cs).
@@ -357,6 +382,12 @@ Pour mémoire — pas des endpoints HTTP, mais des récurrents Hangfire planifi�
 | `feed-polling` | `*/30 * * * *` | F-041/F-045/F-047 v1 : poll RSS → clusterise → matche favoris |
 | `favorite-refresh` | `0 3 * * *` | F-019 : compare snapshots RNE des favoris, publie notifications |
 | `bodacc-polling` | `0 4 * * *` | F-048 : interroge BODACC pour les SIREN favoris, crée `FavoriteEvent` `BodaccPublished` |
+
+Plus des jobs **à la demande** enfilés depuis les endpoints :
+
+| Job | Trigger | Description |
+|---|---|---|
+| `BulkDownloadJob.RunAsync(jobId)` | `POST /downloads/bulk` (F-014) | Télécharge et zippe les bilans/actes des SIREN demandés, écrit dans `IFileStorage`. Idempotent. |
 
 Désactivables via `BackgroundJobs:Enabled=false` (utilisé par les tests d'intégration).
 

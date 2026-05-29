@@ -1,0 +1,39 @@
+meta {
+  name: 07 Download archive
+  type: http
+  seq: 7
+}
+
+get {
+  url: {{baseUrl}}/downloads/bulk/{{bulkJobId}}/archive
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+tests {
+  test("statut 200 ou 409 (selon que le job soit Ready)", function () {
+    expect(res.getStatus()).to.be.oneOf([200, 409]);
+  });
+  test("si 200 : Content-Type application/zip", function () {
+    if (res.getStatus() === 200) {
+      expect(res.getHeader("content-type")).to.include("application/zip");
+    }
+  });
+  test("si 409 : code downloads.not_ready", function () {
+    if (res.getStatus() === 409) {
+      expect(res.getBody().type).to.equal("downloads.not_ready");
+    }
+  });
+}
+
+docs {
+  F-014 — Streaming binaire de l'archive ZIP.
+  - 200 si l'archive est prête (statut `Ready` non expiré).
+  - 409 `downloads.not_ready` si le job est encore Pending/Running/Failed.
+  - 410 `downloads.expired` si le TTL (24 h) est dépassé.
+  Pour un test E2E déterministe, attendre que `05 Get status` retourne
+  `Ready` avant d'exécuter ce call.
+}

@@ -73,6 +73,12 @@ internal static class ErrorHttpMapping
         "devices.not_found" => StatusCodes.Status404NotFound,
         "devices.invalid_token" => StatusCodes.Status400BadRequest,
         "devices.invalid_platform" => StatusCodes.Status400BadRequest,
+        "downloads.empty_sirens" => StatusCodes.Status400BadRequest,
+        "downloads.too_many_sirens" => StatusCodes.Status400BadRequest,
+        "downloads.invalid_siren" => StatusCodes.Status400BadRequest,
+        "downloads.not_found" => StatusCodes.Status404NotFound,
+        "downloads.not_ready" => StatusCodes.Status409Conflict,
+        "downloads.expired" => StatusCodes.Status410Gone,
         // veille.feed_unreachable / veille.invalid_feed_source / veille.invalid_veille_pack
         // restent en 400 (URL/saisie utilisateur invalide) via le défaut.
         _ => StatusCodes.Status400BadRequest,

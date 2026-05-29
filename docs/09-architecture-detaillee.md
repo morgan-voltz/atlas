@@ -678,8 +678,8 @@ Implémentations concrètes des ports, dans `Atlas.Infrastructure.*`.
 
 | Adapter | Implémente | Note |
 |---|---|---|
-| `S3CompatibleFileStorage` | `IFileStorage` | Scaleway Object Storage / OVH ObjectStorage / Minio |
-| `LocalFileStorage` (dev) | `IFileStorage` | Système de fichiers local |
+| `LocalFileStorage` | `IFileStorage` | ✅ Livré (F-014) — filesystem local, sanitization du chemin (anti path-traversal). Configurable via `Storage:Local:RootPath`. |
+| `S3CompatibleFileStorage` | `IFileStorage` | 🔜 À venir — Scaleway Object Storage / OVH ObjectStorage / MinIO via `AWSSDK.S3`. |
 
 ---
 
