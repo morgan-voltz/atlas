@@ -1,8 +1,10 @@
+using System.Globalization;
 using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.Json;
 using Atlas.Domain.Companies;
+using Atlas.Domain.Companies.Attachments;
 using Atlas.Domain.Inpi;
 using Atlas.Shared.Result;
 using Microsoft.Extensions.Caching.Memory;
@@ -10,8 +12,9 @@ using Microsoft.Extensions.Caching.Memory;
 namespace Atlas.Infrastructure.Inpi.Rne;
 
 /// <summary>
-/// Lecture entreprise via le RNE (fiche par SIREN, recherche par dénomination). Le token Bearer est
-/// mis en cache (par compte INPI) jusqu'à peu avant son expiration ; en cas de 401, on ré-authentifie une fois.
+/// Lecture entreprise via le RNE (fiche par SIREN, recherche par dénomination, actes & bilans).
+/// Le token Bearer est mis en cache (par compte INPI) jusqu'à peu avant son expiration ; en cas
+/// de 401, on ré-authentifie une fois.
 /// </summary>
 internal sealed class RneCompanyProvider(
     HttpClient httpClient,
@@ -31,6 +34,19 @@ internal sealed class RneCompanyProvider(
         InpiAccessCredentials credentials,
         CancellationToken ct = default) =>
         ExecuteAsync(credentials, (token, innerCt) => TrySearchByNameAsync(query, token, innerCt), ct);
+
+    public Task<Result<IReadOnlyList<CompanyAttachment>>> GetAttachmentsAsync(
+        Siren siren,
+        InpiAccessCredentials credentials,
+        CancellationToken ct = default) =>
+        ExecuteAsync(credentials, (token, innerCt) => TryGetAttachmentsAsync(siren, token, innerCt), ct);
+
+    public Task<Result<AttachmentContent>> DownloadAttachmentAsync(
+        Siren siren,
+        string attachmentId,
+        InpiAccessCredentials credentials,
+        CancellationToken ct = default) =>
+        ExecuteAsync(credentials, (token, innerCt) => TryDownloadAttachmentAsync(siren, attachmentId, token, innerCt), ct);
 
     /// <summary>Obtient un token (caché), exécute la tentative, et réessaie une fois après ré-auth sur 401.</summary>
     private async Task<Result<T>> ExecuteAsync<T>(
@@ -142,6 +158,202 @@ internal sealed class RneCompanyProvider(
 
     private static PagedResult<CompanySummary> EmptyPage(CompanySearchQuery query) =>
         new([], query.Page, query.PageSize, 0);
+
+    // ── F-013 : actes & bilans ──────────────────────────────────────────────────────
+
+    private async Task<(Result<IReadOnlyList<CompanyAttachment>> Result, bool Unauthorized)> TryGetAttachmentsAsync(
+        Siren siren,
+        string token,
+        CancellationToken ct)
+    {
+        (HttpResponseMessage? response, bool unauthorized, Error? transportError) =
+            await SendAsync(HttpMethod.Get, $"companies/{siren.Value}/attachments", token, ct);
+
+        if (response is null)
+        {
+            return (Result<IReadOnlyList<CompanyAttachment>>.Fail(transportError!), unauthorized);
+        }
+
+        using (response)
+        {
+            if (response.StatusCode == HttpStatusCode.NotFound)
+            {
+                return (Result<IReadOnlyList<CompanyAttachment>>.Ok([]), false);
+            }
+
+            if (!response.IsSuccessStatusCode)
+            {
+                return (Result<IReadOnlyList<CompanyAttachment>>.Fail(InpiErrors.Unavailable), false);
+            }
+
+            JsonElement body = await response.Content.ReadFromJsonAsync<JsonElement>(ct);
+            return (Result<IReadOnlyList<CompanyAttachment>>.Ok(MapAttachments(body)), false);
+        }
+    }
+
+    /// <summary>
+    /// Mapping défensif : l'INPI peut renvoyer soit un tableau direct, soit un objet avec
+    /// les sous-collections <c>actes</c> / <c>comptesAnnuels</c>. On accepte les deux formes.
+    /// </summary>
+    private static List<CompanyAttachment> MapAttachments(JsonElement body)
+    {
+        var result = new List<CompanyAttachment>();
+
+        if (body.ValueKind == JsonValueKind.Array)
+        {
+            foreach (JsonElement item in body.EnumerateArray())
+            {
+                if (MapSingleAttachment(item, AttachmentType.Other) is { } attachment)
+                {
+                    result.Add(attachment);
+                }
+            }
+            return result;
+        }
+
+        if (body.ValueKind != JsonValueKind.Object)
+        {
+            return result;
+        }
+
+        AppendCategory(body, "actes", AttachmentType.Acte, result);
+        AppendCategory(body, "comptesAnnuels", AttachmentType.Bilan, result);
+        AppendCategory(body, "bilans", AttachmentType.Bilan, result);
+
+        return result;
+    }
+
+    private static void AppendCategory(JsonElement body, string field, AttachmentType type, List<CompanyAttachment> sink)
+    {
+        if (!body.TryGetProperty(field, out JsonElement collection) || collection.ValueKind != JsonValueKind.Array)
+        {
+            return;
+        }
+
+        foreach (JsonElement item in collection.EnumerateArray())
+        {
+            if (MapSingleAttachment(item, type) is { } attachment)
+            {
+                sink.Add(attachment);
+            }
+        }
+    }
+
+    private static CompanyAttachment? MapSingleAttachment(JsonElement element, AttachmentType defaultType)
+    {
+        if (element.ValueKind != JsonValueKind.Object)
+        {
+            return null;
+        }
+
+        string? id = ReadString(element, "id") ?? ReadString(element, "numeroDocument");
+        if (string.IsNullOrWhiteSpace(id))
+        {
+            return null;
+        }
+
+        string name = ReadString(element, "nom")
+            ?? ReadString(element, "libelle")
+            ?? ReadString(element, "typeRdd")
+            ?? "Document";
+
+        DateOnly? depositedAt = TryReadDate(element, "dateDepot")
+            ?? TryReadDate(element, "dateCloture")
+            ?? TryReadDate(element, "dateImmatriculation");
+
+        long? sizeBytes = element.TryGetProperty("taille", out JsonElement sizeProp) && sizeProp.TryGetInt64(out long size)
+            ? size
+            : null;
+
+        bool confidential = element.TryGetProperty("confidentialite", out JsonElement confProp)
+            && confProp.ValueKind == JsonValueKind.True;
+
+        AttachmentType type = defaultType;
+        if (ReadString(element, "type") is { } rawType)
+        {
+            type = ClassifyType(rawType, defaultType);
+        }
+
+        return new CompanyAttachment(id!.Trim(), type, name.Trim(), depositedAt, sizeBytes, confidential);
+    }
+
+    private static AttachmentType ClassifyType(string rawType, AttachmentType fallback)
+    {
+        string normalized = rawType.ToLowerInvariant();
+        if (normalized.Contains("bilan", StringComparison.Ordinal) || normalized.Contains("compte", StringComparison.Ordinal))
+        {
+            return AttachmentType.Bilan;
+        }
+        if (normalized.Contains("acte", StringComparison.Ordinal) || normalized.Contains("statut", StringComparison.Ordinal))
+        {
+            return AttachmentType.Acte;
+        }
+        return fallback;
+    }
+
+    private static string? ReadString(JsonElement element, string field) =>
+        element.TryGetProperty(field, out JsonElement value) && value.ValueKind == JsonValueKind.String
+            ? value.GetString()
+            : null;
+
+    private static DateOnly? TryReadDate(JsonElement element, string field)
+    {
+        string? raw = ReadString(element, field);
+        if (string.IsNullOrWhiteSpace(raw))
+        {
+            return null;
+        }
+        return DateOnly.TryParse(raw, CultureInfo.InvariantCulture, out DateOnly value) ? value : null;
+    }
+
+    private async Task<(Result<AttachmentContent> Result, bool Unauthorized)> TryDownloadAttachmentAsync(
+        Siren siren,
+        string attachmentId,
+        string token,
+        CancellationToken ct)
+    {
+        (HttpResponseMessage? response, bool unauthorized, Error? transportError) =
+            await SendAsync(HttpMethod.Get, $"companies/{siren.Value}/attachments/{Uri.EscapeDataString(attachmentId)}/download", token, ct);
+
+        if (response is null)
+        {
+            return (Result<AttachmentContent>.Fail(transportError!), unauthorized);
+        }
+
+        if (response.StatusCode == HttpStatusCode.NotFound)
+        {
+            response.Dispose();
+            return (Result<AttachmentContent>.Fail(AttachmentErrors.NotFound), false);
+        }
+
+        if (response.StatusCode == HttpStatusCode.Forbidden)
+        {
+            response.Dispose();
+            return (Result<AttachmentContent>.Fail(AttachmentErrors.Confidential), false);
+        }
+
+        if (!response.IsSuccessStatusCode)
+        {
+            response.Dispose();
+            return (Result<AttachmentContent>.Fail(InpiErrors.Unavailable), false);
+        }
+
+        // Le caller est responsable de disposer le Stream (et donc indirectement la response).
+        Stream stream = await response.Content.ReadAsStreamAsync(ct);
+        string contentType = response.Content.Headers.ContentType?.MediaType ?? "application/pdf";
+        string fileName = ExtractFileName(response, siren, attachmentId);
+
+        return (Result<AttachmentContent>.Ok(new AttachmentContent(stream, contentType, fileName)), false);
+    }
+
+    private static string ExtractFileName(HttpResponseMessage response, Siren siren, string attachmentId)
+    {
+        string? fromHeader = response.Content.Headers.ContentDisposition?.FileNameStar
+            ?? response.Content.Headers.ContentDisposition?.FileName?.Trim('"');
+        return string.IsNullOrWhiteSpace(fromHeader)
+            ? $"{siren.Value}_{attachmentId}.pdf"
+            : fromHeader;
+    }
 
     /// <summary>Envoie une requête authentifiée. Retourne (réponse, unauthorized, erreur transport) — un seul est significatif.</summary>
     private async Task<(HttpResponseMessage? Response, bool Unauthorized, Error? TransportError)> SendAsync(
