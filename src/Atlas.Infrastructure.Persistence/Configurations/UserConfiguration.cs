@@ -59,6 +59,28 @@ internal sealed class UserConfiguration : IEntityTypeConfiguration<User>
             .HasColumnName("pending_two_factor_secret")
             .HasMaxLength(512);
 
+        builder.OwnsOne(user => user.AccessibilityPreferences, prefs =>
+        {
+            prefs.Property(p => p.HighContrast)
+                .HasColumnName("a11y_high_contrast")
+                .HasDefaultValue(false)
+                .IsRequired();
+
+            prefs.Property(p => p.ReduceMotion)
+                .HasColumnName("a11y_reduce_motion")
+                .HasDefaultValue(false)
+                .IsRequired();
+
+            prefs.Property(p => p.FontPreference)
+                .HasColumnName("a11y_font_preference")
+                .HasConversion<string>()
+                .HasMaxLength(32)
+                .HasDefaultValue(AccessibilityFontPreference.Default)
+                .IsRequired();
+        });
+
+        builder.Navigation(user => user.AccessibilityPreferences).IsRequired();
+
         builder.Ignore(user => user.DomainEvents);
     }
 }

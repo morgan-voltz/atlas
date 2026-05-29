@@ -18,6 +18,9 @@
         <Tab Title="Historique">
             <ShellContent ContentTemplate="{DataTemplate views:SearchHistoryPage}" />
         </Tab>
+        <Tab Title="Accessibilité">
+            <ShellContent ContentTemplate="{DataTemplate views:AccessibilityPreferencesPage}" />
+        </Tab>
     </TabBar>
 
 </Shell>

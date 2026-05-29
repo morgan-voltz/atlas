@@ -1,16 +1,19 @@
-﻿using Atlas.Maui.Theming;
+using Atlas.Maui.Theming;
 
 namespace Atlas.Maui;
 
 public partial class App : Application
 {
-	public App()
+	public App(ThemeManager themeManager)
 	{
+		ArgumentNullException.ThrowIfNull(themeManager);
 		InitializeComponent();
 
 		// Kit de thèmes Atlas (7 thèmes × 2 modes = 14 palettes, WCAG 2.2 AA, ADR-008).
-		// Restaure la préférence persistée et applique le ResourceDictionary correspondant.
-		new ThemeManager().Initialize();
+		// Restaure la préférence persistée + préférences accessibilité (Lot 5c) et applique
+		// le ResourceDictionary correspondant. ThemeManager est singleton DI : la même
+		// instance sert le démarrage et l'écran de réglages accessibilité.
+		themeManager.Initialize();
 	}
 
 	protected override Window CreateWindow(IActivationState? activationState)

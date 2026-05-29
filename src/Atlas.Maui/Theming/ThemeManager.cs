@@ -7,11 +7,18 @@ namespace Atlas.Maui.Theming;
 /// Gere le theme actif (identite coloree) et le mode (clair/sombre/systeme).
 /// Les deux axes sont independants. L'app reference uniquement des tokens
 /// semantiques via {DynamicResource Primary}, etc. : un swap met tout a jour.
+/// <para>
+/// Lot 5c : porte aussi les preferences d'accessibilite (HighContrast force le
+/// theme Contraste, ReduceMotion / FontPreference exposees comme flags globaux).
+/// </para>
 /// </summary>
 public sealed class ThemeManager
 {
     const string KeyTheme = "atlas.theme";
     const string KeyMode  = "atlas.mode"; // "Light" | "Dark" | "System"
+    const string KeyHighContrast = "atlas.a11y.high_contrast";
+    const string KeyReduceMotion = "atlas.a11y.reduce_motion";
+    const string KeyFontPreference = "atlas.a11y.font_preference";
 
     ResourceDictionary? _current;
 
@@ -36,6 +43,25 @@ public sealed class ThemeManager
     public AppThemeId Theme { get; private set; } = AppThemeId.Atlas;
     public AppTheme Mode { get; private set; } = AppTheme.Unspecified; // Unspecified = suit le systeme
 
+    /// <summary>
+    /// Lot 5c : force le theme « Contraste » si activee. La preference Theme reste memorisee
+    /// (restauree au desactivation), aucun choix utilisateur n'est perdu.
+    /// </summary>
+    public bool HighContrast { get; private set; }
+
+    /// <summary>
+    /// Lot 5c : flag global a respecter par les vues / animations (transitions, parallax).
+    /// Persiste cross-session ; les futurs composants animes doivent l'interroger.
+    /// </summary>
+    public bool ReduceMotion { get; private set; }
+
+    /// <summary>
+    /// Lot 5c : preference de police facilitante. Aucun asset embarque pour l'instant
+    /// (OpenDyslexic / Atkinson Hyperlegible non packagees) — la preference est persistee
+    /// et synchronisee multi-device, application visuelle dans une PR ulterieure.
+    /// </summary>
+    public string FontPreference { get; private set; } = "Default";
+
     /// <summary>A appeler au demarrage (App.xaml.cs) pour restaurer le choix.</summary>
     public void Initialize()
     {
@@ -47,6 +73,9 @@ public sealed class ThemeManager
             "Dark"  => AppTheme.Dark,
             _        => AppTheme.Unspecified,
         };
+        HighContrast = Preferences.Get(KeyHighContrast, false);
+        ReduceMotion = Preferences.Get(KeyReduceMotion, false);
+        FontPreference = Preferences.Get(KeyFontPreference, "Default");
         Apply();
     }
 
@@ -62,6 +91,24 @@ public sealed class ThemeManager
         Mode = mode;
         Preferences.Set(KeyMode, mode == AppTheme.Light ? "Light"
                                : mode == AppTheme.Dark ? "Dark" : "System");
+        Apply();
+    }
+
+    /// <summary>
+    /// Lot 5c : applique les preferences d'accessibilite recues du backend ou choisies localement.
+    /// HighContrast remplace temporairement le theme actif par Contraste sans ecraser la
+    /// preference Theme de l'utilisateur (revert transparent).
+    /// </summary>
+    public void SetAccessibility(bool highContrast, bool reduceMotion, string fontPreference)
+    {
+        ArgumentNullException.ThrowIfNull(fontPreference);
+
+        HighContrast = highContrast;
+        ReduceMotion = reduceMotion;
+        FontPreference = fontPreference;
+        Preferences.Set(KeyHighContrast, highContrast);
+        Preferences.Set(KeyReduceMotion, reduceMotion);
+        Preferences.Set(KeyFontPreference, fontPreference);
         Apply();
     }
 
@@ -81,7 +128,9 @@ public sealed class ThemeManager
             _ => app.RequestedTheme == AppTheme.Dark,
         };
 
-        var next = Factory[(Theme, isDark)]();
+        // Lot 5c : HighContrast force le theme Contraste sans ecraser la preference Theme.
+        AppThemeId effectiveTheme = HighContrast ? AppThemeId.Contraste : Theme;
+        var next = Factory[(effectiveTheme, isDark)]();
 
         var dicts = app.Resources.MergedDictionaries;
         if (_current is not null) dicts.Remove(_current);
