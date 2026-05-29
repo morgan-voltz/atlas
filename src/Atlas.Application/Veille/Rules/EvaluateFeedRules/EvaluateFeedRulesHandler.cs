@@ -38,7 +38,7 @@ internal sealed class EvaluateFeedRulesHandler(
 
         // Pré-charge tous les noms de sources qui pourraient apparaître dans les payloads de matches.
         IReadOnlyList<FeedSource> allSources = await sourcesRepository.GetActiveAsync(cancellationToken);
-        Dictionary<FeedSourceId, string> sourceNameById = allSources.ToDictionary(s => s.Id, s => s.Name);
+        var sourceNameById = allSources.ToDictionary(s => s.Id, s => s.Name);
 
         IEnumerable<IGrouping<UserId, FeedRule>> rulesByUser = activeRules.GroupBy(r => r.UserId);
 
