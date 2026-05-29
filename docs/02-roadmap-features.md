@@ -700,21 +700,41 @@ Pour chaque feature, on documente :
 
 ## V2 — Could have (mois 8–18)
 
-**Objectif** : différenciation par rapport aux concurrents (Pappers, Societe.com). C'est ici qu'on construit les "killer features" qui rendent le projet unique.
+**Objectif** : différenciation par rapport aux concurrents (Pappers, Societe.com). C'est ici qu'on construit les killer features qui rendent le projet unique.
 
-### F-023 — Intégration BODACC (annonces légales)
+**Storyline** — V2 s'organise en 5 grappes qui se nourrissent l'une l'autre :
 
-**Description** : surveillance des annonces légales (créations, modifications, RJ, LJ, ventes de fonds) en temps réel pour les entreprises favorites de l'utilisateur.
+1. **Approfondissement de la fiche entreprise** — au-delà du RNE / PI, on enrichit avec établissements (Sirene), cotation boursière, marchés publics et indicateurs financiers descriptifs.
+2. **Organisation & capitalisation** — l'utilisateur range et emporte sa connaissance (watchlists, annotations & tags, mode offline mobile).
+3. **Veille étendue & signaux** — le cluster veille du MVP 2 monte d'un cran : surveillance PI automatisée par règles utilisateur + signaux de risque descriptif.
+4. **Outillage PI avancé** — killer feature pour les cabinets PI : portefeuille IP et antériorité avec matching intelligent.
+5. **Exposition tiers** — Atlas devient une plateforme : API publique pour les intégrateurs, serveur MCP pour les agents IA.
 
-**Valeur user** : alerte précoce sur une procédure collective d'un partenaire commercial, détection d'opportunités (vente de fonds dans son secteur).
+**Récap V2** (13 features) :
 
-**Complexité** : ★★★★
+| Grappe | # | Feature | Complexité |
+|---|---|---|---|
+| 1 — Fiche | F-024 | Intégration Sirene (établissements) | ★★★ |
+| 1 — Fiche | F-051 | Suivi boursier des entreprises cotées | ★★★★ |
+| 1 — Fiche | F-032 | Marchés publics remportés (DECP) | ★★★ |
+| 1 — Fiche | F-054 | Indicateurs financiers descriptifs | ★★★ à ★★★★ |
+| 2 — Orga | F-053 | Watchlists (listes d'entreprises) | ★★★ |
+| 2 — Orga | F-030 | Annotations et tags utilisateur | ★★ |
+| 2 — Orga | F-029 | Mode offline mobile avec sync | ★★★★ |
+| 3 — Veille | F-027 | Veille PI automatisée (règles utilisateur) | ★★★★ |
+| 3 — Veille | F-055 | Signaux de risque (descriptif) | ★★★ |
+| 4 — PI | F-025 | Tableau de bord portefeuille IP | ★★★★★ |
+| 4 — PI | F-026 | Antériorité marque (matching intelligent) | ★★★★★ |
+| 5 — Exposition | F-028 | API publique du projet | ★★★★ |
+| 5 — Exposition | F-052 | Serveur MCP (accès agents IA) | ★★★★ à ★★★★★ |
 
-**APIs externes** : BODACC (data.gouv.fr).
-
-**Dépendances** : F-017.
+**Note de consolidation (29 mai 2026)** :
+- **F-023 supprimée** — son périmètre (« Intégration BODACC ») est entièrement couvert par **F-048** livrée en MVP 2 (polling BODACC + `FavoriteEvent BodaccPublished` + dédup cross-users, cf. commit `50f176f`). Le numéro F-023 reste libre (non recyclé).
+- **F-027 reformulée** pour la distinguer de **F-046** (filtres / règles de veille génériques, MVP 2) : F-027 = application spécifiquement PI au-dessus de F-046.
 
 ---
+
+**Grappe 1 — Approfondissement de la fiche entreprise** *(F-024, F-051, F-032, F-054 — au-delà du RNE / PI, on enrichit la fiche entreprise avec des dimensions descriptives nouvelles)*
 
 ### F-024 — Intégration Sirene (INSEE) pour les établissements
 
@@ -724,97 +744,9 @@ Pour chaque feature, on documente :
 
 **Complexité** : ★★★
 
-**APIs externes** : Sirene (api.insee.fr).
+**APIs externes** : Sirene (api.insee.fr — cf. doc 03 §2.1).
 
 **Dépendances** : F-004.
-
----
-
-### F-025 — Tableau de bord portefeuille IP
-
-**Description** : vue agrégée des marques et brevets suivis par l'utilisateur, avec calendrier des renouvellements à venir, statut de chaque titre, alertes de risque (marques expirantes, oppositions en cours).
-
-**Valeur user** : remplace les tableaux Excel des cabinets PI pour gérer le portefeuille de leurs clients.
-
-**Complexité** : ★★★★★
-
-**APIs externes** : INPI PI.
-
-**Dépendances** : F-018.
-
----
-
-### F-026 — Recherche d'antériorité marque avec matching intelligent
-
-**Description** : recherche d'antériorité avec matching phonétique (Soundex, Metaphone) et sémantique pour détecter les marques proches d'un terme cible, pas seulement les correspondances exactes.
-
-**Valeur user** : la vérification d'antériorité est un acte juridique précieux que les cabinets facturent. Un outil qui automatise une partie de cette analyse a une vraie valeur.
-
-**Complexité** : ★★★★★
-
-**APIs externes** : INPI PI + EUIPO + OMPI.
-
-**Dépendances** : F-006.
-
----
-
-### F-027 — Veille concurrentielle automatisée
-
-**Description** : l'utilisateur configure des règles ("alerte-moi à chaque nouveau dépôt de marque par mon concurrent X, ou contenant le mot Y, dans la classe Z"). Notifications email/push.
-
-**Valeur user** : surveillance proactive impossible à faire manuellement à grande échelle.
-
-**Complexité** : ★★★★
-
-**APIs externes** : INPI PI + EUIPO + OMPI.
-
-**Dépendances** : F-018, F-020.
-
----
-
-### F-028 — API publique du projet
-
-**Description** : exposition d'une API REST publique permettant à des tiers (devs, intégrations) d'utiliser les fonctions du projet via clé API.
-
-**Valeur user** : intégration avec des CRMs, outils internes, scripts d'automatisation.
-
-**Complexité** : ★★★★
-
-**APIs externes** : aucune (exposition de l'existant).
-
-**Dépendances** : MVP 1 complet.
-
-**Détails techniques** : gestion des clés API, quotas, documentation Swagger / OpenAPI, rate limiting.
-
----
-
-### F-029 — Mode offline mobile avec sync
-
-**Description** : sur l'app MAUI mobile, possibilité de consulter ses favoris et son historique en mode hors-ligne, avec synchronisation automatique au retour de la connectivité.
-
-**Valeur user** : usage en déplacement (transports, zones rurales).
-
-**Complexité** : ★★★★
-
-**APIs externes** : aucune.
-
-**Dépendances** : F-009, F-017.
-
-**Détails techniques** : SQLite local + stratégie de réplication.
-
----
-
-### F-030 — Annotations et tags utilisateur
-
-**Description** : l'utilisateur ajoute des notes privées **et des tags** sur les fiches qu'il consulte (entités annotées : entreprise, marque, brevet). Les tags appartiennent à F-030 car ce sont des attributs de l'entité annotée, indépendants de toute liste — cf. « Frontière avec F-053 » dans F-053.
-
-**Valeur user** : capitalisation de la connaissance personnelle au-dessus des données publiques.
-
-**Complexité** : ★★
-
-**APIs externes** : aucune.
-
-**Dépendances** : F-017.
 
 ---
 
@@ -853,73 +785,60 @@ Pour chaque feature, on documente :
 
 ---
 
-### F-052 — Serveur MCP (accès agents IA)
+### F-032 — Marchés publics remportés (DECP)
 
-**Description** : Atlas expose ses capacités sous forme de **serveur MCP** (Model Context Protocol), pour que des **agents IA** (Claude, et tout client compatible) puissent interroger les données et la veille au nom de l'utilisateur (rechercher une entreprise, lire une fiche, consulter les marques, gérer les favoris, interroger la timeline). L'agent n'a jamais plus de droits que l'utilisateur.
+> **Réactivée le 29 mai 2026** — promue de V3+ vers V2. Le motif initial de report (« trop spécifique BTP / consulting / IT public ») ne tient plus : (a) la donnée DECP est désormais **consolidée et propre** (jeu unique sur data.gouv.fr + API tabulaire, le scraping multi-sources n'est plus nécessaire), (b) elle se branche sur le **pattern existant de F-048** (coût marginal faible, purement additif).
 
-**Valeur user** : pour les power users et les profils « travaillant avec l'IA », automatiser des workflows de suivi en langage naturel ; pour les intégrateurs, brancher Atlas dans leurs propres agents via une interface standard. **Différenciation** : un MCP **souverain et auto-hébergeable** est unique sur le marché français des données d'entreprise (Pappers expose déjà un MCP mais sans cet angle).
+**Description** : pour une entreprise, Atlas affiche les **marchés publics qu'elle a remportés** (en tant que titulaire) : acheteur, objet, montant, durée, date de notification, code CPV. Quand une entreprise **suivie** (favori / watchlist) remporte un nouveau marché, un **événement** apparaît dans sa timeline — sur le même principe que les annonces BODACC (F-048).
 
-**Complexité** : ★★★★ (lecture + écriture encadrée) ; ★★★★★ avec couche OAuth 2.1 complète. L'essentiel de l'effort est l'**auth/scoping** et le **durcissement sécurité**, pas la définition des outils (le SDK la rend triviale).
+**Valeur user** : le DECP apporte un signal que ni Pappers ni Societe.com n'exploitent à fond : l'**activité réelle**. Pas « cette boîte existe et a tel bilan » mais « cette boîte **gagne effectivement** des marchés publics, pour tel montant, auprès de tel acheteur ». Croisé avec l'identité (RNE), la PI, la veille et les finances (F-054), ça complète la vue « que fait vraiment cette entreprise ». Personas : **Investisseur / M&A**, **veille concurrentielle** (qui rafle les marchés dans mon secteur ?), et tout profil travaillant avec / autour du secteur public. Contrairement à la crainte initiale, ce n'est pas « niche BTP » — la commande publique achète dans **tous** les secteurs (IT, conseil, services, fournitures, travaux).
 
-**APIs externes** : aucune nouvelle source (réexpose les capacités existantes). Dépendance technique : SDK MCP officiel C# (`ModelContextProtocol`, `ModelContextProtocol.AspNetCore`), maintenu par Microsoft et Anthropic.
+**Complexité** : ★★★ — surtout grâce à la réutilisation du pattern F-048 (polling → `FavoriteEvent` → timeline) et à la consolidation de la source.
 
-**Dépendances** : use cases existants (F-004/F-005, fiche entreprise, F-006/F-007, F-017, F-041→F-047, F-042) ; ADR-003 (coffre de credentials) ; ADR-004 (archi hexagonale) ; **ADR-010 (auth utilisateur) + ADR-011 (OAuth 2.1 pour la délégation)**.
+**APIs externes** :
+- **DECP consolidé** (data.gouv.fr) : jeu unique retraité, formats **Parquet / CSV**, mis à jour quasi quotidiennement, régi par l'arrêté du 22 décembre 2022 (étendu mars 2024). Couvre les marchés notifiés depuis 2020 (7 millésimes).
+- **API tabulaire data.gouv.fr** : consommation directe du jeu (≈ 100 req/s) « pour alimenter une application sans configurer de base ».
 
-**Détails techniques** :
-- **Nouvel adapter entrant** par-dessus les use cases MediatR existants (exactement comme `Atlas.Api`). Projet `Atlas.Mcp` (ou module dans l'API) qui traduit des appels d'outils MCP en commandes/queries du domaine. **Zéro modification du domaine** (ADR-004).
-- Le SDK C# déclare un outil en décorant une méthode (`[McpServerTool]`) ; le schéma JSON est généré automatiquement. Intégration : `AddMcpServer().WithHttpTransport().WithToolsFromAssembly()` + `MapMcp()`.
-- **Outils lecture (V1)** : `search_companies`, `get_company`, `search_trademarks`, `get_trademark`, `list_favorites`, `get_veille_timeline`, `list_veille_packs`.
-- **Outils écriture (encadrés, V2 du chantier)** : `add_favorite` / `remove_favorite`, `subscribe_feed_source` / `apply_veille_pack` — derrière des **approval workflows** et des **scopes** dédiés.
-- **Transports** : stdio (auto-hébergement local) et HTTP/Streamable HTTP (instance distante).
-- **Aucune exposition** de la gestion des secrets (credentials INPI, clés) via MCP. Aucune opération destructrice non réversible exposée sans garde forte.
+Gratuit, sans authentification. Le **scraping n'est plus nécessaire** (corrige la note « DECP via scraping » du pack Investisseur, doc 07).
 
-**Sécurité (cf. ADR-011)** : OAuth 2.1 + PKCE ; **scopes** distincts lecture vs écriture ; tokens courts + refresh rotatif révocable ; audit logging de chaque appel d'outil (Serilog déjà en place) ; rate limiting réutilisé (global + auth-strict). Risque spécifique : **injection par le contenu** (tool poisoning) — règle : le serveur traite tout contenu retourné comme **donnée**, jamais comme instruction ; les outils d'écriture exigent une approbation explicite.
-
-**Modèle économique** : aucun coût par utilisateur côté Atlas (l'inférence est côté agent). Reste dans le **cœur open source** (cohérent ADR-006). Une frontière premium éventuelle (quotas en hébergé, outils agentiques avancés) pourra être posée plus tard sans toucher au socle.
-
-**Décisions ouvertes** :
-- Périmètre exact des outils d'écriture exposés en V1 (probable : favoris + abonnements ; exclure tout ce qui touche aux secrets et au compte).
-- Exposition : self-host (stdio/HTTP local) d'abord, instance hébergée ensuite ? Politique de quotas en hébergé.
-- Frontière premium éventuelle (à n'arbitrer qu'en phase 3-4).
-
----
-
-### F-053 — Watchlists (listes d'entreprises)
-
-**Description** : l'utilisateur regroupe des entreprises en **listes nommées** (« Concurrence », « Portefeuille clients », « Cibles M&A »…). Une entreprise peut appartenir à plusieurs listes. Chaque liste offre une vue dédiée et, en option, **sa propre timeline de veille filtrée**. Un **import en masse de SIREN** (jusqu'à plusieurs centaines) permet de constituer une liste d'un coup. Cette feature couvre le **regroupement** ; les **notes et tags** par entreprise restent de la responsabilité de F-030.
-
-**Valeur user** : signal marché net (Pappers a lancé en 2026 un tableau de bord de suivi de portefeuille, plébiscité par les experts-comptables et les fonds d'investissement). **Angle différenciant Atlas** : une watchlist peut avoir **sa propre timeline de veille** (au-dessus de F-047) — RSS + RNE + BODACC filtrés sur les entreprises de la liste. Pappers ne combine pas listes et veille agrégée ; c'est précisément le trou de marché du projet (ADR-009).
-
-**Complexité** : ★★★ (1–2 semaines) en Modèle A. La couche listes est simple ; le morceau principal est l'**import en masse asynchrone**.
-
-**APIs externes** : aucune nouvelle source. L'import en masse utilise l'API **INPI RNE** existante (résolution des dénominations à partir des SIREN), avec le rate-limiting déjà en place.
-
-**Dépendances** : F-017 (favoris = set surveillé), F-030 (annotations & tags — dépendance à sens unique, voir « Frontière »), patron de F-014 (import asynchrone), F-047 (timeline mixte), ADR-004 (archi hexagonale).
+**Dépendances** : F-017 (favoris), F-053 (watchlists), F-047 (timeline mixte) & patron de F-048 (polling BODACC → `FavoriteEvent`), ADR-004 (archi hexagonale), ADR-006 (open core).
 
 **Détails techniques** :
-- **Modèle A — les listes par-dessus les favoris (non-cassant)** : `CompanyFavorite` (F-017) reste la liste plate parcourue par F-019 (refresh quotidien) et F-047 (timeline). On garde ce rôle intact.
-- Entités : `Watchlist (Id, UserId, Name, CreatedAt)` privée, cascade FK RGPD ; `WatchlistEntry (WatchlistId, Siren, AddedAt)`, index unique `(WatchlistId, Siren)`. Ajouter une entreprise à une liste ⇒ upsert du `CompanyFavorite` correspondant.
-- **Import en masse** : réutilise le patron de F-014 (téléchargement de masse) — validation (Luhn), job Hangfire dédié respectant le rate-limiting INPI, notification (email + push) à la fin avec récap (N ajoutés, M doublons, K invalides).
-- **Timeline par liste** : filtre `watchlistId` au-dessus de F-047, sans nouvelle mécanique de veille.
-- Endpoints (esquisse) : `POST/GET /watchlists`, `PATCH/DELETE /watchlists/{id}`, `POST/DELETE /watchlists/{id}/entries[/{siren}]`, `POST /watchlists/{id}/import` (job async), `GET /watchlists/{id}/timeline`.
+- **Deux modes, une source** (calqués sur l'existant) :
+  - **Mode événement** (pattern F-048) : job `decp-polling` repère les nouveaux marchés attribués aux SIREN suivis → crée un `FavoriteEvent` de type « marché public attribué » → fusionné dans la timeline (F-047), dédupliqué via `FavoriteEvent.ExternalId` (comme BODACC).
+  - **Mode fiche** : section « Marchés publics remportés » alimentée à la demande ou depuis l'ingestion.
+- **Source : ingestion vs API tabulaire (décision ouverte)** :
+  - **Ingestion périodique** du jeu consolidé (filtré / indexé par SIREN titulaire) dans la base Atlas → rapide en lecture, autonome, idéal pour le mode événement (job Hangfire `decp-polling` sur le modèle de `bodacc-polling`).
+  - **API tabulaire à la demande** : interroger par SIREN au moment de l'affichage de la fiche → zéro stockage, mais dépendant de la dispo de l'API.
+  - Probable : ingestion pour les événements + API tabulaire pour le détail de fiche.
+- **Matching titulaire → entreprise** : le titulaire est identifié en **SIRET** (établissement) ; on mappe sur le **SIREN** (9 premiers chiffres) pour matcher les entreprises favorites / watchlists. Trivial, mais à faire explicitement (une entreprise peut remporter un marché via un établissement secondaire).
+- **Architecture (hexagonale, ADR-004)** : adapter `DecpSource` implémentant `IExternalContentSource` (mode événement) comme `BodaccSource` ; éventuel port `IPublicProcurementProvider` pour les requêtes de fiche (mode fiche) ; extension de `FavoriteEvent` avec un nouveau type / `Kind` (« marché public »). **Aucune modification du domaine existant.**
 
-**Frontière avec F-030** (fait foi pour les deux fiches) :
-- **F-030 possède** `UserAnnotation` (note privée par entité) **et les tags** (libellés sur la relation utilisateur ↔ entité).
-- **F-053 possède** `Watchlist` + `WatchlistEntry` (le regroupement) et l'import en masse.
-- **Dépendance à sens unique** : F-053 **consomme** les tags de F-030 pour le filtrage. Une watchlist sans tag fonctionne ; une annotation sans liste fonctionne. **Pas de circularité.**
-- **Set surveillé** = `CompanyFavorite` (F-017). Appartenir à une liste ⇒ être favori. F-019/F-047 restent branchés sur les favoris.
-- **F-030 peut être livré seul et en premier** (le plus rapide), F-053 se pose ensuite ou en parallèle.
+**Cadre légal & positionnement** : la piste facile — open data pur, données publiées par obligation légale (code de la commande publique, articles L2196-2 / L3131-1). Afficher des marchés attribués = exposer des **faits publics**. Aucune ligne sensible à tenir, aucun RGPD spécifique (données d'entreprises et de contrats publics). On reste **descriptif** : on liste, on n'évalue pas (pas de « score puissance publique » agrégé).
 
-**RGPD** : listes et appartenances = données utilisateur. Cascade FK sur le compte (patron existant), incluses dans `/account/export` (art. 20), supprimées à la suppression du compte (art. 17). Privées par défaut (pas de partage en V1 ; le partage relève de F-035 espace équipe).
+**Couverture & qualité (caveats honnêtes)** :
+- **Seuil** : seuls les marchés **> 40 000 € HT** sont publiés. En dessous, rien.
+- **Périmètre** : seulement les entreprises qui **remportent** des marchés publics → beaucoup de favoris n'en auront aucun (afficher « aucun marché public connu » proprement, pas un vide ambigu).
+- **Qualité variable** : malgré l'obligation, certains acheteurs publient mal / incomplètement ; le jeu consolidé corrige beaucoup mais pas tout (champs parfois vides — déjà noté en doc 03 §3.1).
 
-**Accessibilité (rappel ADR-008)** : un tag n'est **jamais** identifié par la couleur seule (libellé + couleur optionnelle), règle portée par F-030. Listes et entrées navigables au clavier et annoncées au lecteur d'écran. L'écran d'import est accessible (rapport d'import lisible, pas seulement visuel).
+**Hors périmètre (explicite)** :
+- **Avis d'appels d'offres** (avant attribution) : c'est le **BOAMP** (doc 03 §3.2), source différente — hors périmètre de cette fiche.
+- Marchés **européens** (TED, doc 03 §3.3) : extension future éventuelle.
 
-**Modèle économique** : aucun coût par utilisateur → cœur open source (cohérent ADR-006). Possibilité de **quotas en hébergé** (nombre de listes, taille), sur le modèle de la limite de sources de F-043.
+**Accessibilité (rappel ADR-008)** : montants, dates et acheteurs en tableau lisible au lecteur d'écran (`SemanticProperties.Description`). Aucune information (ex. type de marché) transmise par la couleur seule.
+
+**Modèle économique** : aucun coût par utilisateur (open data, déterministe) → **cœur open source**, gratuit. Cohérent ADR-006.
+
+**Découpage / jalons** :
+1. **Source & matching** : ingestion du jeu consolidé (ou accès tabulaire), mapping SIRET → SIREN. *(Fondation testable.)*
+2. **Mode fiche** : section « Marchés publics remportés » sur la fiche entreprise.
+3. **Mode événement** : `DecpSource` + job `decp-polling` → `FavoriteEvent` → timeline (pattern F-048).
 
 **Décisions ouvertes** :
-- Modèle A maintenant, Modèle B (favoris = « liste par défaut ») plus tard ? Confirmer qu'on ne généralise pas les favoris en V1.
-- Colonnes type CRM (statut, dernier contact, relance, à la Pappers) : hors cœur par défaut (proche de F-037). À acter : on les exclut, ou version légère portée par F-030 ?
-- Quotas en hébergé (nombre de listes / taille).
+- **Source** : ingestion périodique vs API tabulaire à la demande (ou les deux, fiche + événements).
+- **Ordre de livraison** : mode fiche d'abord (autonome) ou mode événement d'abord ?
+- **Seuil de notabilité** d'un événement (tout marché, ou au-dessus d'un montant ?).
+- **Extension future** : BOAMP (avis avant attribution) et TED (UE) — à garder hors périmètre pour l'instant.
 
 ---
 
@@ -981,60 +900,92 @@ Aucun parsing de PDF nécessaire dans les deux cas.
 
 ---
 
-### F-032 — Marchés publics remportés (DECP)
+**Grappe 2 — Organisation & capitalisation** *(F-053, F-030, F-029 — l'utilisateur range et emporte sa connaissance personnelle au-dessus des données publiques)*
 
-> **Réactivée le 29 mai 2026** — promue de V3+ vers V2. Le motif initial de report (« trop spécifique BTP / consulting / IT public ») ne tient plus : (a) la donnée DECP est désormais **consolidée et propre** (jeu unique sur data.gouv.fr + API tabulaire, le scraping multi-sources n'est plus nécessaire), (b) elle se branche sur le **pattern existant de F-048** (coût marginal faible, purement additif).
+### F-053 — Watchlists (listes d'entreprises)
 
-**Description** : pour une entreprise, Atlas affiche les **marchés publics qu'elle a remportés** (en tant que titulaire) : acheteur, objet, montant, durée, date de notification, code CPV. Quand une entreprise **suivie** (favori / watchlist) remporte un nouveau marché, un **événement** apparaît dans sa timeline — sur le même principe que les annonces BODACC (F-048).
+**Description** : l'utilisateur regroupe des entreprises en **listes nommées** (« Concurrence », « Portefeuille clients », « Cibles M&A »…). Une entreprise peut appartenir à plusieurs listes. Chaque liste offre une vue dédiée et, en option, **sa propre timeline de veille filtrée**. Un **import en masse de SIREN** (jusqu'à plusieurs centaines) permet de constituer une liste d'un coup. Cette feature couvre le **regroupement** ; les **notes et tags** par entreprise restent de la responsabilité de F-030.
 
-**Valeur user** : le DECP apporte un signal que ni Pappers ni Societe.com n'exploitent à fond : l'**activité réelle**. Pas « cette boîte existe et a tel bilan » mais « cette boîte **gagne effectivement** des marchés publics, pour tel montant, auprès de tel acheteur ». Croisé avec l'identité (RNE), la PI, la veille et les finances (F-054), ça complète la vue « que fait vraiment cette entreprise ». Personas : **Investisseur / M&A**, **veille concurrentielle** (qui rafle les marchés dans mon secteur ?), et tout profil travaillant avec / autour du secteur public. Contrairement à la crainte initiale, ce n'est pas « niche BTP » — la commande publique achète dans **tous** les secteurs (IT, conseil, services, fournitures, travaux).
+**Valeur user** : signal marché net (Pappers a lancé en 2026 un tableau de bord de suivi de portefeuille, plébiscité par les experts-comptables et les fonds d'investissement). **Angle différenciant Atlas** : une watchlist peut avoir **sa propre timeline de veille** (au-dessus de F-047) — RSS + RNE + BODACC filtrés sur les entreprises de la liste. Pappers ne combine pas listes et veille agrégée ; c'est précisément le trou de marché du projet (ADR-009).
 
-**Complexité** : ★★★ — surtout grâce à la réutilisation du pattern F-048 (polling → `FavoriteEvent` → timeline) et à la consolidation de la source.
+**Complexité** : ★★★ (1–2 semaines) en Modèle A. La couche listes est simple ; le morceau principal est l'**import en masse asynchrone**.
 
-**APIs externes** :
-- **DECP consolidé** (data.gouv.fr) : jeu unique retraité, formats **Parquet / CSV**, mis à jour quasi quotidiennement, régi par l'arrêté du 22 décembre 2022 (étendu mars 2024). Couvre les marchés notifiés depuis 2020 (7 millésimes).
-- **API tabulaire data.gouv.fr** : consommation directe du jeu (≈ 100 req/s) « pour alimenter une application sans configurer de base ».
+**APIs externes** : aucune nouvelle source. L'import en masse utilise l'API **INPI RNE** existante (résolution des dénominations à partir des SIREN), avec le rate-limiting déjà en place.
 
-Gratuit, sans authentification. Le **scraping n'est plus nécessaire** (corrige la note « DECP via scraping » du pack Investisseur, doc 07).
-
-**Dépendances** : F-017 (favoris), F-053 (watchlists), F-047 (timeline mixte) & patron de F-048 (polling BODACC → `FavoriteEvent`), ADR-004 (archi hexagonale), ADR-006 (open core).
+**Dépendances** : F-017 (favoris = set surveillé), F-030 (annotations & tags — dépendance à sens unique, voir « Frontière »), patron de F-014 (import asynchrone), F-047 (timeline mixte), ADR-004 (archi hexagonale).
 
 **Détails techniques** :
-- **Deux modes, une source** (calqués sur l'existant) :
-  - **Mode événement** (pattern F-048) : job `decp-polling` repère les nouveaux marchés attribués aux SIREN suivis → crée un `FavoriteEvent` de type « marché public attribué » → fusionné dans la timeline (F-047), dédupliqué via `FavoriteEvent.ExternalId` (comme BODACC).
-  - **Mode fiche** : section « Marchés publics remportés » alimentée à la demande ou depuis l'ingestion.
-- **Source : ingestion vs API tabulaire (décision ouverte)** :
-  - **Ingestion périodique** du jeu consolidé (filtré / indexé par SIREN titulaire) dans la base Atlas → rapide en lecture, autonome, idéal pour le mode événement (job Hangfire `decp-polling` sur le modèle de `bodacc-polling`).
-  - **API tabulaire à la demande** : interroger par SIREN au moment de l'affichage de la fiche → zéro stockage, mais dépendant de la dispo de l'API.
-  - Probable : ingestion pour les événements + API tabulaire pour le détail de fiche.
-- **Matching titulaire → entreprise** : le titulaire est identifié en **SIRET** (établissement) ; on mappe sur le **SIREN** (9 premiers chiffres) pour matcher les entreprises favorites / watchlists. Trivial, mais à faire explicitement (une entreprise peut remporter un marché via un établissement secondaire).
-- **Architecture (hexagonale, ADR-004)** : adapter `DecpSource` implémentant `IExternalContentSource` (mode événement) comme `BodaccSource` ; éventuel port `IPublicProcurementProvider` pour les requêtes de fiche (mode fiche) ; extension de `FavoriteEvent` avec un nouveau type / `Kind` (« marché public »). **Aucune modification du domaine existant.**
+- **Modèle A — les listes par-dessus les favoris (non-cassant)** : `CompanyFavorite` (F-017) reste la liste plate parcourue par F-019 (refresh quotidien) et F-047 (timeline). On garde ce rôle intact.
+- Entités : `Watchlist (Id, UserId, Name, CreatedAt)` privée, cascade FK RGPD ; `WatchlistEntry (WatchlistId, Siren, AddedAt)`, index unique `(WatchlistId, Siren)`. Ajouter une entreprise à une liste ⇒ upsert du `CompanyFavorite` correspondant.
+- **Import en masse** : réutilise le patron de F-014 (téléchargement de masse) — validation (Luhn), job Hangfire dédié respectant le rate-limiting INPI, notification (email + push) à la fin avec récap (N ajoutés, M doublons, K invalides).
+- **Timeline par liste** : filtre `watchlistId` au-dessus de F-047, sans nouvelle mécanique de veille.
+- Endpoints (esquisse) : `POST/GET /watchlists`, `PATCH/DELETE /watchlists/{id}`, `POST/DELETE /watchlists/{id}/entries[/{siren}]`, `POST /watchlists/{id}/import` (job async), `GET /watchlists/{id}/timeline`.
 
-**Cadre légal & positionnement** : la piste facile — open data pur, données publiées par obligation légale (code de la commande publique, articles L2196-2 / L3131-1). Afficher des marchés attribués = exposer des **faits publics**. Aucune ligne sensible à tenir, aucun RGPD spécifique (données d'entreprises et de contrats publics). On reste **descriptif** : on liste, on n'évalue pas (pas de « score puissance publique » agrégé).
+**Frontière avec F-030** (fait foi pour les deux fiches) :
+- **F-030 possède** `UserAnnotation` (note privée par entité) **et les tags** (libellés sur la relation utilisateur ↔ entité).
+- **F-053 possède** `Watchlist` + `WatchlistEntry` (le regroupement) et l'import en masse.
+- **Dépendance à sens unique** : F-053 **consomme** les tags de F-030 pour le filtrage. Une watchlist sans tag fonctionne ; une annotation sans liste fonctionne. **Pas de circularité.**
+- **Set surveillé** = `CompanyFavorite` (F-017). Appartenir à une liste ⇒ être favori. F-019/F-047 restent branchés sur les favoris.
+- **F-030 peut être livré seul et en premier** (le plus rapide), F-053 se pose ensuite ou en parallèle.
 
-**Couverture & qualité (caveats honnêtes)** :
-- **Seuil** : seuls les marchés **> 40 000 € HT** sont publiés. En dessous, rien.
-- **Périmètre** : seulement les entreprises qui **remportent** des marchés publics → beaucoup de favoris n'en auront aucun (afficher « aucun marché public connu » proprement, pas un vide ambigu).
-- **Qualité variable** : malgré l'obligation, certains acheteurs publient mal / incomplètement ; le jeu consolidé corrige beaucoup mais pas tout (champs parfois vides — déjà noté en doc 03 §3.1).
+**RGPD** : listes et appartenances = données utilisateur. Cascade FK sur le compte (patron existant), incluses dans `/account/export` (art. 20), supprimées à la suppression du compte (art. 17). Privées par défaut (pas de partage en V1 ; le partage relève de F-035 espace équipe).
 
-**Hors périmètre (explicite)** :
-- **Avis d'appels d'offres** (avant attribution) : c'est le **BOAMP** (doc 03 §3.2), source différente — hors périmètre de cette fiche.
-- Marchés **européens** (TED, doc 03 §3.3) : extension future éventuelle.
+**Accessibilité (rappel ADR-008)** : un tag n'est **jamais** identifié par la couleur seule (libellé + couleur optionnelle), règle portée par F-030. Listes et entrées navigables au clavier et annoncées au lecteur d'écran. L'écran d'import est accessible (rapport d'import lisible, pas seulement visuel).
 
-**Accessibilité (rappel ADR-008)** : montants, dates et acheteurs en tableau lisible au lecteur d'écran (`SemanticProperties.Description`). Aucune information (ex. type de marché) transmise par la couleur seule.
-
-**Modèle économique** : aucun coût par utilisateur (open data, déterministe) → **cœur open source**, gratuit. Cohérent ADR-006.
-
-**Découpage / jalons** :
-1. **Source & matching** : ingestion du jeu consolidé (ou accès tabulaire), mapping SIRET → SIREN. *(Fondation testable.)*
-2. **Mode fiche** : section « Marchés publics remportés » sur la fiche entreprise.
-3. **Mode événement** : `DecpSource` + job `decp-polling` → `FavoriteEvent` → timeline (pattern F-048).
+**Modèle économique** : aucun coût par utilisateur → cœur open source (cohérent ADR-006). Possibilité de **quotas en hébergé** (nombre de listes, taille), sur le modèle de la limite de sources de F-043.
 
 **Décisions ouvertes** :
-- **Source** : ingestion périodique vs API tabulaire à la demande (ou les deux, fiche + événements).
-- **Ordre de livraison** : mode fiche d'abord (autonome) ou mode événement d'abord ?
-- **Seuil de notabilité** d'un événement (tout marché, ou au-dessus d'un montant ?).
-- **Extension future** : BOAMP (avis avant attribution) et TED (UE) — à garder hors périmètre pour l'instant.
+- Modèle A maintenant, Modèle B (favoris = « liste par défaut ») plus tard ? Confirmer qu'on ne généralise pas les favoris en V1.
+- Colonnes type CRM (statut, dernier contact, relance, à la Pappers) : hors cœur par défaut (proche de F-037). À acter : on les exclut, ou version légère portée par F-030 ?
+- Quotas en hébergé (nombre de listes / taille).
+
+---
+
+### F-030 — Annotations et tags utilisateur
+
+**Description** : l'utilisateur ajoute des notes privées **et des tags** sur les fiches qu'il consulte (entités annotées : entreprise, marque, brevet). Les tags appartiennent à F-030 car ce sont des attributs de l'entité annotée, indépendants de toute liste — cf. « Frontière avec F-053 » dans F-053.
+
+**Valeur user** : capitalisation de la connaissance personnelle au-dessus des données publiques.
+
+**Complexité** : ★★
+
+**APIs externes** : aucune.
+
+**Dépendances** : F-017.
+
+---
+
+### F-029 — Mode offline mobile avec sync
+
+**Description** : sur l'app MAUI mobile, possibilité de consulter ses favoris et son historique en mode hors-ligne, avec synchronisation automatique au retour de la connectivité.
+
+**Valeur user** : usage en déplacement (transports, zones rurales).
+
+**Complexité** : ★★★★
+
+**APIs externes** : aucune.
+
+**Dépendances** : F-009, F-017.
+
+**Détails techniques** : SQLite local + stratégie de réplication.
+
+---
+
+**Grappe 3 — Veille étendue & signaux** *(F-027, F-055 — le cluster veille du MVP 2 monte d'un cran : règles utilisateur PI + signaux de risque descriptifs)*
+
+### F-027 — Veille PI automatisée (règles utilisateur)
+
+> **Reformulée 29 mai 2026** — précision du périmètre pour la distinguer de F-046 (cluster veille MVP 2). **F-046 = infrastructure générique** de règles de veille (filtres sur flux, mots-clés, secteurs, types d'annonces). **F-027 = application spécifiquement PI** : règles ciblées sur les nouveaux dépôts marques / brevets (concurrents nommés, classes de Nice, mots-clés). F-027 réutilise F-046 quand la sémantique tient, ou ajoute des règles dédiées PI au-dessus.
+
+**Description** : l'utilisateur configure des règles ciblées PI — « alerte-moi à chaque nouveau dépôt de marque par mon concurrent X », « contenant le mot Y dans la classe Z ». Notifications email / push (F-019 / F-020).
+
+**Valeur user** : surveillance concurrentielle PI proactive, impossible à faire manuellement à grande échelle. Couvre le besoin du pack « Veille concurrentielle B2B » (doc 07).
+
+**Complexité** : ★★★★
+
+**APIs externes** : INPI PI (+ EUIPO / OMPI quand F-039 ouvert en V3+).
+
+**Dépendances** : F-018 (favoris marque / brevet), F-020 (push), F-046 (couche infrastructure des règles user — réutilisation).
 
 ---
 
@@ -1087,6 +1038,85 @@ Gratuit, sans authentification. Le **scraping n'est plus nécessaire** (corrige 
 - **Vue dédiée vs enrichissement de la fiche** existante.
 - **Seuils d'alerte** sur signaux.
 - **PEP** : hors périmètre tant qu'il n'y a pas de source gratuite exploitable.
+
+---
+
+**Grappe 4 — Outillage PI avancé** *(F-025, F-026 — killer feature pour les cabinets de propriété industrielle)*
+
+### F-025 — Tableau de bord portefeuille IP
+
+**Description** : vue agrégée des marques et brevets suivis par l'utilisateur, avec calendrier des renouvellements à venir, statut de chaque titre, alertes de risque (marques expirantes, oppositions en cours).
+
+**Valeur user** : remplace les tableaux Excel des cabinets PI pour gérer le portefeuille de leurs clients.
+
+**Complexité** : ★★★★★
+
+**APIs externes** : INPI PI.
+
+**Dépendances** : F-018.
+
+---
+
+### F-026 — Recherche d'antériorité marque avec matching intelligent
+
+**Description** : recherche d'antériorité avec matching phonétique (Soundex, Metaphone) et sémantique pour détecter les marques proches d'un terme cible, pas seulement les correspondances exactes.
+
+**Valeur user** : la vérification d'antériorité est un acte juridique précieux que les cabinets facturent. Un outil qui automatise une partie de cette analyse a une vraie valeur.
+
+**Complexité** : ★★★★★
+
+**APIs externes** : INPI PI + EUIPO + OMPI.
+
+**Dépendances** : F-006.
+
+---
+
+**Grappe 5 — Exposition tiers** *(F-028, F-052 — Atlas devient une plateforme : ouverte aux intégrateurs et aux agents IA)*
+
+### F-028 — API publique du projet
+
+**Description** : exposition d'une API REST publique permettant à des tiers (devs, intégrations) d'utiliser les fonctions du projet via clé API.
+
+**Valeur user** : intégration avec des CRMs, outils internes, scripts d'automatisation.
+
+**Complexité** : ★★★★
+
+**APIs externes** : aucune (exposition de l'existant).
+
+**Dépendances** : MVP 1 complet.
+
+**Détails techniques** : gestion des clés API, quotas, documentation Swagger / OpenAPI, rate limiting.
+
+---
+
+### F-052 — Serveur MCP (accès agents IA)
+
+**Description** : Atlas expose ses capacités sous forme de **serveur MCP** (Model Context Protocol), pour que des **agents IA** (Claude, et tout client compatible) puissent interroger les données et la veille au nom de l'utilisateur (rechercher une entreprise, lire une fiche, consulter les marques, gérer les favoris, interroger la timeline). L'agent n'a jamais plus de droits que l'utilisateur.
+
+**Valeur user** : pour les power users et les profils « travaillant avec l'IA », automatiser des workflows de suivi en langage naturel ; pour les intégrateurs, brancher Atlas dans leurs propres agents via une interface standard. **Différenciation** : un MCP **souverain et auto-hébergeable** est unique sur le marché français des données d'entreprise (Pappers expose déjà un MCP mais sans cet angle).
+
+**Complexité** : ★★★★ (lecture + écriture encadrée) ; ★★★★★ avec couche OAuth 2.1 complète. L'essentiel de l'effort est l'**auth/scoping** et le **durcissement sécurité**, pas la définition des outils (le SDK la rend triviale).
+
+**APIs externes** : aucune nouvelle source (réexpose les capacités existantes). Dépendance technique : SDK MCP officiel C# (`ModelContextProtocol`, `ModelContextProtocol.AspNetCore`), maintenu par Microsoft et Anthropic.
+
+**Dépendances** : use cases existants (F-004/F-005, fiche entreprise, F-006/F-007, F-017, F-041→F-047, F-042) ; ADR-003 (coffre de credentials) ; ADR-004 (archi hexagonale) ; **ADR-010 (auth utilisateur) + ADR-011 (OAuth 2.1 pour la délégation)**.
+
+**Détails techniques** :
+- **Nouvel adapter entrant** par-dessus les use cases MediatR existants (exactement comme `Atlas.Api`). Projet `Atlas.Mcp` (ou module dans l'API) qui traduit des appels d'outils MCP en commandes/queries du domaine. **Zéro modification du domaine** (ADR-004).
+- Le SDK C# déclare un outil en décorant une méthode (`[McpServerTool]`) ; le schéma JSON est généré automatiquement. Intégration : `AddMcpServer().WithHttpTransport().WithToolsFromAssembly()` + `MapMcp()`.
+- **Outils lecture (V1)** : `search_companies`, `get_company`, `search_trademarks`, `get_trademark`, `list_favorites`, `get_veille_timeline`, `list_veille_packs`.
+- **Outils écriture (encadrés, V2 du chantier)** : `add_favorite` / `remove_favorite`, `subscribe_feed_source` / `apply_veille_pack` — derrière des **approval workflows** et des **scopes** dédiés.
+- **Transports** : stdio (auto-hébergement local) et HTTP/Streamable HTTP (instance distante).
+- **Aucune exposition** de la gestion des secrets (credentials INPI, clés) via MCP. Aucune opération destructrice non réversible exposée sans garde forte.
+
+**Sécurité (cf. ADR-011)** : OAuth 2.1 + PKCE ; **scopes** distincts lecture vs écriture ; tokens courts + refresh rotatif révocable ; audit logging de chaque appel d'outil (Serilog déjà en place) ; rate limiting réutilisé (global + auth-strict). Risque spécifique : **injection par le contenu** (tool poisoning) — règle : le serveur traite tout contenu retourné comme **donnée**, jamais comme instruction ; les outils d'écriture exigent une approbation explicite.
+
+**Modèle économique** : aucun coût par utilisateur côté Atlas (l'inférence est côté agent). Reste dans le **cœur open source** (cohérent ADR-006). Une frontière premium éventuelle (quotas en hébergé, outils agentiques avancés) pourra être posée plus tard sans toucher au socle.
+
+**Décisions ouvertes** :
+- Périmètre exact des outils d'écriture exposés en V1 (probable : favoris + abonnements ; exclure tout ce qui touche aux secrets et au compte).
+- Exposition : self-host (stdio/HTTP local) d'abord, instance hébergée ensuite ? Politique de quotas en hébergé.
+- Frontière premium éventuelle (à n'arbitrer qu'en phase 3-4).
 
 ---
 
