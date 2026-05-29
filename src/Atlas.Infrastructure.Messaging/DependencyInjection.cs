@@ -1,6 +1,7 @@
 using System.Net;
 using Atlas.Domain.Notifications;
 using Atlas.Infrastructure.Messaging.Email;
+using Atlas.Infrastructure.Messaging.Email.Brevo;
 using Atlas.Infrastructure.Messaging.Push;
 using Atlas.Infrastructure.Messaging.Push.Apns;
 using Atlas.Infrastructure.Messaging.Push.Fcm;
@@ -18,7 +19,28 @@ public static class DependencyInjection
         IConfiguration configuration)
     {
         services.Configure<EmailOptions>(configuration.GetSection(EmailOptions.SectionName));
-        services.AddSingleton<IEmailSender, LoggingEmailSender>();
+        services.Configure<BrevoOptions>(configuration.GetSection(BrevoOptions.SectionName));
+
+        // Switch DI : si une ApiKey Brevo est configurée, on câble l'adapter HTTP Brevo
+        // (provider France RGPD-compliant). Sans clé, fallback LoggingEmailSender (mode dev).
+        BrevoOptions brevo = configuration.GetSection(BrevoOptions.SectionName).Get<BrevoOptions>() ?? new BrevoOptions();
+        bool brevoEnabled = !string.IsNullOrWhiteSpace(brevo.ApiKey);
+
+        if (brevoEnabled)
+        {
+            services.AddHttpClient<IEmailSender, BrevoEmailSender>((provider, client) =>
+            {
+                BrevoOptions runtime = provider.GetRequiredService<IOptions<BrevoOptions>>().Value;
+                client.BaseAddress = new Uri(runtime.BaseUrl);
+                client.Timeout = TimeSpan.FromSeconds(runtime.TimeoutSeconds);
+                client.DefaultRequestHeaders.Add("api-key", runtime.ApiKey);
+                client.DefaultRequestHeaders.Accept.ParseAdd("application/json");
+            });
+        }
+        else
+        {
+            services.AddSingleton<IEmailSender, LoggingEmailSender>();
+        }
 
         // ── Push (F-020) ──────────────────────────────────────────────────────────────
         // Chaque plateforme configurée enregistre son IPlatformPushDispatcher ;
