@@ -46,6 +46,8 @@ public static class DependencyInjection
         services.AddScoped<IPatentFavoriteRepository, PatentFavoriteRepository>();
         services.AddScoped<IBulkDownloadJobRepository, BulkDownloadJobRepository>();
         services.AddScoped<IFeedRuleRepository, FeedRuleRepository>();
+        services.AddScoped<IVeillePackLikeRepository, VeillePackLikeRepository>();
+        services.AddScoped<IVeillePackReportRepository, VeillePackReportRepository>();
 
         return services;
     }

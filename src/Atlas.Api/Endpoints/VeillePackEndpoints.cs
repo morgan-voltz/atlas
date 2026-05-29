@@ -2,6 +2,15 @@ using System.Security.Claims;
 using Atlas.Application.Veille.ApplyVeillePack;
 using Atlas.Application.Veille.GetMyVeillePacks;
 using Atlas.Application.Veille.GetVeilleCatalog;
+using Atlas.Application.Veille.Marketplace;
+using Atlas.Application.Veille.Marketplace.CreateUserVeillePack;
+using Atlas.Application.Veille.Marketplace.GetMyAuthoredPacks;
+using Atlas.Application.Veille.Marketplace.LikeVeillePack;
+using Atlas.Application.Veille.Marketplace.ListPublicMarketplace;
+using Atlas.Application.Veille.Marketplace.PublishVeillePack;
+using Atlas.Application.Veille.Marketplace.ReportVeillePack;
+using Atlas.Application.Veille.Marketplace.UnlikeVeillePack;
+using Atlas.Application.Veille.Marketplace.UnpublishVeillePack;
 using Atlas.Application.Veille.SyncVeillePack;
 using Atlas.Shared.Result;
 using MediatR;
@@ -29,6 +38,16 @@ internal static class VeillePackEndpoints
 
         // Re-synchroniser un pack déjà appliqué sur sa version courante.
         group.MapPost("/{code}/sync", SyncAsync);
+
+        // F-049 marketplace.
+        group.MapGet("/community", ListCommunityAsync);
+        group.MapPost("/user", CreateUserPackAsync);
+        group.MapGet("/mine/authored", GetMyAuthoredAsync);
+        group.MapPatch("/user/{code}/publish", PublishAsync);
+        group.MapPatch("/user/{code}/unpublish", UnpublishAsync);
+        group.MapPost("/{code}/like", LikeAsync);
+        group.MapDelete("/{code}/like", UnlikeAsync);
+        group.MapPost("/{code}/report", ReportAsync);
 
         return routes;
     }
@@ -65,4 +84,128 @@ internal static class VeillePackEndpoints
         Result<ApplyVeillePackResult> result = await sender.Send(new SyncVeillePackCommand(userId, code), ct);
         return result.IsSuccess ? Results.Ok(result.Value) : result.Error!.ToProblem();
     }
+
+    // ---- F-049 marketplace ----
+
+    private static async Task<IResult> ListCommunityAsync(
+        ISender sender, int? page, int? pageSize, CancellationToken ct)
+    {
+        Result<PagedResult<VeillePackMarketplaceDto>> result = await sender.Send(
+            new ListPublicMarketplaceQuery(page ?? 1, pageSize ?? 20), ct);
+        return result.IsSuccess ? Results.Ok(result.Value) : result.Error!.ToProblem();
+    }
+
+    private static async Task<IResult> CreateUserPackAsync(
+        ClaimsPrincipal principal,
+        CreateUserVeillePackRequest request,
+        ISender sender,
+        CancellationToken ct)
+    {
+        if (!principal.TryGetUserId(out Guid userId))
+        {
+            return Results.Unauthorized();
+        }
+
+        Result<VeillePackMarketplaceDto> result = await sender.Send(
+            new CreateUserVeillePackCommand(
+                userId,
+                request.Code,
+                request.Name,
+                request.Description ?? string.Empty,
+                request.SubscriptionIds ?? []),
+            ct);
+
+        return result.IsSuccess
+            ? Results.Created($"/veille/packs/user/{result.Value!.Code}", result.Value)
+            : result.Error!.ToProblem();
+    }
+
+    private static async Task<IResult> GetMyAuthoredAsync(
+        ClaimsPrincipal principal, ISender sender, CancellationToken ct)
+    {
+        if (!principal.TryGetUserId(out Guid userId))
+        {
+            return Results.Unauthorized();
+        }
+
+        Result<IReadOnlyList<VeillePackMarketplaceDto>> result =
+            await sender.Send(new GetMyAuthoredPacksQuery(userId), ct);
+        return result.IsSuccess ? Results.Ok(result.Value) : result.Error!.ToProblem();
+    }
+
+    private static async Task<IResult> PublishAsync(
+        ClaimsPrincipal principal, string code, ISender sender, CancellationToken ct)
+    {
+        if (!principal.TryGetUserId(out Guid userId))
+        {
+            return Results.Unauthorized();
+        }
+
+        Result<VeillePackMarketplaceDto> result =
+            await sender.Send(new PublishVeillePackCommand(userId, code), ct);
+        return result.IsSuccess ? Results.Ok(result.Value) : result.Error!.ToProblem();
+    }
+
+    private static async Task<IResult> UnpublishAsync(
+        ClaimsPrincipal principal, string code, ISender sender, CancellationToken ct)
+    {
+        if (!principal.TryGetUserId(out Guid userId))
+        {
+            return Results.Unauthorized();
+        }
+
+        Result<VeillePackMarketplaceDto> result =
+            await sender.Send(new UnpublishVeillePackCommand(userId, code), ct);
+        return result.IsSuccess ? Results.Ok(result.Value) : result.Error!.ToProblem();
+    }
+
+    private static async Task<IResult> LikeAsync(
+        ClaimsPrincipal principal, string code, ISender sender, CancellationToken ct)
+    {
+        if (!principal.TryGetUserId(out Guid userId))
+        {
+            return Results.Unauthorized();
+        }
+
+        Result result = await sender.Send(new LikeVeillePackCommand(userId, code), ct);
+        return result.IsSuccess ? Results.NoContent() : result.Error!.ToProblem();
+    }
+
+    private static async Task<IResult> UnlikeAsync(
+        ClaimsPrincipal principal, string code, ISender sender, CancellationToken ct)
+    {
+        if (!principal.TryGetUserId(out Guid userId))
+        {
+            return Results.Unauthorized();
+        }
+
+        Result result = await sender.Send(new UnlikeVeillePackCommand(userId, code), ct);
+        return result.IsSuccess ? Results.NoContent() : result.Error!.ToProblem();
+    }
+
+    private static async Task<IResult> ReportAsync(
+        ClaimsPrincipal principal,
+        string code,
+        ReportVeillePackRequest request,
+        ISender sender,
+        CancellationToken ct)
+    {
+        if (!principal.TryGetUserId(out Guid userId))
+        {
+            return Results.Unauthorized();
+        }
+
+        Result result = await sender.Send(
+            new ReportVeillePackCommand(userId, code, request.Reason),
+            ct);
+        return result.IsSuccess ? Results.Accepted() : result.Error!.ToProblem();
+    }
+
+    private sealed record CreateUserVeillePackRequest(
+        string Code,
+        string Name,
+        string? Description,
+        IReadOnlyList<Guid>? SubscriptionIds);
+
+    private sealed record ReportVeillePackRequest(string Reason);
 }

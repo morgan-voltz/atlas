@@ -32,6 +32,16 @@ public static class VeilleErrors
 
     public static readonly DomainError FeedRuleForbidden = new FeedRuleForbiddenError();
 
+    public static readonly DomainError VeillePackImmutable = new VeillePackImmutableError();
+
+    public static readonly DomainError VeillePackForbidden = new VeillePackForbiddenError();
+
+    public static readonly DomainError VeillePackNotPublic = new VeillePackNotPublicError();
+
+    public static readonly DomainError VeillePackCodeAlreadyUsed = new VeillePackCodeAlreadyUsedError();
+
+    public static DomainError InvalidVeillePackReport(string reason) => new InvalidVeillePackReportError(reason);
+
     private sealed record InvalidFeedSourceError(string Reason)
         : DomainError("veille.invalid_feed_source", $"Source de veille invalide : {Reason}");
 
@@ -73,4 +83,19 @@ public static class VeilleErrors
 
     private sealed record FeedRuleForbiddenError()
         : DomainError("veille.feed_rule_forbidden", "Vous n'êtes pas autorisé à modifier cette règle.");
+
+    private sealed record VeillePackImmutableError()
+        : DomainError("veille.veille_pack_immutable", "Un pack système ne peut pas être modifié par l'utilisateur.");
+
+    private sealed record VeillePackForbiddenError()
+        : DomainError("veille.veille_pack_forbidden", "Vous n'êtes pas autorisé à modifier ce pack.");
+
+    private sealed record VeillePackNotPublicError()
+        : DomainError("veille.veille_pack_not_public", "Ce pack n'est pas publié au marketplace communautaire.");
+
+    private sealed record VeillePackCodeAlreadyUsedError()
+        : DomainError("veille.veille_pack_code_already_used", "Ce code de pack est déjà utilisé.");
+
+    private sealed record InvalidVeillePackReportError(string Reason)
+        : DomainError("veille.invalid_veille_pack_report", $"Signalement invalide : {Reason}");
 }
