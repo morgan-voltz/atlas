@@ -1,0 +1,34 @@
+meta {
+  name: 02 Dev fetch verification token
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/dev/verification-token?email={{ciEmail}}
+}
+
+script:post-response {
+  if (res.getStatus() === 200) {
+    const body = res.getBody();
+    if (body && body.token) {
+      bru.setVar("verificationToken", body.token);
+    }
+  }
+}
+
+tests {
+  test("statut 200", function () {
+    expect(res.getStatus()).to.equal(200);
+  });
+  test("token capturé", function () {
+    expect(bru.getVar("verificationToken")).to.be.a("string");
+  });
+}
+
+docs {
+  Lot 10 — Étape 2/14. Récupère le token de vérification depuis le
+  store mémoire `DevVerificationTokenStore` (endpoint DEV-only, désactivé en prod).
+
+  En CI, l'environnement est `Development` donc l'endpoint /dev/* est mappé.
+}

@@ -396,6 +396,43 @@ appel authentifié réel (cf. roadmap, statuts 🟡).
   pour la carte-aperçu (§7) et la carte-section (§8). Référencée depuis la
   table « Documents fondateurs » de `CLAUDE.md` et depuis les fiches F-009
   et F-010.
+- **Lot 10 — Automatisation E2E API contre l'INPI réel (workflow GitHub
+  Actions + Bruno CLI)** : la couverture Bruno (100 % endpoints, Lot 8) +
+  les mappings HTTP corrects (Lot 9) deviennent **exécutables en automatique**
+  par un job CI dédié qui frappe l'INPI **en production**.
+  - **`.github/workflows/bruno-inpi-e2e.yml`** : nouveau workflow distinct
+    de `ci.yml`. Trigger `workflow_dispatch` (bouton « Run workflow ») +
+    `schedule: cron '0 2 * * *'` (nightly 02:00 UTC, avant les jobs
+    Hangfire `feed-polling` et `favorite-refresh`). Pas sur push/PR pour
+    protéger les secrets INPI et éviter le rate-limit côté INPI à chaque
+    contribution.
+  - **Stack** : `services.postgres` (postgres:16-alpine) + `actions/setup-dotnet@v4`
+    (10.0.x) + `actions/setup-node@v4` (20) + `npm install -g @usebruno/cli`.
+    Migrations EF Core appliquées avant le start API. `Atlas.Api` démarré
+    en background avec un `wait-for-ready` (poll `curl localhost:5023/` jusqu'à
+    60 s). Logs API uploadés en artefact si échec.
+  - **`bruno/90-INPI-E2E-CI/` (14 étapes orchestrées, séquence ordonnée)** :
+    Register → Dev fetch verification token → Verify email → Login →
+    INPI Connect (POST `/inpi/connection` avec username/password réels)
+    → INPI Status (vérifie `isConnected=true`) → Company Detail (RENAULT
+    SIREN 552032534) → Company Search (« Renault ») → Trademark Search
+    (capture `depositNumber`) → Trademark Detail → Patent Search (déposant
+    Renault, capture `publicationNumber`) → Company Attachments (F-013) →
+    INPI Disconnect → Account Delete (cleanup RGPD cascade).
+  - **`bruno/environments/CI.bru`** : nouveau profil dédié au workflow.
+    `baseUrl=http://localhost:5023`, email unique par run via
+    `e2e-{{process.env.GITHUB_RUN_ID}}@atlas-ci.test`, password fixe pour
+    ce profil, credentials INPI injectés via `bruno/.env` créé à la volée
+    depuis les secrets GitHub.
+  - **Secrets repo requis** (à créer côté Settings → Secrets and variables) :
+    `INPI_USERNAME`, `INPI_PASSWORD`. Le workflow `bruno-inpi-e2e` échoue
+    explicitement avec un message clair si les secrets sont absents.
+  - **Artefacts uploadés** : `bruno-results.xml` (JUnit), `bruno-results.json`,
+    `bruno-results.html` (rapports Bruno) + `atlas-api.log` (sur échec API
+    seulement). Téléchargeables depuis l'onglet « Actions » du run.
+  - **Concurrency lock** : `group: bruno-inpi-e2e` + `cancel-in-progress: false`
+    pour éviter qu'un nightly et un déclenchement manuel se chevauchent et
+    cognent l'INPI en double.
 - **Lot 9 — Mapping HTTP des 6 codes d'erreur veille manquants** :
   ferme la dette annexe documentée par Lot 8. Les codes métier
   `veille.feed_rule_not_found`, `feed_rule_forbidden`,

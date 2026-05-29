@@ -62,6 +62,32 @@ L'API démarre en environnement `Development` :
 | `22-Veille-Marketplace` | **F-049** | 01 List community, 02 Create user pack, 03 My authored, 04 Publish, 05 Like, 06 Unlike, 07 Report, 08 Unpublish |
 | `23-Accessibility` | **Lot 5c** | 01 Get defaults, 02 Update, 03 Round-trip (GET reflects PUT) |
 | `24-Rules-Flow` | E2E F-046 | 01 Create → 02 List contains → 03 Patch → 04 Delete → 05 List excludes |
+| `90-INPI-E2E-CI` | **Lot 10 — E2E INPI réel** | Register → Verify → Login → INPI Connect → Status → Company Detail/Search → Trademark Search/Detail → Patent Search → Attachments → INPI Disconnect → Account Delete (cleanup) |
+
+### `90-INPI-E2E-CI` — workflow GitHub Actions automatisé
+
+Ce dossier est orchestré pour tourner dans GitHub Actions contre l'INPI **réel** :
+le workflow `.github/workflows/bruno-inpi-e2e.yml` se déclenche manuellement
+(bouton « Run workflow ») ou en nightly (cron `0 2 * * *` UTC).
+
+**Secrets repo requis** (Settings → Secrets and variables → Actions → New repository secret) :
+
+| Secret | Contenu |
+|---|---|
+| `INPI_USERNAME` | Identifiant API INPI (data.inpi.fr > « Mes accès API ») |
+| `INPI_PASSWORD` | Mot de passe associé (sera entouré de quotes simples si caractères spéciaux) |
+
+**Environnement Bruno** : `environments/CI.bru` — `baseUrl=http://localhost:5023`,
+email unique par run (`e2e-{{GITHUB_RUN_ID}}@atlas-ci.test`), credentials INPI
+injectés via `bruno/.env` créé à la volée depuis les secrets GitHub.
+
+**Lancement local équivalent** (Bruno CLI installé via `npm install -g @usebruno/cli`,
+API démarrée sur `localhost:5023`, `bruno/.env` rempli) :
+
+```bash
+cd bruno
+bru run "90-INPI-E2E-CI" --env CI
+```
 
 ### Étape manuelle : vérification de l'email
 

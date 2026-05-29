@@ -1,0 +1,34 @@
+meta {
+  name: 07 Company Detail (RENAULT)
+  type: http
+  seq: 7
+}
+
+get {
+  url: {{baseUrl}}/companies/{{siren}}
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+tests {
+  test("statut 200", function () {
+    expect(res.getStatus()).to.equal(200);
+  });
+  test("SIREN renvoyé = celui demandé", function () {
+    const body = res.getBody();
+    expect(body).to.have.property("siren");
+    expect(body.siren).to.equal(bru.getVar("siren"));
+  });
+  test("dénomination présente", function () {
+    expect(res.getBody()).to.have.property("denomination");
+  });
+}
+
+docs {
+  Lot 10 — Étape 7/14 (F-004). Récupère la fiche entreprise RENAULT (SIREN 552032534)
+  depuis l'API RNE INPI réelle. Valide le mapping `RneCompanyMapper` et la chaîne
+  d'auth Bearer + retry 401 du `RneCompanyProvider`.
+}

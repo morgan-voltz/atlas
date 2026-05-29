@@ -1,0 +1,32 @@
+meta {
+  name: 14 Delete account (cleanup)
+  type: http
+  seq: 14
+}
+
+delete {
+  url: {{baseUrl}}/account
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+tests {
+  test("statut 204", function () {
+    expect(res.getStatus()).to.equal(204);
+  });
+}
+
+docs {
+  Lot 10 — Étape 14/14. Supprime le compte de test créé à l'étape 1.
+
+  Cleanup essentiel pour les runs nightly : sans cela, la base de test accumule
+  des comptes orphelins (le harness CI utilise un Postgres conteneurisé jetable
+  donc l'impact est limité, mais cleanup garde la collection idempotente si
+  exécutée localement aussi).
+
+  Cascade FK RGPD : la suppression entraîne le nettoyage des credentials INPI,
+  refresh tokens, search history, favoris, subscriptions veille, etc. (cf. Lot 1).
+}

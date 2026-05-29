@@ -1,0 +1,151 @@
+name: bruno-inpi-e2e
+
+# Workflow d'E2E API contre l'INPI réel via Bruno CLI.
+# - Trigger : workflow_dispatch (bouton GitHub) + cron nightly 02:00 UTC.
+# - Pas sur push/PR : protège les secrets INPI et évite de cogner le rate limit
+#   INPI sur chaque PR.
+#
+# Secrets repo requis :
+#   - INPI_USERNAME    : identifiant API INPI (compte data.inpi.fr > « Mes accès API »)
+#   - INPI_PASSWORD    : mot de passe associé (quotes simples si caractères spéciaux)
+#
+# Lot 10 — Atlas backend E2E avec accès INPI réel.
+
+on:
+  workflow_dispatch:
+  schedule:
+    # Tous les jours à 02:00 UTC (~04:00 Paris d'été, ~03:00 Paris d'hiver).
+    # Avant le job de polling veille (`feed-polling */30 * * * *`) et le job de
+    # refresh favoris (`favorite-refresh 0 3 * * *`) — pas d'interférence backend.
+    - cron: '0 2 * * *'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: bruno-inpi-e2e
+  cancel-in-progress: false
+
+jobs:
+  bruno-e2e:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: atlas
+          POSTGRES_PASSWORD: atlas
+          POSTGRES_DB: atlas
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U atlas -d atlas"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      # Connexion EF Core/Npgsql vers le service Postgres ci-dessus.
+      ConnectionStrings__Atlas: "Host=localhost;Port=5432;Database=atlas;Username=atlas;Password=atlas"
+      # Dev environment requis pour exposer `/dev/verification-token` (étape 2 du flow).
+      DOTNET_ENVIRONMENT: Development
+      ASPNETCORE_ENVIRONMENT: Development
+      # Désactive les Hangfire background jobs : on n'a pas besoin du polling
+      # veille / refresh favoris durant un E2E court, et ça simplifie le startup.
+      BackgroundJobs__Enabled: "false"
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Bruno CLI
+        run: npm install -g @usebruno/cli
+
+      - name: Restore + build Atlas.Api (Release)
+        run: dotnet build src/Atlas.Api/Atlas.Api.csproj -c Release --nologo
+
+      - name: Apply EF Core migrations
+        run: |
+          dotnet tool install --global dotnet-ef --version "10.*" || true
+          dotnet ef database update \
+            --project src/Atlas.Infrastructure.Persistence \
+            --startup-project src/Atlas.Api \
+            --no-build \
+            --configuration Release
+
+      - name: Start Atlas.Api in background
+        run: |
+          dotnet src/Atlas.Api/bin/Release/net10.0/Atlas.Api.dll \
+            --urls "http://localhost:5023" > atlas-api.log 2>&1 &
+          echo "API_PID=$!" >> $GITHUB_ENV
+
+      - name: Wait for API ready (max 60s)
+        run: |
+          for i in $(seq 1 60); do
+            if curl -fs http://localhost:5023/ > /dev/null; then
+              echo "API ready after ${i}s"
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "API did not start within 60s" >&2
+          cat atlas-api.log
+          exit 1
+
+      - name: Write bruno/.env from secrets
+        env:
+          INPI_USERNAME: ${{ secrets.INPI_USERNAME }}
+          INPI_PASSWORD: ${{ secrets.INPI_PASSWORD }}
+        run: |
+          if [ -z "$INPI_USERNAME" ] || [ -z "$INPI_PASSWORD" ]; then
+            echo "::error::Secrets INPI_USERNAME / INPI_PASSWORD non définis sur le repo."
+            echo "Va dans Settings → Secrets and variables → Actions → New repository secret."
+            exit 1
+          fi
+          cat > bruno/.env <<EOF
+          INPI_USERNAME=$INPI_USERNAME
+          INPI_PASSWORD='$INPI_PASSWORD'
+          EOF
+
+      - name: Run Bruno E2E orchestrated (90-INPI-E2E-CI)
+        working-directory: bruno
+        run: |
+          bru run "90-INPI-E2E-CI" \
+            --env CI \
+            --reporter-junit ../bruno-results.xml \
+            --reporter-json ../bruno-results.json \
+            --output ../bruno-results.html
+
+      - name: Upload API logs (on failure)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: atlas-api-log
+          path: atlas-api.log
+          if-no-files-found: ignore
+
+      - name: Upload Bruno results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: bruno-results
+          path: |
+            bruno-results.xml
+            bruno-results.json
+            bruno-results.html
+          if-no-files-found: ignore
+
+      - name: Stop API
+        if: always()
+        run: |
+          if [ -n "$API_PID" ]; then
+            kill $API_PID || true
+          fi

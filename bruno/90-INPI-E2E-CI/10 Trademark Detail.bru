@@ -1,0 +1,27 @@
+meta {
+  name: 10 Trademark Detail
+  type: http
+  seq: 10
+}
+
+get {
+  url: {{baseUrl}}/trademarks/{{depositNumber}}
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+tests {
+  test("statut 200", function () {
+    expect(res.getStatus()).to.equal(200);
+  });
+  test("depositNumber présent", function () {
+    expect(res.getBody()).to.have.property("depositNumber");
+  });
+}
+
+docs {
+  Lot 10 — Étape 10/14 (F-007). Notice détaillée d'une marque (classes de Nice).
+}

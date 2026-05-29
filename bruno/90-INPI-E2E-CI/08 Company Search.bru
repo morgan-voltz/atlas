@@ -1,0 +1,34 @@
+meta {
+  name: 08 Company Search
+  type: http
+  seq: 8
+}
+
+get {
+  url: {{baseUrl}}/companies?name={{companyName}}&page=1&pageSize=10
+  auth: bearer
+  params:query {
+    name: {{companyName}}
+    page: 1
+    pageSize: 10
+  }
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+tests {
+  test("statut 200", function () {
+    expect(res.getStatus()).to.equal(200);
+  });
+  test("forme PagedResult", function () {
+    const body = res.getBody();
+    expect(body).to.have.property("items");
+    expect(body).to.have.property("totalCount");
+  });
+}
+
+docs {
+  Lot 10 — Étape 8/14 (F-005). Recherche d'entreprise par dénomination (« Renault »).
+}

@@ -1,0 +1,29 @@
+meta {
+  name: 06 INPI Status
+  type: http
+  seq: 6
+}
+
+get {
+  url: {{baseUrl}}/inpi/connection
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+tests {
+  test("statut 200", function () {
+    expect(res.getStatus()).to.equal(200);
+  });
+  test("isConnected = true après Connect", function () {
+    const body = res.getBody();
+    expect(body).to.have.property("isConnected");
+    expect(body.isConnected).to.equal(true);
+  });
+}
+
+docs {
+  Lot 10 — Étape 6/14. Vérifie que la connexion INPI est bien active.
+}

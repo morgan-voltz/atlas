@@ -1,0 +1,44 @@
+meta {
+  name: 11 Patent Search
+  type: http
+  seq: 11
+}
+
+get {
+  url: {{baseUrl}}/patents?applicant=renault&page=1&pageSize=10
+  auth: bearer
+  params:query {
+    applicant: renault
+    page: 1
+    pageSize: 10
+  }
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+script:post-response {
+  if (res.getStatus() === 200) {
+    const items = (res.getBody() && res.getBody().items) || [];
+    if (items.length > 0 && items[0].publicationNumber) {
+      bru.setVar("publicationNumber", items[0].publicationNumber);
+    }
+  }
+}
+
+tests {
+  test("statut 200", function () {
+    expect(res.getStatus()).to.equal(200);
+  });
+  test("PagedResult conforme", function () {
+    const body = res.getBody();
+    expect(body).to.have.property("items");
+    expect(body).to.have.property("totalCount");
+  });
+}
+
+docs {
+  Lot 10 — Étape 11/14 (F-016). Recherche brevet multi-critères (déposant = RENAULT).
+  Capture publicationNumber pour l'étape suivante.
+}
