@@ -184,6 +184,43 @@ public sealed class InpiPiTrademarkProviderIntegrationTests : IDisposable
         result.Error!.Code.Should().Be("inpi.invalid_credentials");
     }
 
+    /// <summary>
+    /// Lot 12 — Valide que les requêtes post-login envoient le **cookie** `XSRF-TOKEN` en plus
+    /// de `access_token`, ET le header `X-XSRF-TOKEN`. Le serveur Spring Security applique le
+    /// pattern double-submit cookie : il compare le header `X-XSRF-TOKEN` à la valeur du cookie
+    /// `XSRF-TOKEN` et rejette en 403 « Could not verify the provided CSRF token because your
+    /// session was not found. » sans cette double présence. Régression INPI réelle détectée le
+    /// 2026-05-29 post-Lot 11.
+    /// </summary>
+    [Fact]
+    public async Task SearchTrademarks_sends_both_access_token_and_xsrf_token_cookies()
+    {
+        StubLogin();
+        _server
+            .Given(Request.Create().WithPath("/services/apidiffusion/api/marques/search").UsingPost())
+            .RespondWith(JsonResponse(200, SearchJson));
+
+        Result<PagedResult<TrademarkSummary>> result = await CreateProvider()
+            .SearchTrademarksAsync(new TrademarkSearchQuery("nike", 1, 20), Credentials, CancellationToken.None);
+
+        result.IsSuccess.Should().BeTrue();
+
+        WireMock.IRequestMessage searchRequest = _server.LogEntries
+            .Where(e => e.RequestMessage?.AbsolutePath?.EndsWith("/marques/search", StringComparison.Ordinal) == true)
+            .Select(e => e.RequestMessage!)
+            .Single();
+
+        // Double-submit côté requête : cookie XSRF-TOKEN + header X-XSRF-TOKEN.
+        searchRequest.Cookies!.Should().ContainKey("XSRF-TOKEN");
+        searchRequest.Cookies!.Should().ContainKey("access_token");
+        searchRequest.Headers!.Should().ContainKey("X-XSRF-TOKEN");
+
+        // Sanity : les deux valeurs XSRF (cookie et header) doivent être identiques.
+        string cookieXsrf = searchRequest.Cookies!["XSRF-TOKEN"];
+        string headerXsrf = searchRequest.Headers!["X-XSRF-TOKEN"].Single();
+        cookieXsrf.Should().Be(headerXsrf, "le serveur compare la valeur du header à celle du cookie.");
+    }
+
     [Fact]
     public async Task GetTrademarkImage_returns_bytes_with_content_type()
     {

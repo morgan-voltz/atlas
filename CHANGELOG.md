@@ -396,6 +396,47 @@ appel authentifié réel (cf. roadmap, statuts 🟡).
   pour la carte-aperçu (§7) et la carte-section (§8). Référencée depuis la
   table « Documents fondateurs » de `CLAUDE.md` et depuis les fiches F-009
   et F-010.
+- **Lot 12 — Fix cookie XSRF-TOKEN double-submit sur requêtes data PI** :
+  suite directe du diagnostic curl live post-Lot 11. L'auth PI réussit
+  désormais (JWT bien obtenu, avec rôles `ROLE_API_MARQUES` /
+  `ROLE_API_BREVETS` / `ROLE_API_MODELES`), mais toutes les requêtes
+  data (`/marques/search`, `/marques/notice/{id}`, `/marques/image/...`,
+  équivalents brevets) recevaient **403 « Could not verify the provided
+  CSRF token because your session was not found. »**.
+  - Le serveur INPI applique le pattern **double-submit cookie** de
+    Spring Security : il compare le header `X-XSRF-TOKEN` à la valeur
+    du **cookie** `XSRF-TOKEN`. Atlas envoyait seulement
+    `Cookie: access_token=...` + `X-XSRF-TOKEN: <token>` mais **omettait
+    le cookie XSRF-TOKEN**, donc le serveur ne trouvait pas de session
+    associée au header.
+  - **Fix dans `Authenticated()` helper** (méthode privée partagée par
+    Search / Notice / Image / Patent Search / Patent Detail) :
+    ```diff
+    - request.Headers.TryAddWithoutValidation(
+    -     "Cookie", $"access_token={session.AccessToken}");
+    + request.Headers.TryAddWithoutValidation(
+    +     "Cookie",
+    +     $"access_token={session.AccessToken}; XSRF-TOKEN={session.XsrfToken}");
+      request.Headers.TryAddWithoutValidation("X-XSRF-TOKEN", session.XsrfToken);
+    ```
+  - **Test d'intégration WireMock**
+    (`SearchTrademarks_sends_both_access_token_and_xsrf_token_cookies`) :
+    inspecte `_server.LogEntries` sur `/marques/search` et vérifie que la
+    requête contient à la fois `Cookie: access_token` ET
+    `Cookie: XSRF-TOKEN`, ET le header `X-XSRF-TOKEN`, ET que la valeur
+    du cookie XSRF-TOKEN est **identique** à celle du header (la
+    comparaison côté serveur l'exige).
+  - **Validation manuelle curl contre INPI live** : avant Lot 12 → 403
+    « session not found » ; après Lot 12 → le CSRF est validé,
+    l'INPI traite la requête. Nouveau point de friction immédiat :
+    `POST /services/apidiffusion/api/marques/search` retourne **405
+    Method Not Allowed** alors que la spec officielle
+    (`docs/INPI/APIDiffusionV2.json` v1.1.0) documente bien POST. Soit
+    l'API live diverge de la spec téléchargée, soit le contrat de
+    requête (`PiSearchRequest` vs `TrademarkQuery` officiel : query SolR
+    `[Mark=...]`, `position`/`size`, `collections`) doit être mis à jour.
+    Tracé pour un Lot 13 dédié au refactor du contrat de search PI v2.
+  - 17 tests d'intégration Inpi verts (+1 vs Lot 11).
 - **Lot 11 — Fix CSRF primer dans l'auth INPI PI (régression INPI réel)** :
   l'API INPI PI a durci son authentification — un primer CSRF est désormais
   exigé avant le `POST /auth/login`. L'adapter `InpiPiTrademarkProvider`
