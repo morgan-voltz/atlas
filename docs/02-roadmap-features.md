@@ -4,7 +4,7 @@
 > Chaque feature est décrite avec sa valeur utilisateur, sa complexité technique, les APIs externes requises et les dépendances vers d'autres features.
 
 **Version** : 1.0
-**Date de dernière mise à jour** : 29 mai 2026
+**Date de dernière mise à jour** : 30 mai 2026
 
 ---
 
@@ -784,6 +784,42 @@ Pour chaque feature, on documente :
 - F-049 : dans MVP 2 ou bascule officielle en V2 ?
 - Quels « 🟡 » assume-t-on en post-MVP 2 vs lesquels passe-t-on en ✅ avant de fermer ?
 - Promotion des MVP 1 🟡 résiduels (F-004 à F-007 — confirmation INPI réelle, F-009/F-010 — exécution MAUI + QA, F-012 — contenu légal UI) : à boucler dans la même fenêtre que MVP 2 pour pouvoir parler de « MVP livré ».
+
+---
+
+## Campagne de tests e2e — 30 mai 2026
+
+> Exécution locale de la collection Bruno versionnée (`bruno/`) contre l'API réelle
+> (procédure : `docs/13-harness-test-local-e2e.md`).
+
+**État** : le **cœur fonctionnel est vert** — flux complets d'inscription, 2FA TOTP,
+RGPD (export / effacement), favoris (entreprise / marque / brevet), devices/push,
+veille et règles de surveillance. Point de départ de la campagne : 86/138 requêtes
+vertes, les écarts étant ensuite soit corrigés (ci-dessous), soit attribués aux
+endpoints INPI (cf. « Validation contre l'API INPI réelle »).
+
+**Corrections issues de la campagne**
+
+- **F-014** — `GET /downloads/bulk/{id}/archive` renvoyait `500` (chemin de stockage
+  `RootPath` non configuré écrasé à `null`) ; le job de fond plantait de même. Repli
+  défensif sur le répertoire par défaut + tests de régression (#69).
+- **F-001** — `GET /auth/verify-email` renvoyait `500` sur un `userId` vide ou mal
+  formé (échec de binding du `Guid`). Binding permissif → `400` via le validator (#72).
+- **Transversal API** — les ProblemDetails exposent désormais un champ `code` stable
+  (RFC 9457) sur toutes les erreurs (métier et validation), au lieu d'un code dispersé
+  entre `title`/`type`. Déduplique au passage l'invariant feed-rule (`veille.invalid_feed_rule`
+  porté par le seul domaine). Contrat utile pour F-028 (#74).
+
+**Outillage de test**
+
+- Guide du harness e2e local ajouté (`docs/13-harness-test-local-e2e.md`, #71).
+- Rate limit `auth-strict` relâché en `Development` pour permettre les runs récursifs (#70).
+- Variables `depositNumber` / `publicationNumber` renseignées dans `Local.bru`, débloquant
+  le dossier `18-IP-Favorites` (#73).
+
+**Reste à valider** : les dossiers INPI (`16-Company-Attachments`, `17-Patents`,
+`20-Company-Report`, `90-INPI-E2E-CI`) renvoient `409 inpi.not_connected` faute de
+compte INPI habilité — couvert par la punch-list « Validation contre l'API INPI réelle ».
 
 ---
 
