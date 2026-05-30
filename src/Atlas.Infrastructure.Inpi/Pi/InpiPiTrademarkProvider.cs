@@ -31,11 +31,12 @@ internal sealed class InpiPiTrademarkProvider(
     private const string PatentNoticePath = "services/apidiffusion/api/brevets/notice/";
     private const string PatentSearchPath = "services/apidiffusion/api/brevets/search";
 
-    // Lot 13 — collections par défaut (cf. docs/INPI/APIDiffusionV2.json TrademarkQuery / PatentQuery
-    // + métadonnées live INPI). Pour les marques, FMARK = marques françaises, CTMARK = marques
-    // communautaires (EUIPO), TMINT = marques internationales (OMPI). Pour les brevets : FR, EP
-    // (Office européen des brevets), WO (PCT/OMPI), CCP (certificats complémentaires de protection).
-    private static readonly string[] DefaultTrademarkCollections = ["FMARK", "CTMARK", "TMINT"];
+    // Collections par défaut conformes à docs/INPI/APIDiffusionV2.json (TrademarkQuery /
+    // PatentQuery, champ `collections`). Marques : FR = françaises, EU = Union européenne (EUIPO),
+    // WO = internationales (OMPI). Brevets : FR, EP (Office européen des brevets), WO (PCT/OMPI),
+    // CCP (certificats complémentaires de protection). Des collections hors spec font remonter une
+    // 500 SolR côté INPI (validé en réel le 2026-05-30 : ["FMARK","CTMARK","TMINT"] → 500).
+    private static readonly string[] DefaultTrademarkCollections = ["FR", "EU", "WO"];
     private static readonly string[] DefaultPatentCollections = ["FR", "EP", "WO", "CCP"];
 
     private static readonly TimeSpan SessionMargin = TimeSpan.FromMinutes(1);
@@ -123,6 +124,15 @@ internal sealed class InpiPiTrademarkProvider(
             if (!response.IsSuccessStatusCode)
             {
                 return (Result<PagedResult<TrademarkSummary>>.Fail(InpiErrors.Unavailable), false);
+            }
+
+            // L'INPI renvoie 204 No Content quand la recherche n'a aucun résultat : c'est un
+            // résultat valide (page vide), pas une erreur. Le traiter avant ReadFromJsonAsync,
+            // qui lèverait sinon une JsonException sur le corps vide.
+            if (response.StatusCode == HttpStatusCode.NoContent)
+            {
+                return (Result<PagedResult<TrademarkSummary>>.Ok(
+                    new PagedResult<TrademarkSummary>([], query.Page, query.PageSize, 0)), false);
             }
 
             // Lot 13 — l'INPI peut renvoyer 200 avec un body vide / non-JSON quand le moteur
@@ -236,6 +246,13 @@ internal sealed class InpiPiTrademarkProvider(
             if (!response.IsSuccessStatusCode)
             {
                 return (Result<PagedResult<PatentSummary>>.Fail(InpiErrors.Unavailable), false);
+            }
+
+            // 204 No Content = recherche sans résultat (cf. trademark search) : page vide, pas 502.
+            if (response.StatusCode == HttpStatusCode.NoContent)
+            {
+                return (Result<PagedResult<PatentSummary>>.Ok(
+                    new PagedResult<PatentSummary>([], query.Page, query.PageSize, 0)), false);
             }
 
             // Lot 13 — robustesse face à body vide / non-JSON (cf. trademark search).
