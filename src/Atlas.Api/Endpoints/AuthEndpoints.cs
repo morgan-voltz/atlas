@@ -52,12 +52,18 @@ internal static class AuthEndpoints
     }
 
     private static async Task<IResult> VerifyEmailAsync(
-        Guid userId,
-        string token,
+        string? userId,
+        string? token,
         ISender sender,
         CancellationToken ct)
     {
-        Result result = await sender.Send(new VerifyEmailCommand(userId, token), ct);
+        // Binding permissif : un userId vide ou mal formé dans la query ne doit pas faire échouer
+        // le binding du Guid (qui produirait un 500 non géré), mais aboutir à un 400 via le
+        // validator (VerifyEmailValidator : UserId.NotEmpty / Token.NotEmpty). Un lien de
+        // vérification tronqué reste ainsi une erreur de saisie, pas une erreur serveur.
+        _ = Guid.TryParse(userId, out Guid parsedUserId);
+
+        Result result = await sender.Send(new VerifyEmailCommand(parsedUserId, token ?? string.Empty), ct);
 
         return result.IsSuccess
             ? Results.Ok(new { message = "Email vérifié. Votre compte est actif." })
