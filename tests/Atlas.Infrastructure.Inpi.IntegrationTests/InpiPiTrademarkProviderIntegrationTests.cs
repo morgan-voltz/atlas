@@ -69,6 +69,41 @@ public sealed class InpiPiTrademarkProviderIntegrationTests : IDisposable
     }
 
     [Fact]
+    public async Task SearchTrademarks_returns_empty_page_on_204_no_content()
+    {
+        // L'INPI renvoie 204 No Content quand la recherche n'a aucun résultat : page vide,
+        // pas une erreur. Régression : ce 204 faisait lever une JsonException → 502.
+        StubLogin();
+        _server
+            .Given(Request.Create().WithPath("/services/apidiffusion/api/marques/search").UsingPost())
+            .RespondWith(Response.Create().WithStatusCode(204));
+
+        Result<PagedResult<TrademarkSummary>> result = await CreateProvider()
+            .SearchTrademarksAsync(new TrademarkSearchQuery("zzzznomatch", 1, 20), Credentials, CancellationToken.None);
+
+        result.IsSuccess.Should().BeTrue();
+        result.Value!.Items.Should().BeEmpty();
+        result.Value!.TotalCount.Should().Be(0);
+    }
+
+    [Fact]
+    public async Task SearchPatents_returns_empty_page_on_204_no_content()
+    {
+        StubLogin();
+        _server
+            .Given(Request.Create().WithPath("/services/apidiffusion/api/brevets/search").UsingPost())
+            .RespondWith(Response.Create().WithStatusCode(204));
+
+        Result<PagedResult<PatentSummary>> result = await CreateProvider()
+            .SearchPatentsAsync(
+                new PatentSearchQuery(null, null, "zzzznomatch", 1, 20), Credentials, CancellationToken.None);
+
+        result.IsSuccess.Should().BeTrue();
+        result.Value!.Items.Should().BeEmpty();
+        result.Value!.TotalCount.Should().Be(0);
+    }
+
+    [Fact]
     public async Task SearchTrademarks_fails_unavailable_when_csrf_primer_returns_no_cookie()
     {
         // Si le primer CSRF échoue sans poser de cookie XSRF-TOKEN (réseau cassé, INPI
@@ -223,8 +258,8 @@ public sealed class InpiPiTrademarkProviderIntegrationTests : IDisposable
         JsonElement collections = body.RootElement.GetProperty("collections");
         collections.ValueKind.Should().Be(JsonValueKind.Array);
         var values = collections.EnumerateArray().Select(e => e.GetString()).ToList();
-        values.Should().BeEquivalentTo(["FMARK", "CTMARK", "TMINT"],
-            "défaut conforme aux métadonnées live INPI (marques FR + EUIPO + OMPI).");
+        values.Should().BeEquivalentTo(["FR", "EU", "WO"],
+            "collections conformes à la spec INPI v2 (TrademarkQuery : FR + EU/EUIPO + WO/OMPI).");
 
         // Header Accept doit être application/json pour ne pas recevoir du XML.
         searchRequest.Headers!.Should().ContainKey("Accept");
