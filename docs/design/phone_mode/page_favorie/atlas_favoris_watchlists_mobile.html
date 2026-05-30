@@ -1,0 +1,59 @@
+<h2 class="sr-only">Écran Favoris / Watchlists sur mobile, deux moments : « Tous » sélectionné montrant tout le portefeuille, et une liste « Concurrence » sélectionnée révélant le filtre par tags et l'accès à sa timeline filtrée.</h2>
+<style>
+.ph{background:var(--color-background-tertiary);border-radius:var(--border-radius-lg);border:0.5px solid var(--color-border-secondary);padding:14px;}
+.cap{font-size:12px;color:var(--color-text-secondary);margin:0 0 10px;text-align:center;}
+.h1{font-size:18px;font-weight:600;margin:0;}
+.sub{font-size:12px;color:var(--color-text-secondary);margin:2px 0 0;}
+.chips{display:flex;gap:6px;margin:12px 0 0;flex-wrap:wrap;}
+.chip{font-size:13px;padding:5px 11px;border-radius:999px;border:0.5px solid var(--color-border-tertiary);color:var(--color-text-secondary);white-space:nowrap;}
+.chip.on{background:var(--color-background-info);color:var(--color-text-info);border-color:var(--color-border-info);font-weight:500;}
+.chip.add{color:var(--color-text-tertiary);}
+.tags{display:flex;gap:6px;margin:10px 0 0;align-items:center;}
+.tag{font-size:11px;padding:2px 9px;border-radius:var(--border-radius-md);background:var(--color-background-secondary);color:var(--color-text-secondary);display:inline-flex;align-items:center;gap:5px;}
+.tag .dot{width:7px;height:7px;border-radius:50%;}
+.tl{margin-top:12px;display:flex;align-items:center;gap:8px;background:var(--color-background-secondary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-md);padding:9px 12px;font-size:13px;color:var(--color-text-info);}
+.row{display:flex;align-items:center;gap:10px;padding:11px 4px;border-bottom:0.5px solid var(--color-border-tertiary);}
+.nm{font-size:14px;font-weight:500;}
+.rs{font-size:12px;color:var(--color-text-secondary);font-family:var(--font-mono);}
+.kebab{color:var(--color-text-tertiary);}
+.list-title{font-size:12px;color:var(--color-text-tertiary);letter-spacing:.04em;margin:14px 0 2px;}
+</style>
+<div style="background:var(--color-background-secondary);border-radius:var(--border-radius-lg);padding:1.25rem;display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+
+<div class="ph">
+<p class="cap">« Tous » — le portefeuille</p>
+<p class="h1">Favoris</p>
+<p class="sub">12 entreprises surveillées</p>
+<div class="chips">
+<span class="chip on">Tous · 12</span>
+<span class="chip">Concurrence · 5</span>
+<span class="chip">Clients · 8</span>
+<span class="chip add">+ Liste</span>
+</div>
+<div class="row" style="margin-top:8px;"><div style="flex:1;"><p class="nm">Ateliers Beaumont</p><p class="rs">552 032 534 · SAS</p></div><i class="ti ti-dots-vertical kebab" aria-hidden="true"></i></div>
+<div class="row"><div style="flex:1;"><p class="nm">Néo Mobilités</p><p class="rs">823 114 905 · SAS</p></div><i class="ti ti-dots-vertical kebab" aria-hidden="true"></i></div>
+<div class="row"><div style="flex:1;"><p class="nm">Maïa Conseil</p><p class="rs">410 220 110 · SARL</p></div><i class="ti ti-dots-vertical kebab" aria-hidden="true"></i></div>
+<div class="row"><div style="flex:1;"><p class="nm">SCI du Vieux Port</p><p class="rs">901 556 248 · SCI</p></div><i class="ti ti-dots-vertical kebab" aria-hidden="true"></i></div>
+</div>
+
+<div class="ph">
+<p class="cap">Liste « Concurrence » ouverte</p>
+<p class="h1">Favoris</p>
+<p class="sub">Concurrence · 5 entreprises</p>
+<div class="chips">
+<span class="chip">Tous · 12</span>
+<span class="chip on">Concurrence · 5</span>
+<span class="chip">Clients · 8</span>
+</div>
+<div class="tags">
+<span style="font-size:11px;color:var(--color-text-tertiary);">Tags :</span>
+<span class="tag"><span class="dot" style="background:var(--color-text-info);"></span>directe</span>
+<span class="tag"><span class="dot" style="background:var(--color-text-warning);"></span>à surveiller</span>
+</div>
+<div class="tl"><i class="ti ti-timeline" aria-hidden="true"></i><span style="flex:1;">Voir l'activité de cette liste</span><i class="ti ti-chevron-right" aria-hidden="true"></i></div>
+<div class="row" style="margin-top:4px;"><div style="flex:1;"><p class="nm">Néo Mobilités</p><p class="rs">823 114 905 · SAS</p></div><i class="ti ti-dots-vertical kebab" aria-hidden="true"></i></div>
+<div class="row"><div style="flex:1;"><p class="nm">Groupe Vidal Logistique</p><p class="rs">334 870 661 · SA</p></div><i class="ti ti-dots-vertical kebab" aria-hidden="true"></i></div>
+<div class="row"><div style="flex:1;"><p class="nm">Distribution Royer</p><p class="rs">552 901 233 · SAS</p></div><i class="ti ti-dots-vertical kebab" aria-hidden="true"></i></div>
+</div>
+
+</div>
