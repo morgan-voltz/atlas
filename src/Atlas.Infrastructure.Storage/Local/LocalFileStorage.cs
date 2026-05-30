@@ -10,7 +10,7 @@ namespace Atlas.Infrastructure.Storage.Local;
 /// </summary>
 internal sealed class LocalFileStorage(IOptions<LocalFileStorageOptions> options) : IFileStorage
 {
-    private readonly string _rootPath = EnsureDirectory(options.Value.RootPath);
+    private readonly string _rootPath = EnsureDirectory(ResolveRoot(options.Value.RootPath));
 
     public async Task SaveAsync(string key, Stream content, string contentType, CancellationToken ct = default)
     {
@@ -53,6 +53,11 @@ internal sealed class LocalFileStorage(IOptions<LocalFileStorageOptions> options
             .Replace("..", "__", StringComparison.Ordinal);
         return Path.Combine(_rootPath, safe);
     }
+
+    // Une config absente ou vide (ex. "RootPath": null dans appsettings) ne doit jamais faire
+    // planter le stockage à chaque requête : on retombe sur le répertoire par défaut.
+    private static string ResolveRoot(string? configured) =>
+        string.IsNullOrWhiteSpace(configured) ? LocalFileStorageOptions.DefaultRootPath : configured;
 
     private static string EnsureDirectory(string root)
     {
