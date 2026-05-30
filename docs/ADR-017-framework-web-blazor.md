@@ -1,7 +1,7 @@
 ## ADR-017 — Framework du client web : Blazor Web App (interactivité WASM/Auto)
 
 **Statut** : ✅ Accepté
-**Date** : 29 mai 2026
+**Date** : 29 mai 2026 — **amendé le 30 mai 2026** (WASM pur pour la v1 « app authentifiée seule » ; cf. § Amendement et `docs/14-modele-ux-client-web.md`)
 
 ### Contexte
 
@@ -66,6 +66,18 @@ Le client web est un **Blazor Web App (modèle unifié)**, structuré ainsi :
   - Appliquer la **checklist d'accessibilité** (ADR-008 / `docs/06-accessibilite.md`) au web comme à MAUI — les `aria-*` y sont natifs.
   - Références croisées : **ADR-002** (topologie), **ADR-007** (stack — décision différée ici résolue), **ADR-008** (accessibilité), `docs/06-accessibilite.md`, `docs/12-modele-ux-client-maui.md`, **F-009/F-010** (clients MAUI, patron partagé).
 
+### Amendement — 30 mai 2026 (WASM pur pour la v1)
+
+`docs/14-modele-ux-client-web.md` précise le périmètre v1 du client web : **app
+authentifiée uniquement**, sans pages publiques. Dans ce cas, l'option *Interactive
+Auto* perd son objet — elle n'optimise que le premier rendu de **pages publiques**
+(SSR → bascule WASM) et garderait, sans public, le bref **circuit serveur** au
+démarrage (l'« entorse » signalée plus haut en Conséquences). La v1 retient donc
+**WASM pur** : un seul mode de rendu, client 100 % consommateur de l'API, **zéro
+état serveur** — strictement comme `Atlas.Maui`. Le **modèle unifié + SSR reste la
+référence** si des pages publiques (landing/marketing) sont ajoutées un jour : ce
+serait alors un nouvel avenant rouvrant le SSR.
+
 ---
 
-*ADR figé le 29 mai 2026. Client web = Blazor Web App (modèle unifié) : interactivité WASM/Auto pour l'app, SSR pour le public ; client pur de l'API (`Domain` + `Shared` only, NetArchTest) ; auth access-token-en-mémoire + refresh cookie HttpOnly. Résout le point laissé ouvert par ADR-007 ; tout-.NET, topologie ADR-002 préservée, UX mutualisée avec doc 12.*
+*ADR figé le 29 mai 2026, amendé le 30 mai 2026. Client web = Blazor Web App ; v1 « app authentifiée seule » → **WASM pur** (modèle unifié + SSR réservé à d'éventuelles pages publiques) ; client pur de l'API (`Domain` + `Shared` only, NetArchTest) ; auth access-token-en-mémoire + refresh cookie HttpOnly. Résout le point laissé ouvert par ADR-007 ; tout-.NET, topologie ADR-002 préservée, UX mutualisée avec doc 12.*
