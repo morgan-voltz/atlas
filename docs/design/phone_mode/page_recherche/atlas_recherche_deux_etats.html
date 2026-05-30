@@ -1,0 +1,43 @@
+<h2 class="sr-only">L'écran de recherche dans ses deux états : un SIREN détecté ouvre une carte d'accès direct ; du texte affiche des segments Entreprises / Marques avec une liste réactive.</h2>
+<style>
+.phone{background:var(--color-background-tertiary);border-radius:var(--border-radius-lg);border:0.5px solid var(--color-border-secondary);padding:14px;}
+.cap{font-size:12px;color:var(--color-text-secondary);margin:0 0 8px;text-align:center;}
+.bar{display:flex;align-items:center;gap:8px;background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-md);padding:10px 12px;}
+.bar .q{font-size:14px;color:var(--color-text-primary);}
+.hint{font-size:11px;color:var(--color-text-info);margin:6px 2px 0;display:flex;align-items:center;gap:5px;}
+.seg{display:flex;gap:6px;margin:12px 0 4px;}
+.seg span{font-size:13px;padding:5px 12px;border-radius:var(--border-radius-md);}
+.seg .on{background:var(--color-background-info);color:var(--color-text-info);font-weight:500;}
+.seg .off{color:var(--color-text-secondary);}
+.row{display:flex;align-items:center;gap:10px;padding:11px 6px;border-bottom:0.5px solid var(--color-border-tertiary);}
+.row .nm{font-size:14px;font-weight:500;}
+.row .sub{font-size:12px;color:var(--color-text-secondary);font-family:var(--font-mono);}
+.pill{font-size:11px;color:var(--color-text-tertiary);background:var(--color-background-secondary);padding:1px 7px;border-radius:var(--border-radius-md);}
+.direct{margin-top:14px;background:var(--color-background-primary);border:1px solid var(--color-border-info);border-radius:var(--border-radius-lg);padding:14px;display:flex;align-items:center;gap:12px;}
+</style>
+<div style="background:var(--color-background-secondary);border-radius:var(--border-radius-lg);padding:1.25rem;display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+
+<div class="phone">
+<p class="cap">SIREN détecté → accès direct</p>
+<div class="bar"><i class="ti ti-search" aria-hidden="true" style="color:var(--color-text-tertiary);"></i><span class="q" style="font-family:var(--font-mono);">552 032 534</span></div>
+<div class="hint"><i class="ti ti-circle-check" aria-hidden="true"></i> SIREN valide détecté</div>
+<div class="direct">
+<i class="ti ti-building" aria-hidden="true" style="font-size:22px;color:var(--color-text-info);"></i>
+<div style="flex:1;">
+<p style="margin:0;font-weight:500;font-size:14px;">Entreprise 552 032 534</p>
+<p style="margin:2px 0 0;font-size:12px;color:var(--color-text-secondary);">Ouvrir la fiche directement</p>
+</div>
+<i class="ti ti-arrow-right" aria-hidden="true" style="color:var(--color-text-info);"></i>
+</div>
+</div>
+
+<div class="phone">
+<p class="cap">Texte → segments + liste réactive</p>
+<div class="bar"><i class="ti ti-search" aria-hidden="true" style="color:var(--color-text-tertiary);"></i><span class="q">beaumont</span></div>
+<div class="seg"><span class="on">Entreprises · 6</span><span class="off">Marques · 2</span></div>
+<div class="row"><div style="flex:1;"><p class="nm">Ateliers Beaumont</p><p class="sub">552 032 534 · SAS · Lyon</p></div><i class="ti ti-chevron-right" aria-hidden="true" style="color:var(--color-text-tertiary);"></i></div>
+<div class="row"><div style="flex:1;"><p class="nm">Beaumont &amp; Fils</p><p class="sub">410 220 110 · SARL · Lille</p></div><i class="ti ti-chevron-right" aria-hidden="true" style="color:var(--color-text-tertiary);"></i></div>
+<div class="row"><div style="flex:1;"><p class="nm">SCI Beaumont</p><p class="sub" style="font-style:italic;font-family:inherit;color:var(--color-text-tertiary);">Diffusion restreinte (INSEE)</p></div><span class="pill">restreint</span></div>
+</div>
+
+</div>

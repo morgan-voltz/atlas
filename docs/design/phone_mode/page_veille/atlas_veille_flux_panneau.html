@@ -1,0 +1,74 @@
+<h2 class="sr-only">Écran Veille : à gauche le flux de lecture avec un filtre actif visible, à droite le panneau de filtres ouvert (packs et sources).</h2>
+<style>
+.ph{background:var(--color-background-tertiary);border-radius:var(--border-radius-lg);border:0.5px solid var(--color-border-secondary);padding:14px;}
+.cap{font-size:12px;color:var(--color-text-secondary);margin:0 0 10px;text-align:center;}
+.h1{font-size:18px;font-weight:600;margin:0;}
+.topbar{display:flex;align-items:center;justify-content:space-between;margin-top:10px;}
+.filtbtn{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--color-text-info);background:var(--color-background-info);padding:5px 10px;border-radius:999px;}
+.new{font-size:12px;color:var(--color-text-info);background:var(--color-background-secondary);border:0.5px solid var(--color-border-info);border-radius:999px;padding:5px 12px;text-align:center;margin:12px 0 4px;}
+.item{padding:12px 4px;border-bottom:0.5px solid var(--color-border-tertiary);}
+.it-top{display:flex;align-items:center;gap:8px;margin-bottom:4px;}
+.src{font-size:11px;color:var(--color-text-tertiary);}
+.dedup{font-size:10px;color:var(--color-text-tertiary);background:var(--color-background-secondary);padding:1px 7px;border-radius:var(--border-radius-md);}
+.ttl{font-size:14px;font-weight:500;line-height:1.35;}
+.sum{font-size:12px;color:var(--color-text-secondary);line-height:1.4;margin-top:3px;}
+.acts{display:flex;gap:16px;margin-top:8px;color:var(--color-text-tertiary);font-size:15px;}
+.unread{width:8px;height:8px;border-radius:50%;background:var(--color-text-info);flex-shrink:0;}
+/* panneau */
+.pan{background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-md);padding:12px;margin-top:10px;}
+.pan h4{font-size:11px;letter-spacing:.04em;color:var(--color-text-tertiary);margin:0 0 8px;text-transform:uppercase;}
+.opt{display:flex;align-items:center;gap:9px;padding:7px 0;font-size:13px;border-bottom:0.5px solid var(--color-border-tertiary);}
+.box{width:16px;height:16px;border-radius:4px;border:1.5px solid var(--color-border-secondary);flex-shrink:0;}
+.box.on{background:var(--color-text-info);border-color:var(--color-text-info);}
+.count{margin-left:auto;font-size:11px;color:var(--color-text-tertiary);}
+</style>
+<div style="background:var(--color-background-secondary);border-radius:var(--border-radius-lg);padding:1.25rem;display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+
+<div class="ph">
+<p class="cap">Lecture — panneau replié</p>
+<p class="h1">Veille</p>
+<div class="topbar">
+<span class="filtbtn"><i class="ti ti-filter" aria-hidden="true"></i> Pack Compta · 23</span>
+<i class="ti ti-adjustments-horizontal" aria-hidden="true" style="color:var(--color-text-tertiary);"></i>
+</div>
+<div class="new">↑ 4 nouveaux items · afficher</div>
+<div class="item">
+<div class="it-top"><span class="unread"></span><span class="src">Les Échos · il y a 2 h</span><span class="dedup">3 sources</span></div>
+<p class="ttl">Réforme de la facturation électronique : le calendrier 2026 précisé</p>
+<p class="sum">L'administration publie les modalités d'application pour les PME…</p>
+<div class="acts"><i class="ti ti-circle" aria-hidden="true"></i><i class="ti ti-star" aria-hidden="true"></i><i class="ti ti-archive" aria-hidden="true"></i></div>
+</div>
+<div class="item">
+<div class="it-top"><span class="unread"></span><span class="src">Légifrance · il y a 5 h</span></div>
+<p class="ttl">Décret relatif aux seuils de présentation des comptes</p>
+<div class="acts"><i class="ti ti-circle" aria-hidden="true"></i><i class="ti ti-star" aria-hidden="true"></i><i class="ti ti-archive" aria-hidden="true"></i></div>
+</div>
+<div class="item" style="opacity:.6;">
+<div class="it-top"><span class="src">Banque de France · hier</span></div>
+<p class="ttl">Statistiques de crédit aux entreprises — T1 2026</p>
+<div class="acts"><i class="ti ti-circle-check" aria-hidden="true"></i><i class="ti ti-star" aria-hidden="true"></i><i class="ti ti-archive" aria-hidden="true"></i></div>
+</div>
+</div>
+
+<div class="ph">
+<p class="cap">Gestion — panneau ouvert</p>
+<p class="h1">Veille</p>
+<div class="topbar">
+<span style="font-size:13px;font-weight:500;">Filtrer</span>
+<i class="ti ti-x" aria-hidden="true" style="color:var(--color-text-tertiary);"></i>
+</div>
+<div class="pan">
+<h4>Packs métier</h4>
+<div class="opt"><span class="box on" aria-hidden="true"></span>Expert-comptable<span class="count">23</span></div>
+<div class="opt"><span class="box" aria-hidden="true"></span>Veille concurrentielle<span class="count">11</span></div>
+</div>
+<div class="pan">
+<h4>Sources libres</h4>
+<div class="opt"><span class="box on" aria-hidden="true"></span>Les Échos — Entreprises<span class="count">8</span></div>
+<div class="opt"><span class="box on" aria-hidden="true"></span>Légifrance<span class="count">4</span></div>
+<div class="opt"><span class="box" aria-hidden="true"></span>INSEE<span class="count">6</span></div>
+<div class="opt" style="border-bottom:none;color:var(--color-text-info);"><i class="ti ti-plus" aria-hidden="true"></i> Ajouter un flux RSS</div>
+</div>
+</div>
+
+</div>

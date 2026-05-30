@@ -1,0 +1,60 @@
+<h2 class="sr-only">Deux sous-pages sensibles du Profil : Connexion INPI (état connecté, test, déconnexion) et Données & confidentialité (export bénin en haut, zone danger suppression isolée en bas).</h2>
+<style>
+.ph{background:var(--color-background-tertiary);border-radius:var(--border-radius-lg);border:0.5px solid var(--color-border-secondary);padding:14px;}
+.cap{font-size:12px;color:var(--color-text-secondary);margin:0 0 10px;text-align:center;}
+.bk{display:flex;align-items:center;gap:6px;color:var(--color-text-tertiary);font-size:13px;}
+.h1{font-size:17px;font-weight:600;margin:6px 0 2px;}
+.card{background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-md);padding:14px;margin-top:12px;}
+.statusline{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:500;}
+.ok{color:var(--color-text-success);}
+.meta{font-size:12px;color:var(--color-text-secondary);margin-top:6px;}
+.btns{display:flex;gap:8px;margin-top:12px;}
+.btn{flex:1;text-align:center;font-size:13px;padding:9px;border-radius:var(--border-radius-md);border:0.5px solid var(--color-border-secondary);color:var(--color-text-primary);}
+.btn.ghost{color:var(--color-text-secondary);}
+.note{display:flex;gap:7px;font-size:11px;color:var(--color-text-tertiary);margin-top:12px;line-height:1.5;}
+.h2{font-size:12px;letter-spacing:.04em;color:var(--color-text-tertiary);text-transform:uppercase;margin:16px 2px 6px;}
+.exp{display:flex;align-items:center;gap:12px;}
+.exp .ico{width:30px;height:30px;border-radius:8px;background:var(--color-background-info);color:var(--color-text-info);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.danger{border:0.5px solid var(--color-border-danger);border-radius:var(--border-radius-md);padding:14px;margin-top:8px;background:var(--color-background-danger);}
+.danger .t{font-size:14px;font-weight:600;color:var(--color-text-danger);display:flex;align-items:center;gap:7px;}
+.danger .d{font-size:12px;color:var(--color-text-secondary);margin:7px 0 0;line-height:1.5;}
+.danger .b{margin-top:11px;text-align:center;font-size:13px;font-weight:500;padding:10px;border-radius:var(--border-radius-md);border:1px solid var(--color-border-danger);color:var(--color-text-danger);}
+</style>
+<div style="background:var(--color-background-secondary);border-radius:var(--border-radius-lg);padding:1.25rem;display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+
+<div class="ph">
+<p class="cap">Connexion INPI</p>
+<div class="bk"><i class="ti ti-chevron-left" aria-hidden="true"></i> Profil</div>
+<p class="h1">Connexion INPI</p>
+<div class="card">
+<div class="statusline"><i class="ti ti-circle-check ok" aria-hidden="true"></i> <span>Connecté</span></div>
+<p class="meta">Identifiant : c.beaumont@…&nbsp; · &nbsp;testé le 28 mai 2026</p>
+<div class="btns">
+<span class="btn">Tester la connexion</span>
+<span class="btn ghost">Déconnecter</span>
+</div>
+<div class="note"><i class="ti ti-lock" aria-hidden="true" style="font-size:14px;"></i><span>Tes identifiants INPI sont chiffrés et ne sont jamais affichés. Ils servent uniquement à interroger l'INPI en ton nom.</span></div>
+</div>
+</div>
+
+<div class="ph">
+<p class="cap">Données &amp; confidentialité</p>
+<div class="bk"><i class="ti ti-chevron-left" aria-hidden="true"></i> Profil</div>
+<p class="h1">Données &amp; confidentialité</p>
+
+<div class="h2">Mes données</div>
+<div class="card exp">
+<span class="ico"><i class="ti ti-download" aria-hidden="true"></i></span>
+<div style="flex:1;"><div style="font-size:14px;font-weight:500;">Exporter mes données</div><div style="font-size:12px;color:var(--color-text-secondary);margin-top:1px;">Archive JSON (favoris, listes, historique)</div></div>
+<i class="ti ti-chevron-right" aria-hidden="true" style="color:var(--color-text-tertiary);"></i>
+</div>
+
+<div class="h2">Zone sensible</div>
+<div class="danger">
+<div class="t"><i class="ti ti-alert-triangle" aria-hidden="true"></i> Supprimer mon compte</div>
+<p class="d">Effacement sous 30 jours. Tes données personnelles et identifiants INPI sont supprimés ; certaines données de facturation sont conservées et anonymisées (obligation légale).</p>
+<div class="b">Supprimer définitivement…</div>
+</div>
+</div>
+
+</div>
