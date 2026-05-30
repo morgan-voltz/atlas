@@ -20,6 +20,7 @@ public class DependencyRuleTests
     private static readonly Assembly ApplicationPremiumAssembly = typeof(Atlas.Application.Premium.AssemblyMarker).Assembly;
     private static readonly Assembly PersistenceAssembly = typeof(Atlas.Infrastructure.Persistence.AtlasDbContext).Assembly;
     private static readonly Assembly SharedAssembly = typeof(Atlas.Shared.Result.Result).Assembly;
+    private static readonly Assembly WebClientAssembly = typeof(Atlas.Web.Client.AssemblyMarker).Assembly;
 
     [Fact]
     public void Domain_should_not_depend_on_application_infrastructure_or_api()
@@ -153,6 +154,24 @@ public class DependencyRuleTests
                 || name.StartsWith("Npgsql", StringComparison.Ordinal));
 
         illegal.Should().BeEmpty("Atlas.Shared est le noyau : aucune dépendance projet ou tierce, hors BCL.");
+    }
+
+    /// <summary>
+    /// ADR-017 — <c>Atlas.Web.Client</c> (assembly d'interactivité Blazor WASM) part dans le navigateur
+    /// et est donc décompilable : même contrainte que <c>Atlas.Maui</c>. Il ne référence que
+    /// <c>Atlas.Domain</c> + <c>Atlas.Shared</c>, jamais <c>Application</c>, <c>Infrastructure</c> ni
+    /// <c>Api</c> (zéro logique sensible, zéro credential côté client). L'hôte <c>Atlas.Web</c>, lui,
+    /// peut référencer davantage (composition root, comme <c>Atlas.Api</c>).
+    /// </summary>
+    [Fact]
+    public void Web_client_should_only_depend_on_domain_and_shared()
+    {
+        TestResult result = Types.InAssembly(WebClientAssembly)
+            .ShouldNot()
+            .HaveDependencyOnAny(ApplicationNamespace, ApplicationPremiumNamespace, InfrastructureNamespace, ApiNamespace)
+            .GetResult();
+
+        result.IsSuccessful.Should().BeTrue(Describe(result));
     }
 
     private static string Describe(TestResult result) =>
