@@ -12,6 +12,9 @@ internal static class ErrorHttpMapping
     {
         ArgumentNullException.ThrowIfNull(error);
 
+        // Le code métier est exposé de façon stable et uniforme via l'extension `code` du
+        // ProblemDetails (RFC 9457), quel que soit le type d'erreur. Les clients (MAUI, API
+        // publique F-028) peuvent s'y fier plutôt que de parser `title`/`type`.
         if (error is ValidationError validation)
         {
             var errors = validation.Failures
@@ -20,12 +23,23 @@ internal static class ErrorHttpMapping
                     group => group.Key,
                     group => group.Select(failure => failure.Message).ToArray());
 
-            return Results.ValidationProblem(errors, detail: error.Message, type: error.Code);
+            return Results.ValidationProblem(
+                errors,
+                detail: error.Message,
+                type: error.Code,
+                extensions: CodeExtension(error.Code));
         }
 
         int status = StatusCodeFor(error.Code);
-        return Results.Problem(detail: error.Message, statusCode: status, title: error.Code);
+        return Results.Problem(
+            detail: error.Message,
+            statusCode: status,
+            title: error.Code,
+            extensions: CodeExtension(error.Code));
     }
+
+    private static Dictionary<string, object?> CodeExtension(string code) =>
+        new() { ["code"] = code };
 
     private static int StatusCodeFor(string code) => code switch
     {

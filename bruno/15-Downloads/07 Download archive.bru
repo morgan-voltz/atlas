@@ -24,7 +24,7 @@ tests {
   });
   test("si 409 : code downloads.not_ready", function () {
     if (res.getStatus() === 409) {
-      expect(res.getBody().type).to.equal("downloads.not_ready");
+      expect(res.getBody().code).to.equal("downloads.not_ready");
     }
   });
 }

@@ -35,7 +35,7 @@ tests {
     expect(res.getStatus()).to.equal(400);
   });
   test("code downloads.too_many_sirens", function () {
-    expect(res.getBody().type).to.equal("downloads.too_many_sirens");
+    expect(res.getBody().code).to.equal("downloads.too_many_sirens");
   });
 }
 

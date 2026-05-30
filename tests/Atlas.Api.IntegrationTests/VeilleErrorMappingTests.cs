@@ -42,6 +42,8 @@ public sealed class VeilleErrorMappingTests(AtlasApiFactory factory)
 
         JsonElement body = await response.Content.ReadFromJsonAsync<JsonElement>();
         body.GetProperty("title").GetString().Should().Be("veille.feed_rule_not_found");
+        // Le code métier est aussi exposé de façon stable via l'extension `code` (contrat F-028).
+        body.GetProperty("code").GetString().Should().Be("veille.feed_rule_not_found");
     }
 
     [Fact]
@@ -79,6 +81,50 @@ public sealed class VeilleErrorMappingTests(AtlasApiFactory factory)
 
         JsonElement body = await response.Content.ReadFromJsonAsync<JsonElement>();
         body.GetProperty("title").GetString().Should().Be("veille.veille_pack_not_found");
+    }
+
+    [Fact]
+    public async Task Create_feed_rule_without_criteria_returns_400_with_domain_code()
+    {
+        HttpClient client = await CreateAuthenticatedClientAsync();
+
+        // Aucun critère (keyword/source/siren) ni canal de notification : invariant porté par le
+        // domaine FeedRule.Create, qui renvoie veille.invalid_feed_rule — et non un validation.failed
+        // générique du FluentValidator.
+        HttpResponseMessage response = await client.PostAsJsonAsync(
+            "/feed/rules",
+            new
+            {
+                name = "Règle sans critères",
+                keywordPattern = (string?)null,
+                sourceId = (Guid?)null,
+                mentionedSiren = (string?)null,
+                notifyEmail = false,
+                notifyPush = false,
+            });
+
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+
+        JsonElement body = await response.Content.ReadFromJsonAsync<JsonElement>();
+        body.GetProperty("title").GetString().Should().Be("veille.invalid_feed_rule");
+        body.GetProperty("code").GetString().Should().Be("veille.invalid_feed_rule");
+    }
+
+    [Fact]
+    public async Task Validation_failure_exposes_stable_code_extension()
+    {
+        HttpClient client = factory.CreateClient();
+
+        // Mot de passe trop court → rejeté par FluentValidation (ValidationError) avant le handler.
+        // L'extension `code` doit valoir "validation.failed" de façon uniforme.
+        HttpResponseMessage response = await client.PostAsJsonAsync(
+            "/auth/register",
+            new { email = $"weak-{Guid.NewGuid():N}@example.com", password = "short" });
+
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+
+        JsonElement body = await response.Content.ReadFromJsonAsync<JsonElement>();
+        body.GetProperty("code").GetString().Should().Be("validation.failed");
     }
 
     private async Task<HttpClient> CreateAuthenticatedClientAsync()
