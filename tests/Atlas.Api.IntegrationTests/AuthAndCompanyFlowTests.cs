@@ -84,6 +84,22 @@ public sealed class AuthAndCompanyFlowTests(AtlasApiFactory factory)
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
     }
 
+    // Régression F-001 : un userId vide ou mal formé dans la query faisait échouer le binding du
+    // Guid (BadHttpRequestException → 500). Une saisie invalide doit produire un 400, jamais un 500.
+    [Theory]
+    [InlineData("/auth/verify-email?userId=&token=abc")]
+    [InlineData("/auth/verify-email?token=abc")]
+    [InlineData("/auth/verify-email?userId=not-a-guid&token=abc")]
+    [InlineData("/auth/verify-email?userId=11111111-1111-1111-1111-111111111111&token=")]
+    public async Task Verify_email_with_invalid_query_returns_bad_request_not_server_error(string url)
+    {
+        HttpClient client = factory.CreateClient();
+
+        HttpResponseMessage response = await client.GetAsync(url);
+
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+    }
+
     private static IResponseBuilder JsonResponse(int statusCode, string body) =>
         Response.Create()
             .WithStatusCode(statusCode)
