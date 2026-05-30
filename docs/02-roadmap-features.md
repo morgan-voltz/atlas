@@ -1668,6 +1668,46 @@ C'est **assistif**, pas autoritaire : Atlas aide à ne rien rater, mais le **dev
 
 ---
 
+### F-060 — Vérificateur de présence d'un nom (multi-sources)
+
+> **Figée le 30 mai 2026**. Statut **V3+ — Won't have (yet)**. Doctrine **ADR-012 / ADR-014** : Atlas rapporte des faits **sourcés et datés**, **jamais un verdict de disponibilité**. Cf. fiche dédiée [`feature-verificateur-nom-F060.md`](feature-verificateur-nom-F060.md).
+
+**Description** : depuis la Recherche, un mode « Vérifier un nom » (3ᵉ intention de recherche — pas de 6ᵉ onglet) où l'utilisateur saisit un nom (marque, enseigne, dénomination envisagée) et obtient un **rapport multi-sources** : marques (INPI PI), dénominations d'entreprises (RNE), domaines web (WHOIS/DNS) — chacun avec sa provenance, sa date et son périmètre — plus une liste de **noms proches à vérifier**. Ne rend **jamais** de verdict (« disponible », « libre ») : toute conclusion passe par le contrat `MatchCandidate` (ADR-014), dont la disposition ne peut être que « à vérifier ».
+
+**Valeur user** : les outils existants ne couvrent qu'une source (checker de domaine isolé) ou affichent un verdict irresponsable. Atlas agrège plusieurs registres et reste descriptif — utile avant un dépôt de marque ou une création d'entreprise, sans se substituer au conseil PI.
+
+**Complexité** : ★★★.
+
+**APIs externes** : INPI PI (déjà intégrée, F-006), INPI RNE (déjà intégrée, F-004/F-005), **WHOIS/DNS (nouvelle source à évaluer)**.
+
+**Dépendances** : F-006, F-005, F-004, F-026/ADR-014 (`ITrademarkSimilarityMatcher` + noyau de normalisation de noms), F-061 (pendant temporel).
+
+**Pourquoi reporté (V3+)** : (1) **source externe nouvelle** (WHOIS/DNS) hors du socle INPI/INSEE/BODACC — à évaluer (fournisseur, coût, rate-limits) ; (2) **sensibilité juridique maximale** — l'écran où un mauvais cadrage ferait le plus de dégâts, à livrer avec rigueur doctrinale. À reconsidérer selon la traction (persona Cabinet PI).
+
+**Détails techniques** : port `INameAvailabilityProbe`, adapters `InpiTrademarkPresenceAdapter` / `RneDenominationPresenceAdapter` / `WhoisDomainAdapter` (nouveau, `Atlas.Infrastructure.Whois`), use case `CheckNamePresence` (requêtes parallèles bornées, DTO discriminé par source — pas de fusion en indicateur unique). Cf. fiche dédiée.
+
+---
+
+### F-061 — Surveillance continue d'un nom
+
+> **Figée le 30 mai 2026**. Statut **V3+ — Won't have (yet)**. **Pendant temporel de F-060**. Doctrine **ADR-014** : sortie = `MatchCandidate` « à vérifier », jamais « conflit avéré ». Cf. fiche dédiée [`feature-surveillance-nom-F061.md`](feature-surveillance-nom-F061.md).
+
+**Description** : surveillance continue d'un nom — soit un **nom libre** saisi (projet de marque non déposé : nouveau concept de « surveillance de nom »), soit une **entité déjà suivie** (via une `WatchRule`, patron F-046). Atlas détecte dans le temps l'**apparition** d'éléments proches : nouveaux dépôts de marques (INPI/BOPI), nouvelles dénominations (RNE), nouveaux domaines (WHOIS) — et **alerte** (timeline F-047 + push F-020) avec **piste d'audit** (date, source, élément, base du rapprochement). Là où F-060 répond « ce nom est-il pris *maintenant* ? », F-061 répond « **préviens-moi quand quelque chose de proche apparaît** ».
+
+**Valeur user** : pour le persona Cabinet PI et les créateurs, une surveillance **multi-sources** (marque + société + domaine), **souveraine** et **descriptive** — « correspondance à vérifier », jamais « conflit avéré ».
+
+**Complexité** : ★★★★ — l'essentiel est déjà fait ailleurs (snapshot/diff F-019, polling F-048, similarité F-026, timeline F-047, push F-020) ; le neuf : concept de « surveillance de nom libre », polling filtré par similarité, maîtrise du bruit.
+
+**APIs externes** : celles de F-060 (INPI PI/BOPI, RNE, WHOIS/DNS).
+
+**Dépendances** : F-060, F-026/ADR-014, F-019 (snapshot+diff+job), F-047 (timeline / `FavoriteEvent`), F-048 (polling+dédup `ExternalId`), F-046 (`WatchRule`), F-020 (push), F-017/F-053 (entités suivies).
+
+**Pourquoi reporté (V3+)** : dépend de F-060 + évaluation WHOIS + maîtrise du bruit. Réutilise massivement l'existant.
+
+**Détails techniques** : snapshot `NameWatchSnapshot` (par cible : nom libre ou `(UserId, entité)`), `DiffWith(...)` (éléments apparus / disparus), job Hangfire `name-watch` (cron décalé, ex. `0 6 * * *`), nouvel événement `FavoriteEvent` de type `NameMatchAppeared` (`ExternalId` = dépôt/dénomination/domaine + source, pour dédup). Cf. fiche dédiée.
+
+---
+
 ## Features explicitement écartées
 
 Pour mémoire, certaines pistes ont été évaluées et **explicitement écartées** :
