@@ -1,5 +1,5 @@
-﻿<!DOCTYPE html>
-<html lang="en">
+<!DOCTYPE html>
+<html lang="fr">
 
 <head>
     <meta charset="utf-8" />
@@ -11,11 +11,11 @@
     <link rel="stylesheet" href="@Assets["Atlas.Web.styles.css"]" />
     <ImportMap />
     <link rel="icon" type="image/png" href="favicon.png" />
-    <HeadOutlet />
+    <HeadOutlet @rendermode="InteractiveWebAssembly" />
 </head>
 
 <body>
-    <Routes />
+    <Routes @rendermode="InteractiveWebAssembly" />
     <script src="@Assets["_framework/blazor.web.js"]"></script>
 </body>
 

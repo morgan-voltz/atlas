@@ -1,4 +1,3 @@
-using Atlas.Web.Client.Pages;
 using Atlas.Web.Components;
 
 var builder = WebApplication.CreateBuilder(args);

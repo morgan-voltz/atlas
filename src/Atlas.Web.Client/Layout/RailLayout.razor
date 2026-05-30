@@ -1,0 +1,18 @@
+@inherits LayoutComponentBase
+
+@* Présentation desktop des 5 destinations (doc 12 §3) en rail latéral (doc 14 §2).
+   Mêmes 5 destinations que MAUI ; seule la présentation change. Plafond : jamais de 6e entrée. *@
+<div class="app-shell">
+    <nav class="rail" aria-label="Navigation principale">
+        <div class="rail-brand">Atlas</div>
+        <NavLink class="rail-link" href="/accueil">Accueil</NavLink>
+        <NavLink class="rail-link" href="/recherche">Recherche</NavLink>
+        <NavLink class="rail-link" href="/veille">Veille</NavLink>
+        <NavLink class="rail-link" href="/favoris">Favoris</NavLink>
+        <NavLink class="rail-link" href="/profil">Profil</NavLink>
+    </nav>
+
+    <main class="app-main">
+        @Body
+    </main>
+</div>
