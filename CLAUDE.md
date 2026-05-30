@@ -31,6 +31,7 @@ Avant toute contribution significative, consulter le document approprié dans `d
 | Créer un nouveau projet `.csproj` ou modifier la solution | `docs/10-layout-solution-dotnet.md` |
 | Ajouter, modifier ou supprimer un endpoint HTTP | `docs/11-api-endpoints.md` |
 | Concevoir une vue MAUI (navigation, list-detail, page vs carte, densité mobile/desktop) | `docs/12-modele-ux-client-maui.md` |
+| Concevoir une vue du client web Blazor (rail, list-detail 2 panneaux, routing/URLs) — delta de doc 12 | `docs/14-modele-ux-client-web.md` |
 | Lancer ou tester l'application en local de bout en bout (Postgres, API, Bruno, INPI) | `docs/13-harness-test-local-e2e.md` |
 
 ---
