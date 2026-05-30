@@ -1,0 +1,52 @@
+.app-shell {
+    display: flex;
+    min-height: 100vh;
+}
+
+.rail {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    width: 220px;
+    flex-shrink: 0;
+    padding: 1rem 0.5rem;
+    border-right: 1px solid #e2e2e2;
+    background: #fafafa;
+}
+
+.rail-brand {
+    font-weight: 700;
+    font-size: 1.25rem;
+    padding: 0.5rem 0.75rem 1rem;
+}
+
+.rail-link {
+    display: block;
+    padding: 0.6rem 0.75rem;
+    border-radius: 6px;
+    border-left: 3px solid transparent;
+    color: #1a1a1a;
+    text-decoration: none;
+}
+
+.rail-link:hover {
+    background: #efefef;
+}
+
+.rail-link:focus-visible {
+    outline: 2px solid #1452cc;
+    outline-offset: 2px;
+}
+
+/* État actif : non porté par la seule couleur (bordure + graisse), cf. doc 06. */
+.rail-link.active {
+    background: #eaf0ff;
+    border-left-color: #1452cc;
+    font-weight: 600;
+}
+
+.app-main {
+    flex: 1;
+    min-width: 0;
+    padding: 1.5rem 2rem;
+}

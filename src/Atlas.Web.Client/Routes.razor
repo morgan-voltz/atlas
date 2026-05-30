@@ -1,0 +1,7 @@
+@* Routeur du client web Blazor (WASM). Les pages routables vivent dans cet assembly client. *@
+<Router AppAssembly="typeof(AssemblyMarker).Assembly" NotFoundPage="typeof(Pages.NotFound)">
+    <Found Context="routeData">
+        <RouteView RouteData="routeData" DefaultLayout="typeof(Layout.RailLayout)" />
+        <FocusOnNavigate RouteData="routeData" Selector="h1" />
+    </Found>
+</Router>
