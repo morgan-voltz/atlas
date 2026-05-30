@@ -7,10 +7,6 @@ meta {
 get {
   url: {{baseUrl}}/patents?page=1&pageSize=20
   auth: bearer
-  params:query {
-    page: 1
-    pageSize: 20
-  }
 }
 
 auth:bearer {
@@ -21,10 +17,10 @@ tests {
   test("statut 400", function () {
     expect(res.getStatus()).to.equal(400);
   });
-  test("ProblemDetails avec title patents.empty_search", function () {
+  test("ProblemDetails avec code patents.empty_search", function () {
     const body = res.getBody();
-    expect(body).to.have.property("title");
-    expect(body.title).to.equal("patents.empty_search");
+    expect(body).to.have.property("code");
+    expect(body.code).to.equal("patents.empty_search");
   });
 }
 

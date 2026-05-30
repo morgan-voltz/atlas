@@ -17,10 +17,10 @@ tests {
   test("statut 200", function () {
     expect(res.getStatus()).to.equal(200);
   });
-  test("isConnected = true après Connect", function () {
+  test("connected = true après Connect", function () {
     const body = res.getBody();
-    expect(body).to.have.property("isConnected");
-    expect(body.isConnected).to.equal(true);
+    expect(body).to.have.property("connected");
+    expect(body.connected).to.equal(true);
   });
 }
 

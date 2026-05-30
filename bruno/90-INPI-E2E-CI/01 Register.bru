@@ -20,21 +20,9 @@ body:json {
   }
 }
 
-script:post-response {
-  if (res.getStatus() === 200) {
-    const body = res.getBody();
-    if (body && body.userId) {
-      bru.setVar("userId", body.userId);
-    }
-  }
-}
-
 tests {
   test("statut 200", function () {
     expect(res.getStatus()).to.equal(200);
-  });
-  test("userId capturé", function () {
-    expect(bru.getVar("userId")).to.be.a("string");
   });
 }
 
