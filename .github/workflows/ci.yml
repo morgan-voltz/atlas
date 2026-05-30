@@ -29,6 +29,11 @@ jobs:
       - name: Build backend (Release)
         run: dotnet build src/Atlas.Api/Atlas.Api.csproj -c Release
 
+      # Client web Blazor Web App (hôte Atlas.Web + Atlas.Web.Client WASM). Pas de workload
+      # mobile ici ; un `build` (sans publish AOT) ne requiert pas wasm-tools.
+      - name: Build web client (Release)
+        run: dotnet build src/Atlas.Web/Atlas.Web.csproj -c Release
+
       # Tests unitaires + architecture (rapides, sans Docker).
       - name: Unit & architecture tests
         run: |
