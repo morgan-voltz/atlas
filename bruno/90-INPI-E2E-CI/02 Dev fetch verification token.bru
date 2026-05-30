@@ -14,6 +14,11 @@ script:post-response {
     if (body && body.token) {
       bru.setVar("verificationToken", body.token);
     }
+    // L'endpoint /dev/verification-token renvoie aussi l'userId : c'est ici qu'on le capture
+    // (l'inscription ne le renvoie pas dans sa réponse).
+    if (body && body.userId) {
+      bru.setVar("userId", body.userId);
+    }
   }
 }
 

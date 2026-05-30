@@ -7,13 +7,6 @@ meta {
 get {
   url: {{baseUrl}}/patents?title={{patentTitle}}&inventor={{patentInventor}}&applicant={{patentApplicant}}&page=1&pageSize=20
   auth: bearer
-  params:query {
-    title: {{patentTitle}}
-    inventor: {{patentInventor}}
-    applicant: {{patentApplicant}}
-    page: 1
-    pageSize: 20
-  }
 }
 
 auth:bearer {

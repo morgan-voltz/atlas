@@ -7,11 +7,6 @@ meta {
 get {
   url: {{baseUrl}}/companies?name={{companyName}}&page=1&pageSize=10
   auth: bearer
-  params:query {
-    name: {{companyName}}
-    page: 1
-    pageSize: 10
-  }
 }
 
 auth:bearer {

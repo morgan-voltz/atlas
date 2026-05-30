@@ -20,7 +20,7 @@ tests {
   test("SIREN renvoyé = celui demandé", function () {
     const body = res.getBody();
     expect(body).to.have.property("siren");
-    expect(body.siren).to.equal(bru.getVar("siren"));
+    expect(body.siren).to.equal(bru.getEnvVar("siren"));
   });
   test("dénomination présente", function () {
     expect(res.getBody()).to.have.property("denomination");
