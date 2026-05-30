@@ -17,15 +17,8 @@ internal sealed class CreateFeedRuleValidator : AbstractValidator<CreateFeedRule
             .MaximumLength(FeedRule.MaxKeywordLength)
             .When(command => !string.IsNullOrWhiteSpace(command.KeywordPattern));
 
-        RuleFor(command => command)
-            .Must(command =>
-                !string.IsNullOrWhiteSpace(command.KeywordPattern)
-                || command.SourceId.HasValue
-                || !string.IsNullOrWhiteSpace(command.MentionedSiren))
-            .WithMessage("Au moins un critère requis (KeywordPattern, SourceId ou MentionedSiren).");
-
-        RuleFor(command => command)
-            .Must(command => command.NotifyEmail || command.NotifyPush)
-            .WithMessage("Au moins une action de notification requise (NotifyEmail ou NotifyPush).");
+        // Les invariants « ≥1 critère » et « ≥1 canal de notification » sont portés par le domaine
+        // (FeedRule.Create), qui renvoie le code métier `veille.invalid_feed_rule`. On ne les duplique
+        // pas ici, pour ne pas masquer ce code derrière un `validation.failed` générique.
     }
 }

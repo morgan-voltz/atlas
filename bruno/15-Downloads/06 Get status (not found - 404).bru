@@ -18,7 +18,7 @@ tests {
     expect(res.getStatus()).to.equal(404);
   });
   test("code downloads.not_found", function () {
-    expect(res.getBody().type).to.equal("downloads.not_found");
+    expect(res.getBody().code).to.equal("downloads.not_found");
   });
 }
 
