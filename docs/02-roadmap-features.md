@@ -1672,7 +1672,7 @@ C'est **assistif**, pas autoritaire : Atlas aide à ne rien rater, mais le **dev
 
 ### F-060 — Vérificateur de présence d'un nom (multi-sources)
 
-> **Figée le 30 mai 2026**. Statut **V3+ — Won't have (yet)**. Doctrine **ADR-012 / ADR-014** : Atlas rapporte des faits **sourcés et datés**, **jamais un verdict de disponibilité**. Cf. fiche dédiée [`feature-verificateur-nom-F060.md`](feature-verificateur-nom-F060.md).
+> **Figée le 30 mai 2026**. Statut **V3+ — Won't have (yet)**. Doctrine **ADR-012 / ADR-014** : Atlas rapporte des faits **sourcés et datés**, **jamais un verdict de disponibilité**.
 
 **Description** : depuis la Recherche, un mode « Vérifier un nom » (3ᵉ intention de recherche — pas de 6ᵉ onglet) où l'utilisateur saisit un nom (marque, enseigne, dénomination envisagée) et obtient un **rapport multi-sources** : marques (INPI PI), dénominations d'entreprises (RNE), domaines web (WHOIS/DNS) — chacun avec sa provenance, sa date et son périmètre — plus une liste de **noms proches à vérifier**. Ne rend **jamais** de verdict (« disponible », « libre ») : toute conclusion passe par le contrat `MatchCandidate` (ADR-014), dont la disposition ne peut être que « à vérifier ».
 
@@ -1686,13 +1686,23 @@ C'est **assistif**, pas autoritaire : Atlas aide à ne rien rater, mais le **dev
 
 **Pourquoi reporté (V3+)** : (1) **source externe nouvelle** (WHOIS/DNS) hors du socle INPI/INSEE/BODACC — à évaluer (fournisseur, coût, rate-limits) ; (2) **sensibilité juridique maximale** — l'écran où un mauvais cadrage ferait le plus de dégâts, à livrer avec rigueur doctrinale. À reconsidérer selon la traction (persona Cabinet PI).
 
-**Détails techniques** : port `INameAvailabilityProbe`, adapters `InpiTrademarkPresenceAdapter` / `RneDenominationPresenceAdapter` / `WhoisDomainAdapter` (nouveau, `Atlas.Infrastructure.Whois`), use case `CheckNamePresence` (requêtes parallèles bornées, DTO discriminé par source — pas de fusion en indicateur unique). Cf. fiche dédiée.
+**Détails techniques** : port `INameAvailabilityProbe` (`Atlas.Domain`, renvoie un agrégat **sourcé**, jamais un booléen) ; adapters `InpiTrademarkPresenceAdapter` (F-006) / `RneDenominationPresenceAdapter` (F-005) / **`WhoisDomainAdapter`** (nouveau, `Atlas.Infrastructure.Whois`) ; use case `CheckNamePresence` (requêtes parallèles bornées, DTO **discriminé par source**, aucune fusion en indicateur unique) ; sortie `MatchCandidate` (ADR-014) par élément ; endpoints esquissés `GET /names/check?q=` et `GET /names/similar?q=`.
+
+**Doctrine (garde-fous)** : faits, jamais verdict (« disponible »/« libre »/« vous pouvez déposer » interdits) ; sources séparées, jamais fusionnées ; similarité = suggestion à vérifier, jamais affirmation de risque de confusion ; couleurs neutres ; note de cadrage permanente (« Atlas rapporte ce qu'il a trouvé, sourcé et daté ; il ne conclut pas sur la disponibilité juridique d'un nom — cette appréciation relève du conseil en PI »). Accessibilité ADR-008 / doc 06 : chaque source = section avec provenance, « à vérifier » jamais porté par la seule couleur.
+
+**RGPD** : registres publics (pas de données personnelles au-delà de ce que F-005/F-006 traitent déjà) ; WHOIS = uniquement le public (statut d'enregistrement, dates), aucune ré-identification des titulaires.
+
+**Modèle économique** : candidat **premium** (ADR-006 / ADR-009) — vérification multi-sources à forte valeur pour les cabinets ; le cœur (recherche mono-source) reste open source. À arbitrer.
+
+**Découpage** : (1) port + use case `CheckNamePresence` agrégeant F-005/F-006 (sans domaines) ; (2) mode UI « Vérifier un nom » (doc 12 §7) + rapport sourcé + noms proches (réutilise F-026) ; (3) adapter WHOIS/DNS (`Atlas.Infrastructure.Whois`) ; (4) premium gating éventuel.
+
+**À l'intégration** : référencer la source WHOIS dans `docs/03-catalogue-apis-publiques.md` ; à la création d'`Atlas.Infrastructure.Whois`, ajouter sa règle de dépendance (CLAUDE.md) et ses tests d'archi.
 
 ---
 
 ### F-061 — Surveillance continue d'un nom
 
-> **Figée le 30 mai 2026**. Statut **V3+ — Won't have (yet)**. **Pendant temporel de F-060**. Doctrine **ADR-014** : sortie = `MatchCandidate` « à vérifier », jamais « conflit avéré ». Cf. fiche dédiée [`feature-surveillance-nom-F061.md`](feature-surveillance-nom-F061.md).
+> **Figée le 30 mai 2026**. Statut **V3+ — Won't have (yet)**. **Pendant temporel de F-060**. Doctrine **ADR-014** : sortie = `MatchCandidate` « à vérifier », jamais « conflit avéré ». Jumeau structurel de **F-057** (re-screening de sanctions) : même patron snapshot/diff/job.
 
 **Description** : surveillance continue d'un nom — soit un **nom libre** saisi (projet de marque non déposé : nouveau concept de « surveillance de nom »), soit une **entité déjà suivie** (via une `WatchRule`, patron F-046). Atlas détecte dans le temps l'**apparition** d'éléments proches : nouveaux dépôts de marques (INPI/BOPI), nouvelles dénominations (RNE), nouveaux domaines (WHOIS) — et **alerte** (timeline F-047 + push F-020) avec **piste d'audit** (date, source, élément, base du rapprochement). Là où F-060 répond « ce nom est-il pris *maintenant* ? », F-061 répond « **préviens-moi quand quelque chose de proche apparaît** ».
 
@@ -1706,7 +1716,13 @@ C'est **assistif**, pas autoritaire : Atlas aide à ne rien rater, mais le **dev
 
 **Pourquoi reporté (V3+)** : dépend de F-060 + évaluation WHOIS + maîtrise du bruit. Réutilise massivement l'existant.
 
-**Détails techniques** : snapshot `NameWatchSnapshot` (par cible : nom libre ou `(UserId, entité)`), `DiffWith(...)` (éléments apparus / disparus), job Hangfire `name-watch` (cron décalé, ex. `0 6 * * *`), nouvel événement `FavoriteEvent` de type `NameMatchAppeared` (`ExternalId` = dépôt/dénomination/domaine + source, pour dédup). Cf. fiche dédiée.
+**Détails techniques** : snapshot `NameWatchSnapshot` (par cible : nom libre ou `(UserId, entité)`, formes normalisées/hash à la F-019) ; `DiffWith(...)` (éléments apparus / disparus) ; job Hangfire `name-watch` (cron décalé, ex. `0 6 * * *`, désactivable via `BackgroundJobs:Enabled=false`) ; nouvel événement `FavoriteEvent` `NameMatchAppeared` (`ExternalId` = dépôt/dénomination/domaine + source, pour dédup) ; dédup inter-utilisateurs (un calcul de similarité par nom partagé, patron F-048) ; sortie `MatchCandidate` (« à vérifier » garanti par le type) ; audit persisté = journal défendable.
+
+**Doctrine / RGPD / a11y** : hérite d'ADR-014 — la disposition ne peut être que « candidat / à vérifier », l'état « conflit avéré » est structurellement non représentable ; registres publics, pas de ré-identification WHOIS ; alertes lisibles au lecteur d'écran, « à vérifier » jamais porté par la seule couleur (doc 06).
+
+**Modèle économique** : candidat **premium** (ADR-006 / ADR-009) — surveillance continue à forte valeur récurrente ; le cœur (vérification ponctuelle F-060 mono-source) peut rester open source.
+
+**Découpage** : (1) `NameWatchSnapshot` + `DiffWith` + job `name-watch` sur une entité suivie (réutilise F-019/F-047/F-048) ; (2) surveillance d'un **nom libre** (saisie + persistance) ; (3) sources INPI/BOPI + RNE + WHOIS (selon F-060) ; (4) premium gating éventuel.
 
 ---
 
