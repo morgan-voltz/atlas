@@ -17,7 +17,12 @@ public sealed record GetTimelineQuery(
     bool FavoritesOnly,
     bool IncludeArchived,
     /// <summary>F-047 : ne renvoyer que les items mentionnant au moins une entreprise favorite du user.</summary>
-    bool MentionsFavoritesOnly) : IRequest<Result<PagedResult<TimelineItemDto>>>;
+    bool MentionsFavoritesOnly,
+    /// <summary>
+    /// Veille (doc 12 §6) : ne renvoyer que le contenu éditorial (items RSS), en excluant les
+    /// <c>FavoriteEvent</c> (qui appartiennent à l'Accueil). N'affecte pas le filtrage des items RSS.
+    /// </summary>
+    bool EditorialOnly = false) : IRequest<Result<PagedResult<TimelineItemDto>>>;
 
 /// <summary>F-047 : référence à une entreprise favorite du user mentionnée dans un item.</summary>
 public sealed record FavoriteMentionDto(string Siren, string Name);

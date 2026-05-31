@@ -40,7 +40,7 @@ Chaque jalon = une tranche verticale livrant de la valeur utilisable de bout en 
 | **M2 — Fiche entreprise** | depuis un résultat, fiche en cartes-sections, provenance épinglée, états de couverture | réutilise carte-section + le client API de M1 | ✅ |
 | **M3 — Accueil / feed** | fil des mouvements des entités suivies (cartes-aperçu *event*) | dépend des favoris (lecture) ; garde-fous anti-« réseau social » | ✅ |
 | **M4 — Favoris / Watchlists + list-detail 2 panneaux** | gestion des favoris **et** introduction du **list-detail à 2 panneaux** (signature desktop, réutilisé ensuite) | la signature desktop (doc 14 §3) arrive ici puis se généralise | ✅ |
-| **M5 — Veille** | flux, palier de lecture, pont vers fiche « à vérifier » | réutilise list-detail (M4) | ⬜ |
+| **M5 — Veille** | flux, palier de lecture, pont vers fiche « à vérifier » | réutilise list-detail (M4) | ✅ |
 | **M6 — Profil & compte** | profil, sous-pages compte / connexion INPI / données (RGPD) | — | ✅ |
 | **M7 — Onboarding complet** | création de compte, vérification email, défi 2FA, proposition INPI | complète l'auth minimale de M1 | ⬜ |
 
@@ -61,11 +61,13 @@ Un écran n'est **✅** que lorsque **toutes** ses colonnes le sont. DoD = templ
 | Fiche entreprise (Identité + Dirigeants ; Bilans/BODACC/Étabts/PI = features à venir) | M2 | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | Accueil / feed | M3 | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | Favoris (plats + list-detail 2 panneaux ; watchlists/tags F-053/F-030 = backend différé) | M4 | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| Veille | M5 | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
+| Veille | M5 | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | Profil hub + Connexion INPI + Données/RGPD (Compte/2FA/préférences = à venir) | M6 | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | Auth / onboarding | M1/M7 | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | 🟡 |
 
 Renvois doctrine par écran : Recherche doc 12 §7 ; Fiche §4 ; Accueil §5 ; Favoris §8 ; Veille §6 ; Profil §9 ; Auth §10.
+
+> **Vérification E2E M5 (31 mai 2026)** — Veille validée en navigateur (Playwright) : login UI → `/veille` **état vide** honnête (compte neuf, aucune source abonnée) ; **flux éditorial** (contrat `GET /feed/timeline?editorialOnly=true` mocké) en **list-detail 2 panneaux**, items lu/non-lu + dédup « N sources rapportent », **mention de favori absente de la liste** (garde-fou doc 12 §6 : la liste reste éditoriale) ; **palier de lecture** (sélection `?i=`) : vue lecture interne (titre + extrait), **pont vers fiche** « \<entité\> — voir sa fiche → » marqué *à vérifier* (uniquement dans le détail, jamais un verdict — ADR-012), **lien sortant honnête** « Lire la source ↗ (vous quittez Atlas) » ; **états par item** lu/favori/archiver (`PATCH /feed/items/{id}/state`, optimiste) + raccourcis clavier (Espace/F/A) ; archivage → sortie du flux + désélection. Backend : filtre **`editorialOnly`** ajouté à la timeline (exclut les `FavoriteEvent`, sans effet sur l'Accueil ; test unitaire).
 
 > **Vérification E2E M3 (31 mai 2026)** — Accueil / feed validé en navigateur (Playwright) : racine `/` en déconnecté → redirection propre vers `/connexion` (corrige un 500 d'hôte : la page racine `[Authorize]` exigeait un `AuthorizationMiddleware` absent en WASM pur → `Atlas.Web` ajoute `AddAuthorization()`/`UseAuthorization()` + `.AllowAnonymous()` sur les endpoints de composants, le gating restant côté client via `AuthorizeRouteView`) ; après login UI → `/accueil` **état vide** honnête (compte neuf) ; **état chargé** (contrat `GET /feed/timeline` mocké) : cartes-event RNE/BODACC + veille, lien fiche / lien source, chips de mentions favoris, dédup « N sources rapportent », clôture « tu es à jour » ; **marquage lu optimiste** (`PATCH /feed/items/{id}/state`) avec distinction lu/non-lu non portée par la seule couleur (pastille + graisse + bordure). Données réelles côté intégration (register/verify/login), rendu chargé exercé sur payload conforme au `TimelineItemDto`.
 
