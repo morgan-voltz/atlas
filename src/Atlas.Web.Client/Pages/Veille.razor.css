@@ -1,0 +1,492 @@
+/*
+ * Veille — list-detail à deux panneaux (doc 14 §3), même grammaire que Favoris (M4).
+ * Desktop (≥ 880 px) : flux à gauche, palier de lecture à droite. Sous le point de rupture :
+ * empilement (flux OU lecture si .has-selection), avec un retour « ← Flux ».
+ */
+
+.veille-shell {
+    min-width: 0;
+}
+
+/* ---- Empilement (étroit, défaut) ---------------------------------------- */
+
+.veille-detail {
+    display: none;
+}
+
+.has-selection .veille-list {
+    display: none;
+}
+
+.has-selection .veille-detail {
+    display: block;
+}
+
+.veille-back {
+    margin: 0 0 1rem;
+    font-size: 0.85rem;
+}
+
+.veille-back a {
+    color: var(--on-surface-variant);
+    text-decoration: none;
+}
+
+.veille-back a:hover {
+    text-decoration: underline;
+}
+
+.veille-back a:focus-visible {
+    outline: 2px solid var(--focus);
+    outline-offset: 2px;
+}
+
+/* ---- Deux panneaux (desktop) -------------------------------------------- */
+
+@media (min-width: 880px) {
+    .veille-shell {
+        display: flex;
+        gap: 1.5rem;
+        align-items: flex-start;
+    }
+
+    .veille-list {
+        display: block !important;
+        flex: 0 0 24rem;
+        position: sticky;
+        top: 1.5rem;
+        max-height: calc(100vh - 3rem);
+        overflow-y: auto;
+    }
+
+    .veille-detail {
+        display: block !important;
+        flex: 1;
+        min-width: 0;
+    }
+
+    .veille-back {
+        display: none;
+    }
+}
+
+/* ---- En-tête ------------------------------------------------------------- */
+
+.veille-header {
+    display: flex;
+    align-items: baseline;
+    gap: 0.6rem;
+    margin-bottom: 1rem;
+}
+
+.veille-title {
+    margin: 0;
+    font-size: 1.5rem;
+}
+
+.veille-count {
+    font-size: 0.85rem;
+    color: var(--on-surface-variant);
+}
+
+/* ---- Lignes du flux ------------------------------------------------------ */
+
+.veille-rows {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.veille-row {
+    border: 1px solid var(--surface-variant);
+    border-radius: var(--radius-md);
+    margin-bottom: 0.5rem;
+    background: var(--surface);
+}
+
+/* Non lu : pastille + graisse + bordure d'accent — jamais la couleur seule (doc 06). */
+.veille-row.unread {
+    border-left: 3px solid var(--primary);
+}
+
+/* Sélectionné : mis en avant (bordure + ombre interne), pas par la seule couleur. */
+.veille-row.selected {
+    border-color: var(--primary);
+    box-shadow: inset 3px 0 0 var(--primary);
+}
+
+.veille-row-link {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    padding: 0.7rem 0.85rem;
+    text-decoration: none;
+    color: inherit;
+}
+
+.veille-row-link:hover {
+    background: var(--surface-variant);
+    border-radius: var(--radius-md);
+}
+
+.veille-row-link:focus-visible {
+    outline: 3px solid var(--focus);
+    outline-offset: -3px;
+    border-radius: var(--radius-md);
+}
+
+.row-top {
+    display: flex;
+    align-items: baseline;
+    gap: 0.4rem;
+}
+
+.unread-dot {
+    flex-shrink: 0;
+    width: 0.5rem;
+    height: 0.5rem;
+    border-radius: 50%;
+    background: var(--primary);
+    align-self: center;
+}
+
+.row-title {
+    font-weight: 600;
+    line-height: 1.3;
+    color: var(--on-surface);
+}
+
+.veille-row.unread .row-title {
+    font-weight: 700;
+}
+
+.row-meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    font-size: 0.76rem;
+    color: var(--on-surface-variant);
+}
+
+.row-dot {
+    margin: 0 0.35rem;
+    color: var(--outline);
+}
+
+.row-fav {
+    color: var(--primary);
+}
+
+.row-excerpt {
+    font-size: 0.84rem;
+    line-height: 1.45;
+    color: var(--on-surface-variant);
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    -webkit-box-orient: vertical;
+}
+
+/* ---- Charger plus / fin -------------------------------------------------- */
+
+.veille-more {
+    margin-top: 0.5rem;
+    text-align: center;
+}
+
+.btn-more {
+    padding: 0.6rem 1.4rem;
+    font-weight: 600;
+    color: var(--on-surface);
+    background: var(--surface);
+    border: 1px solid var(--outline);
+    border-radius: var(--radius-md);
+    cursor: pointer;
+}
+
+.btn-more:hover:not(:disabled) {
+    background: var(--surface-variant);
+}
+
+.btn-more:focus-visible {
+    outline: 3px solid var(--focus);
+    outline-offset: 2px;
+}
+
+.btn-more:disabled {
+    opacity: 0.65;
+    cursor: progress;
+}
+
+.veille-end {
+    margin: 1rem 0 0;
+    text-align: center;
+    font-size: 0.88rem;
+    color: var(--success);
+    font-weight: 600;
+}
+
+/* ---- Palier de lecture (détail) ----------------------------------------- */
+
+.read-view {
+    padding: 1.25rem 1.4rem;
+    background: var(--surface);
+    border: 1px solid var(--surface-variant);
+    border-radius: var(--radius-lg);
+}
+
+.read-view:focus-visible {
+    outline: 3px solid var(--focus);
+    outline-offset: 2px;
+}
+
+.read-meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.1rem;
+    margin: 0 0 0.4rem;
+    font-size: 0.8rem;
+    color: var(--on-surface-variant);
+}
+
+.read-source {
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    margin-right: 0.5rem;
+}
+
+.read-title {
+    margin: 0 0 0.75rem;
+    font-size: 1.3rem;
+    line-height: 1.3;
+    color: var(--on-surface);
+}
+
+.read-summary {
+    margin: 0 0 1rem;
+    line-height: 1.6;
+    color: var(--on-surface);
+}
+
+/* ---- Pont vers fiche (mentions) ----------------------------------------- */
+
+.read-mentions {
+    padding: 0.85rem 1rem;
+    margin: 0 0 1rem;
+    background: var(--primary-container);
+    border-radius: var(--radius-md);
+}
+
+.mentions-label {
+    margin: 0 0 0.5rem;
+    font-size: 0.85rem;
+    color: var(--on-primary-container);
+}
+
+.mentions-hint {
+    font-style: italic;
+    opacity: 0.85;
+}
+
+.mentions-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+}
+
+.mention-chip {
+    font-weight: 600;
+    color: var(--on-primary-container);
+    text-decoration: none;
+}
+
+.mention-chip:hover {
+    text-decoration: underline;
+}
+
+.mention-chip:focus-visible {
+    outline: 2px solid var(--focus);
+    outline-offset: 2px;
+}
+
+/* ---- Lien sortant honnête ------------------------------------------------ */
+
+.read-outbound {
+    margin: 0 0 1.25rem;
+}
+
+.read-outbound a {
+    font-weight: 600;
+    color: var(--primary);
+    text-decoration: none;
+}
+
+.read-outbound a:hover {
+    text-decoration: underline;
+}
+
+.read-outbound a:focus-visible {
+    outline: 2px solid var(--focus);
+    outline-offset: 2px;
+}
+
+.outbound-note {
+    margin-left: 0.5rem;
+    font-size: 0.78rem;
+    color: var(--on-surface-variant);
+}
+
+/* ---- Actions d'item ------------------------------------------------------ */
+
+.read-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--surface-variant);
+}
+
+.action-btn {
+    padding: 0.45rem 0.9rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--on-surface);
+    background: var(--surface);
+    border: 1px solid var(--outline);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+}
+
+.action-btn:hover {
+    background: var(--surface-variant);
+}
+
+.action-btn.on {
+    color: var(--on-primary-container);
+    background: var(--primary-container);
+    border-color: var(--primary);
+}
+
+.action-btn:focus-visible {
+    outline: 3px solid var(--focus);
+    outline-offset: 2px;
+}
+
+.read-shortcuts {
+    margin: 0.85rem 0 0;
+    font-size: 0.76rem;
+    color: var(--on-surface-variant);
+}
+
+.read-shortcuts kbd {
+    padding: 0.05rem 0.35rem;
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    background: var(--surface-variant);
+    border: 1px solid var(--outline);
+    border-radius: 3px;
+}
+
+/* ---- Vide / erreur ------------------------------------------------------- */
+
+.veille-empty {
+    padding: 1.5rem 1.4rem;
+    background: var(--surface);
+    border: 1px solid var(--surface-variant);
+    border-radius: var(--radius-lg);
+}
+
+.empty-title {
+    margin: 0 0 0.5rem;
+    font-family: var(--font-heading);
+    font-size: 1.15rem;
+    font-weight: 600;
+    color: var(--on-surface);
+}
+
+.empty-sub {
+    margin: 0;
+    color: var(--on-surface-variant);
+    font-size: 0.92rem;
+}
+
+.veille-error {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.85rem;
+    padding: 0.9rem 1.1rem;
+    background: var(--error-container);
+    border: 1px solid var(--error-outline);
+    border-radius: var(--radius-md);
+}
+
+.veille-error-msg {
+    flex: 1;
+    min-width: 12rem;
+    margin: 0;
+    color: var(--on-error-container);
+}
+
+.veille-retry {
+    padding: 0.5rem 1rem;
+    font-weight: 600;
+    color: var(--on-primary);
+    background: var(--primary);
+    border: 0;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+}
+
+.veille-retry:focus-visible {
+    outline: 3px solid var(--focus);
+    outline-offset: 2px;
+}
+
+.veille-placeholder {
+    padding: 2.5rem 1.5rem;
+    text-align: center;
+    color: var(--on-surface-variant);
+    border: 1px dashed var(--outline);
+    border-radius: var(--radius-lg);
+}
+
+/* ---- Squelette ----------------------------------------------------------- */
+
+.skeleton-card {
+    padding: 0.9rem 1.1rem;
+    background: var(--surface);
+    border: 1px solid var(--surface-variant);
+    border-radius: var(--radius-md);
+    margin-bottom: 0.5rem;
+}
+
+.skeleton-line {
+    height: 0.85rem;
+    margin: 0.45rem 0;
+    border-radius: var(--radius-sm);
+    background: linear-gradient(90deg, var(--surface-variant) 25%, var(--bg) 50%, var(--surface-variant) 75%);
+    background-size: 200% 100%;
+    animation: veille-shimmer 1.3s ease-in-out infinite;
+}
+
+.skeleton-line.short {
+    width: 45%;
+}
+
+@keyframes veille-shimmer {
+    from { background-position: 200% 0; }
+    to { background-position: -200% 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .skeleton-line {
+        animation: none;
+    }
+}

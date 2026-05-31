@@ -107,6 +107,27 @@ public sealed class GetTimelineHandlerTests
     }
 
     [Fact]
+    public async Task Handle_excludes_events_when_editorial_only_even_without_rss_filter()
+    {
+        // Veille (doc 12 §6) : editorialOnly=true exclut les FavoriteEvent même si AUCUN filtre RSS
+        // n'est actif (cas où ShouldIncludeEvents les inclurait normalement).
+        _itemRepo.GetTimelineAsync(Arg.Any<UserId>(), Arg.Any<TimelineFilter>(),
+                Arg.Any<int>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
+            .Returns(new PagedResult<TimelineEntry>([], 1, 500, 0));
+
+        var query = new GetTimelineQuery(Guid.NewGuid(), 1, 20, null, null, null, null,
+            UnreadOnly: false, FavoritesOnly: false, IncludeArchived: false, MentionsFavoritesOnly: false,
+            EditorialOnly: true);
+
+        Result<PagedResult<TimelineItemDto>> result = await CreateHandler().Handle(query, CancellationToken.None);
+
+        result.IsSuccess.Should().BeTrue();
+        await _eventRepo.DidNotReceive().GetForUserAsync(
+            Arg.Any<UserId>(), Arg.Any<DateTimeOffset?>(), Arg.Any<DateTimeOffset?>(),
+            Arg.Any<int>(), Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
     public async Task Handle_propagates_pagination()
     {
         _itemRepo.GetTimelineAsync(Arg.Any<UserId>(), Arg.Any<TimelineFilter>(), Arg.Any<int>(), Arg.Any<int>(), Arg.Any<CancellationToken>())

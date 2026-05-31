@@ -1,7 +1,331 @@
 @page "/veille"
 @attribute [Authorize]
+@inject IAtlasApiClient Api
+@using Atlas.Shared.Result
+@using Microsoft.AspNetCore.Components.Web
 
-<PageTitle>Veille · Atlas</PageTitle>
+@* Veille (M5, doc 12 §6 + doc 14 §3) — la lecture de fond éditoriale (vs l'Accueil = mouvements des
+   entités suivies). List-detail à deux panneaux (signature desktop M4) : flux chronologique à gauche,
+   palier de lecture à droite. La liste reste éditoriale (kind=RssItem, editorialOnly) ; le pont vers la
+   fiche d'une entité mentionnée (F-047) vit UNIQUEMENT dans le détail, jamais dans la liste — sinon la
+   Veille rejouerait l'Accueil. Mention = proposition à vérifier, jamais un verdict (ADR-012). *@
 
-<h1>Veille</h1>
-<p>Flux sectoriel et réglementaire, lecture puis gestion. Écran à implémenter — cf. doc 12 §6 et doc 14.</p>
+<PageTitle>@PageTitleText</PageTitle>
+
+<div class="veille-shell @(HasSelection ? "has-selection" : null)">
+
+    <section class="veille-list" aria-label="Flux de veille">
+        <header class="veille-header">
+            <h1 class="veille-title">Veille</h1>
+            @if (state == FeedState.Loaded)
+            {
+                <span class="veille-count">@items.Count élément(s)</span>
+            }
+        </header>
+
+        @switch (state)
+        {
+            case FeedState.Loading:
+                <p role="status" class="sr-only">Chargement du flux…</p>
+                @for (int i = 0; i < 4; i++)
+                {
+                    <div class="skeleton-card" aria-hidden="true">
+                        <div class="skeleton-line short"></div>
+                        <div class="skeleton-line"></div>
+                    </div>
+                }
+                break;
+
+            case FeedState.Error:
+                <div class="veille-error" role="alert">
+                    <p class="veille-error-msg">@message</p>
+                    <button type="button" class="veille-retry" @onclick="() => LoadAsync(reset: true)">Réessayer</button>
+                </div>
+                break;
+
+            case FeedState.Empty:
+                @* Vide d'onboarding (doc 12 §6/§14) : la Veille a besoin de sources abonnées. *@
+                <div class="veille-empty" role="status">
+                    <p class="empty-title">Aucun élément de veille</p>
+                    <p class="empty-sub">Abonnez-vous à des sources (packs métier ou flux RSS) pour suivre l'actualité de votre secteur. La gestion des sources arrive prochainement.</p>
+                </div>
+                break;
+
+            case FeedState.Loaded:
+                <ul class="veille-rows" role="feed" aria-busy="@busy">
+                    @foreach (TimelineItemResponse item in items)
+                    {
+                        <li class="veille-row @(item.IsRead ? null : "unread") @(IsSelected(item) ? "selected" : null)">
+                            <a class="veille-row-link" href="veille?i=@item.Id"
+                               aria-current="@(IsSelected(item) ? "true" : null)">
+                                <span class="row-top">
+                                    @if (!item.IsRead)
+                                    {
+                                        <span class="unread-dot" aria-label="Non lu" title="Non lu"></span>
+                                    }
+                                    <span class="row-title">@item.Title</span>
+                                </span>
+                                <span class="row-meta">
+                                    <time datetime="@item.OccurredAt.ToString("o")">@item.OccurredAt.ToString("d MMM yyyy", Culture)</time>
+                                    @if (item.SourceCount > 1)
+                                    {
+                                        <span class="row-dot" aria-hidden="true">·</span>
+                                        <span>@item.SourceCount sources rapportent</span>
+                                    }
+                                    @if (item.IsFavorite)
+                                    {
+                                        <span class="row-dot" aria-hidden="true">·</span>
+                                        <span class="row-fav" title="Favori">★ favori</span>
+                                    }
+                                </span>
+                                @if (!string.IsNullOrWhiteSpace(item.Summary))
+                                {
+                                    <span class="row-excerpt">@item.Summary</span>
+                                }
+                            </a>
+                        </li>
+                    }
+                </ul>
+
+                @if (HasMore)
+                {
+                    <div class="veille-more">
+                        <button type="button" class="btn-more" @onclick="LoadMoreAsync" disabled="@busy">
+                            @(busy ? "Chargement…" : "Charger plus")
+                        </button>
+                    </div>
+                }
+                else
+                {
+                    <p class="veille-end" role="status"><span aria-hidden="true">✓ </span>Vous êtes à jour.</p>
+                }
+                break;
+        }
+    </section>
+
+    <section class="veille-detail" aria-label="Lecture de l'élément sélectionné">
+        @if (Current is { } current)
+        {
+            @* Palier de lecture (doc 12 §6) : vue lecture interne, puis lien sortant honnête. *@
+            <p class="veille-back"><a href="veille">← Flux</a></p>
+
+            <div class="read-view" tabindex="0" @onkeydown="OnReadKeyDown" @onkeydown:preventDefault="ShouldPreventKey">
+                <p class="read-meta">
+                    <span class="read-source">Veille</span>
+                    <time datetime="@current.OccurredAt.ToString("o")">@current.OccurredAt.ToString("d MMMM yyyy", Culture)</time>
+                    @if (current.SourceCount > 1)
+                    {
+                        <span class="row-dot" aria-hidden="true">·</span>
+                        <span>@current.SourceCount sources rapportent</span>
+                    }
+                </p>
+
+                <h2 class="read-title">@current.Title</h2>
+
+                @if (!string.IsNullOrWhiteSpace(current.Summary))
+                {
+                    <p class="read-summary">@current.Summary</p>
+                }
+
+                @if (current.MentionedFavorites.Count > 0)
+                {
+                    @* Pont vers fiche — proposition à vérifier, jamais un verdict (ADR-012). *@
+                    <div class="read-mentions">
+                        <p class="mentions-label">Cet article mentionne une entité que vous suivez <span class="mentions-hint">— à vérifier</span> :</p>
+                        <ul class="mentions-list">
+                            @foreach (FavoriteMentionResponse m in current.MentionedFavorites)
+                            {
+                                <li><a class="mention-chip" href="entreprise/@m.Siren">@m.Name — voir sa fiche →</a></li>
+                            }
+                        </ul>
+                    </div>
+                }
+
+                @if (!string.IsNullOrWhiteSpace(current.Url))
+                {
+                    <p class="read-outbound">
+                        <a href="@current.Url" target="_blank" rel="noopener noreferrer">Lire la source ↗</a>
+                        <span class="outbound-note">(vous quittez Atlas)</span>
+                    </p>
+                }
+
+                <div class="read-actions" role="group" aria-label="Actions sur l'élément">
+                    <button type="button" class="action-btn" @onclick="ToggleReadAsync">
+                        @(current.IsRead ? "Marquer non lu" : "Marquer comme lu")
+                    </button>
+                    <button type="button" class="action-btn @(current.IsFavorite ? "on" : null)" @onclick="ToggleFavoriteAsync"
+                            aria-pressed="@(current.IsFavorite ? "true" : "false")">
+                        @(current.IsFavorite ? "★ Favori" : "☆ Favori")
+                    </button>
+                    <button type="button" class="action-btn" @onclick="ArchiveAsync">Archiver</button>
+                </div>
+                <p class="read-shortcuts">Raccourcis : <kbd>Espace</kbd> lu · <kbd>F</kbd> favori · <kbd>A</kbd> archiver</p>
+            </div>
+        }
+        else
+        {
+            <div class="veille-placeholder">
+                <p>Sélectionnez un élément à gauche pour le lire.</p>
+            </div>
+        }
+    </section>
+
+</div>
+
+@code {
+    private const int PageSize = 20;
+    private static readonly System.Globalization.CultureInfo Culture = new("fr-FR");
+
+    [SupplyParameterFromQuery(Name = "i")]
+    private string? Selected { get; set; }
+
+    private FeedState state = FeedState.Loading;
+    private readonly List<TimelineItemResponse> items = [];
+    private int page = 1;
+    private long totalCount;
+    private bool busy;
+    private string? message;
+
+    private bool HasMore => items.Count < totalCount;
+    private bool HasSelection => !string.IsNullOrEmpty(Selected);
+
+    private TimelineItemResponse? Current =>
+        HasSelection ? items.FirstOrDefault(i => i.Id.ToString() == Selected) : null;
+
+    private bool IsSelected(TimelineItemResponse item) => item.Id.ToString() == Selected;
+
+    private string PageTitleText => Current is { } c ? $"{c.Title} · Veille · Atlas" : "Veille · Atlas";
+
+    private bool ShouldPreventKey { get; set; }
+
+    protected override async Task OnInitializedAsync() => await LoadAsync(reset: true);
+
+    private async Task LoadAsync(bool reset)
+    {
+        if (reset)
+        {
+            page = 1;
+            items.Clear();
+            state = FeedState.Loading;
+        }
+
+        message = null;
+        ApiResult<PagedResult<TimelineItemResponse>> result = await Api.GetVeilleFeedAsync(page, PageSize);
+
+        if (!result.IsSuccess || result.Value is null)
+        {
+            message = MapError(result.ErrorCode);
+            state = FeedState.Error;
+            return;
+        }
+
+        items.AddRange(result.Value.Items);
+        totalCount = result.Value.TotalCount;
+        state = items.Count == 0 ? FeedState.Empty : FeedState.Loaded;
+    }
+
+    private async Task LoadMoreAsync()
+    {
+        if (busy || !HasMore)
+        {
+            return;
+        }
+
+        busy = true;
+        page++;
+        await LoadAsync(reset: false);
+        busy = false;
+    }
+
+    private async Task ToggleReadAsync()
+    {
+        if (Current is not { } c)
+        {
+            return;
+        }
+
+        bool target = !c.IsRead;
+        Replace(c with { IsRead = target });
+        await Api.SetFeedItemStateAsync(c.Id, isRead: target);
+    }
+
+    private async Task ToggleFavoriteAsync()
+    {
+        if (Current is not { } c)
+        {
+            return;
+        }
+
+        bool target = !c.IsFavorite;
+        Replace(c with { IsFavorite = target });
+        await Api.SetFeedItemStateAsync(c.Id, isFavorite: target);
+    }
+
+    private async Task ArchiveAsync()
+    {
+        if (Current is not { } c)
+        {
+            return;
+        }
+
+        // Archivé → sort du flux éditorial (editorialOnly n'inclut pas les archivés) : retrait optimiste
+        // de la liste + désélection.
+        Guid id = c.Id;
+        items.RemoveAll(i => i.Id == id);
+        Selected = null;
+        if (items.Count == 0 && !HasMore)
+        {
+            state = FeedState.Empty;
+        }
+
+        await Api.SetFeedItemStateAsync(id, isArchived: true);
+    }
+
+    private async Task OnReadKeyDown(KeyboardEventArgs e)
+    {
+        // Raccourcis doc 06 §11.5 : Espace = lu, F = favori, A = archiver. preventDefault sur Espace
+        // pour éviter le défilement de page.
+        ShouldPreventKey = e.Key is " " or "Spacebar" || e.Code == "Space";
+
+        switch (e.Key.ToLowerInvariant())
+        {
+            case " ":
+            case "spacebar":
+                await ToggleReadAsync();
+                break;
+            case "f":
+                await ToggleFavoriteAsync();
+                break;
+            case "a":
+                await ArchiveAsync();
+                break;
+            default:
+                ShouldPreventKey = false;
+                break;
+        }
+    }
+
+    private void Replace(TimelineItemResponse updated)
+    {
+        int idx = items.FindIndex(i => i.Id == updated.Id);
+        if (idx >= 0)
+        {
+            items[idx] = updated;
+        }
+    }
+
+    private static string MapError(string? code) => code switch
+    {
+        "unauthorized" => "Votre session a expiré. Reconnectez-vous.",
+        "network" => "Service indisponible. Vérifiez votre connexion et réessayez.",
+        _ => "Le flux n'a pas pu être chargé. Réessayez.",
+    };
+
+    private enum FeedState
+    {
+        Loading,
+        Loaded,
+        Empty,
+        Error,
+    }
+}

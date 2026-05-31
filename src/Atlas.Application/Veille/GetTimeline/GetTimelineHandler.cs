@@ -41,8 +41,9 @@ internal sealed class GetTimelineHandler(
             userId, filter, page: 1, pageSize: FusionBuffer, cancellationToken);
 
         // Événements RNE : exclus si l'un des filtres RSS-spécifiques est actif (les events n'ont
-        // pas de source RSS ni d'état utilisateur — sinon ils apparaîtraient toujours, surprise).
-        IReadOnlyList<FavoriteEvent> events = ShouldIncludeEvents(filter)
+        // pas de source RSS ni d'état utilisateur — sinon ils apparaîtraient toujours, surprise) ou
+        // si l'appelant demande explicitement le contenu éditorial seul (Veille, doc 12 §6).
+        IReadOnlyList<FavoriteEvent> events = !request.EditorialOnly && ShouldIncludeEvents(filter)
             ? await eventRepository.GetForUserAsync(
                 userId, request.After, request.Before, FusionBuffer, cancellationToken)
             : [];

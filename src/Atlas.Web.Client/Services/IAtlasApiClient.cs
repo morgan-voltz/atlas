@@ -42,4 +42,10 @@ public interface IAtlasApiClient
     Task<ApiResult<PagedResult<TimelineItemResponse>>> GetAccueilFeedAsync(int page, int pageSize, CancellationToken ct = default);
 
     Task<ApiResult> MarkFeedItemReadAsync(Guid id, CancellationToken ct = default);
+
+    /// <summary>Flux de la Veille : contenu éditorial seul (timeline filtrée <c>editorialOnly</c>, doc 12 §6).</summary>
+    Task<ApiResult<PagedResult<TimelineItemResponse>>> GetVeilleFeedAsync(int page, int pageSize, CancellationToken ct = default);
+
+    /// <summary>États d'un item de veille (F-044) : lu / favori / archivé. Les champs <c>null</c> restent inchangés.</summary>
+    Task<ApiResult> SetFeedItemStateAsync(Guid id, bool? isRead = null, bool? isFavorite = null, bool? isArchived = null, CancellationToken ct = default);
 }
