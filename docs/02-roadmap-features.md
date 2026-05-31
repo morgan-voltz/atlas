@@ -3,7 +3,7 @@
 > Catalogue détaillé des fonctionnalités du projet, organisé selon la méthode **MoSCoW** (Must / Should / Could / Won't have for now) et par jalon de version.
 > Chaque feature est décrite avec sa valeur utilisateur, sa complexité technique, les APIs externes requises et les dépendances vers d'autres features.
 >
-> **Ce document est le backlog produit (`F-NNN`).** L'implémentation du **client web** suit sa propre feuille de route, à part : `docs/15-roadmap-client-web.md` (`W-NNN`).
+> **Ce document est le backlog produit (`F-NNN`).** L'implémentation du **client web** suit sa propre feuille de route, à part : `docs/15-roadmap-client-web.md`.
 
 **Version** : 1.0
 **Date de dernière mise à jour** : 31 mai 2026

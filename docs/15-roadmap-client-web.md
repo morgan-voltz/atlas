@@ -1,113 +1,110 @@
 # Roadmap — client web (Atlas.Web)
 
 > Feuille de route **d'implémentation** du client web Blazor (`Atlas.Web` / `Atlas.Web.Client`).
-> Document **distinct** du backlog produit/features (`docs/02-roadmap-features.md`, identifiants `F-NNN`)
-> et de la doctrine UX (`docs/12` tronc commun + `docs/14` delta web). Ici on suit **comment on bâtit
-> le client web**, pas quelles features produit existent.
+> Document **distinct** du backlog produit (`docs/02-roadmap-features.md`, `F-NNN`) et de la doctrine
+> UX (`docs/12` tronc commun + `docs/14` delta web). Ici : **comment on bâtit le client**.
 
 **Version** : 1.0 — **Date** : 31 mai 2026 — **Portée** : `Atlas.Web` (app authentifiée, WASM pur).
-**Décisions cadre** : **ADR-017** (Blazor Web App, WASM pur), **ADR-002** (client pur de l'API), **ADR-008 / doc 06** (accessibilité).
+**Cadre** : **ADR-017** (Blazor Web App, WASM pur), **ADR-002** (client pur de l'API), **ADR-008 / doc 06** (accessibilité, bloquante).
 
-Identifiants `W-NNN` (Web). Les items qui **surfacent** une feature produit renvoient à son `F-NNN`.
+Légende : ✅ fait & vérifié · 🟡 partiel · ⬜ à faire.
 
-Légende : ✅ livré & vérifié · 🟡 livré, vérification partielle · ⬜ à faire.
-
----
-
-## État d'avancement
-
-| Phase | Item | Statut |
-|---|---|:--:|
-| **0 — Fondations** | W-001 Framework & décision (ADR-017, WASM pur) | ✅ |
-| | W-002 Modèle UX web (doc 14) | ✅ |
-| | W-003 Scaffold `Atlas.Web` + `Atlas.Web.Client` (CPM, NetArchTest) | ✅ |
-| | W-004 Squelette navigation + routing (rail 5 destinations, URLs, 404) | ✅ |
-| **1 — Kit de composants Razor** | W-010 Atomes (champ étiqueté, badge, provenance, chiffre-clé) | ⬜ |
-| | W-011 Carte-aperçu (entity / event) | ⬜ |
-| | W-012 Carte-section (repliable, pin, provenance) | ⬜ |
-| | W-013 États (chargement, vide, erreur, fin de liste) | ⬜ |
-| | W-014 Thème clair/sombre + tokens (mapping maquettes) | ⬜ |
-| **2 — Accès API & auth** | W-020 `AtlasApiClient` (Refit) | ⬜ |
-| | W-021 Auth navigateur (token mémoire + refresh cookie HttpOnly) | ⬜ |
-| | W-022 Garde de route protégée → `/login` + retour à l'URL | ⬜ |
-| | W-023 Erreurs API → états (mapping `code` ProblemDetails) | ⬜ |
-| **3 — Écrans par destination** | W-030 Accueil / feed | ⬜ |
-| | W-031 Recherche (+ 3e mode « Vérifier un nom », F-060) | ⬜ |
-| | W-032 Veille | ⬜ |
-| | W-033 Favoris / Watchlists | ⬜ |
-| | W-034 Profil + sous-pages (compte, INPI, données) | ⬜ |
-| | W-035 Fiche entreprise (page cartes-sections) | ⬜ |
-| | W-036 Auth / onboarding (ouverture → 2FA → proposition INPI) | ⬜ |
-| **4 — List-detail & responsive** | W-040 List-detail 2 panneaux (Recherche/Favoris/Veille) | ⬜ |
-| | W-041 Reflow par largeur (breakpoints R2 → empilement mobile) | ⬜ |
-| | W-042 Conventions web (clavier, survol doublé, titre/favicon) | ⬜ |
-| **5 — Qualité & déploiement** | W-050 Checklist accessibilité (doc 06 / ADR-008) par écran | ⬜ |
-| | W-051 Tests (composants bUnit + smoke e2e) | ⬜ |
-| | W-052 Build/CI + déploiement (hébergement statique WASM) | ⬜ |
-| | W-053 PWA / hors-ligne (à évaluer) | ⬜ |
+**Principe directeur — tranches verticales, pas couches horizontales.** On livre **un écran de bout en
+bout** (UI + données + auth + états + accessibilité) avant de passer au suivant : du fonctionnel tôt,
+l'intégration dé-risquée au plus tôt. Le **kit de composants s'extrait au fil des écrans** (pas tout en
+amont). Chaque écran est « fini » au sens de sa **Definition of Done** (§3), pas avant.
 
 ---
 
-## Phase 0 — Fondations ✅
+## 1. Cadre
 
-Socle décisionnel et technique posé (30-31 mai 2026).
+Le client web est le **3ᵉ form-factor** d'un même produit (R1) : 90 % de la doctrine vient de `docs/12`
+(agnostique) ; `docs/14` ne décrit que les deltas web (rail, list-detail 2 panneaux, routing/URLs).
+Topologie : **consommateur HTTP pur** de `Atlas.Api` (ADR-002) ; `Atlas.Web.Client` ne référence que
+`Domain` + `Shared` (verrouillé par NetArchTest). Maquettes de référence : `docs/design/phone_mode/`.
 
-- **W-001 — Framework & décision** ✅ — Client web = **Blazor Web App, WASM pur** pour l'app authentifiée (ADR-017, amendé). PR #81, #83.
-- **W-002 — Modèle UX web** ✅ — `docs/14-modele-ux-client-web.md` : delta de doc 12 (rail, list-detail 2 panneaux, routing/URLs). PR #82.
-- **W-003 — Scaffold** ✅ — `src/Atlas.Web` (hôte) + `src/Atlas.Web.Client` (WASM, `Domain` + `Shared` only, verrouillé par NetArchTest). CPM aligné. PR #84.
-- **W-004 — Squelette navigation + routing** ✅ — Render mode WASM global, rail latéral à 5 destinations (Accueil/Recherche/Veille/Favoris/Profil), routes `/accueil…/profil`, page 404. PR #85.
-
-## Phase 1 — Kit de composants Razor ⬜
-
-Transposer le kit de doc 12 §6-9 et §11-14 en composants Razor réutilisables, à partir des maquettes `docs/design/phone_mode/`. **Pré-requis du reste** : les écrans (phase 3) consomment ce kit.
-
-- **W-010 — Atomes** — champ étiqueté, badge (descriptif, jamais verdict, jamais couleur seule), **ligne de provenance** (`source · date`, jamais masquée), chiffre-clé. Doc 12 §6.
-- **W-011 — Carte-aperçu** — variantes *preview-entity* (recherche/favoris) et *preview-event* (feed/veille), une seule anatomie. Doc 12 §12.
-- **W-012 — Carte-section** — repliable, pin, provenance dans le corps, lien d'approfondissement. Doc 12 §13.
-- **W-013 — États** — chargement (skeleton calquant l'anatomie), vide (onboarding vs couverture), erreur **locale**, « à jour / fin de liste ». Doc 12 §14.
-- **W-014 — Thème & tokens** — clair/sombre, mapping des tokens depuis les maquettes (et `themes.json` si retenu).
-
-## Phase 2 — Accès API & auth ⬜
-
-Le client est un **consommateur HTTP pur** de `Atlas.Api` (ADR-002).
-
-- **W-020 — `AtlasApiClient`** — contrat typé via **Refit** (`Refit.HttpClientFactory` déjà en CPM), DI côté client. Réutilise les DTO de `Atlas.Shared`/`Domain`.
-- **W-021 — Auth navigateur** — access token JWT **en mémoire** + refresh via cookie **HttpOnly** rotatif `atlas_refresh` (déjà émis par l'API) ; **jamais** de token en `localStorage`. Doc 14 §1, ADR-010.
-- **W-022 — Garde de route protégée** — route sans session → redirection propre vers `/login`, retour à l'URL demandée après login. Doc 14 §4.
-- **W-023 — Erreurs API → états** — mapping du champ `code` des ProblemDetails (cf. PR #74) vers les états (W-013) ; deep-link dégradé honnête (INPI non connecté → bandeau, pas d'écran cassé). Doc 14 §4.
-
-## Phase 3 — Écrans par destination ⬜
-
-Chaque écran assemble le kit (phase 1) sur les données (phase 2), selon doc 12 + maquettes.
-
-- **W-030 — Accueil / feed** — fil des mouvements d'entités suivies, cartes-aperçu *event*, garde-fous anti-« réseau social ». Doc 12 §5.
-- **W-031 — Recherche** — champ unique intelligent, deux états guidés par l'intention ; **3e mode « Vérifier un nom »** surface **F-060** (V3). Doc 12 §7.
-- **W-032 — Veille** — flux, palier de lecture, pont vers fiche « à vérifier ». Doc 12 §6.
-- **W-033 — Favoris / Watchlists** — modèle « Tous + listes », divulgation R6. Doc 12 §8.
-- **W-034 — Profil** — 5 entrées en 2 familles + déconnexion ; sous-pages compte / connexion INPI / données. Doc 12 §9.
-- **W-035 — Fiche entreprise** — page unique de cartes-sections repliables, provenance épinglée. Doc 12 §4.
-- **W-036 — Auth / onboarding** — ouverture (choix), connexion, création de compte, vérification email, défi 2FA, proposition INPI. Doc 12 §10.
-
-## Phase 4 — List-detail & responsive ⬜
-
-- **W-040 — List-detail 2 panneaux** — signature desktop : liste à gauche, détail à droite, sélection persistante. Recherche / Favoris / Veille. Doc 14 §3.
-- **W-041 — Reflow par largeur** — sous le point de rupture, repli sur l'empilement mobile (R2, adapter à la largeur pas à l'OS). Doc 14 §5.
-- **W-042 — Conventions web** — clavier de premier ordre (`/` ou `Ctrl-K`, flèches, `Esc`), survol **doublé** d'un accès permanent, `<title>`/favicon par écran. Doc 14 §5.
-
-## Phase 5 — Qualité & déploiement ⬜
-
-- **W-050 — Accessibilité** — checklist doc 06 / ADR-008 passée **par écran** (exigence bloquante DoD).
-- **W-051 — Tests** — composants (bUnit) + smoke e2e des parcours clés.
-- **W-052 — Build/CI & déploiement** — au-delà du build CI déjà en place (#84), publication WASM et hébergement statique à câbler (cf. docs/10).
-- **W-053 — PWA / hors-ligne** — installable + cache, à évaluer selon le besoin. Doc 14 §7.
+**Fondations — ✅ faites** (30-31 mai 2026, PR #81-#85) : décision framework (ADR-017, WASM pur),
+modèle UX web (doc 14), scaffold `Atlas.Web`/`Atlas.Web.Client` (CPM, NetArchTest), squelette de
+navigation (rail 5 destinations) + routing + page 404.
 
 ---
 
-## Hors périmètre (v1)
-- **Pages publiques / SEO** (landing, marketing) : exclues (app authentifiée seule). Leur ajout rouvrirait WASM-pur vs modèle unifié → avenant à ADR-017. Doc 14 §1/§7.
-- **Client MAUI** : suivi séparément (F-009/F-010 de docs/02) ; priorité au web d'abord.
+## 2. Jalons (tranches verticales)
+
+Chaque jalon = une tranche verticale livrant de la valeur utilisable de bout en bout.
+
+| Jalon | Contenu | Pourquoi en premier / dépendances | Statut |
+|---|---|:--:|:--:|
+| **M0 — Fondations** | scaffold + navigation/routing | socle (cf. §1) | ✅ |
+| **M1 — Connexion + Recherche** | login (token mémoire + refresh cookie HttpOnly) **et** écran Recherche de bout en bout | 1ʳᵉ tranche : valide toute la chaîne — `AtlasApiClient`, auth, garde de route, premiers composants (carte-aperçu, états) | ⬜ |
+| **M2 — Fiche entreprise** | depuis un résultat, fiche en cartes-sections, provenance épinglée, états de couverture | réutilise carte-section + le client API de M1 | ⬜ |
+| **M3 — Accueil / feed** | fil des mouvements des entités suivies (cartes-aperçu *event*) | dépend des favoris (lecture) ; garde-fous anti-« réseau social » | ⬜ |
+| **M4 — Favoris / Watchlists + list-detail 2 panneaux** | gestion des favoris **et** introduction du **list-detail à 2 panneaux** (signature desktop, réutilisé ensuite) | la signature desktop (doc 14 §3) arrive ici puis se généralise | ⬜ |
+| **M5 — Veille** | flux, palier de lecture, pont vers fiche « à vérifier » | réutilise list-detail (M4) | ⬜ |
+| **M6 — Profil & compte** | profil, sous-pages compte / connexion INPI / données (RGPD) | — | ⬜ |
+| **M7 — Onboarding complet** | création de compte, vérification email, défi 2FA, proposition INPI | complète l'auth minimale de M1 | ⬜ |
+
+> L'ordre est indicatif et révisable ; on ne démarre un jalon que quand le précédent atteint sa DoD.
+
+---
+
+## 3. Écrans & parcours — Definition of Done
+
+Un écran n'est **✅** que lorsque **toutes** ses colonnes le sont. DoD = template commun :
+
+> **maquette** conforme à `docs/design` · **données** câblées à l'API · **états** (chargement / vide / erreur) ·
+> **responsive** (reflow par largeur, doc 14 §5) · **a11y** (doc 06, bloquant) · **clavier** (focus, raccourcis) · **URL/titre** de page.
+
+| Écran | Jalon | Maquette | Données | États | Responsive | A11y | Clavier | URL/titre | Statut |
+|---|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|
+| Recherche (+ « Vérifier un nom », F-060) | M1 | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
+| Fiche entreprise | M2 | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
+| Accueil / feed | M3 | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
+| Favoris / Watchlists | M4 | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
+| Veille | M5 | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
+| Profil + sous-pages | M6 | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
+| Auth / onboarding | M1/M7 | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
+
+Renvois doctrine par écran : Recherche doc 12 §7 ; Fiche §4 ; Accueil §5 ; Favoris §8 ; Veille §6 ; Profil §9 ; Auth §10.
+
+---
+
+## 4. Kit de composants (vivant)
+
+Extrait **au fil des écrans**, pas en amont. Chaque composant couvre ses **états** (doc 12 §11-14).
+
+| Composant | États / variantes | Extrait en | Statut |
+|---|---|:--:|:--:|
+| Layout **rail** (5 destinations) | actif / hover / focus | M0 | ✅ |
+| Atomes (champ étiqueté, badge, **provenance**, chiffre-clé) | — (provenance jamais masquée) | M1 | ⬜ |
+| **Carte-aperçu** (entity / event) | défaut · hover · pressed · focus · sélectionné · lu/non-lu · skeleton | M1 | ⬜ |
+| **Carte-section** (repliable) | ouvert · replié · épinglé · vide-couverture · erreur-locale · skeleton | M2 | ⬜ |
+| **États** (composants) | chargement (skeleton) · vide (onboarding/couverture) · erreur (locale) · fin de liste | M1 | ⬜ |
+| **Thème** clair/sombre + tokens | clair · sombre | M1 | ⬜ |
+
+---
+
+## 5. Exigences transverses (portes de qualité — toujours actives)
+
+Pas des phases : vérifiées **sur chaque écran** (intégrées à la DoD §3).
+
+- **Accessibilité** (doc 06 / ADR-008) — **bloquante** (DoD). `aria-*` natifs au web ; focus visible ; rien porté par la seule couleur.
+- **Responsive** — adapter à la **largeur** (R2), pas à l'OS ; list-detail 2 panneaux → empilement sous le point de rupture.
+- **Thème** clair/sombre cohérent avec les maquettes.
+- **Sécurité client** — token JWT **en mémoire** (jamais `localStorage`) ; `Atlas.Web.Client` → `Domain` + `Shared` only (NetArchTest) ; zéro secret côté navigateur.
+- **Performance** — poids WASM initial (lazy loading / trimming à évaluer ; non-sujet SEO car app authentifiée).
+- **Langue** — français par défaut (`NeutralLanguage` fr-FR).
+
+---
+
+## 6. Hors périmètre (v1)
+
+- **Pages publiques / SEO** (landing, marketing) — exclues (app authentifiée seule) ; leur ajout rouvrirait WASM-pur vs modèle unifié (avenant ADR-017). Doc 14 §1/§7.
+- **PWA / hors-ligne** — à évaluer ultérieurement. Doc 14 §7.
+- **Client MAUI** — suivi séparément (F-009/F-010 de `docs/02`) ; priorité au web d'abord.
 
 ## Renvois
+
 | Sujet | Référence |
 |---|---|
 | Backlog produit / features | `docs/02-roadmap-features.md` (`F-NNN`) |
@@ -118,4 +115,4 @@ Chaque écran assemble le kit (phase 1) sur les données (phase 2), selon doc 12
 | Accessibilité (bloquant) | `docs/06-accessibilite.md`, ADR-008 |
 | Placement solution | `docs/10-layout-solution-dotnet.md` |
 
-*Document évolutif. Mettre à jour le statut des `W-NNN` au fil des PR.*
+*Document évolutif. Cocher les colonnes de DoD (§3) et les statuts (§2, §4) au fil des PR.*
