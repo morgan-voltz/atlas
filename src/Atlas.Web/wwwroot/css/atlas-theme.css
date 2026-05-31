@@ -1,0 +1,164 @@
+/*
+ * Atlas — fondation de thème du client web (tokens + polices).
+ *
+ * Source de vérité des couleurs : thème « Atlas » de
+ *   docs/atlas-themes-kit/atlas-themes/source/themes.json (clair + sombre).
+ * Source de vérité des polices : docs/16-polices-et-lisibilite.md
+ *   (corps = Atkinson Hyperlegible, titres = IBM Plex Serif, identifiants = IBM Plex Mono).
+ *
+ * Le mode sombre est automatique via prefers-color-scheme en M1 ; le sélecteur de
+ * thème (préférence persistée, F-062) arrivera au jalon M6 (Profil → Affichage & données)
+ * et surchargera ces tokens via un attribut [data-theme] sur <html>.
+ *
+ * Polices auto-hébergées (souveraineté + hors-ligne, doc 16 §7). Sous-ensemble de poids
+ * volontairement réduit pour limiter le poids WASM ; le subsetting fin reste à faire.
+ */
+
+/* ---- Polices ------------------------------------------------------------ */
+
+@font-face {
+    font-family: "Atkinson Hyperlegible";
+    font-style: normal;
+    font-weight: 400;
+    font-display: swap;
+    src: url("/fonts/AtkinsonHyperlegible-Regular.ttf") format("truetype");
+}
+
+@font-face {
+    font-family: "Atkinson Hyperlegible";
+    font-style: italic;
+    font-weight: 400;
+    font-display: swap;
+    src: url("/fonts/AtkinsonHyperlegible-Italic.ttf") format("truetype");
+}
+
+@font-face {
+    font-family: "Atkinson Hyperlegible";
+    font-style: normal;
+    font-weight: 700;
+    font-display: swap;
+    src: url("/fonts/AtkinsonHyperlegible-Bold.ttf") format("truetype");
+}
+
+@font-face {
+    font-family: "IBM Plex Serif";
+    font-style: normal;
+    font-weight: 600;
+    font-display: swap;
+    src: url("/fonts/IBMPlexSerif-SemiBold.ttf") format("truetype");
+}
+
+@font-face {
+    font-family: "IBM Plex Serif";
+    font-style: normal;
+    font-weight: 700;
+    font-display: swap;
+    src: url("/fonts/IBMPlexSerif-Bold.ttf") format("truetype");
+}
+
+@font-face {
+    font-family: "IBM Plex Mono";
+    font-style: normal;
+    font-weight: 400;
+    font-display: swap;
+    src: url("/fonts/IBMPlexMono-Regular.ttf") format("truetype");
+}
+
+@font-face {
+    font-family: "IBM Plex Mono";
+    font-style: normal;
+    font-weight: 500;
+    font-display: swap;
+    src: url("/fonts/IBMPlexMono-Medium.ttf") format("truetype");
+}
+
+/* ---- Tokens (thème « Atlas », clair) ------------------------------------ */
+
+:root {
+    /* Rôles de police (doc 16 §1) — découplés, changeables indépendamment. */
+    --font-body: "Atkinson Hyperlegible", system-ui, -apple-system, "Segoe UI", sans-serif;
+    --font-heading: "IBM Plex Serif", Georgia, "Times New Roman", serif;
+    --font-mono: "IBM Plex Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+
+    /* Couleurs sémantiques (themes.json → Atlas → light). */
+    --bg: #f6f9fc;
+    --surface: #ffffff;
+    --surface-variant: #e7eff8;
+    --on-bg: #13202e;
+    --on-surface: #13202e;
+    --on-surface-variant: #42596f;
+    --outline: #7e97ae;
+    --primary: #1b4f7e;
+    --on-primary: #ffffff;
+    --primary-container: #d4e4f4;
+    --on-primary-container: #0b2236;
+    --success: #1e7a40;
+    --warning: #8a5a00;
+    --error: #b5281f;
+    --on-error: #ffffff;
+    --info: #1b5e8a;
+    --focus: #1565c0;
+
+    /* Conteneur d'erreur (teinte locale dérivée, lisible sur surface claire). */
+    --error-container: #fcece9;
+    --on-error-container: #7a271a;
+    --error-outline: #f2c9c6;
+
+    /* Rayons. */
+    --radius-sm: 0.4rem;
+    --radius-md: 0.6rem;
+    --radius-lg: 0.85rem;
+
+    /* Anneau de focus réutilisable (doc 06 — focus visible obligatoire). */
+    --focus-ring: 0 0 0 3px color-mix(in srgb, var(--focus) 35%, transparent);
+}
+
+/* ---- Tokens (thème « Atlas », sombre — automatique) --------------------- */
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        --bg: #0d1722;
+        --surface: #16222f;
+        --surface-variant: #21303f;
+        --on-bg: #e8eef4;
+        --on-surface: #e8eef4;
+        --on-surface-variant: #aabbcc;
+        --outline: #5a7490;
+        --primary: #7fb2e0;
+        --on-primary: #08121c;
+        --primary-container: #1e4060;
+        --on-primary-container: #d4e4f4;
+        --success: #5fc98a;
+        --warning: #e0b25c;
+        --error: #f08a82;
+        --on-error: #08121c;
+        --info: #74c0e8;
+        --focus: #8fc4f5;
+
+        --error-container: #3a1714;
+        --on-error-container: #f5b5af;
+        --error-outline: #5e2620;
+    }
+}
+
+/* ---- Base --------------------------------------------------------------- */
+
+html, body {
+    font-family: var(--font-body);
+    background: var(--bg);
+    color: var(--on-bg);
+}
+
+h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-heading);
+    color: var(--on-bg);
+}
+
+a, .btn-link {
+    color: var(--primary);
+}
+
+/* Classe utilitaire pour les identifiants (SIREN, codes) — chasse fixe, glyphes non ambigus. */
+.mono {
+    font-family: var(--font-mono);
+}

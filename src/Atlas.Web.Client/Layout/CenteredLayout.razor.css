@@ -4,7 +4,7 @@
     align-items: flex-start;
     justify-content: center;
     padding: 2.5rem 1.25rem;
-    background: #f4f7fa;
+    background: var(--bg);
 }
 
 .auth-card {
