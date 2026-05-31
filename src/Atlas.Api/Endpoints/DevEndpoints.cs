@@ -22,6 +22,12 @@ internal static class DevEndpoints
                 ? Results.Ok(new { userId = entry.UserId, token = entry.Token })
                 : Results.NotFound(new { message = "Aucun token de vérification pour cet email." }));
 
+        // Restitue le dernier token de réinitialisation de mot de passe émis pour un compte. DEV UNIQUEMENT.
+        group.MapGet("/password-reset-token", (string email, DevVerificationTokenStore store) =>
+            store.TryGetReset(email, out DevVerificationEntry entry)
+                ? Results.Ok(new { userId = entry.UserId, token = entry.Token })
+                : Results.NotFound(new { message = "Aucun token de réinitialisation pour cet email." }));
+
         // Déclenche immédiatement le polling des sources de veille (au lieu d'attendre le job Hangfire).
         group.MapPost("/feed/poll", async (ISender sender, CancellationToken ct) =>
         {

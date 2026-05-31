@@ -36,6 +36,27 @@ internal sealed class CapturingEmailSender(
         return Task.CompletedTask;
     }
 
+    public Task SendPasswordResetAsync(
+        EmailAddress recipient,
+        UserId userId,
+        string resetToken,
+        CancellationToken ct = default)
+    {
+        store.RecordReset(recipient.Value, userId.Value, resetToken);
+
+        if (logger.IsEnabled(LogLevel.Information))
+        {
+            string baseUrl = configuration["Email:PasswordResetBaseUrl"] ?? "(non configuré)";
+            string link = $"{baseUrl}?userId={userId.Value}&token={Uri.EscapeDataString(resetToken)}";
+            logger.LogInformation(
+                "[DEV] Email de réinitialisation pour {Recipient}. Lien : {ResetLink}",
+                recipient.Value,
+                link);
+        }
+
+        return Task.CompletedTask;
+    }
+
     public Task SendFavoriteChangeAsync(
         EmailAddress recipient,
         string sirenValue,

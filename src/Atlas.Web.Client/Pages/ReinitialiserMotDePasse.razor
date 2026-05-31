@@ -1,0 +1,93 @@
+@page "/reinitialiser-mot-de-passe"
+@layout CenteredLayout
+@inject IAtlasApiClient Api
+
+@* Réinitialisation effective du mot de passe (M7, doc 12 §10). Atteinte via le lien d'email
+   (userId + token en query). Collecte le nouveau mot de passe (règle ≥ 12 visible) puis appelle
+   /auth/reset-password. Succès → invitation à se connecter (les anciennes sessions sont révoquées). *@
+
+<PageTitle>Réinitialiser le mot de passe · Atlas</PageTitle>
+
+@if (done)
+{
+    <h1 class="auth-title">Mot de passe réinitialisé ✓</h1>
+    <p class="auth-intro">Votre mot de passe a été mis à jour. Vos autres sessions ont été déconnectées par sécurité.</p>
+    <a class="btn-primary btn-link" href="connexion">Se connecter</a>
+}
+else if (!HasLink)
+{
+    <h1 class="auth-title">Lien invalide</h1>
+    <p class="auth-error" role="alert">Ce lien de réinitialisation est incomplet ou invalide.</p>
+    <a class="btn-primary btn-link" href="mot-de-passe-oublie">Demander un nouveau lien</a>
+}
+else
+{
+    <h1 class="auth-title">Nouveau mot de passe</h1>
+
+    <EditForm Model="form" OnValidSubmit="SubmitAsync" class="auth-form">
+        <DataAnnotationsValidator />
+
+        @if (message is not null)
+        {
+            <p class="auth-error" role="alert" aria-live="assertive">@message</p>
+        }
+
+        <div class="field">
+            <label for="password">Nouveau mot de passe</label>
+            <InputText id="password" @bind-Value="form.Password" type="password" autocomplete="new-password"
+                       aria-describedby="pwd-rule" disabled="@busy" />
+            <p id="pwd-rule" class="field-hint">Au moins 12 caractères.</p>
+            <ValidationMessage For="() => form.Password" />
+        </div>
+
+        <button type="submit" class="btn-primary" disabled="@busy" aria-busy="@busy">
+            @(busy ? "Réinitialisation…" : "Réinitialiser")
+        </button>
+    </EditForm>
+
+    <p class="auth-footer"><a href="connexion">Retour à la connexion</a></p>
+}
+
+@code {
+    [SupplyParameterFromQuery(Name = "userId")]
+    private string? UserId { get; set; }
+
+    [SupplyParameterFromQuery(Name = "token")]
+    private string? Token { get; set; }
+
+    private readonly ResetForm form = new();
+    private bool busy;
+    private bool done;
+    private string? message;
+
+    private bool HasLink => !string.IsNullOrWhiteSpace(UserId) && !string.IsNullOrWhiteSpace(Token);
+
+    private async Task SubmitAsync()
+    {
+        busy = true;
+        message = null;
+
+        ApiResult result = await Api.ResetPasswordAsync(UserId!, Token!, form.Password);
+
+        if (result.IsSuccess)
+        {
+            done = true;
+            return;
+        }
+
+        message = result.ErrorCode switch
+        {
+            "users.invalid_password_reset_token" => "Ce lien est invalide ou a expiré. Demandez-en un nouveau.",
+            "network" => "Service indisponible. Réessayez plus tard.",
+            _ => "La réinitialisation a échoué. Réessayez.",
+        };
+        busy = false;
+    }
+
+    private sealed class ResetForm
+    {
+        [System.ComponentModel.DataAnnotations.Required(ErrorMessage = "Le mot de passe est requis.")]
+        [System.ComponentModel.DataAnnotations.MinLength(12, ErrorMessage = "Le mot de passe doit contenir au moins 12 caractères.")]
+        public string Password { get; set; } = string.Empty;
+    }
+}

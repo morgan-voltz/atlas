@@ -12,4 +12,16 @@ internal sealed class RefreshTokenRepository(AtlasDbContext dbContext) : IRefres
         dbContext.RefreshTokens.FirstOrDefaultAsync(token => token.TokenHash == tokenHash, ct);
 
     public void Update(RefreshToken token) => dbContext.RefreshTokens.Update(token);
+
+    public async Task RevokeAllForUserAsync(UserId userId, DateTimeOffset now, CancellationToken ct = default)
+    {
+        List<RefreshToken> active = await dbContext.RefreshTokens
+            .Where(token => token.UserId == userId && token.RevokedAt == null)
+            .ToListAsync(ct);
+
+        foreach (RefreshToken token in active)
+        {
+            token.Revoke(now);
+        }
+    }
 }

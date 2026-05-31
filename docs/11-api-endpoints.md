@@ -3,7 +3,7 @@
 > **Périmètre** : tous les endpoints HTTP exposés par `Atlas.Api`, groupés par domaine fonctionnel.
 > Document **vivant** : à mettre à jour à chaque PR qui ajoute, modifie ou supprime un endpoint.
 
-**Dernière mise à jour** : 29 mai 2026 — après merge F-014 (PR à venir).
+**Dernière mise à jour** : 31 mai 2026 — endpoints d'onboarding (resend vérification, reset mot de passe).
 
 ---
 
@@ -64,6 +64,9 @@ Cf. [`AuthEndpoints.cs`](../src/Atlas.Api/Endpoints/AuthEndpoints.cs) et [`AuthC
 |---|---|---|---|
 | `POST` | `/auth/register` | 🔓 🚦 | Inscription. Body `{ email, password }`. Envoie un email de vérification. |
 | `GET` | `/auth/verify-email?userId=&token=` | 🔓 | Active le compte à partir du lien email. |
+| `POST` | `/auth/resend-verification` | 🔓 🚦 | Renvoie le lien de vérification. Body `{ email }`. **Réponse uniforme** (anti-énumération) : 200 même si l'email est inconnu ou déjà vérifié. |
+| `POST` | `/auth/forgot-password` | 🔓 🚦 | Demande de réinitialisation. Body `{ email }`. **Réponse uniforme** : 200 même si l'email est inconnu. Envoie un lien (expire sous 1 h). |
+| `POST` | `/auth/reset-password` | 🔓 🚦 | Réinitialise le mot de passe. Body `{ userId, token, newPassword }` (mdp ≥ 12). Token à usage unique ; **révoque toutes les sessions actives**. |
 | `POST` | `/auth/login` | 🔓 🚦 | Authentification mot de passe. Body `{ email, password }`. Retourne soit `{ accessToken, expiresAt }` + cookie refresh, soit `{ twoFactorRequired: true, challengeToken }`. |
 | `POST` | `/auth/refresh` | 🔓 🚦 | Rotation du refresh token (cookie `atlas_refresh`). Retourne un nouvel `accessToken`. |
 | `POST` | `/auth/logout` | 🔓 | Révoque le refresh token + supprime le cookie. Idempotent. |
@@ -88,6 +91,7 @@ Cf. [`AuthEndpoints.cs`](../src/Atlas.Api/Endpoints/AuthEndpoints.cs) et [`AuthC
 | `users.invalid_refresh_token` | 401 | Cookie refresh invalide/expiré |
 | `users.invalid_two_factor_code` | 401 | Code TOTP invalide |
 | `users.invalid_two_factor_challenge` | 401 | Challenge token expiré/invalide |
+| `users.invalid_password_reset_token` | 401 | Lien de réinitialisation invalide ou expiré |
 | `users.two_factor_already_enabled` | 409 | 2FA déjà actif |
 | `users.two_factor_not_enabled` | 409 | 2FA non actif |
 

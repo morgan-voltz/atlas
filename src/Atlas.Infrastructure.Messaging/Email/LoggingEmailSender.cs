@@ -35,6 +35,26 @@ internal sealed class LoggingEmailSender(
         return Task.CompletedTask;
     }
 
+    public Task SendPasswordResetAsync(
+        EmailAddress recipient,
+        UserId userId,
+        string resetToken,
+        CancellationToken ct = default)
+    {
+        if (logger.IsEnabled(LogLevel.Information))
+        {
+            string link = $"{options.Value.PasswordResetBaseUrl}" +
+                $"?userId={userId.Value}&token={Uri.EscapeDataString(resetToken)}";
+
+            logger.LogInformation(
+                "[DEV] Réinitialisation de mot de passe pour {Recipient}. Lien : {ResetLink}",
+                recipient.Value,
+                link);
+        }
+
+        return Task.CompletedTask;
+    }
+
     public Task SendFavoriteChangeAsync(
         EmailAddress recipient,
         string sirenValue,

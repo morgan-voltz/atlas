@@ -49,6 +49,13 @@ internal sealed class UserConfiguration : IEntityTypeConfiguration<User>
         builder.Property<DateTimeOffset?>("_emailVerificationTokenExpiresAt")
             .HasColumnName("email_verification_token_expires_at");
 
+        builder.Property<string?>("_passwordResetTokenHash")
+            .HasColumnName("password_reset_token_hash")
+            .HasMaxLength(128);
+
+        builder.Property<DateTimeOffset?>("_passwordResetTokenExpiresAt")
+            .HasColumnName("password_reset_token_expires_at");
+
         builder.Property(user => user.TwoFactorEnabled).HasColumnName("two_factor_enabled");
 
         builder.Property(user => user.TwoFactorSecret)

@@ -53,6 +53,31 @@ internal sealed class BrevoEmailSender(
         return SendAsync(recipient, subject, html, text, "email-verification", ct);
     }
 
+    public Task SendPasswordResetAsync(
+        EmailAddress recipient,
+        UserId userId,
+        string resetToken,
+        CancellationToken ct = default)
+    {
+        string link = $"{_email.PasswordResetBaseUrl}?userId={userId.Value}&token={Uri.EscapeDataString(resetToken)}";
+
+        string subject = "Réinitialisation de votre mot de passe Atlas";
+        string text =
+            $"Bonjour,\n\nVous avez demandé à réinitialiser votre mot de passe Atlas. Cliquez sur le lien suivant :\n{link}\n\n" +
+            "Ce lien expire sous une heure. Si vous n'êtes pas à l'origine de cette demande, ignorez cet email.\n\n— L'équipe Atlas";
+
+        string html =
+            $"""
+            <p>Bonjour,</p>
+            <p>Vous avez demandé à réinitialiser votre mot de passe Atlas. Cliquez sur le lien suivant :</p>
+            <p><a href="{HttpUtility.HtmlAttributeEncode(link)}">Réinitialiser mon mot de passe</a></p>
+            <p>Ce lien expire sous une heure. Si vous n'êtes pas à l'origine de cette demande, ignorez cet email.</p>
+            <p>— L'équipe Atlas</p>
+            """;
+
+        return SendAsync(recipient, subject, html, text, "password-reset", ct);
+    }
+
     public Task SendFavoriteChangeAsync(
         EmailAddress recipient,
         string sirenValue,

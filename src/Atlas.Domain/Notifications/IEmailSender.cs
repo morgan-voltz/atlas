@@ -12,6 +12,13 @@ public interface IEmailSender
         string verificationToken,
         CancellationToken ct = default);
 
+    /// <summary>Lien de réinitialisation de mot de passe (clair, à usage unique). Le token n'est jamais persisté en clair.</summary>
+    Task SendPasswordResetAsync(
+        EmailAddress recipient,
+        UserId userId,
+        string resetToken,
+        CancellationToken ct = default);
+
     /// <summary>Alerte quotidienne F-019 : un favori d'entreprise a évolué (changement de dénomination, dirigeants, adresse, …).</summary>
     Task SendFavoriteChangeAsync(
         EmailAddress recipient,

@@ -123,6 +123,7 @@ en production et servent à automatiser Bruno (`src/Atlas.Api/Endpoints/DevEndpo
 | Endpoint | Rôle |
 |---|---|
 | `GET /dev/verification-token?email=` | Restitue `{ userId, token }` de vérification email (capturé en RAM par `DevVerificationTokenStore`), pour enchaîner `register → verify` sans accès aux logs. |
+| `GET /dev/password-reset-token?email=` | Restitue `{ userId, token }` de réinitialisation de mot de passe (même capture RAM), pour automatiser `forgot-password → reset-password`. |
 | `POST /dev/feed/poll` | Déclenche immédiatement le polling des sources de veille au lieu d'attendre le job Hangfire. |
 
 ---
