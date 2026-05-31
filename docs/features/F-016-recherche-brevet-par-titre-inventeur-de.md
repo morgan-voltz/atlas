@@ -2,7 +2,7 @@
 
 > **Statut** : 🟡 Backend implémenté (MVP 2, 29 mai 2026). `PatentSearchQuery(Title?, Inventor?, Applicant?, Page, PageSize)` + `PatentSummary` + `IIntellectualPropertyProvider.SearchPatentsAsync`. Endpoint `GET /patents?title=&inventor=&applicant=&page=&pageSize=` (route précédant celle paramétrée pour éviter collision avec F-015). Validation : ≥ 1 critère renseigné → 400 `patents.empty_search` sinon. Pagination clampée. Adapter via `POST /services/apidiffusion/api/brevets/search`. Mapping best-effort `PiPatentMapper.MapSummary`. **Reste** : confirmation contre l'API INPI réelle (syntaxe SolR exacte, structure de la réponse paginée). PR #40.
 >
-> **⚠️ Diagnostic réel 31 mai 2026 (compte habilité)** : comme F-006, `POST /services/apidiffusion/api/brevets/search` renvoie **`405 Allow: GET`** — l'API attend **`GET`**, notre adapter envoie `POST` (→ `502 inpi.unavailable`). **À corriger** dans `InpiPiTrademarkProvider` (POST→GET + format de query à établir ; contrat GET non encore connu, recherche en cours). L'auth PI et le RNE, eux, sont validés.
+> **⚠️ Diagnostic réel 31 mai 2026** : comme F-006, **tout `/services/apidiffusion/api/...` échoue en prod** (`POST brevets/search` → 405 `Allow: GET` ; `metadata`/`notice` en GET → 404). Ce n'est pas un problème de verbe/cookies/params mais de **chemins prod ≠ doc 2021/V2**. Correctif appliqué (cookie `session_token` + header `x-forwarded-for`) — nécessaire mais insuffisant. **Le vrai contrat de `search` prod reste à obtenir** (DevTools sur le portail / `licences@inpi.fr`). Détail complet dans la fiche **F-006**. L'auth PI et le RNE sont validés.
 
 **Description** : recherche avancée multi-critères sur la base brevets.
 

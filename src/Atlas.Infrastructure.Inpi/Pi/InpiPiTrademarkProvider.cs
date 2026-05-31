@@ -403,10 +403,15 @@ internal sealed class InpiPiTrademarkProvider(
                 return Result<PiSession>.Fail(InpiErrors.Unavailable);
             }
 
+            // La doc technique API PI (§3.8, exemples §4.x/§5.x) exige que TOUS les appels
+            // `apidiffusion` portent aussi le cookie `session_token=<refresh_token>` en plus de
+            // `access_token`. Le login pose `refresh_token` en cookie ; on le capture ici.
+            string refreshToken = ExtractCookie(setCookies, "refresh_token") ?? string.Empty;
+
             // Le serveur renvoie un nouveau XSRF-TOKEN post-login (rotation) ; on prend ça
             // pour les requêtes suivantes, sinon on retombe sur le token primer.
             string xsrf = ExtractCookie(setCookies, "XSRF-TOKEN") ?? initialXsrf;
-            var session = new PiSession(accessToken, xsrf, DateTimeOffset.UtcNow.Add(options.Value.TokenLifetimeFallback));
+            var session = new PiSession(accessToken, refreshToken, xsrf, DateTimeOffset.UtcNow.Add(options.Value.TokenLifetimeFallback));
 
             TimeSpan ttl = session.ExpiresAt - DateTimeOffset.UtcNow - SessionMargin;
             if (ttl > TimeSpan.Zero)
@@ -465,19 +470,21 @@ internal sealed class InpiPiTrademarkProvider(
         HttpContent? content = null)
     {
         var request = new HttpRequestMessage(method, url) { Content = content };
-        // Lot 12 : pattern double-submit cookie de Spring Security — le serveur compare le
-        // header `X-XSRF-TOKEN` à la valeur du cookie `XSRF-TOKEN`. Sans le cookie XSRF-TOKEN
-        // côté requête, la session est considérée comme « not found » et toute requête
-        // post-login (recherche, notice, image) reçoit 403 « Could not verify the provided
-        // CSRF token because your session was not found. ». Régression INPI confirmée par
-        // diagnostic curl post-Lot 11 le 2026-05-29.
-        request.Headers.TryAddWithoutValidation(
-            "Cookie",
-            $"access_token={session.AccessToken}; XSRF-TOKEN={session.XsrfToken}");
+        // Doc technique API PI (§3.8, exemples §4.x/§5.x) : les appels `apidiffusion` portent
+        // TROIS cookies — `access_token`, `session_token=<refresh_token>` ET `XSRF-TOKEN` —
+        // plus le header `X-XSRF-TOKEN` (double-submit Spring Security). L'absence de
+        // `session_token` faisait échouer `search` (405/erreur de session) malgré une auth OK.
+        string cookie = $"access_token={session.AccessToken}; XSRF-TOKEN={session.XsrfToken}";
+        if (!string.IsNullOrEmpty(session.RefreshToken))
+        {
+            cookie += $"; session_token={session.RefreshToken}";
+        }
+        request.Headers.TryAddWithoutValidation("Cookie", cookie);
         request.Headers.TryAddWithoutValidation("X-XSRF-TOKEN", session.XsrfToken);
-        // Lot 13 : la spec INPI v2 documente `produces: [application/xml, application/json]`
-        // avec XML par défaut. Atlas mappe la réponse en JSON, donc on impose Accept JSON
-        // pour ne pas avoir à parser du XML côté domain.
+        // Doc §4.4.5 / §5.4.5 : `x-forwarded-for` est « indispensable pour la gestion des quotas
+        // utilisateurs ». On l'envoie systématiquement sur les appels de diffusion.
+        request.Headers.TryAddWithoutValidation("x-forwarded-for", "127.0.0.1");
+        // Réponse par défaut en XML ; on impose Accept JSON pour rester homogène côté mapping.
         request.Headers.TryAddWithoutValidation("Accept", "application/json");
         return request;
     }
@@ -499,7 +506,7 @@ internal sealed class InpiPiTrademarkProvider(
         return null;
     }
 
-    private sealed record PiSession(string AccessToken, string XsrfToken, DateTimeOffset ExpiresAt);
+    private sealed record PiSession(string AccessToken, string RefreshToken, string XsrfToken, DateTimeOffset ExpiresAt);
 
     private sealed record PiLoginRequest(
         [property: JsonPropertyName("username")] string Username,
