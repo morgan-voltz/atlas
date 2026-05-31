@@ -103,14 +103,14 @@ Changer de police ou agrandir le texte ne casse donc aucun signal — ils ne dé
 | Accessibilité (cadre bloquant, contraste, clavier, lecteur d'écran) | `docs/06-accessibilite.md`, ADR-008 |
 | Densité, thèmes, emplacement « Affichage & données » | `docs/12-modele-ux-client-maui.md` §8, §9 |
 | Spécificités web (poids WASM, reflow) | `docs/14-modele-ux-client-web.md` |
-| Système de tokens / thèmes | `themes.json` |
-| Persistance multi-device des préférences | ADR-001 |
+| Système de tokens / thèmes (génération) | `docs/atlas-themes-kit/atlas-themes/` (README + `source/`) ; `themes.json` = source machine |
+| Persistance multi-device des préférences | **F-062** (réalisation), sous ADR-001 |
 | Matching « à vérifier », états de section (restent textuels) | ADR-014, ADR-015 |
 
-> **À faire à l'intégration** :
-> - Dans `docs/06-accessibilite.md` et `docs/12-modele-ux-client-maui.md`, **remplacer toute règle de lisibilité/scaling par un renvoi vers ce document** (un seul propriétaire).
-> - Mettre à jour `themes.json` / les tokens typographiques : rôle **corps = Atkinson Hyperlegible** (défaut), **titres = IBM Plex Serif**, **mono = IBM Plex Mono**.
-> - Auto-héberger les fichiers de police (licences ouvertes) pour la souveraineté et l'usage hors-ligne.
+> **Intégration (état au 31 mai 2026)** :
+> - ✅ `docs/06-accessibilite.md` §10.3 renvoie ici (plus de doctrine police dupliquée). `docs/12` §8 traite la densité et renvoie ici pour la lisibilité du texte.
+> - **Tokens typographiques** à câbler dans la chaîne de thèmes (cf. README du kit) : rôle **corps = Atkinson Hyperlegible** (défaut), **titres = IBM Plex Serif**, **mono = IBM Plex Mono**.
+> - Polices **auto-hébergées** (licences ouvertes) sous `docs/design/fonts/` — souveraineté + usage hors-ligne.
 
 ---
 
