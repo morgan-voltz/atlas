@@ -1,0 +1,266 @@
+/*
+ * List-detail à deux panneaux (doc 14 §3). Desktop (≥ 880 px) : liste à gauche, fiche à droite.
+ * Sous le point de rupture : empilement temporel — on montre la liste, OU la fiche si une
+ * entreprise est sélectionnée (classe .has-selection), avec un retour « ← Favoris ».
+ */
+
+.fav-shell {
+    min-width: 0;
+}
+
+/* ---- Empilement (étroit, défaut) ---------------------------------------- */
+
+.fav-detail {
+    display: none;
+}
+
+.has-selection .fav-list {
+    display: none;
+}
+
+.has-selection .fav-detail {
+    display: block;
+}
+
+.fav-back {
+    margin: 0 0 1rem;
+    font-size: 0.85rem;
+}
+
+.fav-back a {
+    color: var(--on-surface-variant);
+    text-decoration: none;
+}
+
+.fav-back a:hover {
+    text-decoration: underline;
+}
+
+.fav-back a:focus-visible {
+    outline: 2px solid var(--focus);
+    outline-offset: 2px;
+}
+
+/* ---- Deux panneaux (desktop) -------------------------------------------- */
+
+@media (min-width: 880px) {
+    .fav-shell {
+        display: flex;
+        gap: 1.5rem;
+        align-items: flex-start;
+    }
+
+    .fav-list {
+        display: block !important;
+        flex: 0 0 22rem;
+        position: sticky;
+        top: 1.5rem;
+    }
+
+    .fav-detail {
+        display: block !important;
+        flex: 1;
+        min-width: 0;
+    }
+
+    .fav-back {
+        display: none;
+    }
+}
+
+/* ---- En-tête de liste ---------------------------------------------------- */
+
+.fav-header {
+    display: flex;
+    align-items: baseline;
+    gap: 0.6rem;
+    margin-bottom: 1rem;
+}
+
+.fav-title {
+    margin: 0;
+    font-size: 1.5rem;
+}
+
+.fav-count {
+    font-size: 0.85rem;
+    color: var(--on-surface-variant);
+}
+
+.fav-msg {
+    color: var(--on-surface-variant);
+    font-size: 0.95rem;
+}
+
+/* ---- Lignes de favoris --------------------------------------------------- */
+
+.fav-rows {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.fav-row {
+    display: flex;
+    align-items: stretch;
+    gap: 0.25rem;
+    border: 1px solid var(--surface-variant);
+    border-radius: var(--radius-md);
+    margin-bottom: 0.5rem;
+    background: var(--surface);
+}
+
+/* Sélectionné : mis en avant, jamais par la seule couleur (bordure + fond, doc 06). */
+.fav-row.selected {
+    border-color: var(--primary);
+    box-shadow: inset 3px 0 0 var(--primary);
+}
+
+.fav-row-link {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    padding: 0.7rem 0.85rem;
+    text-decoration: none;
+    color: inherit;
+}
+
+.fav-row-link:hover {
+    background: var(--surface-variant);
+    border-radius: var(--radius-md);
+}
+
+.fav-row-link:focus-visible {
+    outline: 3px solid var(--focus);
+    outline-offset: -3px;
+    border-radius: var(--radius-md);
+}
+
+.fav-name {
+    font-weight: 600;
+    color: var(--on-surface);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.fav-sub {
+    font-size: 0.78rem;
+    color: var(--on-surface-variant);
+}
+
+.fav-dot {
+    margin: 0 0.35rem;
+    color: var(--outline);
+}
+
+.fav-remove {
+    flex-shrink: 0;
+    /* Cible tactile ≥ 44 px (doc 12 §8) ; accès permanent (pas de swipe seul, doc 06). */
+    min-width: 44px;
+    padding: 0 0.6rem;
+    font-size: 1rem;
+    color: var(--on-surface-variant);
+    background: transparent;
+    border: 0;
+    border-left: 1px solid var(--surface-variant);
+    cursor: pointer;
+}
+
+.fav-remove:hover:not(:disabled) {
+    color: var(--on-error-container);
+    background: var(--error-container);
+}
+
+.fav-remove:focus-visible {
+    outline: 3px solid var(--focus);
+    outline-offset: -3px;
+}
+
+.fav-remove:disabled {
+    cursor: progress;
+}
+
+/* ---- États (vide / erreur) ---------------------------------------------- */
+
+.fav-empty {
+    padding: 1.5rem 1.4rem;
+    background: var(--surface);
+    border: 1px solid var(--surface-variant);
+    border-radius: var(--radius-lg);
+}
+
+.fav-empty-title {
+    margin: 0 0 0.5rem;
+    font-family: var(--font-heading);
+    font-size: 1.15rem;
+    font-weight: 600;
+    color: var(--on-surface);
+}
+
+.fav-empty-sub {
+    margin: 0;
+    color: var(--on-surface-variant);
+    font-size: 0.92rem;
+}
+
+.fav-empty-action {
+    display: inline-block;
+    margin-top: 1rem;
+    padding: 0.6rem 1.1rem;
+    font-weight: 700;
+    color: var(--on-primary);
+    background: var(--primary);
+    border-radius: var(--radius-md);
+    text-decoration: none;
+}
+
+.fav-empty-action:focus-visible {
+    outline: 3px solid var(--focus);
+    outline-offset: 2px;
+}
+
+.fav-error {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.85rem;
+    padding: 0.9rem 1.1rem;
+    background: var(--error-container);
+    border: 1px solid var(--error-outline);
+    border-radius: var(--radius-md);
+}
+
+.fav-error-msg {
+    flex: 1;
+    min-width: 12rem;
+    margin: 0;
+    color: var(--on-error-container);
+}
+
+.fav-retry {
+    padding: 0.5rem 1rem;
+    font-weight: 600;
+    color: var(--on-primary);
+    background: var(--primary);
+    border: 0;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+}
+
+.fav-retry:focus-visible {
+    outline: 3px solid var(--focus);
+    outline-offset: 2px;
+}
+
+/* ---- Panneau droit vide (desktop) --------------------------------------- */
+
+.fav-placeholder {
+    padding: 2.5rem 1.5rem;
+    text-align: center;
+    color: var(--on-surface-variant);
+    border: 1px dashed var(--outline);
+    border-radius: var(--radius-lg);
+}

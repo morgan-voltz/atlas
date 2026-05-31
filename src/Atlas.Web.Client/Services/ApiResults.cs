@@ -27,3 +27,13 @@ public sealed record ApiResult<T>(T? Value, string? ErrorCode)
 
     public static ApiResult<T> Fail(string code) => new(default, code);
 }
+
+/// <summary>Variante sans valeur, pour les appels qui ne renvoient pas de corps (POST/DELETE → 204).</summary>
+public sealed record ApiResult(string? ErrorCode)
+{
+    public bool IsSuccess => ErrorCode is null;
+
+    public static ApiResult Ok() => new((string?)null);
+
+    public static ApiResult Fail(string code) => new(code);
+}

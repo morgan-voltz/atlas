@@ -89,6 +89,22 @@ internal sealed class AtlasApiClient(HttpClient httpClient, ITokenStore tokenSto
     public Task<ApiResult<CompanyResponse>> GetCompanyBySirenAsync(string siren, CancellationToken ct = default) =>
         GetAsync<CompanyResponse>($"companies/{Uri.EscapeDataString(siren)}", ct);
 
+    public Task<ApiResult<IReadOnlyList<CompanyFavoriteResponse>>> GetMyCompanyFavoritesAsync(CancellationToken ct = default) =>
+        GetAsync<IReadOnlyList<CompanyFavoriteResponse>>("favorites/companies", ct);
+
+    public Task<ApiResult> AddCompanyFavoriteAsync(string siren, string? name, CancellationToken ct = default) =>
+        SendNoContentAsync(
+            () => new HttpRequestMessage(HttpMethod.Post, "favorites/companies")
+            {
+                Content = JsonContent.Create(new AddCompanyFavoriteRequest(siren, name)),
+            },
+            ct);
+
+    public Task<ApiResult> RemoveCompanyFavoriteAsync(string siren, CancellationToken ct = default) =>
+        SendNoContentAsync(
+            () => new HttpRequestMessage(HttpMethod.Delete, $"favorites/companies/{Uri.EscapeDataString(siren)}"),
+            ct);
+
     private async Task<ApiResult<T>> GetAsync<T>(string url, CancellationToken ct)
     {
         try
@@ -114,6 +130,30 @@ internal sealed class AtlasApiClient(HttpClient httpClient, ITokenStore tokenSto
         catch (HttpRequestException)
         {
             return ApiResult<T>.Fail("network");
+        }
+    }
+
+    private async Task<ApiResult> SendNoContentAsync(Func<HttpRequestMessage> requestFactory, CancellationToken ct)
+    {
+        try
+        {
+            using HttpResponseMessage response = await SendWithAuthAsync(requestFactory, ct);
+
+            if (response.IsSuccessStatusCode)
+            {
+                return ApiResult.Ok();
+            }
+
+            if (response.StatusCode == HttpStatusCode.Unauthorized)
+            {
+                return ApiResult.Fail("unauthorized");
+            }
+
+            return ApiResult.Fail(await ReadProblemCodeAsync(response, ct) ?? "unexpected");
+        }
+        catch (HttpRequestException)
+        {
+            return ApiResult.Fail("network");
         }
     }
 
