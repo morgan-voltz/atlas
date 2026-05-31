@@ -1,0 +1,193 @@
+.donnees-page {
+    max-width: 34rem;
+}
+
+.back-link {
+    margin: 0 0 1rem;
+    font-size: 0.85rem;
+}
+
+.back-link a {
+    color: var(--on-surface-variant);
+    text-decoration: none;
+}
+
+.back-link a:hover {
+    text-decoration: underline;
+}
+
+.back-link a:focus-visible {
+    outline: 2px solid var(--focus);
+    outline-offset: 2px;
+}
+
+.family {
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--on-surface-variant);
+    margin: 1.5rem 0 0.6rem;
+}
+
+.danger-label {
+    color: var(--error);
+}
+
+/* ---- Export ------------------------------------------------------------- */
+
+.export-card {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem 1.2rem;
+    background: var(--surface);
+    border: 1px solid var(--surface-variant);
+    border-radius: var(--radius-lg);
+}
+
+.export-main {
+    flex: 1;
+    min-width: 0;
+}
+
+.export-title {
+    margin: 0;
+    font-weight: 600;
+    color: var(--on-surface);
+}
+
+.export-sub {
+    margin: 0.2rem 0 0;
+    font-size: 0.82rem;
+    color: var(--on-surface-variant);
+}
+
+.inline-error {
+    margin: 0.6rem 0 0;
+    padding: 0.5rem 0.7rem;
+    font-size: 0.85rem;
+    color: var(--on-error-container);
+    background: var(--error-container);
+    border: 1px solid var(--error-outline);
+    border-radius: var(--radius-sm);
+}
+
+/* ---- Zone danger -------------------------------------------------------- */
+
+.danger-zone {
+    padding: 1.2rem 1.3rem;
+    background: var(--error-container);
+    border: 1px solid var(--error-outline);
+    border-radius: var(--radius-lg);
+}
+
+.danger-title {
+    margin: 0;
+    font-weight: 700;
+    color: var(--on-error-container);
+}
+
+.danger-text {
+    margin: 0.5rem 0 1rem;
+    font-size: 0.88rem;
+    line-height: 1.5;
+    color: var(--on-error-container);
+}
+
+.delete-confirm {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.delete-confirm label {
+    font-size: 0.85rem;
+    color: var(--on-error-container);
+}
+
+.delete-confirm input {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 0.65rem 0.85rem;
+    font-size: 1rem;
+    font-family: var(--font-body);
+    border: 1px solid var(--error-outline);
+    border-radius: var(--radius-md);
+    background: var(--surface);
+    color: var(--on-surface);
+}
+
+.delete-confirm input:focus-visible {
+    outline: 3px solid var(--focus);
+    outline-offset: 1px;
+}
+
+.delete-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+    margin-top: 0.25rem;
+}
+
+/* ---- Boutons ------------------------------------------------------------ */
+
+.btn-primary,
+.btn-secondary {
+    padding: 0.6rem 1rem;
+    font-weight: 700;
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    text-decoration: none;
+    white-space: nowrap;
+}
+
+.btn-primary {
+    color: var(--on-primary);
+    background: var(--primary);
+    border: 1px solid var(--primary);
+}
+
+.btn-secondary {
+    color: var(--on-primary-container);
+    background: var(--primary-container);
+    border: 1px solid var(--primary);
+}
+
+.btn-danger {
+    padding: 0.6rem 1rem;
+    font-weight: 700;
+    color: var(--on-error);
+    background: var(--error);
+    border: 1px solid var(--error);
+    border-radius: var(--radius-md);
+    cursor: pointer;
+}
+
+.btn-danger:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+}
+
+.btn-cancel {
+    padding: 0.6rem 1rem;
+    font-weight: 600;
+    color: var(--on-error-container);
+    background: transparent;
+    border: 1px solid var(--error-outline);
+    border-radius: var(--radius-md);
+    cursor: pointer;
+}
+
+.btn-primary:focus-visible,
+.btn-secondary:focus-visible,
+.btn-danger:focus-visible,
+.btn-cancel:focus-visible {
+    outline: 3px solid var(--focus);
+    outline-offset: 2px;
+}
+
+.btn-secondary:disabled {
+    opacity: 0.65;
+    cursor: progress;
+}

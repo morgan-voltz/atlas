@@ -1,0 +1,185 @@
+.inpi-page {
+    max-width: 34rem;
+}
+
+.back-link {
+    margin: 0 0 1rem;
+    font-size: 0.85rem;
+}
+
+.back-link a {
+    color: var(--on-surface-variant);
+    text-decoration: none;
+}
+
+.back-link a:hover {
+    text-decoration: underline;
+}
+
+.back-link a:focus-visible {
+    outline: 2px solid var(--focus);
+    outline-offset: 2px;
+}
+
+.muted {
+    color: var(--on-surface-variant);
+}
+
+.status-card {
+    padding: 1.1rem 1.3rem;
+    background: var(--surface);
+    border: 1px solid var(--surface-variant);
+    border-radius: var(--radius-lg);
+    margin-bottom: 1rem;
+}
+
+.status-card.warn {
+    background: var(--error-container);
+    border-color: var(--error-outline);
+}
+
+.status-line {
+    margin: 0;
+    font-weight: 600;
+    font-size: 1.05rem;
+}
+
+.status-line.ok {
+    color: var(--success);
+}
+
+.status-line.warn {
+    color: var(--on-error-container);
+}
+
+.status-meta {
+    margin: 0.4rem 0 0;
+    font-size: 0.85rem;
+    color: var(--on-surface-variant);
+}
+
+.status-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+    margin-top: 1rem;
+}
+
+.onboarding {
+    margin-bottom: 1.1rem;
+    color: var(--on-surface);
+    line-height: 1.5;
+}
+
+/* ---- Formulaire ---------------------------------------------------------- */
+
+.inpi-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    padding: 1.1rem 1.3rem;
+    background: var(--surface);
+    border: 1px solid var(--surface-variant);
+    border-radius: var(--radius-lg);
+}
+
+.field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+}
+
+.field label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--on-surface-variant);
+}
+
+.field input {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 0.7rem 0.85rem;
+    font-size: 1rem;
+    font-family: var(--font-body);
+    border: 1px solid var(--outline);
+    border-radius: var(--radius-md);
+    background: var(--bg);
+    color: var(--on-surface);
+}
+
+.field input:focus-visible {
+    outline: 3px solid var(--focus);
+    outline-offset: 1px;
+    border-color: var(--focus);
+}
+
+.form-error {
+    margin: 0;
+    padding: 0.6rem 0.8rem;
+    font-size: 0.88rem;
+    color: var(--on-error-container);
+    background: var(--error-container);
+    border: 1px solid var(--error-outline);
+    border-radius: var(--radius-md);
+}
+
+/* ---- Boutons ------------------------------------------------------------- */
+
+.btn-primary {
+    padding: 0.75rem 1rem;
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--on-primary);
+    background: var(--primary);
+    border: 1px solid var(--primary);
+    border-radius: var(--radius-md);
+    cursor: pointer;
+}
+
+.btn-primary:hover:not(:disabled) {
+    background: color-mix(in srgb, var(--primary) 88%, black);
+}
+
+.btn-primary:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.btn-secondary {
+    padding: 0.55rem 0.95rem;
+    font-weight: 600;
+    color: var(--on-primary-container);
+    background: var(--primary-container);
+    border: 1px solid var(--primary);
+    border-radius: var(--radius-md);
+    cursor: pointer;
+}
+
+.btn-ghost {
+    padding: 0.55rem 0.95rem;
+    font-weight: 600;
+    color: var(--on-surface-variant);
+    background: transparent;
+    border: 1px solid var(--outline);
+    border-radius: var(--radius-md);
+    cursor: pointer;
+}
+
+.btn-primary:focus-visible,
+.btn-secondary:focus-visible,
+.btn-ghost:focus-visible {
+    outline: 3px solid var(--focus);
+    outline-offset: 2px;
+}
+
+.btn-ghost:disabled {
+    opacity: 0.65;
+    cursor: progress;
+}
+
+.security-note {
+    margin: 1.5rem 0 0;
+    font-size: 0.8rem;
+    line-height: 1.5;
+    color: var(--on-surface-variant);
+}

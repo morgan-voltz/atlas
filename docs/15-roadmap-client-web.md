@@ -41,7 +41,7 @@ Chaque jalon = une tranche verticale livrant de la valeur utilisable de bout en 
 | **M3 — Accueil / feed** | fil des mouvements des entités suivies (cartes-aperçu *event*) | dépend des favoris (lecture) ; garde-fous anti-« réseau social » | ⬜ |
 | **M4 — Favoris / Watchlists + list-detail 2 panneaux** | gestion des favoris **et** introduction du **list-detail à 2 panneaux** (signature desktop, réutilisé ensuite) | la signature desktop (doc 14 §3) arrive ici puis se généralise | ✅ |
 | **M5 — Veille** | flux, palier de lecture, pont vers fiche « à vérifier » | réutilise list-detail (M4) | ⬜ |
-| **M6 — Profil & compte** | profil, sous-pages compte / connexion INPI / données (RGPD) | — | ⬜ |
+| **M6 — Profil & compte** | profil, sous-pages compte / connexion INPI / données (RGPD) | — | ✅ |
 | **M7 — Onboarding complet** | création de compte, vérification email, défi 2FA, proposition INPI | complète l'auth minimale de M1 | ⬜ |
 
 > L'ordre est indicatif et révisable ; on ne démarre un jalon que quand le précédent atteint sa DoD.
@@ -62,12 +62,12 @@ Un écran n'est **✅** que lorsque **toutes** ses colonnes le sont. DoD = templ
 | Accueil / feed | M3 | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
 | Favoris (plats + list-detail 2 panneaux ; watchlists/tags F-053/F-030 = backend différé) | M4 | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | Veille | M5 | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
-| Profil + sous-pages | M6 | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
+| Profil hub + Connexion INPI + Données/RGPD (Compte/2FA/préférences = à venir) | M6 | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | Auth / onboarding | M1/M7 | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | 🟡 |
 
 Renvois doctrine par écran : Recherche doc 12 §7 ; Fiche §4 ; Accueil §5 ; Favoris §8 ; Veille §6 ; Profil §9 ; Auth §10.
 
-> **Vérification E2E réelle (31 mai 2026)** — M1/M2/M4 validés contre le backend + l'INPI RNE réels (harness `docs/13`) : `GET /companies?name=`, `GET /companies/{siren}` (fiche DANONE/SIREN 552032534, dirigeants réels), `POST/GET/DELETE /favorites/companies`. Parcours navigateur (Playwright, données live) : connexion → recherche SIREN → fiche → « Suivre » → favoris list-detail à deux panneaux, captures à l'appui. Hors périmètre : recherche PI (blocage INPI connu, V2). Fidélité données : forme juridique et qualité des dirigeants exposées en **codes** RNE (mapping code→libellé = amélioration future, transverse aux clients).
+> **Vérification E2E réelle (31 mai 2026)** — M1/M2/M4/M6 validés contre le backend + l'INPI RNE réels (harness `docs/13`) : `GET /companies?name=`, `GET /companies/{siren}` (fiche DANONE/SIREN 552032534, dirigeants réels), `POST/GET/DELETE /favorites/companies`, `/inpi/connection`, `/account/export`. Parcours navigateur (Playwright, données live) : connexion → recherche SIREN → fiche → « Suivre » → favoris list-detail à deux panneaux ; puis **M6** : **connexion INPI depuis le formulaire UI → « ✓ Connecté » → déblocage des données (fiche réelle) → export RGPD**, captures à l'appui. Hors périmètre : recherche PI (blocage INPI connu, V2). Fidélité données : forme juridique et qualité des dirigeants exposées en **codes** RNE (mapping code→libellé = amélioration future, transverse aux clients).
 
 ---
 

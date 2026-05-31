@@ -26,4 +26,15 @@ public interface IAtlasApiClient
     Task<ApiResult> AddCompanyFavoriteAsync(string siren, string? name, CancellationToken ct = default);
 
     Task<ApiResult> RemoveCompanyFavoriteAsync(string siren, CancellationToken ct = default);
+
+    Task<ApiResult<InpiConnectionStatusResponse>> GetInpiStatusAsync(CancellationToken ct = default);
+
+    Task<ApiResult> ConnectInpiAsync(string username, string password, CancellationToken ct = default);
+
+    Task<ApiResult> DisconnectInpiAsync(CancellationToken ct = default);
+
+    /// <summary>Export RGPD (art. 20) : renvoie le JSON brut prêt à être téléchargé par l'utilisateur.</summary>
+    Task<ApiResult<string>> ExportMyDataAsync(CancellationToken ct = default);
+
+    Task<ApiResult> DeleteMyAccountAsync(CancellationToken ct = default);
 }

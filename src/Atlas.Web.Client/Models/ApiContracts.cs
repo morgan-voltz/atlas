@@ -45,6 +45,15 @@ public sealed record CompanyFavoriteResponse(string Siren, string? Name, DateTim
 public sealed record AddCompanyFavoriteRequest(string Siren, string? Name);
 
 /// <summary>
+/// Réponse de <c>GET /inpi/connection</c> (statut de connexion INPI — F-003). Ne contient
+/// <b>jamais</b> les identifiants : seuls l'état, le statut technique et la date du dernier test.
+/// </summary>
+public sealed record InpiConnectionStatusResponse(bool Connected, string? Status, DateTimeOffset? LastTestedAt);
+
+/// <summary>Corps de <c>POST /inpi/connection</c>. Identifiants techniques INPI (jamais relus côté client).</summary>
+public sealed record ConnectInpiRequest(string Username, string Password);
+
+/// <summary>
 /// Extrait de ProblemDetails (RFC 9457) renvoyé par l'API en cas d'erreur. Le champ <c>code</c>
 /// (extension projet) porte le code métier stable utilisé pour choisir le bon message côté UI.
 /// </summary>
