@@ -60,3 +60,159 @@ h1:focus {
 .form-floating > .form-control-plaintext:focus::placeholder, .form-floating > .form-control:focus::placeholder {
     text-align: start;
 }
+
+/* ------------------------------------------------------------------ *
+ * Écrans d'authentification (Connexion, Inscription, Vérification email)
+ * Styles GLOBAUX (partagés par les pages d'auth sous CenteredLayout),
+ * et non scoped, pour éviter de tripler la même feuille par page.
+ * ------------------------------------------------------------------ */
+
+.auth-title {
+    font-family: var(--font-heading);
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--on-bg);
+    margin: 0 0 1.75rem;
+}
+
+.auth-intro {
+    margin: 0 0 1.5rem;
+    color: var(--on-surface-variant);
+    font-size: 0.95rem;
+    line-height: 1.6;
+}
+
+.auth-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+}
+
+.field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+}
+
+.field label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--on-surface-variant);
+}
+
+.field input {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 0.8rem 0.9rem;
+    font-size: 1rem;
+    font-family: var(--font-body);
+    border: 1px solid var(--outline);
+    border-radius: var(--radius-md);
+    background: var(--surface);
+    color: var(--on-surface);
+}
+
+.field input:focus-visible {
+    outline: 3px solid var(--focus);
+    outline-offset: 1px;
+    border-color: var(--focus);
+}
+
+.field .validation-message {
+    font-size: 0.8rem;
+    color: var(--error);
+}
+
+.field-hint {
+    margin: 0;
+    font-size: 0.8rem;
+    color: var(--on-surface-variant);
+}
+
+.btn-primary {
+    margin-top: 0.5rem;
+    padding: 0.85rem 1rem;
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--on-primary);
+    background: var(--primary);
+    border: 1px solid var(--primary);
+    border-radius: var(--radius-md);
+    cursor: pointer;
+}
+
+.btn-primary:hover:not(:disabled) {
+    background: color-mix(in srgb, var(--primary) 88%, black);
+}
+
+.btn-primary:focus-visible {
+    outline: 3px solid var(--focus);
+    outline-offset: 2px;
+}
+
+.btn-primary:disabled {
+    opacity: 0.65;
+    cursor: progress;
+}
+
+/* Ancre stylée comme un bouton primaire (ex. « Se connecter » après activation). */
+.btn-link {
+    display: inline-block;
+    text-decoration: none;
+    text-align: center;
+}
+
+/* Bouton d'action secondaire rendu comme un lien (ex. « Revenir à la connexion »). */
+.link-button {
+    padding: 0;
+    font: inherit;
+    color: var(--primary);
+    background: none;
+    border: 0;
+    cursor: pointer;
+    text-decoration: underline;
+}
+
+.link-button:focus-visible {
+    outline: 2px solid var(--focus);
+    outline-offset: 2px;
+}
+
+.auth-error {
+    margin: 0;
+    padding: 0.7rem 0.9rem;
+    font-size: 0.9rem;
+    color: var(--on-error-container);
+    background: var(--error-container);
+    border: 1px solid var(--error-outline);
+    border-radius: var(--radius-md);
+}
+
+.auth-secondary {
+    margin: 1rem 0 0;
+    text-align: center;
+}
+
+.auth-footer {
+    margin: 2rem 0 0;
+    text-align: center;
+    color: var(--on-surface-variant);
+    font-size: 0.9rem;
+}
+
+.auth-muted-note {
+    margin: 0.5rem 0 0;
+    font-size: 0.85rem;
+    color: var(--on-surface-variant);
+}
+
+.auth-dot {
+    margin: 0 0.4rem;
+    color: var(--outline);
+}
+
+.auth-muted {
+    color: var(--outline);
+    font-weight: 600;
+    cursor: not-allowed;
+}

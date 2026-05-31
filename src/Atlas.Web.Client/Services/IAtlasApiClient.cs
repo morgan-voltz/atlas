@@ -13,6 +13,15 @@ public interface IAtlasApiClient
 
     Task LogoutAsync(CancellationToken ct = default);
 
+    /// <summary>Création de compte (F-001 / M7). Renvoie un succès même si l'email doit encore être vérifié.</summary>
+    Task<ApiResult> RegisterAsync(string email, string password, CancellationToken ct = default);
+
+    /// <summary>Vérification d'email via le lien d'activation (<c>userId</c> + <c>token</c>).</summary>
+    Task<ApiResult> VerifyEmailAsync(string userId, string token, CancellationToken ct = default);
+
+    /// <summary>Défi 2FA : échange le jeton de défi + un code TOTP/secours contre une session (stocke le bearer).</summary>
+    Task<ApiResult> Verify2faAsync(string challengeToken, string code, CancellationToken ct = default);
+
     Task<ApiResult<PagedResult<CompanySummaryResponse>>> SearchCompaniesAsync(
         string name,
         int page,

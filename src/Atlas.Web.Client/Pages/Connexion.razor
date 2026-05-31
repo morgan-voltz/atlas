@@ -4,50 +4,88 @@
 @inject AtlasAuthenticationStateProvider AuthState
 @inject NavigationManager Navigation
 
+@* Connexion (M1) + défi 2FA (M7, doc 12 §10). Le défi est une sous-vue de cette page : le jeton de
+   défi reste en mémoire dans le composant (jamais dans l'URL). Le champ code accepte le TOTP 6 chiffres
+   OU un code de secours (le backend essaie le TOTP puis retombe sur les codes de récupération). *@
+
 <PageTitle>Se connecter · Atlas</PageTitle>
 
-<h1 class="auth-title">Se connecter</h1>
+@if (mode == Mode.Login)
+{
+    <h1 class="auth-title">Se connecter</h1>
 
-<EditForm Model="form" OnValidSubmit="SubmitAsync" class="auth-form">
-    <DataAnnotationsValidator />
+    <EditForm Model="form" OnValidSubmit="SubmitAsync" class="auth-form">
+        <DataAnnotationsValidator />
 
-    @if (message is not null)
-    {
-        <p class="auth-error" role="alert" aria-live="assertive">@message</p>
-    }
+        @if (message is not null)
+        {
+            <p class="auth-error" role="alert" aria-live="assertive">@message</p>
+        }
 
-    <div class="field">
-        <label for="email">Email</label>
-        <InputText id="email" @bind-Value="form.Email" type="email" autocomplete="username"
-                   placeholder="vous@cabinet.fr" disabled="@busy" />
-        <ValidationMessage For="() => form.Email" />
-    </div>
+        <div class="field">
+            <label for="email">Email</label>
+            <InputText id="email" @bind-Value="form.Email" type="email" autocomplete="username"
+                       placeholder="vous@cabinet.fr" disabled="@busy" />
+            <ValidationMessage For="() => form.Email" />
+        </div>
 
-    <div class="field">
-        <label for="password">Mot de passe</label>
-        <InputText id="password" @bind-Value="form.Password" type="password" autocomplete="current-password"
-                   disabled="@busy" />
-        <ValidationMessage For="() => form.Password" />
-    </div>
+        <div class="field">
+            <label for="password">Mot de passe</label>
+            <InputText id="password" @bind-Value="form.Password" type="password" autocomplete="current-password"
+                       disabled="@busy" />
+            <ValidationMessage For="() => form.Password" />
+        </div>
 
-    <button type="submit" class="btn-primary" disabled="@busy" aria-busy="@busy">
-        @(busy ? "Connexion…" : "Se connecter")
-    </button>
-</EditForm>
+        <button type="submit" class="btn-primary" disabled="@busy" aria-busy="@busy">
+            @(busy ? "Connexion…" : "Se connecter")
+        </button>
+    </EditForm>
 
-@* Mot de passe oublié et création de compte : parcours d'onboarding au jalon M7. *@
-<p class="auth-secondary">
-    <span class="auth-muted" title="Disponible au jalon M7">Mot de passe oublié ?</span>
-</p>
-<p class="auth-footer">
-    Pas de compte ?
-    <span class="auth-muted" title="Création de compte au jalon M7">Créer un compte</span>
-</p>
+    @* Mot de passe oublié : pas d'endpoint backend à ce jour → différé. *@
+    <p class="auth-secondary">
+        <span class="auth-muted" title="Disponible prochainement">Mot de passe oublié ?</span>
+    </p>
+    <p class="auth-footer">
+        Pas de compte ? <a href="inscription">Créer un compte</a>
+    </p>
+}
+else
+{
+    <h1 class="auth-title">Validation en deux étapes</h1>
+
+    <EditForm Model="totpForm" OnValidSubmit="SubmitTwoFactorAsync" class="auth-form">
+        <DataAnnotationsValidator />
+
+        @if (message is not null)
+        {
+            <p class="auth-error" role="alert" aria-live="assertive">@message</p>
+        }
+
+        <div class="field">
+            <label for="code">Code de validation</label>
+            <InputText id="code" @bind-Value="totpForm.Code" autocomplete="one-time-code" inputmode="numeric"
+                       placeholder="123456" disabled="@busy" />
+            <p id="code-hint" class="field-hint">Code à 6 chiffres de votre application, ou un code de secours.</p>
+            <ValidationMessage For="() => totpForm.Code" />
+        </div>
+
+        <button type="submit" class="btn-primary" disabled="@busy" aria-busy="@busy">
+            @(busy ? "Vérification…" : "Valider")
+        </button>
+    </EditForm>
+
+    <p class="auth-footer">
+        <button type="button" class="link-button" @onclick="BackToLogin">← Revenir à la connexion</button>
+    </p>
+}
 
 @code {
     private readonly LoginForm form = new();
+    private readonly TwoFactorForm totpForm = new();
     private bool busy;
     private string? message;
+    private Mode mode = Mode.Login;
+    private string? challengeToken;
 
     [SupplyParameterFromQuery]
     private string? ReturnUrl { get; set; }
@@ -66,13 +104,16 @@
                 Navigation.NavigateTo(SafeReturnTarget(), forceLoad: false);
                 return;
             case LoginStatus.TwoFactorRequired:
-                message = "Ce compte utilise la validation en deux étapes (2FA). La vérification 2FA arrivera au jalon M7.";
+                // Bascule vers le défi 2FA : on garde le jeton de défi en mémoire.
+                challengeToken = result.ChallengeToken;
+                mode = Mode.TwoFactor;
+                message = null;
                 break;
             case LoginStatus.InvalidCredentials:
                 message = "Email ou mot de passe incorrect.";
                 break;
             case LoginStatus.EmailNotVerified:
-                message = "Votre adresse email n'a pas encore été vérifiée.";
+                message = "Votre adresse email n'a pas encore été vérifiée. Vérifiez votre boîte mail.";
                 break;
             case LoginStatus.AccountLocked:
                 message = "Compte temporairement verrouillé après plusieurs tentatives. Réessayez dans quelques minutes.";
@@ -82,6 +123,43 @@
                 break;
         }
 
+        busy = false;
+    }
+
+    private async Task SubmitTwoFactorAsync()
+    {
+        if (string.IsNullOrEmpty(challengeToken))
+        {
+            BackToLogin();
+            return;
+        }
+
+        busy = true;
+        message = null;
+
+        ApiResult result = await Api.Verify2faAsync(challengeToken, totpForm.Code.Trim());
+
+        if (result.IsSuccess)
+        {
+            AuthState.NotifyUserAuthentication();
+            Navigation.NavigateTo(SafeReturnTarget(), forceLoad: false);
+            return;
+        }
+
+        message = result.ErrorCode switch
+        {
+            "network" => "Service indisponible pour le moment. Réessayez plus tard.",
+            _ => "Code incorrect. Réessayez, ou utilisez un code de secours.",
+        };
+        busy = false;
+    }
+
+    private void BackToLogin()
+    {
+        mode = Mode.Login;
+        challengeToken = null;
+        totpForm.Code = string.Empty;
+        message = null;
         busy = false;
     }
 
@@ -96,6 +174,12 @@
         return ReturnUrl;
     }
 
+    private enum Mode
+    {
+        Login,
+        TwoFactor,
+    }
+
     private sealed class LoginForm
     {
         [System.ComponentModel.DataAnnotations.Required(ErrorMessage = "L'email est requis.")]
@@ -104,5 +188,11 @@
 
         [System.ComponentModel.DataAnnotations.Required(ErrorMessage = "Le mot de passe est requis.")]
         public string Password { get; set; } = string.Empty;
+    }
+
+    private sealed class TwoFactorForm
+    {
+        [System.ComponentModel.DataAnnotations.Required(ErrorMessage = "Le code est requis.")]
+        public string Code { get; set; } = string.Empty;
     }
 }

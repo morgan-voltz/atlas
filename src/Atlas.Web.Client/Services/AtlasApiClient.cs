@@ -78,6 +78,57 @@ internal sealed class AtlasApiClient(HttpClient httpClient, ITokenStore tokenSto
         }
     }
 
+    public Task<ApiResult> RegisterAsync(string email, string password, CancellationToken ct = default) =>
+        SendNoContentAsync(
+            () => new HttpRequestMessage(HttpMethod.Post, "auth/register")
+            {
+                Content = JsonContent.Create(new RegisterRequest(email, password)),
+            },
+            ct);
+
+    public Task<ApiResult> VerifyEmailAsync(string userId, string token, CancellationToken ct = default) =>
+        SendNoContentAsync(
+            () => new HttpRequestMessage(
+                HttpMethod.Get,
+                $"auth/verify-email?userId={Uri.EscapeDataString(userId)}&token={Uri.EscapeDataString(token)}"),
+            ct);
+
+    public async Task<ApiResult> Verify2faAsync(string challengeToken, string code, CancellationToken ct = default)
+    {
+        HttpResponseMessage response;
+        try
+        {
+            using var request = new HttpRequestMessage(HttpMethod.Post, "auth/2fa/verify")
+            {
+                Content = JsonContent.Create(new VerifyTwoFactorRequest(challengeToken, code)),
+            };
+            // Comme /auth/login : le refresh rotatif est posé en cookie HttpOnly → credentials inclus.
+            request.SetBrowserRequestCredentials(BrowserRequestCredentials.Include);
+            response = await httpClient.SendAsync(request, ct);
+        }
+        catch (HttpRequestException)
+        {
+            return ApiResult.Fail("network");
+        }
+
+        using (response)
+        {
+            if (!response.IsSuccessStatusCode)
+            {
+                return ApiResult.Fail(await ReadProblemCodeAsync(response, ct) ?? "unexpected");
+            }
+
+            LoginResponse? body = await response.Content.ReadFromJsonAsync<LoginResponse>(ct);
+            if (body is null || string.IsNullOrEmpty(body.AccessToken))
+            {
+                return ApiResult.Fail("unexpected");
+            }
+
+            tokenStore.SetAccessToken(body.AccessToken);
+            return ApiResult.Ok();
+        }
+    }
+
     public Task<ApiResult<PagedResult<CompanySummaryResponse>>> SearchCompaniesAsync(
         string name,
         int page,
