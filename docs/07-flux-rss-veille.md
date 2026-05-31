@@ -296,6 +296,17 @@ Les URLs de flux sont des **patterns canoniques** ou des liens connus. Certaines
 
 **Importance** : ⭐⭐⭐⭐ — clé pour suivre les évolutions du cadre légal des données entreprises et PI.
 
+### 3.0 EUR-Lex / Cellar — Réglementaire UE (source structurée, F-063)
+
+| | |
+|---|---|
+| Site | https://eur-lex.europa.eu/ |
+| Flux | Atom Cellar (découverte) + SPARQL `https://publications.europa.eu/webapi/rdf/sparql` (enrichissement, modèle CDM) |
+| Fréquence | Polling ~15-30 min (Hangfire) |
+| Langue | FR (filtre `lang = "fr"` obligatoire — sinon ×24 expressions linguistiques) |
+| Pertinence | ⭐⭐⭐⭐ |
+| Note | **Pas un simple RSS** : source structurée, ingestion en deux temps (Atom → URI Cellar → SPARQL ciblé pour CELEX, EuroVoc, *directory code*). Dédup par CELEX. Spécifiée par **F-063** ; le rattachement sectoriel NAF (« ton secteur bouge au niveau UE ») est porté par **F-064** via le crosswalk éditorial d'**ADR-020**. Dégradation locale (ADR-018), code `eurlex.unavailable`. |
+
 ### 3.1 Légifrance — Nouveautés textes
 
 | | |

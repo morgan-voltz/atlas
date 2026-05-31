@@ -75,6 +75,7 @@ Une URL partageable doit respecter les mêmes règles que le reste de l'app — 
 - **Route protégée → redirection propre vers `/login`** si la session est absente/expirée (jamais un écran cassé ou un `inpi.not_connected` brut). Après login, retour à l'URL demandée.
 - **URL d'entité en diffusion restreinte** (`diffusionINSEE = "N"`) : la page **n'expose pas** de données restreintes même si on arrive par URL directe — elle affiche le **caveat de couverture** (doc 12 §7), comme dans les résultats. Une URL ne doit jamais être une porte dérobée qui contourne un fait de couverture.
 - **Deep-link sans données** : une fiche atteinte par URL alors qu'INPI n'est pas connecté affiche l'**état dégradé honnête** (doc 12 §10 — bandeau « connecte ton compte INPI »), pas une erreur.
+- **Deep-link pendant qu'une source amont est down (ADR-018)** : `/marque/{id}` atteint alors que l'INPI PI est indisponible (`inpi.pi_unavailable`, 502) affiche l'**état dégradé** (composant Erreur, doc 12 §14 — message non technique + Réessayer, provenance « INPI PI » gardée), **jamais** un `404` « introuvable » ni un écran cassé : « indisponible » ≠ « introuvable » ≠ « vide ». Le rendu se clé sur le **code métier**, pas sur le statut HTTP brut.
 - **Profondeur & retour** : la pile de navigation du navigateur reflète le parcours réel ; le « retour » revient à l'origine effective (ce qui répond, côté web, au trou « comportement du retour » listé en doc 12 §16 — sur le web, c'est l'historique du navigateur qui le résout nativement).
 
 ---

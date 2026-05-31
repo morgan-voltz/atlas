@@ -421,6 +421,8 @@ Occupe l'espace avec la *forme* du contenu à venir (aucun saut de mise en page)
 ### Erreur
 Message **clair et non technique** (« Source RNE injoignable pour l'instant », pas un code brut) + **Réessayer** ; **portée locale** quand une section échoue ; jamais d'information par la couleur seule (icône **+** texte) ; **aucun détail sensible** dans le message (cf. `CLAUDE.md` : jamais de credentials/tokens exposés).
 
+**Source amont indisponible ≠ vide ≠ accès (ADR-018).** Quand une source amont tombe (RNE `inpi.unavailable`, **INPI PI `inpi.pi_unavailable`**, veille `veille.fetch_failed`), l'écran sépare **trois faits** et ne les confond jamais : *indisponible* (« on n'a pas pu regarder » → composant Erreur ci-dessus) vs *vide de couverture* (« on a regardé, il n'y a rien » → composant Vide) vs *problème d'accès* (auth réparable par l'utilisateur). Une indisponibilité n'est **jamais** rendue comme un « 0 résultat ». Le client **clé son UX sur le code métier**, jamais sur le statut HTTP brut ; la **provenance reste nommée** (« INPI PI » ne s'efface pas) ; portée **strictement locale** — segment Marques en erreur, segment Entreprises (RNE) intact ; section PI d'une fiche en erreur (`SectionState` indisponible, ADR-015), reste du dossier intact.
+
 ### « À jour / tout vu »
 Marque la **fin** d'un flux — la clôture qui désamorce le scroll infini. Repère discret en fin de liste + date de dernière mise à jour, option digest rappelée. La fin est une **bonne nouvelle**, pas un manque.
 
