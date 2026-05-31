@@ -2,39 +2,41 @@
     display: flex;
     align-items: center;
     gap: 0.5rem;
-    background: #fff;
-    border: 1px solid #cdd5df;
-    border-radius: 0.7rem;
+    background: var(--surface);
+    border: 1px solid var(--outline);
+    border-radius: var(--radius-lg);
     padding: 0.35rem 0.35rem 0.35rem 0.8rem;
     max-width: 36rem;
 }
 
 .search-bar:focus-within {
-    border-color: #1d4e7c;
-    box-shadow: 0 0 0 3px rgba(29, 78, 124, 0.25);
+    border-color: var(--focus);
+    box-shadow: var(--focus-ring);
 }
 
 .search-icon {
-    color: #8a94a3;
+    color: var(--on-surface-variant);
 }
 
 .search-bar input {
     flex: 1;
+    min-width: 0;
     border: 0;
     outline: 0;
     font-size: 1rem;
+    font-family: var(--font-body);
     padding: 0.5rem 0;
     background: transparent;
-    color: #14181f;
+    color: var(--on-surface);
 }
 
 .search-go {
     padding: 0.55rem 1rem;
     font-weight: 600;
-    color: #fff;
-    background: #1d4e7c;
+    color: var(--on-primary);
+    background: var(--primary);
     border: 0;
-    border-radius: 0.5rem;
+    border-radius: var(--radius-md);
     cursor: pointer;
 }
 
@@ -44,14 +46,14 @@
 }
 
 .search-go:focus-visible {
-    outline: 3px solid #14181f;
+    outline: 3px solid var(--focus);
     outline-offset: 2px;
 }
 
 .search-hint {
     margin: 0.5rem 0.2rem 0;
     font-size: 0.8rem;
-    color: #5b6573;
+    color: var(--on-surface-variant);
 }
 
 .search-results {
@@ -60,25 +62,25 @@
 }
 
 .state-msg {
-    color: #5b6573;
+    color: var(--on-surface-variant);
     font-size: 0.95rem;
 }
 
 .state-error {
-    color: #7a271a;
-    background: #fef3f2;
-    border: 1px solid #fecdca;
-    border-radius: 0.6rem;
+    color: var(--on-error-container);
+    background: var(--error-container);
+    border: 1px solid var(--error-outline);
+    border-radius: var(--radius-md);
     padding: 0.7rem 0.9rem;
 }
 
 .state-idle {
-    color: #8a94a3;
+    color: var(--outline);
 }
 
 .results-count {
     font-size: 0.85rem;
-    color: #5b6573;
+    color: var(--on-surface-variant);
     margin: 0 0 0.5rem;
 }
 
@@ -93,9 +95,9 @@
     align-items: center;
     gap: 0.85rem;
     padding: 0.9rem 1rem;
-    background: #fff;
-    border: 1px solid #9cc1e3;
-    border-radius: 0.7rem;
+    background: var(--surface);
+    border: 1px solid var(--info);
+    border-radius: var(--radius-lg);
 }
 
 .direct-icon {
@@ -104,22 +106,23 @@
 
 .direct-main {
     flex: 1;
+    min-width: 0;
 }
 
 .direct-name {
     margin: 0;
     font-weight: 600;
-    color: #14181f;
+    color: var(--on-surface);
 }
 
 .direct-sub {
     margin: 0.15rem 0 0;
     font-size: 0.85rem;
-    color: #5b6573;
+    color: var(--on-surface-variant);
 }
 
 .direct-soon {
     font-size: 0.75rem;
-    color: #1d4e7c;
+    color: var(--info);
     font-weight: 600;
 }

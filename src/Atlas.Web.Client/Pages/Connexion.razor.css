@@ -1,8 +1,8 @@
 .auth-title {
-    font-family: Georgia, "Times New Roman", serif;
+    font-family: var(--font-heading);
     font-size: 2rem;
     font-weight: 700;
-    color: #14181f;
+    color: var(--on-bg);
     margin: 0 0 1.75rem;
 }
 
@@ -21,7 +21,7 @@
 .field label {
     font-size: 0.85rem;
     font-weight: 600;
-    color: #3c4654;
+    color: var(--on-surface-variant);
 }
 
 .field ::deep input {
@@ -29,21 +29,22 @@
     box-sizing: border-box;
     padding: 0.8rem 0.9rem;
     font-size: 1rem;
-    border: 1px solid #cdd5df;
-    border-radius: 0.6rem;
-    background: #fff;
-    color: #14181f;
+    font-family: var(--font-body);
+    border: 1px solid var(--outline);
+    border-radius: var(--radius-md);
+    background: var(--surface);
+    color: var(--on-surface);
 }
 
 .field ::deep input:focus-visible {
-    outline: 3px solid #1d4e7c;
+    outline: 3px solid var(--focus);
     outline-offset: 1px;
-    border-color: #1d4e7c;
+    border-color: var(--focus);
 }
 
 .field ::deep .validation-message {
     font-size: 0.8rem;
-    color: #b42318;
+    color: var(--error);
 }
 
 .btn-primary {
@@ -51,19 +52,19 @@
     padding: 0.85rem 1rem;
     font-size: 1rem;
     font-weight: 700;
-    color: #fff;
-    background: #1d4e7c;
-    border: 1px solid #1d4e7c;
-    border-radius: 0.6rem;
+    color: var(--on-primary);
+    background: var(--primary);
+    border: 1px solid var(--primary);
+    border-radius: var(--radius-md);
     cursor: pointer;
 }
 
 .btn-primary:hover:not(:disabled) {
-    background: #18406a;
+    background: color-mix(in srgb, var(--primary) 88%, black);
 }
 
 .btn-primary:focus-visible {
-    outline: 3px solid #14181f;
+    outline: 3px solid var(--focus);
     outline-offset: 2px;
 }
 
@@ -76,10 +77,10 @@
     margin: 0;
     padding: 0.7rem 0.9rem;
     font-size: 0.9rem;
-    color: #7a271a;
-    background: #fef3f2;
-    border: 1px solid #fecdca;
-    border-radius: 0.6rem;
+    color: var(--on-error-container);
+    background: var(--error-container);
+    border: 1px solid var(--error-outline);
+    border-radius: var(--radius-md);
 }
 
 .auth-secondary {
@@ -90,12 +91,12 @@
 .auth-footer {
     margin: 2rem 0 0;
     text-align: center;
-    color: #3c4654;
+    color: var(--on-surface-variant);
     font-size: 0.9rem;
 }
 
 .auth-muted {
-    color: #8a94a3;
+    color: var(--outline);
     font-weight: 600;
     cursor: not-allowed;
 }

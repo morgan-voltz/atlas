@@ -1,6 +1,8 @@
 .app-shell {
     display: flex;
     min-height: 100vh;
+    min-height: 100dvh;
+    background: var(--bg);
 }
 
 .rail {
@@ -10,38 +12,41 @@
     width: 220px;
     flex-shrink: 0;
     padding: 1rem 0.5rem;
-    border-right: 1px solid #e2e2e2;
-    background: #fafafa;
+    border-right: 1px solid var(--outline);
+    background: var(--surface);
 }
 
 .rail-brand {
+    font-family: var(--font-heading);
     font-weight: 700;
     font-size: 1.25rem;
+    color: var(--on-surface);
     padding: 0.5rem 0.75rem 1rem;
 }
 
 .rail-link {
     display: block;
     padding: 0.6rem 0.75rem;
-    border-radius: 6px;
+    border-radius: var(--radius-sm);
     border-left: 3px solid transparent;
-    color: #1a1a1a;
+    color: var(--on-surface);
     text-decoration: none;
 }
 
 .rail-link:hover {
-    background: #efefef;
+    background: var(--surface-variant);
 }
 
 .rail-link:focus-visible {
-    outline: 2px solid #1452cc;
+    outline: 2px solid var(--focus);
     outline-offset: 2px;
 }
 
 /* État actif : non porté par la seule couleur (bordure + graisse), cf. doc 06. */
 .rail-link.active {
-    background: #eaf0ff;
-    border-left-color: #1452cc;
+    background: var(--primary-container);
+    border-left-color: var(--primary);
+    color: var(--on-primary-container);
     font-weight: 600;
 }
 
@@ -49,4 +54,58 @@
     flex: 1;
     min-width: 0;
     padding: 1.5rem 2rem;
+}
+
+/*
+ * Adaptation par largeur (R2, doc 14 §2/§5) : sous le point de rupture, le rail
+ * latéral desktop bascule en barre d'onglets horizontale ancrée en bas (pouce, mobile).
+ * Mêmes 5 destinations, présentation différente — jamais une 6ᵉ entrée.
+ */
+@media (max-width: 640px) {
+    .app-shell {
+        flex-direction: column;
+    }
+
+    .rail {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        z-index: 20;
+        flex-direction: row;
+        width: auto;
+        gap: 0;
+        padding: 0.25rem;
+        border-right: 0;
+        border-top: 1px solid var(--outline);
+        /* Respecte la zone sûre iOS / barre de gestes. */
+        padding-bottom: max(0.25rem, env(safe-area-inset-bottom));
+    }
+
+    /* En barre d'onglets, le titre de marque n'a plus sa place. */
+    .rail-brand {
+        display: none;
+    }
+
+    .rail-link {
+        flex: 1;
+        text-align: center;
+        padding: 0.6rem 0.25rem;
+        border-left: 0;
+        border-bottom: 3px solid transparent;
+        font-size: 0.85rem;
+        /* Cible tactile ≥ 44 px (doc 12 §8). */
+        min-height: 44px;
+    }
+
+    .rail-link.active {
+        border-left-color: transparent;
+        border-bottom-color: var(--primary);
+    }
+
+    .app-main {
+        /* Place pour la barre d'onglets fixe. */
+        padding: 1.25rem 1rem;
+        padding-bottom: calc(4rem + env(safe-area-inset-bottom));
+    }
 }
