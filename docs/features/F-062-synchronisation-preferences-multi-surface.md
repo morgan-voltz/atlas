@@ -1,9 +1,9 @@
 # F-062 — Synchronisation des préférences utilisateur (multi-surface)
 
-> **Statut** : 🟡 À spécifier (comble une dette implicite). Cible : **V1–V2** (réalise une promesse déjà faite par ADR-001).
-> **Date** : 30 mai 2026.
+> **Statut** : ⬜ Spécifiée, **au périmètre V2 / MVP 2** (à implémenter). Comble une dette implicite : réalise une promesse déjà faite par ADR-001.
+> **Date** : 30 mai 2026 (spec) ; classée V2 le 31 mai 2026.
 > **Catégorie MoSCoW** : Should have (le principe est déjà invoqué partout ; seule la réalisation manque).
-> **Origine** : ADR-001 **promet** la synchronisation multi-device (« un user qui utilise l'app sur desktop ET mobile doit retrouver ses données ») mais ne la spécifie pas ; doc 12 et doc 15 écrivent « persiste multi-device (ADR-001) » à chaque préférence — **sans feature qui le réalise**. Cette fiche comble ce trou.
+> **Origine** : ADR-001 **promet** la synchronisation multi-device (« un user qui utilise l'app sur desktop ET mobile doit retrouver ses données ») mais ne la spécifie pas ; doc 12 et doc 16 écrivent « persiste multi-device (ADR-001) » à chaque préférence — **sans feature qui le réalise**. Cette fiche comble ce trou.
 > **Dépendances** : F-001 (compte/auth), patron de stockage utilisateur (cascade FK RGPD), `docs/12-modele-ux-client-maui.md` (§8 densité, §9 Profil/Affichage & données), `docs/16-polices-et-lisibilite.md` (police, espacement, taille), `themes.json` (thèmes), ADR-001 (multi-device), ADR-002 (clients purs de l'API).
 > **Documents liés** : `02-roadmap-features.md`, `04-securite-rgpd.md`, `docs/14-modele-ux-client-web.md`.
 
@@ -23,8 +23,8 @@ Un utilisateur qui a réglé sa **police accessible**, son **gabarit de fiche** 
 
 ### Préférences de **compte** (synchronisées — « qui je suis »)
 Suivent l'utilisateur sur toutes ses surfaces :
-- **Police** de corps, **espacement**, **taille** du texte (doc 15).
-- **Réglages d'accessibilité** (doc 06 / doc 15).
+- **Police** de corps, **espacement**, **taille** du texte (doc 16).
+- **Réglages d'accessibilité** (doc 06 / doc 16).
 - **Gabarit de fiche** par défaut, **sections masquées / épinglées** (doc 12 §4).
 - **Langue**.
 
@@ -93,10 +93,10 @@ C'est la feature qui **garantit que les réglages d'accessibilité suivent l'uti
 ## À faire à l'intégration
 
 - Ajouter **F-062** au catalogue `02-roadmap-features.md` (Should have).
-- **Remplacer**, dans doc 12 et doc 15, les mentions « persiste multi-device (ADR-001) » par un **renvoi à F-062** (qui devient le propriétaire de la *réalisation*), en précisant la famille (compte vs appareil) pour chaque préférence.
+- ✅ Fait (31 mai 2026) : les mentions « persiste multi-device (ADR-001) » de **doc 12** renvoient désormais à **F-062** (propriétaire de la *réalisation*), en précisant la famille (compte vs appareil — la densité est explicitée comme préférence d'appareil).
 - Vérifier la cohérence avec `themes.json` : le **thème** est désormais explicitement une préférence **d'appareil** (non synchronisée par défaut) — à noter là où la persistance du thème était sous-entendue.
 - Envisager un **ADR court** si la stratégie de sync (last-write-wins par clé + compte/appareil) doit être tracée comme décision structurante.
 
 ---
 
-*Fiche figée le 30 mai 2026. Réalise la synchronisation multi-device promise par ADR-001. Principe : distinguer préférences de compte (suivent l'utilisateur — police, accessibilité, gabarits, langue) et préférences d'appareil (locales — thème, densité). Résolution : last-write-wins par clé horodatée. Comble une dette implicite invoquée dans doc 12 et doc 15 sans jamais avoir été spécifiée.*
+*Fiche figée le 30 mai 2026. Réalise la synchronisation multi-device promise par ADR-001. Principe : distinguer préférences de compte (suivent l'utilisateur — police, accessibilité, gabarits, langue) et préférences d'appareil (locales — thème, densité). Résolution : last-write-wins par clé horodatée. Comble une dette implicite invoquée dans doc 12 (et la lisibilité de doc 16) sans jamais avoir été spécifiée.*

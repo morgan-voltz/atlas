@@ -18,8 +18,8 @@ Légende : ✅ livré & vérifié · 🟡 livré, vérification partielle (cf. s
 | F-001 Inscription / connexion | ✅ |
 | F-002 2FA TOTP | ✅ |
 | F-003 Connexion compte INPI | ✅ |
-| F-004 Recherche entreprise (SIREN) | 🟡 |
-| F-005 Recherche entreprise (nom) | 🟡 |
+| F-004 Recherche entreprise (SIREN) | ✅ |
+| F-005 Recherche entreprise (nom) | ✅ |
 | F-006 Recherche marque | 🟡 |
 | F-007 Fiche marque | 🟡 |
 | F-008 Historique de recherches | ✅ |
@@ -28,9 +28,12 @@ Légende : ✅ livré & vérifié · 🟡 livré, vérification partielle (cf. s
 | F-011 Documentation | ✅ |
 | F-012 Conformité RGPD | 🟡 |
 
-Les 🟡 correspondent surtout à : intégrations INPI à confirmer par un appel authentifié réel
-(F-004→F-007), clients MAUI compilés mais non exécutés/QA (F-009/F-010), et contenu légal UI
-restant pour le RGPD (F-012). Le détail figure dans le bloc « Statut » de chaque feature.
+**Validation INPI réelle (31 mai 2026, compte habilité)** : le **RNE est validé** de bout en bout
+(F-004 fiche SIREN, F-005 recherche nom, F-013 actes/bilans → ✅ via Bruno `90-INPI-E2E-CI`).
+La **recherche PI** (marques F-006/F-007, brevets F-015/F-016) reste **🟡 / bloquée** : l'API
+`api-gateway.inpi.fr` répond `405 Allow: GET` sur `search` alors que l'adapter envoie `POST`
+(auth PI et droits OK ; **correctif POST→GET + contrat GET à établir**). Les autres 🟡 : clients
+MAUI compilés non QA (F-009/F-010), contenu légal UI du RGPD (F-012). Détail dans chaque fiche.
 
 ---
 
@@ -38,13 +41,13 @@ restant pour le RGPD (F-012). Le détail figure dans le bloc « Statut » de cha
 
 Légende identique au tableau MVP 1.
 
-**Section principale** (F-013 → F-022) :
+**Section principale** (F-013 → F-022, F-062) :
 
 | Feature | Statut |
 |---|:--:|
-| F-013 Téléchargement individuel d'actes et bilans | 🟡 |
+| F-013 Téléchargement individuel d'actes et bilans | ✅ |
 | F-014 Téléchargement en masse de documents | ✅ |
-| F-015 Recherche brevet par numéro | ✅ |
+| F-015 Recherche brevet par numéro | 🟡 |
 | F-016 Recherche brevet avancée (titre / inventeur / déposant) | 🟡 |
 | F-017 Favoris : suivi d'une entreprise | ✅ |
 | F-018 Favoris : suivi d'une marque ou d'un brevet | ✅ |
@@ -52,6 +55,7 @@ Légende identique au tableau MVP 1.
 | F-020 Notifications push mobiles (et desktop) | ✅ |
 | F-021 Export CSV / Excel | 🟡 |
 | F-022 Rapport PDF de fiche entreprise | ✅ |
+| F-062 Synchronisation des préférences (multi-surface) | ⬜ |
 
 **Cluster Veille** (F-041 → F-050) :
 
@@ -154,7 +158,7 @@ Pour chaque feature, on documente :
 - [**F-020 — Notifications push mobiles (et desktop)**](features/F-020-notifications-push-mobiles-et-desktop.md) — Statut : ✅ Backend complet (29 mai 2026), client MAUI restant.
 - [**F-021 — Export CSV / Excel de résultats**](features/F-021-export-csv-excel-de-resultats.md) — Statut : 🟡 MVP CSV livré (MVP 2, 29 mai 2026).
 - [**F-022 — Rapport PDF de fiche entreprise**](features/F-022-rapport-pdf-de-fiche-entreprise.md) — Statut : ✅ MVP implémenté (MVP 2, 29 mai 2026).
-- [**F-062 — Synchronisation des préférences utilisateur (multi-surface)**](features/F-062-synchronisation-preferences-multi-surface.md) — Statut : 🟡 À spécifier. Réalise la sync multi-device promise par ADR-001 (préférences « compte » qui suivent l'utilisateur vs « appareil » locales ; last-write-wins par clé).
+- [**F-062 — Synchronisation des préférences utilisateur (multi-surface)**](features/F-062-synchronisation-preferences-multi-surface.md) — Statut : ⬜ Spécifiée, **au périmètre V2 / MVP 2** — à implémenter (entité `UserPreference` + `GET/PUT /me/preferences`). Réalise la sync multi-device promise par ADR-001 (préférences « compte » qui suivent l'utilisateur vs « appareil » locales ; last-write-wins par clé).
 
 ---
 

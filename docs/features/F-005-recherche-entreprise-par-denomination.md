@@ -1,6 +1,6 @@
 # F-005 — Recherche entreprise par dénomination
 
-> **Statut** : 🟡 Implémenté (MVP 1, 27 mai 2026). `ICompanyDataProvider.SearchByNameAsync` → `PagedResult<CompanySummary>` (SIREN, dénomination, ville, NAF) ; endpoint `GET /companies?name=&page=&pageSize=` (réutilise le client RNE + cache token). Mapping des items aligné sur la doc INPI v4.0 (navigation défensive, cf. F-004). **Reste à valider en réel** : pagination (par page vs curseur `searchAfter`) et `TotalCount` (forme de réponse de recherche non documentée publiquement). Debouncing 300 ms côté client (MAUI, F-009).
+> **Statut** : ✅ Implémenté (MVP 1, 27 mai 2026), validé en réel le 31 mai 2026. `ICompanyDataProvider.SearchByNameAsync` → `PagedResult<CompanySummary>` (SIREN, dénomination, ville, NAF) ; endpoint `GET /companies?name=&page=&pageSize=` (réutilise le client RNE + cache token). Mapping des items aligné sur la doc INPI v4.0 (navigation défensive, cf. F-004). **✅ Validé en réel le 31 mai 2026** (Bruno `90-INPI-E2E-CI` : Company Search → 200, forme `PagedResult` conforme). Debouncing 300 ms côté client (MAUI, F-009).
 
 **Description** : l'utilisateur saisit tout ou partie d'un nom d'entreprise, le système retourne une liste de résultats avec pagination.
 
