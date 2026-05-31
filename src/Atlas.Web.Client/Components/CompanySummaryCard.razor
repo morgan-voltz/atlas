@@ -1,7 +1,7 @@
-@* Carte-aperçu d'un résultat entreprise (doc 12 §7 / kit doc 15 §4). Présentation seule en M1 ;
-   l'ouverture de la fiche (navigation vers /entreprise/{siren}) arrive avec M2. *@
+@* Carte-aperçu d'un résultat entreprise (doc 12 §7/§12). Toute la ligne est un lien vers la
+   fiche (/entreprise/{siren}, M2). Le SIREN est rendu en police mono (glyphes non ambigus, doc 16). *@
 
-<article class="result-row">
+<a class="result-row" href="entreprise/@Company.Siren">
     <div class="result-main">
         <p class="result-name">@Company.Denomination</p>
         <p class="result-sub">
@@ -16,7 +16,8 @@
             }
         </p>
     </div>
-</article>
+    <span class="result-chevron" aria-hidden="true">›</span>
+</a>
 
 @code {
     [Parameter]

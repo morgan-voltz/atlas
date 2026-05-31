@@ -98,6 +98,17 @@
     background: var(--surface);
     border: 1px solid var(--info);
     border-radius: var(--radius-lg);
+    text-decoration: none;
+    color: inherit;
+}
+
+.direct-card:hover {
+    background: var(--surface-variant);
+}
+
+.direct-card:focus-visible {
+    outline: 3px solid var(--focus);
+    outline-offset: 2px;
 }
 
 .direct-icon {
@@ -121,8 +132,9 @@
     color: var(--on-surface-variant);
 }
 
-.direct-soon {
-    font-size: 0.75rem;
+.direct-go {
+    flex-shrink: 0;
+    font-size: 0.85rem;
     color: var(--info);
     font-weight: 600;
 }

@@ -1,0 +1,108 @@
+@* Carte-section repliable de la fiche entreprise (doc 12 §13). Conteneur thématique
+   (Identité, Dirigeants, Bilans…) regroupant des atomes. États gérés : déployée / repliée,
+   vide-de-couverture, erreur locale, chargement (squelette) — cf. doc 12 §14.
+
+   En-tête = bouton qui replie/déploie toute la section (cible ≥ 44 px), porté par un heading
+   pour que la fiche se lise comme un document (doc 06). La provenance vit DANS le corps, avec
+   les données, et disparaît avec elles au repli (garde-fou : jamais de donnée sans provenance). *@
+
+<section class="section-card">
+    <h2 class="section-head">
+        <button type="button" class="section-toggle" aria-expanded="@expanded.ToString().ToLowerInvariant()"
+                aria-controls="@BodyId" @onclick="Toggle">
+            <span class="section-chevron @(expanded ? "open" : null)" aria-hidden="true">▸</span>
+            <span class="section-title">@Title</span>
+            @if (!string.IsNullOrWhiteSpace(Indicator))
+            {
+                <span class="section-indicator">@Indicator</span>
+            }
+        </button>
+    </h2>
+
+    <div id="@BodyId" class="section-body" hidden="@(!expanded)">
+        @switch (State)
+        {
+            case SectionState.Skeleton:
+                <p class="section-skeleton" role="status">Chargement…</p>
+                <div class="skeleton-line" aria-hidden="true"></div>
+                <div class="skeleton-line short" aria-hidden="true"></div>
+                break;
+
+            case SectionState.CoverageEmpty:
+                @* Vide DE COUVERTURE (doc 12 §14) : un fait, pas une action — message honnête
+                   nommant la raison, sans bouton. *@
+                <p class="section-coverage">@EmptyMessage</p>
+                break;
+
+            case SectionState.Error:
+                <div class="section-error" role="alert">
+                    <p class="section-error-msg"><span aria-hidden="true">⚠ </span>@ErrorMessage</p>
+                    @if (OnRetry.HasDelegate)
+                    {
+                        <button type="button" class="section-retry" @onclick="OnRetry">Réessayer</button>
+                    }
+                </div>
+                break;
+
+            default:
+                @ChildContent
+                @if (!string.IsNullOrWhiteSpace(Source))
+                {
+                    <p class="section-provenance">Source : @Source</p>
+                }
+                break;
+        }
+    </div>
+</section>
+
+@code {
+    /// <summary>Variantes d'état du corps de section (doc 12 §14).</summary>
+    public enum SectionState
+    {
+        Loaded,
+        Skeleton,
+        CoverageEmpty,
+        Error,
+    }
+
+    [Parameter]
+    [EditorRequired]
+    public required string Title { get; set; }
+
+    /// <summary>Compteur ou source globale affiché dans l'en-tête (slot « Indicateur », optionnel).</summary>
+    [Parameter]
+    public string? Indicator { get; set; }
+
+    /// <summary>Ligne de provenance « source · date » rendue avec les données (requise si données sourcées).</summary>
+    [Parameter]
+    public string? Source { get; set; }
+
+    [Parameter]
+    public SectionState State { get; set; } = SectionState.Loaded;
+
+    /// <summary>Message du vide-de-couverture : nomme la raison (caveat), sans appel à l'action.</summary>
+    [Parameter]
+    public string? EmptyMessage { get; set; }
+
+    [Parameter]
+    public string? ErrorMessage { get; set; }
+
+    [Parameter]
+    public EventCallback OnRetry { get; set; }
+
+    /// <summary>Ouverte par défaut ? Les gabarits/préférences (F-062, M6) piloteront ce défaut plus tard.</summary>
+    [Parameter]
+    public bool StartExpanded { get; set; } = true;
+
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+    private bool expanded;
+
+    // Identifiant stable du corps pour aria-controls (dérivé du titre).
+    private string BodyId => "sec-" + new string(Title.Where(char.IsLetterOrDigit).ToArray()).ToLowerInvariant();
+
+    protected override void OnInitialized() => expanded = StartExpanded;
+
+    private void Toggle() => expanded = !expanded;
+}

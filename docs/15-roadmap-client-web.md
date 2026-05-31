@@ -37,7 +37,7 @@ Chaque jalon = une tranche verticale livrant de la valeur utilisable de bout en 
 |---|---|:--:|:--:|
 | **M0 — Fondations** | scaffold + navigation/routing | socle (cf. §1) | ✅ |
 | **M1 — Connexion + Recherche** | login (token mémoire + refresh cookie HttpOnly) **et** écran Recherche de bout en bout | 1ʳᵉ tranche : valide toute la chaîne — `AtlasApiClient`, auth, garde de route, premiers composants (carte-aperçu, états) | ✅ |
-| **M2 — Fiche entreprise** | depuis un résultat, fiche en cartes-sections, provenance épinglée, états de couverture | réutilise carte-section + le client API de M1 | ⬜ |
+| **M2 — Fiche entreprise** | depuis un résultat, fiche en cartes-sections, provenance épinglée, états de couverture | réutilise carte-section + le client API de M1 | 🟡 |
 | **M3 — Accueil / feed** | fil des mouvements des entités suivies (cartes-aperçu *event*) | dépend des favoris (lecture) ; garde-fous anti-« réseau social » | ⬜ |
 | **M4 — Favoris / Watchlists + list-detail 2 panneaux** | gestion des favoris **et** introduction du **list-detail à 2 panneaux** (signature desktop, réutilisé ensuite) | la signature desktop (doc 14 §3) arrive ici puis se généralise | ⬜ |
 | **M5 — Veille** | flux, palier de lecture, pont vers fiche « à vérifier » | réutilise list-detail (M4) | ⬜ |
@@ -58,7 +58,7 @@ Un écran n'est **✅** que lorsque **toutes** ses colonnes le sont. DoD = templ
 | Écran | Jalon | Maquette | Données | États | Responsive | A11y | Clavier | URL/titre | Statut |
 |---|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|
 | Recherche (cœur M1 ; « Vérifier un nom » F-060 = backlog séparé) | M1 | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| Fiche entreprise | M2 | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
+| Fiche entreprise (Identité + Dirigeants ; Bilans/BODACC/Étabts/PI = features à venir) | M2 | 🟡 | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | 🟡 |
 | Accueil / feed | M3 | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
 | Favoris / Watchlists | M4 | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
 | Veille | M5 | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
@@ -78,8 +78,8 @@ Extrait **au fil des écrans**, pas en amont. Chaque composant couvre ses **éta
 | Layout **rail** (5 destinations) | actif / hover / focus | M0 | ✅ |
 | Atomes (champ étiqueté, badge, **provenance**, chiffre-clé) | — (provenance jamais masquée) | M1 | ⬜ |
 | **Carte-aperçu** (entity / event) | défaut · hover · pressed · focus · sélectionné · lu/non-lu · skeleton | M1 | 🟡 |
-| **Carte-section** (repliable) | ouvert · replié · épinglé · vide-couverture · erreur-locale · skeleton | M2 | ⬜ |
-| **États** (composants) | chargement (skeleton) · vide (onboarding/couverture) · erreur (locale) · fin de liste | M1 | ⬜ |
+| **Carte-section** (repliable) | ouvert · replié · épinglé · vide-couverture · erreur-locale · skeleton | M2 | 🟡 |
+| **États** (composants) | chargement (skeleton) · vide (onboarding/couverture) · erreur (locale) · fin de liste | M1 | 🟡 |
 | **Thème** clair/sombre + tokens | clair · sombre (auto `prefers-color-scheme` ; sélecteur persisté → M6/F-062) | M1 | ✅ |
 
 ---

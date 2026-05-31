@@ -1,0 +1,236 @@
+@page "/entreprise/{Siren}"
+@attribute [Authorize]
+@inject IAtlasApiClient Api
+
+@* Fiche entreprise (M2, doc 15) — une seule page qui défile, en-tête d'identité toujours visible
+   + pile de cartes-sections repliables (doc 12 §4). Consommateur pur de GET /companies/{siren}
+   (F-004). Garde-fous routing (doc 14 §4) : diffusion restreinte montrée même en accès direct ;
+   deep-link sans INPI → état dégradé honnête, jamais une erreur brute. *@
+
+<PageTitle>@PageTitleText</PageTitle>
+
+<section aria-live="polite" aria-busy="@(state == FicheState.Loading)">
+    @switch (state)
+    {
+        case FicheState.Loading:
+            <p class="back-link"><a href="recherche">← Recherche</a></p>
+            <div class="id-header skeleton-header" aria-hidden="true">
+                <div class="skeleton-line title"></div>
+                <div class="skeleton-line short"></div>
+            </div>
+            <SectionCard Title="Dirigeants" State="SectionCard.SectionState.Skeleton" />
+            <p role="status" class="sr-only">Chargement de la fiche entreprise…</p>
+            break;
+
+        case FicheState.NotConnected:
+            <p class="back-link"><a href="recherche">← Recherche</a></p>
+            <div class="degraded" role="status">
+                <p class="degraded-title">Connecte ton compte INPI pour voir cette fiche</p>
+                <p class="degraded-sub">
+                    Les fiches entreprise viennent du Registre National des Entreprises (INPI), accessible
+                    avec tes identifiants. Rends-toi sur ton profil pour les renseigner.
+                </p>
+                <a class="degraded-action" href="profil">Aller au profil</a>
+            </div>
+            break;
+
+        case FicheState.NotFound:
+            <p class="back-link"><a href="recherche">← Recherche</a></p>
+            <div class="empty-state" role="status">
+                <p class="empty-title">Aucune entreprise pour ce SIREN</p>
+                <p class="empty-sub">Le SIREN <span class="mono">@FormatSiren(Siren)</span> n'a pas de fiche au RNE.</p>
+            </div>
+            break;
+
+        case FicheState.Error:
+            <p class="back-link"><a href="recherche">← Recherche</a></p>
+            <div class="page-error" role="alert">
+                <p class="page-error-msg">@message</p>
+                <button type="button" class="page-retry" @onclick="LoadAsync">Réessayer</button>
+            </div>
+            break;
+
+        case FicheState.Loaded when company is not null:
+            <p class="back-link"><a href="recherche">← Recherche</a></p>
+
+            @* En-tête d'identité — toujours visible, ne se replie jamais (doc 12 §4). *@
+            <header class="id-header">
+                <div class="id-top">
+                    <h1 class="id-name">@company.Denomination</h1>
+                    <button type="button" class="follow-btn" disabled
+                            title="Suivre une entreprise arrivera au jalon M4 (Favoris)">
+                        ☆ Suivre · M4
+                    </button>
+                </div>
+
+                <p class="id-meta">
+                    <span class="mono id-siren">@FormatSiren(company.Siren)</span>
+                    @if (!string.IsNullOrWhiteSpace(company.FormeJuridique))
+                    {
+                        <span class="id-badge">@company.FormeJuridique</span>
+                    }
+                    @if (!company.IsDiffusible)
+                    {
+                        @* Diffusion restreinte (catégorie 3, doctrine) : fait de couverture, toujours montré. *@
+                        <span class="id-badge restricted" title="Diffusion restreinte (INSEE)">Diffusion restreinte</span>
+                    }
+                </p>
+
+                <dl class="id-facts">
+                    @if (!string.IsNullOrWhiteSpace(company.NafCode))
+                    {
+                        <div class="id-fact">
+                            <dt>Activité (NAF)</dt>
+                            <dd><span class="mono">@company.NafCode</span>@(string.IsNullOrWhiteSpace(company.NafLabel) ? null : $" — {company.NafLabel}")</dd>
+                        </div>
+                    }
+                    @if (company.DateCreation is { } created)
+                    {
+                        <div class="id-fact">
+                            <dt>Création</dt>
+                            <dd>@created.ToString("d MMMM yyyy", Culture)</dd>
+                        </div>
+                    }
+                    @if (FormatAddress(company.Adresse) is { } addr)
+                    {
+                        <div class="id-fact">
+                            <dt>Siège</dt>
+                            <dd>@addr</dd>
+                        </div>
+                    }
+                </dl>
+
+                @* Provenance épinglée — ne se replie jamais (garde-fou R6, doc 12 §4). *@
+                <p class="id-provenance">Source : Registre National des Entreprises (INPI)</p>
+            </header>
+
+            @* Pile de cartes-sections — ordre par défaut doc 12 §4 (MVP : Dirigeants ; le reste à venir). *@
+            <SectionCard Title="Dirigeants"
+                         Indicator="@(company.Dirigeants.Count > 0 ? company.Dirigeants.Count.ToString() : null)"
+                         Source="Registre National des Entreprises (INPI)"
+                         State="@(company.Dirigeants.Count == 0 ? SectionCard.SectionState.CoverageEmpty : SectionCard.SectionState.Loaded)"
+                         EmptyMessage="@DirigeantsEmptyMessage">
+                <ul class="dirigeants-list">
+                    @foreach (DirigeantResponse d in company.Dirigeants)
+                    {
+                        <li class="dirigeant">
+                            <span class="dirigeant-nom">@d.Nom</span>
+                            @if (!string.IsNullOrWhiteSpace(d.Qualite))
+                            {
+                                <span class="dirigeant-qualite">@d.Qualite</span>
+                            }
+                        </li>
+                    }
+                </ul>
+            </SectionCard>
+
+            @* Sections à venir : signalées honnêtement comme un périmètre Atlas (pas un fait sur
+               l'entreprise), distinctes d'un vide-de-couverture. Données réelles avec les features
+               dédiées (Bilans F-013, BODACC, Établissements, PI). *@
+            <div class="upcoming" aria-label="Sections à venir">
+                <p class="upcoming-head">À venir dans Atlas web</p>
+                <ul class="upcoming-list">
+                    <li>Bilans &amp; finances</li>
+                    <li>BODACC &amp; procédures</li>
+                    <li>Établissements</li>
+                    <li>Propriété industrielle</li>
+                </ul>
+            </div>
+            break;
+    }
+</section>
+
+@code {
+    private static readonly System.Globalization.CultureInfo Culture = new("fr-FR");
+
+    [Parameter]
+    public string Siren { get; set; } = string.Empty;
+
+    private FicheState state = FicheState.Loading;
+    private CompanyResponse? company;
+    private string? message;
+    private string? loadedSiren;
+
+    private string PageTitleText =>
+        company is not null ? $"{company.Denomination} · Atlas" : "Entreprise · Atlas";
+
+    private string DirigeantsEmptyMessage => company?.IsDiffusible == false
+        ? "Diffusion restreinte : dirigeants non communiqués (INSEE)."
+        : "Aucun dirigeant publié au RNE pour cette entreprise.";
+
+    protected override async Task OnParametersSetAsync()
+    {
+        // Recharge seulement quand le SIREN change (évite un re-fetch à chaque re-rendu,
+        // ex. propagation de l'état d'authentification). Un nouveau SIREN = nouvelle fiche.
+        if (Siren != loadedSiren)
+        {
+            await LoadAsync();
+        }
+    }
+
+    private async Task LoadAsync()
+    {
+        state = FicheState.Loading;
+        message = null;
+        company = null;
+        loadedSiren = Siren;
+
+        ApiResult<CompanyResponse> result = await Api.GetCompanyBySirenAsync(Siren);
+        if (result.IsSuccess)
+        {
+            company = result.Value;
+            state = FicheState.Loaded;
+            return;
+        }
+
+        state = result.ErrorCode switch
+        {
+            "companies.not_found" => FicheState.NotFound,
+            "inpi.not_connected" => FicheState.NotConnected,
+            _ => FicheState.Error,
+        };
+
+        if (state == FicheState.Error)
+        {
+            message = MapError(result.ErrorCode);
+        }
+    }
+
+    private static string MapError(string? code) => code switch
+    {
+        "companies.invalid_siren" => "SIREN invalide : 9 chiffres avec un contrôle Luhn valide.",
+        "unauthorized" => "Votre session a expiré. Reconnectez-vous.",
+        "network" => "Service indisponible. Vérifiez votre connexion et réessayez.",
+        _ => "Une erreur est survenue pendant le chargement de la fiche. Réessayez.",
+    };
+
+    private static string FormatSiren(string siren) =>
+        siren.Length == 9 ? $"{siren[..3]} {siren[3..6]} {siren[6..]}" : siren;
+
+    private static string? FormatAddress(AddressResponse? a)
+    {
+        if (a is null)
+        {
+            return null;
+        }
+
+        string[] parts =
+        [
+            a.Line ?? string.Empty,
+            string.Join(' ', new[] { a.PostalCode, a.City }.Where(s => !string.IsNullOrWhiteSpace(s))),
+            a.Country ?? string.Empty,
+        ];
+
+        string joined = string.Join(", ", parts.Where(s => !string.IsNullOrWhiteSpace(s)));
+        return string.IsNullOrWhiteSpace(joined) ? null : joined;
+    }
+
+    private enum FicheState
+    {
+        Loading,
+        Loaded,
+        NotFound,
+        NotConnected,
+        Error,
+    }
+}
