@@ -147,6 +147,19 @@ internal sealed class AtlasApiClient(HttpClient httpClient, ITokenStore tokenSto
     public Task<ApiResult> DeleteMyAccountAsync(CancellationToken ct = default) =>
         SendNoContentAsync(() => new HttpRequestMessage(HttpMethod.Delete, "account"), ct);
 
+    public Task<ApiResult<PagedResult<TimelineItemResponse>>> GetAccueilFeedAsync(
+        int page, int pageSize, CancellationToken ct = default) =>
+        GetAsync<PagedResult<TimelineItemResponse>>(
+            $"feed/timeline?mentionsFavoritesOnly=true&page={page}&pageSize={pageSize}", ct);
+
+    public Task<ApiResult> MarkFeedItemReadAsync(Guid id, CancellationToken ct = default) =>
+        SendNoContentAsync(
+            () => new HttpRequestMessage(HttpMethod.Patch, $"feed/items/{id}/state")
+            {
+                Content = JsonContent.Create(new { isRead = true }),
+            },
+            ct);
+
     private async Task<ApiResult<T>> GetAsync<T>(string url, CancellationToken ct)
     {
         try
