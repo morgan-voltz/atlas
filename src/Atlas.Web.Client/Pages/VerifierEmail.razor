@@ -1,0 +1,103 @@
+@page "/verifier-email"
+@layout CenteredLayout
+@inject IAtlasApiClient Api
+
+@* Vérification d'email (M7, doc 12 §10). Deux usages :
+   - sans token : état d'ATTENTE après inscription (jamais un cul-de-sac — rappel spam, modifier l'adresse) ;
+   - avec userId+token (lien d'activation) : on vérifie, puis on confirme et on annonce le palier INPI à venir.
+   « Renvoyer le lien » est différé : pas d'endpoint backend de renvoi à ce jour. *@
+
+<PageTitle>Vérification de l'email · Atlas</PageTitle>
+
+@switch (state)
+{
+    case ViewState.Verifying:
+        <h1 class="auth-title">Vérification…</h1>
+        <p role="status">Activation de votre compte en cours…</p>
+        break;
+
+    case ViewState.Verified:
+        <h1 class="auth-title">Compte activé ✓</h1>
+        <p class="auth-intro">
+            Votre adresse est vérifiée. Connectez-vous pour accéder à Atlas. Vous pourrez ensuite
+            <strong>connecter votre compte INPI</strong> pour débloquer les données — ou le faire plus
+            tard depuis votre profil.
+        </p>
+        <a class="btn-primary btn-link" href="connexion">Se connecter</a>
+        break;
+
+    case ViewState.VerifyError:
+        <h1 class="auth-title">Lien invalide</h1>
+        <p class="auth-error" role="alert">@message</p>
+        <a class="btn-primary btn-link" href="connexion">Aller à la connexion</a>
+        break;
+
+    case ViewState.Pending:
+    default:
+        <h1 class="auth-title">Vérifiez votre email</h1>
+        <p class="auth-intro">
+            Un email de vérification @(HasEmail ? "a été envoyé à " : "vous a été envoyé.")
+            @if (HasEmail)
+            {
+                <strong>@Email</strong><text>.</text>
+            }
+            Cliquez le lien qu'il contient pour activer votre compte.
+        </p>
+        <p class="auth-muted-note">Pensez à vérifier votre dossier spam.</p>
+        <p class="auth-footer">
+            Mauvaise adresse ? <a href="inscription">Modifier</a>
+            <span class="auth-dot" aria-hidden="true">·</span>
+            <a href="connexion">Se connecter</a>
+        </p>
+        <p class="auth-muted" title="Disponible prochainement">Renvoyer le lien</p>
+        break;
+}
+
+@code {
+    [SupplyParameterFromQuery(Name = "email")]
+    private string? Email { get; set; }
+
+    [SupplyParameterFromQuery(Name = "userId")]
+    private string? UserId { get; set; }
+
+    [SupplyParameterFromQuery(Name = "token")]
+    private string? Token { get; set; }
+
+    private ViewState state = ViewState.Pending;
+    private string? message;
+
+    private bool HasEmail => !string.IsNullOrWhiteSpace(Email);
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Lien d'activation : userId + token présents → on vérifie.
+        if (!string.IsNullOrWhiteSpace(UserId) && !string.IsNullOrWhiteSpace(Token))
+        {
+            state = ViewState.Verifying;
+            ApiResult result = await Api.VerifyEmailAsync(UserId!, Token!);
+            if (result.IsSuccess)
+            {
+                state = ViewState.Verified;
+            }
+            else
+            {
+                state = ViewState.VerifyError;
+                message = result.ErrorCode == "network"
+                    ? "Service indisponible. Réessayez plus tard."
+                    : "Ce lien de vérification est invalide ou a expiré.";
+            }
+
+            return;
+        }
+
+        state = ViewState.Pending;
+    }
+
+    private enum ViewState
+    {
+        Pending,
+        Verifying,
+        Verified,
+        VerifyError,
+    }
+}

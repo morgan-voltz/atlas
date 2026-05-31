@@ -8,6 +8,15 @@ namespace Atlas.Web.Client.Models;
 /// <summary>Corps de <c>POST /auth/login</c>.</summary>
 public sealed record LoginRequest(string Email, string Password);
 
+/// <summary>Corps de <c>POST /auth/register</c> (F-001 / onboarding M7).</summary>
+public sealed record RegisterRequest(string Email, string Password);
+
+/// <summary>
+/// Corps de <c>POST /auth/2fa/verify</c> : échange le jeton de défi + un code (TOTP 6 chiffres
+/// <b>ou</b> code de secours — le backend essaie le TOTP puis retombe sur les codes de récupération).
+/// </summary>
+public sealed record VerifyTwoFactorRequest(string ChallengeToken, string Code);
+
 /// <summary>
 /// Réponse de <c>POST /auth/login</c> et <c>/auth/refresh</c>. Superset des deux formes possibles :
 /// authentification réussie (<see cref="AccessToken"/> + <see cref="ExpiresAt"/>) ou défi 2FA requis
