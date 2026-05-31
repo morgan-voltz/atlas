@@ -13,7 +13,7 @@
 ## Sommaire
 
 - [Vision du projet](#vision-du-projet)
-- [Décisions (ADR-001 → ADR-020)](#décisions-adr-001--adr-020)
+- [Décisions (ADR-001 → ADR-026)](#décisions-adr-001--adr-026)
 - [Décisions à prendre ultérieurement](#décisions-à-prendre-ultérieurement)
 - [Roadmap macro](#roadmap-macro)
 - [Glossaire](#glossaire)
@@ -41,7 +41,7 @@ Le projet propose une **alternative open source** qui :
 
 ---
 
-## Décisions (ADR-001 → ADR-020)
+## Décisions (ADR-001 → ADR-026)
 
 > Synthèses ; le détail (contexte, rationale, conséquences) est dans chaque fichier de [`docs/ADR/`](ADR/).
 
@@ -59,8 +59,8 @@ Le projet propose une **alternative open source** qui :
   **AGPL v3** : copyleft fort (protège contre le fork SaaS fermé), compatible dual-licensing futur.
 - **[ADR-006 — Modèle économique : open core](ADR/ADR-006-modele-economique.md)** ✅
   OSS pur d'abord, puis **SaaS hébergé** ; frontière cœur / premium isolée structurellement (`Atlas.Application.Premium`).
-- **[ADR-007 — Stack technique .NET / MAUI](ADR/ADR-007-stack-dotnet-maui.md)** ✅
-  **Tout-.NET** (une seule stack) : ASP.NET Core, MAUI natif, **Blazor pour le web** (précisé par ADR-017).
+- **[ADR-007 — Stack technique .NET / MAUI](ADR/ADR-007-stack-dotnet-maui.md)** ✅ *(amendé par ADR-026 — desktop → Avalonia)*
+  **Tout-.NET** (une seule stack) : ASP.NET Core, **Blazor pour le web** (précisé par ADR-017), clients natifs **MAUI (mobile) + Avalonia (desktop)** (amendé par ADR-026).
 - **[ADR-008 — Accessibilité WCAG 2.2 AA + RGAA 4.1.2](ADR/ADR-008-accessibilite-wcag.md)** ✅
   Accessibilité **bloquante** dans la Definition of Done de toute UI.
 - **[ADR-009 — Veille comme feature majeure + open core](ADR/ADR-009-veille-open-core.md)** ✅
@@ -92,6 +92,8 @@ Le projet propose une **alternative open source** qui :
 
 - **[ADR-017 — Framework du client web : Blazor Web App](ADR/ADR-017-framework-web-blazor.md)** ✅ *(amendé 30 mai 2026 — WASM pur v1)*
   Client web = **Blazor Web App**, **WASM pur** pour l'app authentifiée v1 ; `Atlas.Web.Client` = consommateur HTTP pur (`Domain` + `Shared` only, NetArchTest). Résout le point laissé ouvert par ADR-007. UX : `docs/14`.
+- **[ADR-026 — Clients natifs : MAUI (mobile) + Avalonia (desktop)](ADR/ADR-026-clients-natifs-maui-avalonia.md)** ✅
+  Split par force : **mobile (Android/iOS) reste MAUI**, **desktop (Windows/macOS/Linux) passe à Avalonia** (couvre Linux face à la bascule souveraine DINUM), web Blazor WASM inchangé. **Noyau partagé** (Domain + Shared + `AtlasApiClient` + ViewModels + doctrine UX), seules les Views diffèrent ; client = adapter entrant pur (NetArchTest étendu). **Amende ADR-007** ; requalifie **F-010** (desktop → Avalonia). UX agnostique : `docs/12` (delta desktop éventuel comme `docs/14` pour le web).
 
 ### Robustesse & exploitation
 
@@ -99,6 +101,22 @@ Le projet propose une **alternative open source** qui :
   Trois faits jamais confondus (**indisponible** ≠ **vide de couverture** ≠ **problème d'accès**) ; code métier **`inpi.pi_unavailable`** (502) sur `/trademarks*` et `/patents*` classifié dans l'adapter ; dégradation **à portée locale** (`SectionState`, ADR-015) ; rendu client honnête réutilisant le composant Erreur. Pendant *humain* de la doctrine ADR-016. UX : `docs/12 §14`, `docs/14`.
 - **[ADR-019 — Serveur de préproduction (alpha & beta) : VPS unique tout-en-un](ADR/ADR-019-serveur-preproduction.md)** ✅
   Préprod = **un seul VPS auto-géré** (API + PostgreSQL + Hangfire in-process + statiques WASM) en docker-compose miroir du harness local (doc 13) ; 2 vCPU / 4 Go ; **région UE** (**Hetzner** pressenti, provider révisable — c'est la région UE, pas la marque, qui fait la conformité) ; always-on derrière reverse proxy TLS ; clé de chiffrement en posture préprod assumée ; `pg_dump` quotidien ; **maintenance par l'auteur, délégation différée** sur critère de bascule explicite. **Ne tranche que la préprod** — le choix de l'hébergeur de **prod** reste ouvert.
+
+### Approfondissement de la donnée (confiance · temps · documents · graphe)
+
+- **[ADR-021 — Export auditable : intégrité par empreinte + horodatage](ADR/ADR-021-export-auditable-integrite.md)** ✅
+  Tout export auditable embarque une **empreinte SHA-256 du contenu canonicalisé + horodatage** (option RFC 3161), **auto-vérifiable** ; granularité **par fait**, états honnêtes inclus, scellement souverain côté serveur. Posture **« trace vérifiable », jamais « preuve légale »**. Prolonge ADR-012 jusqu'à l'artefact d'audit. Implémenté par **F-065 / F-066**.
+- **[ADR-022 — Historisation bi-temporelle des entités](ADR/ADR-022-historisation-bitemporelle-entites.md)** ✅
+  **Journal de changements append-only** (réutilise les `MonitoredChange` d'ADR-013) + snapshots baseline pour **reconstituer l'état d'une entité à une date** (`asOf`). Bi-temporalité ciblée (temps d'événement vs d'observation), nouvel état `SectionState.Unobserved` pour l'honnêteté temporelle, périmètre = entités suivies. Implémenté par **F-067 / F-068** ; donne un `asOf` à l'export (F-066).
+- **[ADR-023 — Extraction documentaire souveraine (actes)](ADR/ADR-023-extraction-documentaire-souveraine.md)** ✅
+  Extraction de faits depuis les actes comme **aide à la lecture** : **faits candidats à vérifier, ancrés à la page**, jamais oracle. **OCR + extraction on-infra par défaut** (cloud/BYOAI = premium opt-in), phasage index (F-069) puis extraction (F-070). Prolonge le patron open core ADR-006/009 et la doctrine ADR-012/014.
+- **[ADR-024 — Graphe d'écosystème : généralisation multi-arêtes de F-034](ADR/ADR-024-graphe-ecosysteme-multiaretes.md)** ✅
+  Généralise F-034 en **graphe multi-arêtes typées** (DECP, co-dépôts PI) sur le **même substrat PostgreSQL borné** (1-2 sauts, pas de Neo4j). Sépare le poids légal entité↔entité (open data léger) des arêtes impliquant une **personne** (cadre DPIA F-034) ; résolution conservatrice nom→SIREN, traversée **consciente des hubs** ; arêtes **descriptives, jamais qualifiantes**. Implémenté par **F-071 / F-072**.
+
+### Agentique & génératif
+
+- **[ADR-025 — Usage agentique génératif : composer & faire remonter, jamais conclure](ADR/ADR-025-usage-agentique-generatif.md)** ✅
+  Encadre deux usages génératifs bâtis sur ADR-016 : **règles de surveillance en langage naturel** (étend F-046) et **agent de sourcing « thèse → cibles »** (sur F-052). Principe : l'orchestration **compose et fait remonter, jamais ne conclut** ; **LLM hors de la boucle déterministe** quand possible, **human-in-the-loop lecture-d'abord**, souveraineté **BYOAI** (inférence côté agent de l'utilisateur). Implémenté par **F-073 / F-074**. (Composition inter-produits Atlas ↔ Chronos = futur ADR dédié.)
 
 ---
 

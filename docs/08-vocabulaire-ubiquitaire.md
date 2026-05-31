@@ -897,6 +897,68 @@ Le rattachement d'un texte réglementaire (EUR-Lex, F-063) au **secteur (NAF)** 
 
 **Garde-fous** : crosswalk **conservateur** (dans le doute, ne pas mapper — un mapping manquant = silence honnête, un mapping faux = bruit + faux verdict) ; **validation humaine** de chaque règle (via PR) ; ne **jamais** fusionner la table éditoriale source→NAF avec la table **officielle** NACE rév.2 ↔ 2.1 (anti-pattern « fusionner deux natures », ADR-013).
 
+### 12.9 Export auditable (ADR-021)
+
+Artefact d'audit d'un dossier d'entité tierce, **scellé** par empreinte + horodatage et **auto-vérifiable**. Posture **« trace vérifiable », jamais « preuve légale »** ; granularité **par fait**, états honnêtes inclus (F-066). Prolonge `Provenance` (ADR-015) jusqu'à l'artefact.
+
+| Terme | Définition | Côté |
+|---|---|---|
+| **`AuditExport`** | Artefact d'audit d'un dossier (sujet, date de génération, faits, états, intégrité), sérialisé puis scellé côté serveur. | Application |
+| **`AuditedFact`** | Un fait exporté avec sa valeur, sa **provenance**, sa **référence source exacte** et son **`AsOf`** — granularité par fait. | Application |
+| **`Integrity`** | Bloc d'intégrité : algo de hash, **hash SHA-256 du contenu canonicalisé**, date de scellement, token RFC 3161 optionnel. | Application |
+
+**Garde-fou** : un export **n'affirme jamais une valeur légale** ; il atteste seulement *« voici ce qu'Atlas a vu, et la preuve que le contenu n'a pas changé depuis le scellement »*. Les états (`Unavailable`, `Restricted`…) sont exportés tels quels, jamais aplatis.
+
+### 12.10 Historisation bi-temporelle (ADR-022)
+
+Journal **append-only** des changements (réutilise les `MonitoredChange` d'ADR-013) + reconstruction de l'état d'une entité **à une date passée** (`asOf`). Bi-temporalité ciblée : *temps d'événement* vs *temps d'observation* (F-067/F-068).
+
+| Terme | Définition | Côté |
+|---|---|---|
+| **`EntityChangeLogEntry`** | Entrée du journal append-only : un `MonitoredChange` horodaté sur deux axes (sujet, dimension, type, delta, `EventTime`, `ObservedAt`, provenance). | Application |
+| **`IPointInTimeResolver`** | Port qui rejoue le journal jusqu'à un cutoff sur l'axe choisi pour reconstituer un `CompanyDossier` à une date. | Application (port) |
+| **`TimeAxis`** | Axe temporel de reconstruction : *valid time* (événement) vs *transaction time* (observation). | Application |
+| **`SectionState.Unobserved`** | **Nouvelle valeur** de l'enum `SectionState` (ADR-015) : période **antérieure au suivi** — trou explicite, jamais aplati en « inchangé ». | Domain |
+
+**Garde-fou** : ne **jamais** combler un trou temporel par de la supposition — avant le début du suivi, l'état est `Unobserved`, pas « stable ». Backfill source (actes RNE, archive BODACC) borné et tracé.
+
+### 12.11 Extraction documentaire (ADR-023)
+
+Extraction de faits depuis les **actes** comme **aide à la lecture** : faits **candidats à vérifier**, **ancrés à la page**, jamais oracle. OCR + extraction **on-infra par défaut** (cloud/BYOAI = premium opt-in). Phasage index (F-069) → extraction (F-070).
+
+| Terme | Définition | Côté |
+|---|---|---|
+| **`ExtractedFactCandidate`** | Fait candidat extrait d'un acte, **toujours à vérifier**, **ancré à la page** (sujet, `Kind`, valeur structurée, document source, page, `Confidence`). | Application |
+| **`ExtractedFactKind`** | Type de fait extrait (`ShareTransfer` / `CapitalChange` / `OfficerChange` …). | Application (enum) |
+| **`ExtractionConfidence`** | Score de confiance **affiché** de l'extraction — jamais « confirmé ». | Application |
+| **`IDocumentFactExtractor`** | Port d'extraction de faits depuis un document ; **implémentation locale par défaut**, cloud/BYOAI en adapter **premium opt-in**. | Application (port) |
+| **Index documentaire** | Capacité de classement (type/date/objet) + OCR plein-texte cherchable + saut à la page (F-069). Réutilise `AttachmentId` (F-013). | Application/Infra |
+
+**Garde-fou** : un fait extrait est un **`ExtractedFactCandidate` « semble … — à vérifier »**, jamais un fait asséné ; les bilans (F-054) ne sont **pas re-parsés**.
+
+### 12.12 Graphe d'écosystème (ADR-024)
+
+Généralisation multi-arêtes de F-034 sur le **même substrat PostgreSQL borné** (1-2 sauts, pas de Neo4j). Arêtes **descriptives, jamais qualifiantes** ; le poids légal entité↔entité (open data léger) est séparé des arêtes impliquant une **personne** (cadre DPIA F-034).
+
+| Terme | Définition | Côté |
+|---|---|---|
+| **`EdgeKind`** | Énumération des types d'arêtes (`Mandate`, `PublicContract`, `CoFiling`, `SharedAddress`). | Domain |
+| **`GraphEdge`** | Arête typée et **qualifiée descriptivement** entre deux nœuds : libellé descriptif, provenance, année. | Domain |
+| **`TraversalPolicy`** | Politique de traversée **bornée** : nombre de sauts max, **seuil de degré de hub** (traversée consciente des hubs). | Domain |
+
+**Garde-fou** : une arête **relie**, elle ne **conclut** pas ; résolution nom→SIREN **conservatrice** (ADR-014) ; déposants PI individuels = régime F-034 (DPIA).
+
+### 12.13 Usage agentique génératif (ADR-025)
+
+Deux usages génératifs bâtis sur ADR-016 : **règles en langage naturel** (F-073) et **agent de sourcing** (F-074). Principe : **composer & faire remonter, jamais conclure** ; LLM hors de la boucle déterministe quand possible ; **BYOAI** (inférence côté agent de l'utilisateur).
+
+| Terme | Définition | Côté |
+|---|---|---|
+| **Composition NL→règle** | Traduction d'une intention en **langage naturel** vers un **brouillon** de `FeedRule`/`WatchRule` structuré, **revu et validé** par l'utilisateur avant exécution déterministe (F-046). Le LLM **compose**, il n'exécute pas. | Application |
+| **Sourcing à sortie candidate** | Pattern de l'agent de sourcing : à partir d'une *thèse*, traverse les outils MCP lecture et renvoie une **liste de candidats** `{ faits sourcés + critères matchés }` — **jamais de score, classement ni recommandation**. | Application |
+
+**Garde-fou** : l'orchestration **ne conclut jamais** (cohérent ADR-012) ; **human-in-the-loop lecture-d'abord** ; aucune écriture/activation silencieuse ; les noms de types C# précis restent à arrêter à l'implémentation.
+
 ---
 
 ## 13. Faux-amis et pièges fréquents
@@ -1003,6 +1065,8 @@ Pour navigation rapide. À maintenir au fil des ajouts.
 | `Address` | §5.7 |
 | `Ape` | §3.5 |
 | `Alert` | §10.3 |
+| `AuditExport` | §12.9 |
+| `AuditedFact` | §12.9 |
 | `BeneficiaireEffectif` | §5.10 |
 | `BopiPublication` | §6.6 |
 | `Company` | §5.1 |
@@ -1011,16 +1075,23 @@ Pour navigation rapide. À maintenir au fil des ajouts.
 | `Design` | §6.4 |
 | `Dirigeant` | §5.5 |
 | `Document` | §7.1 |
+| `EdgeKind` | §12.12 |
+| `EntityChangeLogEntry` | §12.10 |
 | `Etablissement` | §5.3 |
 | `ExternalContentSource` (port) | §9.1, §11.2 |
+| `ExtractedFactCandidate` | §12.11 |
 | `Favorite` | §8.3 |
 | `FeedItem` | §9.3 |
 | `FeedItemSectorMatch` | §12.8 |
 | `FeedSource` | §9.2 |
 | `FinancialStatement` | §7.3 |
 | `FormeJuridique` | §5.4 |
+| `GraphEdge` | §12.12 |
+| `IDocumentFactExtractor` (port) | §12.11 |
 | `InpiCredentials` | §4.4 |
+| `Integrity` | §12.9 |
 | `IntellectualPropertyAsset` | §6.1 |
+| `IPointInTimeResolver` (port) | §12.10 |
 | `ISectorClassifier` | §12.8 |
 | `LegalAct` | §7.2 |
 | `Mandataire` | §5.6 |
@@ -1039,7 +1110,9 @@ Pour navigation rapide. À maintenir au fil des ajouts.
 | `Siren` | §3.1 |
 | `Siret` | §3.2 |
 | `SourceScheme` | §12.8 |
+| `TimeAxis` | §12.10 |
 | `Timeline` | §9.6 |
+| `TraversalPolicy` | §12.12 |
 | `Trademark` | §6.2 |
 | `TvaNumber` | §3.6 |
 | `UniteLegale` | §5.2 |

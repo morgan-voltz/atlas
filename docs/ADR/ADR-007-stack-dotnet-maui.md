@@ -1,7 +1,9 @@
 # ADR-007 — Stack technique .NET / MAUI
 
-**Statut** : ✅ Accepté
+**Statut** : ✅ Accepté **— amendé par [ADR-026](ADR-026-clients-natifs-maui-avalonia.md) (31 mai 2026)**
 **Date** : 26 mai 2026
+
+> **Amendement (ADR-026, 31 mai 2026)** — Le client natif n'est plus « MAUI pour iOS/Android/Windows/macOS ». Désormais : **MAUI pour le mobile (Android/iOS)** ; **Avalonia pour le desktop (Windows/macOS/Linux)** — pour couvrir Linux face à la bascule souveraine DINUM. Le web (Blazor WASM, ADR-017) est inchangé. Cf. ADR-026 pour le détail et la requalification de F-010.
 
 ## Contexte
 
