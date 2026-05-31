@@ -19,7 +19,7 @@ Avant toute contribution significative, consulter le document approprié dans `d
 
 | Quand tu fais... | Lis d'abord |
 |---|---|
-| Une décision d'architecture ou un nouveau choix structurant | `docs/01-decisions-architecturales.md` |
+| Une décision d'architecture ou un nouveau choix structurant | `docs/01-decisions-architecturales.md` (index) + `docs/ADR/` (un fichier par ADR) |
 | Une nouvelle feature | `docs/02-roadmap-features.md` |
 | Une intégration d'une nouvelle API publique | `docs/03-catalogue-apis-publiques.md` |
 | Tout ce qui touche aux credentials INPI, données personnelles, ou stockage de secrets | `docs/04-securite-rgpd.md` |

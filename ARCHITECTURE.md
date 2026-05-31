@@ -14,7 +14,8 @@ Architecture : le **domaine métier** est pur et ne dépend de rien ; il défini
 ```
        ┌────────────────────────────────────────────────────────────┐
        │  Adapters primaires (entrants)                              │
-       │  Atlas.Api (Minimal API)   Atlas.Maui (client)   Atlas.Mcp* │
+       │  Atlas.Api   Atlas.Maui (natif)   Atlas.Web (Blazor)        │
+       │  Atlas.Mcp*                                                 │
        └─────────────────┬──────────────────────────────────────────┘
                          │ appelle les use cases
        ┌─────────────────▼──────────────────────────────────┐
@@ -40,8 +41,8 @@ Doctrine et architecture de sécurité posées par **ADR-016**.
 ## Projets et règles de dépendance
 
 Les règles sont **vérifiées automatiquement** par `tests/Atlas.Architecture.Tests` (NetArchTest).
-La suite (7 tests) verrouille notamment la séparation cœur open source / premium et l'isolation
-hexagonale.
+La suite verrouille notamment la séparation cœur open source / premium, l'isolation hexagonale et
+la frontière des clients (MAUI, web).
 
 | Projet | Peut référencer |
 |---|---|
@@ -52,9 +53,13 @@ hexagonale.
 | `Atlas.Infrastructure.*` | `Atlas.Application`, `Atlas.Domain`, `Atlas.Shared` |
 | `Atlas.Api` | tous les précédents |
 | `Atlas.Maui` | **uniquement** `Atlas.Domain` et `Atlas.Shared` |
+| `Atlas.Web` | composition root web (hôte Blazor) |
+| `Atlas.Web.Client` | **uniquement** `Atlas.Domain` et `Atlas.Shared` |
 
-`Atlas.Maui` ne référence jamais l'infrastructure : le client passe exclusivement par l'API HTTP
-via `Atlas.Maui/Services/AtlasApiClient.cs` (le code MAUI est livré sur les terminaux et décompilable).
+Les clients ne référencent jamais l'infrastructure : ils passent exclusivement par l'API HTTP
+(`Atlas.Maui/Services/AtlasApiClient.cs` côté natif). `Atlas.Web.Client` (interactivité Blazor WASM)
+suit la **même règle et la même raison** que `Atlas.Maui` — code livré au navigateur, décompilable —
+et est verrouillé par le même type de test NetArchTest ; l'hôte `Atlas.Web` est la composition root web.
 
 **Verrous d'archi (NetArchTest)** :
 
@@ -89,9 +94,9 @@ via `Atlas.Maui/Services/AtlasApiClient.cs` (le code MAUI est livré sur les ter
   ChangeTracker, commit la transaction, puis publie via `IPublisher` (sémantique
   after-commit — aucun event publié si la transaction échoue).
 
-## Doctrine architecturale (ADR-001 → ADR-016)
+## Doctrine architecturale (ADR-001 → ADR-017)
 
-Les décisions architecturales sont énumérées dans [`docs/01-decisions-architecturales.md`](docs/01-decisions-architecturales.md).
+Les décisions architecturales sont indexées dans [`docs/01-decisions-architecturales.md`](docs/01-decisions-architecturales.md) ; chaque ADR a son fichier dans [`docs/ADR/`](docs/ADR/).
 
 **Fondations** : ADR-001 SaaS multi-utilisateur, ADR-002 topologie hybride, ADR-003 auth INPI
 multi-tenant, ADR-004 hexagonale platform-ready, ADR-005 AGPL v3, ADR-006 modèle économique
@@ -118,6 +123,10 @@ doctrine, résolution snapshot-first réutilisant ADR-013, backbone de F-056). A
 doctrine de la surface agentique MCP (surface curée lecture-d'abord, doctrine inline avec
 donnée, contenu externe = donnée jamais instruction, délégation utilisateur, credentials ne
 traversent jamais).
+
+**Clients** : ADR-017 framework du client web — **Blazor Web App, WASM pur** pour l'app
+authentifiée (`Atlas.Web.Client` = consommateur HTTP pur, `Domain` + `Shared` only). UX web :
+[`docs/14-modele-ux-client-web.md`](docs/14-modele-ux-client-web.md).
 
 ## Sous-systèmes par sous-domaine
 
