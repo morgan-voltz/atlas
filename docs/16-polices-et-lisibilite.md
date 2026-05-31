@@ -108,7 +108,7 @@ Changer de police ou agrandir le texte ne casse donc aucun signal — ils ne dé
 | Matching « à vérifier », états de section (restent textuels) | ADR-014, ADR-015 |
 
 > **À faire à l'intégration** :
-> - Dans `docs/06-accessibilite.md` et `docs/12-modele-ux-client-maui.md`, **remplacer toute règle de lisibilité/scaling par un renvoi vers ce doc 15** (un seul propriétaire).
+> - Dans `docs/06-accessibilite.md` et `docs/12-modele-ux-client-maui.md`, **remplacer toute règle de lisibilité/scaling par un renvoi vers ce document** (un seul propriétaire).
 > - Mettre à jour `themes.json` / les tokens typographiques : rôle **corps = Atkinson Hyperlegible** (défaut), **titres = IBM Plex Serif**, **mono = IBM Plex Mono**.
 > - Auto-héberger les fichiers de police (licences ouvertes) pour la souveraineté et l'usage hors-ligne.
 

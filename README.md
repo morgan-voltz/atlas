@@ -71,11 +71,13 @@ Configuration backend (`src/Atlas.Api/appsettings.json` ou variables d'environne
 - [`CHANGELOG.md`](CHANGELOG.md) — historique des changements
 - [`CONTRIBUTING.md`](CONTRIBUTING.md) — comment contribuer
 - [`CLAUDE.md`](CLAUDE.md) — instructions pour Claude Code et contributeurs (synthèse)
-- [`docs/`](docs/) — documentation fondatrice : [ADR](docs/01-decisions-architecturales.md),
-  [roadmap features](docs/02-roadmap-features.md), [architecture détaillée](docs/09-architecture-detaillee.md),
-  [layout solution](docs/10-layout-solution-dotnet.md), [API endpoints](docs/11-api-endpoints.md),
-  [UX client MAUI](docs/12-modele-ux-client-maui.md), [harness de test e2e](docs/13-harness-test-local-e2e.md),
-  [UX client web](docs/14-modele-ux-client-web.md), [roadmap client web](docs/15-roadmap-client-web.md)
+- [`docs/`](docs/) — documentation fondatrice : [index ADR](docs/01-decisions-architecturales.md) (fiches dans [`docs/ADR/`](docs/ADR/)),
+  [index roadmap features](docs/02-roadmap-features.md) (fiches dans [`docs/features/`](docs/features/)),
+  [architecture détaillée](docs/09-architecture-detaillee.md), [layout solution](docs/10-layout-solution-dotnet.md),
+  [API endpoints](docs/11-api-endpoints.md), [UX client MAUI](docs/12-modele-ux-client-maui.md),
+  [harness de test e2e](docs/13-harness-test-local-e2e.md), [UX client web](docs/14-modele-ux-client-web.md),
+  [roadmap client web](docs/15-roadmap-client-web.md), [polices & lisibilité](docs/16-polices-et-lisibilite.md)
+- [`docs/persona/`](docs/persona/) — personas métier (carte + 7 fiches) ; [`docs/design/`](docs/design/) — maquettes UI et polices
 - [`website/`](website/) — site de documentation utilisateur (installation, premiers pas, FAQ)
 
 ## Sécurité
