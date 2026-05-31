@@ -44,14 +44,14 @@
 
         case SearchState.DirectHit when directCompany is not null:
             <h2 class="sr-only">Entreprise correspondant au SIREN</h2>
-            <div class="direct-card">
+            <a class="direct-card" href="entreprise/@directCompany.Siren">
                 <span class="direct-icon" aria-hidden="true">🏢</span>
                 <div class="direct-main">
                     <p class="direct-name">@directCompany.Denomination</p>
                     <p class="direct-sub">@directCompany.FormeJuridique @(directCompany.Adresse?.City)</p>
                 </div>
-                <span class="direct-soon" title="Ouverture de la fiche au jalon M2">Fiche → M2</span>
-            </div>
+                <span class="direct-go" aria-hidden="true">Ouvrir la fiche ›</span>
+            </a>
             break;
 
         case SearchState.Results when results is not null:

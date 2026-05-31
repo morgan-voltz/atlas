@@ -1,0 +1,159 @@
+.section-card {
+    background: var(--surface);
+    border: 1px solid var(--surface-variant);
+    border-radius: var(--radius-lg);
+    margin-bottom: 0.85rem;
+    overflow: hidden;
+}
+
+.section-head {
+    margin: 0;
+    font-size: 1rem;
+}
+
+.section-toggle {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    width: 100%;
+    /* Cible ≥ 44 px (doc 12 §8). */
+    min-height: 44px;
+    padding: 0.7rem 1rem;
+    background: transparent;
+    border: 0;
+    cursor: pointer;
+    text-align: left;
+    font-family: var(--font-heading);
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: var(--on-surface);
+}
+
+.section-toggle:hover {
+    background: var(--surface-variant);
+}
+
+.section-toggle:focus-visible {
+    outline: 3px solid var(--focus);
+    outline-offset: -3px;
+}
+
+.section-chevron {
+    display: inline-block;
+    transition: transform 0.15s ease;
+    color: var(--on-surface-variant);
+}
+
+.section-chevron.open {
+    transform: rotate(90deg);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .section-chevron {
+        transition: none;
+    }
+}
+
+.section-title {
+    flex: 1;
+}
+
+.section-indicator {
+    font-family: var(--font-body);
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--on-surface-variant);
+    background: var(--surface-variant);
+    border-radius: var(--radius-sm);
+    padding: 0.1rem 0.5rem;
+}
+
+.section-body {
+    padding: 0.25rem 1rem 1rem;
+    font-family: var(--font-body);
+}
+
+.section-body[hidden] {
+    display: none;
+}
+
+/* Provenance — jamais masquée indépendamment des données (doc 12 §13). */
+.section-provenance {
+    margin: 0.85rem 0 0;
+    font-size: 0.75rem;
+    color: var(--on-surface-variant);
+}
+
+/* Vide de couverture : informe d'une limite, sans bouton (doc 12 §14). */
+.section-coverage {
+    margin: 0.25rem 0;
+    font-size: 0.9rem;
+    font-style: italic;
+    color: var(--on-surface-variant);
+}
+
+/* Erreur locale : portée à la section, avec réessai (doc 12 §13/§14). */
+.section-error {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.7rem 0.9rem;
+    background: var(--error-container);
+    border: 1px solid var(--error-outline);
+    border-radius: var(--radius-md);
+}
+
+.section-error-msg {
+    margin: 0;
+    flex: 1;
+    min-width: 12rem;
+    font-size: 0.9rem;
+    color: var(--on-error-container);
+}
+
+.section-retry {
+    padding: 0.4rem 0.85rem;
+    font-weight: 600;
+    color: var(--on-primary);
+    background: var(--primary);
+    border: 0;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+}
+
+.section-retry:focus-visible {
+    outline: 3px solid var(--focus);
+    outline-offset: 2px;
+}
+
+/* Squelette de chargement — calque l'anatomie, animation discrète. */
+.section-skeleton {
+    margin: 0 0 0.6rem;
+    font-size: 0.85rem;
+    color: var(--on-surface-variant);
+}
+
+.skeleton-line {
+    height: 0.85rem;
+    margin: 0.5rem 0;
+    border-radius: var(--radius-sm);
+    background: linear-gradient(90deg, var(--surface-variant) 25%, var(--bg) 50%, var(--surface-variant) 75%);
+    background-size: 200% 100%;
+    animation: skeleton-shimmer 1.3s ease-in-out infinite;
+}
+
+.skeleton-line.short {
+    width: 60%;
+}
+
+@keyframes skeleton-shimmer {
+    from { background-position: 200% 0; }
+    to { background-position: -200% 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .skeleton-line {
+        animation: none;
+    }
+}
