@@ -1,0 +1,70 @@
+@* Carte-aperçu « event » du fil Accueil (doc 12 §5/§12) : carte light = qui · quoi a changé ·
+   quand · source. Fait, jamais verdict (ADR-012) — aucune couleur danger sur une entité.
+   FavoriteEvent → mène à la fiche ; RssItem mentionnant un favori → lien de lecture + puces favoris. *@
+
+<article class="feed-card @(Item.IsRead ? null : "unread")" aria-labelledby="@TitleId">
+    <div class="feed-head">
+        @if (!Item.IsRead)
+        {
+            <span class="unread-dot" aria-label="Non lu" title="Non lu"></span>
+        }
+        <span class="feed-source">@SourceLabel</span>
+        <time class="feed-date" datetime="@Item.OccurredAt.ToString("o")">@Item.OccurredAt.ToString("d MMM yyyy", Culture)</time>
+    </div>
+
+    <h3 id="@TitleId" class="feed-title">@Item.Title</h3>
+
+    @if (!string.IsNullOrWhiteSpace(Item.Summary))
+    {
+        <p class="feed-summary">@Item.Summary</p>
+    }
+
+    @if (Item.MentionedFavorites.Count > 0)
+    {
+        <p class="feed-mentions">
+            <span class="mentions-label">Mentionne :</span>
+            @foreach (FavoriteMentionResponse m in Item.MentionedFavorites)
+            {
+                <a class="mention-chip" href="entreprise/@m.Siren">@m.Name</a>
+            }
+        </p>
+    }
+
+    <div class="feed-actions">
+        @if (IsFavoriteEvent && !string.IsNullOrWhiteSpace(Item.EventSiren))
+        {
+            <a class="feed-primary" href="entreprise/@Item.EventSiren">Voir la fiche →</a>
+        }
+        else if (!string.IsNullOrWhiteSpace(Item.Url))
+        {
+            <a class="feed-primary external" href="@Item.Url" target="_blank" rel="noopener noreferrer">Lire la source ↗</a>
+        }
+
+        @if (Item.SourceCount > 1)
+        {
+            <span class="feed-dedup">@Item.SourceCount sources rapportent</span>
+        }
+
+        @if (!Item.IsRead)
+        {
+            <button type="button" class="feed-mark" @onclick="() => OnMarkRead.InvokeAsync(Item.Id)">Marquer comme lu</button>
+        }
+    </div>
+</article>
+
+@code {
+    private static readonly System.Globalization.CultureInfo Culture = new("fr-FR");
+
+    [Parameter]
+    [EditorRequired]
+    public required TimelineItemResponse Item { get; set; }
+
+    [Parameter]
+    public EventCallback<Guid> OnMarkRead { get; set; }
+
+    private bool IsFavoriteEvent => string.Equals(Item.Kind, "FavoriteEvent", StringComparison.OrdinalIgnoreCase);
+
+    private string SourceLabel => IsFavoriteEvent ? "Mouvement RNE / BODACC" : "Veille";
+
+    private string TitleId => $"feed-{Item.Id}";
+}

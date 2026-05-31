@@ -38,7 +38,7 @@ Chaque jalon = une tranche verticale livrant de la valeur utilisable de bout en 
 | **M0 — Fondations** | scaffold + navigation/routing | socle (cf. §1) | ✅ |
 | **M1 — Connexion + Recherche** | login (token mémoire + refresh cookie HttpOnly) **et** écran Recherche de bout en bout | 1ʳᵉ tranche : valide toute la chaîne — `AtlasApiClient`, auth, garde de route, premiers composants (carte-aperçu, états) | ✅ |
 | **M2 — Fiche entreprise** | depuis un résultat, fiche en cartes-sections, provenance épinglée, états de couverture | réutilise carte-section + le client API de M1 | ✅ |
-| **M3 — Accueil / feed** | fil des mouvements des entités suivies (cartes-aperçu *event*) | dépend des favoris (lecture) ; garde-fous anti-« réseau social » | ⬜ |
+| **M3 — Accueil / feed** | fil des mouvements des entités suivies (cartes-aperçu *event*) | dépend des favoris (lecture) ; garde-fous anti-« réseau social » | ✅ |
 | **M4 — Favoris / Watchlists + list-detail 2 panneaux** | gestion des favoris **et** introduction du **list-detail à 2 panneaux** (signature desktop, réutilisé ensuite) | la signature desktop (doc 14 §3) arrive ici puis se généralise | ✅ |
 | **M5 — Veille** | flux, palier de lecture, pont vers fiche « à vérifier » | réutilise list-detail (M4) | ⬜ |
 | **M6 — Profil & compte** | profil, sous-pages compte / connexion INPI / données (RGPD) | — | ✅ |
@@ -59,13 +59,15 @@ Un écran n'est **✅** que lorsque **toutes** ses colonnes le sont. DoD = templ
 |---|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|
 | Recherche (cœur M1 ; « Vérifier un nom » F-060 = backlog séparé) | M1 | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | Fiche entreprise (Identité + Dirigeants ; Bilans/BODACC/Étabts/PI = features à venir) | M2 | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| Accueil / feed | M3 | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
+| Accueil / feed | M3 | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | Favoris (plats + list-detail 2 panneaux ; watchlists/tags F-053/F-030 = backend différé) | M4 | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | Veille | M5 | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
 | Profil hub + Connexion INPI + Données/RGPD (Compte/2FA/préférences = à venir) | M6 | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | Auth / onboarding | M1/M7 | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | 🟡 |
 
 Renvois doctrine par écran : Recherche doc 12 §7 ; Fiche §4 ; Accueil §5 ; Favoris §8 ; Veille §6 ; Profil §9 ; Auth §10.
+
+> **Vérification E2E M3 (31 mai 2026)** — Accueil / feed validé en navigateur (Playwright) : racine `/` en déconnecté → redirection propre vers `/connexion` (corrige un 500 d'hôte : la page racine `[Authorize]` exigeait un `AuthorizationMiddleware` absent en WASM pur → `Atlas.Web` ajoute `AddAuthorization()`/`UseAuthorization()` + `.AllowAnonymous()` sur les endpoints de composants, le gating restant côté client via `AuthorizeRouteView`) ; après login UI → `/accueil` **état vide** honnête (compte neuf) ; **état chargé** (contrat `GET /feed/timeline` mocké) : cartes-event RNE/BODACC + veille, lien fiche / lien source, chips de mentions favoris, dédup « N sources rapportent », clôture « tu es à jour » ; **marquage lu optimiste** (`PATCH /feed/items/{id}/state`) avec distinction lu/non-lu non portée par la seule couleur (pastille + graisse + bordure). Données réelles côté intégration (register/verify/login), rendu chargé exercé sur payload conforme au `TimelineItemDto`.
 
 > **Vérification E2E réelle (31 mai 2026)** — M1/M2/M4/M6 validés contre le backend + l'INPI RNE réels (harness `docs/13`) : `GET /companies?name=`, `GET /companies/{siren}` (fiche DANONE/SIREN 552032534, dirigeants réels), `POST/GET/DELETE /favorites/companies`, `/inpi/connection`, `/account/export`. Parcours navigateur (Playwright, données live) : connexion → recherche SIREN → fiche → « Suivre » → favoris list-detail à deux panneaux ; puis **M6** : **connexion INPI depuis le formulaire UI → « ✓ Connecté » → déblocage des données (fiche réelle) → export RGPD**, captures à l'appui. Hors périmètre : recherche PI (blocage INPI connu, V2). Fidélité données : forme juridique et qualité des dirigeants exposées en **codes** RNE (mapping code→libellé = amélioration future, transverse aux clients).
 
@@ -79,9 +81,9 @@ Extrait **au fil des écrans**, pas en amont. Chaque composant couvre ses **éta
 |---|---|:--:|:--:|
 | Layout **rail** (5 destinations) | actif / hover / focus | M0 | ✅ |
 | Atomes (champ étiqueté, badge, **provenance**, chiffre-clé) | — (provenance jamais masquée) | M1 | ⬜ |
-| **Carte-aperçu** (entity / event) | défaut · hover · pressed · focus · sélectionné · lu/non-lu · skeleton | M1 | 🟡 |
+| **Carte-aperçu** (entity / event) | défaut · hover · pressed · focus · sélectionné · lu/non-lu · skeleton | M1 / M3 | 🟡 (variante *event* livrée M3 : `FeedEventCard`) |
 | **Carte-section** (repliable) | ouvert · replié · épinglé · vide-couverture · erreur-locale · skeleton | M2 | 🟡 |
-| **États** (composants) | chargement (skeleton) · vide (onboarding/couverture) · erreur (locale) · fin de liste | M1 | 🟡 |
+| **États** (composants) | chargement (skeleton) · vide (onboarding/couverture) · erreur (locale) · fin de liste | M1 / M3 | ✅ (les 4 exercés sur l'Accueil) |
 | **Thème** clair/sombre + tokens | clair · sombre (auto `prefers-color-scheme` ; sélecteur persisté → M6/F-062) | M1 | ✅ |
 
 ---

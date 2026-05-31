@@ -1,8 +1,152 @@
 @page "/"
 @page "/accueil"
 @attribute [Authorize]
+@inject IAtlasApiClient Api
+@using Atlas.Shared.Result
+
+@* Accueil (M3, doc 12 §5) — le fil des mouvements des entités suivies (mentionsFavoritesOnly,
+   doc 12 §6). Garde-fous anti-« réseau social » : tri chronologique transparent (pas de « pour toi »),
+   carte = fait jamais verdict (ADR-012), clôture « tu es à jour » au lieu d'un scroll infini, état
+   lu/non-lu. Sémantique feed/article + clavier (doc 06 §11.5). *@
 
 <PageTitle>Accueil · Atlas</PageTitle>
 
-<h1>Accueil</h1>
-<p>Le fil des mouvements de vos entités suivies (RNE/BODACC). Écran à implémenter — cf. doc 12 §5 et doc 14.</p>
+<div class="accueil">
+    <h1>Accueil</h1>
+    <p class="accueil-sub">Les mouvements de vos entités suivies, du plus récent au plus ancien.</p>
+
+    <section aria-busy="@(state == FeedState.Loading)" aria-label="Fil des mouvements">
+        @switch (state)
+        {
+            case FeedState.Loading:
+                <p role="status" class="sr-only">Chargement du fil…</p>
+                @for (int i = 0; i < 3; i++)
+                {
+                    <div class="skeleton-card" aria-hidden="true">
+                        <div class="skeleton-line short"></div>
+                        <div class="skeleton-line"></div>
+                    </div>
+                }
+                break;
+
+            case FeedState.Error:
+                <div class="feed-error" role="alert">
+                    <p class="feed-error-msg">@message</p>
+                    <button type="button" class="feed-retry" @onclick="() => LoadAsync(reset: true)">Réessayer</button>
+                </div>
+                break;
+
+            case FeedState.Empty:
+                @* Vide d'onboarding (doc 12 §14) : invite à agir pour amorcer la boucle. *@
+                <div class="feed-empty" role="status">
+                    <p class="empty-title">Rien de neuf pour l'instant</p>
+                    <p class="empty-sub">Suis des entreprises pour voir leurs mouvements (BODACC, RNE) apparaître ici.</p>
+                    <a class="empty-action" href="recherche">Rechercher une entreprise</a>
+                </div>
+                break;
+
+            case FeedState.Loaded:
+                <div role="feed" aria-busy="@busy">
+                    @foreach (TimelineItemResponse item in items)
+                    {
+                        <FeedEventCard Item="item" OnMarkRead="MarkReadAsync" />
+                    }
+                </div>
+
+                @if (HasMore)
+                {
+                    <div class="feed-more">
+                        <button type="button" class="btn-more" @onclick="LoadMoreAsync" disabled="@busy">
+                            @(busy ? "Chargement…" : "Charger plus")
+                        </button>
+                    </div>
+                }
+                else
+                {
+                    @* Clôture : la fin est une bonne nouvelle, pas un manque (doc 12 §14). *@
+                    <p class="feed-end" role="status"><span aria-hidden="true">✓ </span>Tu es à jour.</p>
+                }
+                break;
+        }
+    </section>
+</div>
+
+@code {
+    private const int PageSize = 20;
+
+    private FeedState state = FeedState.Loading;
+    private readonly List<TimelineItemResponse> items = [];
+    private int page = 1;
+    private long totalCount;
+    private bool busy;
+    private string? message;
+
+    private bool HasMore => items.Count < totalCount;
+
+    protected override async Task OnInitializedAsync() => await LoadAsync(reset: true);
+
+    private async Task LoadAsync(bool reset)
+    {
+        if (reset)
+        {
+            page = 1;
+            items.Clear();
+            state = FeedState.Loading;
+        }
+
+        message = null;
+        ApiResult<PagedResult<TimelineItemResponse>> result = await Api.GetAccueilFeedAsync(page, PageSize);
+
+        if (!result.IsSuccess || result.Value is null)
+        {
+            message = MapError(result.ErrorCode);
+            state = FeedState.Error;
+            return;
+        }
+
+        items.AddRange(result.Value.Items);
+        totalCount = result.Value.TotalCount;
+        state = items.Count == 0 ? FeedState.Empty : FeedState.Loaded;
+    }
+
+    private async Task LoadMoreAsync()
+    {
+        if (busy || !HasMore)
+        {
+            return;
+        }
+
+        busy = true;
+        page++;
+        await LoadAsync(reset: false);
+        busy = false;
+    }
+
+    private async Task MarkReadAsync(Guid id)
+    {
+        // Optimiste : on bascule l'item localement, puis on persiste (best-effort).
+        int idx = items.FindIndex(i => i.Id == id);
+        if (idx < 0)
+        {
+            return;
+        }
+
+        items[idx] = items[idx] with { IsRead = true };
+        await Api.MarkFeedItemReadAsync(id);
+    }
+
+    private static string MapError(string? code) => code switch
+    {
+        "unauthorized" => "Votre session a expiré. Reconnectez-vous.",
+        "network" => "Service indisponible. Vérifiez votre connexion et réessayez.",
+        _ => "Le fil n'a pas pu être chargé. Réessayez.",
+    };
+
+    private enum FeedState
+    {
+        Loading,
+        Loaded,
+        Empty,
+        Error,
+    }
+}

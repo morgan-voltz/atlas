@@ -1,0 +1,156 @@
+.accueil {
+    max-width: 42rem;
+}
+
+.accueil-sub {
+    margin: 0 0 1.25rem;
+    color: var(--on-surface-variant);
+    font-size: 0.92rem;
+}
+
+/* ---- Vide d'onboarding -------------------------------------------------- */
+
+.feed-empty {
+    padding: 1.75rem 1.5rem;
+    background: var(--surface);
+    border: 1px solid var(--surface-variant);
+    border-radius: var(--radius-lg);
+    text-align: center;
+}
+
+.empty-title {
+    margin: 0 0 0.5rem;
+    font-family: var(--font-heading);
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: var(--on-surface);
+}
+
+.empty-sub {
+    margin: 0 0 1rem;
+    color: var(--on-surface-variant);
+    font-size: 0.92rem;
+}
+
+.empty-action {
+    display: inline-block;
+    padding: 0.6rem 1.1rem;
+    font-weight: 700;
+    color: var(--on-primary);
+    background: var(--primary);
+    border-radius: var(--radius-md);
+    text-decoration: none;
+}
+
+.empty-action:focus-visible {
+    outline: 3px solid var(--focus);
+    outline-offset: 2px;
+}
+
+/* ---- Erreur ------------------------------------------------------------- */
+
+.feed-error {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.85rem;
+    padding: 0.9rem 1.1rem;
+    background: var(--error-container);
+    border: 1px solid var(--error-outline);
+    border-radius: var(--radius-md);
+}
+
+.feed-error-msg {
+    flex: 1;
+    min-width: 12rem;
+    margin: 0;
+    color: var(--on-error-container);
+}
+
+.feed-retry {
+    padding: 0.5rem 1rem;
+    font-weight: 600;
+    color: var(--on-primary);
+    background: var(--primary);
+    border: 0;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+}
+
+.feed-retry:focus-visible {
+    outline: 3px solid var(--focus);
+    outline-offset: 2px;
+}
+
+/* ---- Charger plus / fin de fil ------------------------------------------ */
+
+.feed-more {
+    margin-top: 0.5rem;
+    text-align: center;
+}
+
+.btn-more {
+    padding: 0.6rem 1.4rem;
+    font-weight: 600;
+    color: var(--on-surface);
+    background: var(--surface);
+    border: 1px solid var(--outline);
+    border-radius: var(--radius-md);
+    cursor: pointer;
+}
+
+.btn-more:hover:not(:disabled) {
+    background: var(--surface-variant);
+}
+
+.btn-more:focus-visible {
+    outline: 3px solid var(--focus);
+    outline-offset: 2px;
+}
+
+.btn-more:disabled {
+    opacity: 0.65;
+    cursor: progress;
+}
+
+.feed-end {
+    margin: 1rem 0 0;
+    text-align: center;
+    font-size: 0.88rem;
+    color: var(--success);
+    font-weight: 600;
+}
+
+/* ---- Squelette ---------------------------------------------------------- */
+
+.skeleton-card {
+    padding: 0.9rem 1.1rem;
+    background: var(--surface);
+    border: 1px solid var(--surface-variant);
+    border-radius: var(--radius-lg);
+    margin-bottom: 0.75rem;
+}
+
+.skeleton-line {
+    height: 0.9rem;
+    margin: 0.5rem 0;
+    border-radius: var(--radius-sm);
+    background: linear-gradient(90deg, var(--surface-variant) 25%, var(--bg) 50%, var(--surface-variant) 75%);
+    background-size: 200% 100%;
+    animation: accueil-shimmer 1.3s ease-in-out infinite;
+}
+
+.skeleton-line.short {
+    width: 45%;
+}
+
+@keyframes accueil-shimmer {
+    from { background-position: 200% 0; }
+    to { background-position: -200% 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .skeleton-line {
+        animation: none;
+    }
+}

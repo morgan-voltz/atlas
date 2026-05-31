@@ -37,4 +37,9 @@ public interface IAtlasApiClient
     Task<ApiResult<string>> ExportMyDataAsync(CancellationToken ct = default);
 
     Task<ApiResult> DeleteMyAccountAsync(CancellationToken ct = default);
+
+    /// <summary>Fil de l'Accueil : mouvements des entités suivies (timeline filtrée <c>mentionsFavoritesOnly</c>).</summary>
+    Task<ApiResult<PagedResult<TimelineItemResponse>>> GetAccueilFeedAsync(int page, int pageSize, CancellationToken ct = default);
+
+    Task<ApiResult> MarkFeedItemReadAsync(Guid id, CancellationToken ct = default);
 }

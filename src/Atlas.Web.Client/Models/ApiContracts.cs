@@ -53,6 +53,32 @@ public sealed record InpiConnectionStatusResponse(bool Connected, string? Status
 /// <summary>Corps de <c>POST /inpi/connection</c>. Identifiants techniques INPI (jamais relus côté client).</summary>
 public sealed record ConnectInpiRequest(string Username, string Password);
 
+/// <summary>F-047 : entreprise favorite mentionnée dans un item de timeline.</summary>
+public sealed record FavoriteMentionResponse(string Siren, string Name);
+
+/// <summary>
+/// Élément de la timeline unifiée (<c>GET /feed/timeline</c>, F-044 + F-047). <see cref="Kind"/>
+/// discrimine <c>"RssItem"</c> (item de flux) et <c>"FavoriteEvent"</c> (mouvement RNE/BODACC d'un
+/// favori). Les champs non applicables au kind valent null / défaut. L'Accueil filtre sur les
+/// mouvements des entités suivies (<c>mentionsFavoritesOnly=true</c>, doc 12 §6).
+/// </summary>
+public sealed record TimelineItemResponse(
+    string Kind,
+    Guid Id,
+    string Title,
+    string? Url,
+    string? Summary,
+    DateTimeOffset OccurredAt,
+    bool IsRead,
+    bool IsFavorite,
+    bool IsArchived,
+    Guid? SourceId,
+    IReadOnlyList<string> Categories,
+    int SourceCount,
+    IReadOnlyList<FavoriteMentionResponse> MentionedFavorites,
+    string? EventType,
+    string? EventSiren);
+
 /// <summary>
 /// Extrait de ProblemDetails (RFC 9457) renvoyé par l'API en cas d'erreur. Le champ <c>code</c>
 /// (extension projet) porte le code métier stable utilisé pour choisir le bon message côté UI.
