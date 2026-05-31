@@ -15,7 +15,8 @@
 **MVP 1 — backend complet, clients et documentation amorcés.** Fonctionnalités livrées : inscription /
 connexion, 2FA, connexion d'un compte INPI, recherche entreprise (SIREN / dénomination), recherche et
 fiche de marques, historique de recherches, RGPD (export / suppression), client MAUI (mobile + desktop),
-site de documentation.
+site de documentation. **Client web Blazor (WASM)** amorcé : scaffold + squelette de navigation (rail
+5 destinations + routing) — suivi dans la [roadmap client web](docs/15-roadmap-client-web.md).
 
 Certaines intégrations INPI sont alignées sur la documentation officielle mais restent à confirmer par un
 appel authentifié réel (cf. statuts 🟡 dans la [roadmap](docs/02-roadmap-features.md)). Détail des
@@ -56,7 +57,9 @@ Configuration backend (`src/Atlas.Api/appsettings.json` ou variables d'environne
   - `Atlas.Application.Premium` — use cases premium isolés
   - `Atlas.Infrastructure.*` — adapters (Inpi, Persistence, Veille, Messaging, Security, Cache, Storage)
   - `Atlas.Api` — Web API ASP.NET Core (composition root serveur)
-  - `Atlas.Maui` — client multi-plateformes (Android, iOS, Windows, macOS)
+  - `Atlas.Maui` — client multi-plateformes natif (Android, iOS, Windows, macOS)
+  - `Atlas.Web` — hôte du client web Blazor Web App (composition root web)
+  - `Atlas.Web.Client` — interactivité Blazor WebAssembly (mêmes règles d'archi que MAUI : `Domain` + `Shared` uniquement)
 - **tests/** — projets de tests (unitaires, intégration, architecture)
 - **docs/** — documentation fondatrice (ADR, roadmap, vocabulaire, etc.)
 - **website/** — site de documentation utilisateur (MkDocs)
@@ -69,8 +72,10 @@ Configuration backend (`src/Atlas.Api/appsettings.json` ou variables d'environne
 - [`CONTRIBUTING.md`](CONTRIBUTING.md) — comment contribuer
 - [`CLAUDE.md`](CLAUDE.md) — instructions pour Claude Code et contributeurs (synthèse)
 - [`docs/`](docs/) — documentation fondatrice : [ADR](docs/01-decisions-architecturales.md),
-  [roadmap](docs/02-roadmap-features.md), [architecture détaillée](docs/09-architecture-detaillee.md),
-  [layout solution](docs/10-layout-solution-dotnet.md)
+  [roadmap features](docs/02-roadmap-features.md), [architecture détaillée](docs/09-architecture-detaillee.md),
+  [layout solution](docs/10-layout-solution-dotnet.md), [API endpoints](docs/11-api-endpoints.md),
+  [UX client MAUI](docs/12-modele-ux-client-maui.md), [harness de test e2e](docs/13-harness-test-local-e2e.md),
+  [UX client web](docs/14-modele-ux-client-web.md), [roadmap client web](docs/15-roadmap-client-web.md)
 - [`website/`](website/) — site de documentation utilisateur (installation, premiers pas, FAQ)
 
 ## Sécurité
