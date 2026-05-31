@@ -1,0 +1,101 @@
+.auth-title {
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 2rem;
+    font-weight: 700;
+    color: #14181f;
+    margin: 0 0 1.75rem;
+}
+
+.auth-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+}
+
+.field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+}
+
+.field label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #3c4654;
+}
+
+.field ::deep input {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 0.8rem 0.9rem;
+    font-size: 1rem;
+    border: 1px solid #cdd5df;
+    border-radius: 0.6rem;
+    background: #fff;
+    color: #14181f;
+}
+
+.field ::deep input:focus-visible {
+    outline: 3px solid #1d4e7c;
+    outline-offset: 1px;
+    border-color: #1d4e7c;
+}
+
+.field ::deep .validation-message {
+    font-size: 0.8rem;
+    color: #b42318;
+}
+
+.btn-primary {
+    margin-top: 0.5rem;
+    padding: 0.85rem 1rem;
+    font-size: 1rem;
+    font-weight: 700;
+    color: #fff;
+    background: #1d4e7c;
+    border: 1px solid #1d4e7c;
+    border-radius: 0.6rem;
+    cursor: pointer;
+}
+
+.btn-primary:hover:not(:disabled) {
+    background: #18406a;
+}
+
+.btn-primary:focus-visible {
+    outline: 3px solid #14181f;
+    outline-offset: 2px;
+}
+
+.btn-primary:disabled {
+    opacity: 0.65;
+    cursor: progress;
+}
+
+.auth-error {
+    margin: 0;
+    padding: 0.7rem 0.9rem;
+    font-size: 0.9rem;
+    color: #7a271a;
+    background: #fef3f2;
+    border: 1px solid #fecdca;
+    border-radius: 0.6rem;
+}
+
+.auth-secondary {
+    margin: 1rem 0 0;
+    text-align: center;
+}
+
+.auth-footer {
+    margin: 2rem 0 0;
+    text-align: center;
+    color: #3c4654;
+    font-size: 0.9rem;
+}
+
+.auth-muted {
+    color: #8a94a3;
+    font-weight: 600;
+    cursor: not-allowed;
+}

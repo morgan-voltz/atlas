@@ -11,12 +11,20 @@
     <link rel="stylesheet" href="@Assets["Atlas.Web.styles.css"]" />
     <ImportMap />
     <link rel="icon" type="image/png" href="favicon.png" />
-    <HeadOutlet @rendermode="InteractiveWebAssembly" />
+    <HeadOutlet @rendermode="WasmNoPrerender" />
 </head>
 
 <body>
-    <Routes @rendermode="InteractiveWebAssembly" />
+    <Routes @rendermode="WasmNoPrerender" />
     <script src="@Assets["_framework/blazor.web.js"]"></script>
 </body>
 
 </html>
+
+@code {
+    // WASM pur (ADR-017, amendement 30 mai 2026) : app authentifiée seule, zéro état serveur.
+    // On désactive le prerendering — l'hôte ne fait que servir le boot WASM ; toute l'auth et les
+    // appels API vivent côté client. Évite d'avoir à héberger les services d'auth du client sur le serveur.
+    private static readonly IComponentRenderMode WasmNoPrerender =
+        new InteractiveWebAssemblyRenderMode(prerender: false);
+}

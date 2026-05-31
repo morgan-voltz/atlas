@@ -1,6 +1,34 @@
 @page "/profil"
+@attribute [Authorize]
+@inject IAtlasApiClient Api
+@inject AtlasAuthenticationStateProvider AuthState
+@inject NavigationManager Navigation
 
 <PageTitle>Profil · Atlas</PageTitle>
 
 <h1>Profil</h1>
 <p>Compte, session, connexion INPI, préférences, données. Écran à implémenter — cf. doc 12 §9 et doc 14.</p>
+
+<AuthorizeView>
+    <Authorized>
+        <p class="profil-identity">
+            Connecté en tant que <strong>@(context.User.Identity?.Name ?? "utilisateur")</strong>.
+        </p>
+    </Authorized>
+</AuthorizeView>
+
+<button type="button" class="btn-logout" @onclick="LogoutAsync" disabled="@busy">
+    @(busy ? "Déconnexion…" : "Se déconnecter")
+</button>
+
+@code {
+    private bool busy;
+
+    private async Task LogoutAsync()
+    {
+        busy = true;
+        await Api.LogoutAsync();
+        AuthState.NotifyUserLogout();
+        Navigation.NavigateTo("connexion", forceLoad: false);
+    }
+}

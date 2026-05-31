@@ -1,0 +1,28 @@
+.profil-identity {
+    color: #3c4654;
+}
+
+.btn-logout {
+    margin-top: 1rem;
+    padding: 0.6rem 1.1rem;
+    font-weight: 600;
+    color: #7a271a;
+    background: #fff;
+    border: 1px solid #e0a3a0;
+    border-radius: 0.6rem;
+    cursor: pointer;
+}
+
+.btn-logout:hover:not(:disabled) {
+    background: #fef3f2;
+}
+
+.btn-logout:focus-visible {
+    outline: 3px solid #1d4e7c;
+    outline-offset: 2px;
+}
+
+.btn-logout:disabled {
+    opacity: 0.6;
+    cursor: progress;
+}

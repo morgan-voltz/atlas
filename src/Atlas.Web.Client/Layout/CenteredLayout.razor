@@ -1,0 +1,9 @@
+@inherits LayoutComponentBase
+
+@* Layout sobre, sans rail de navigation : utilisé par les écrans hors-session (connexion).
+   Le rail (RailLayout) n'a de sens qu'une fois l'utilisateur authentifié. *@
+<div class="auth-shell">
+    <main class="auth-card">
+        @Body
+    </main>
+</div>

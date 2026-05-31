@@ -1,6 +1,175 @@
 @page "/recherche"
+@attribute [Authorize]
+@inject IAtlasApiClient Api
+@using Atlas.Shared.Result
 
 <PageTitle>Recherche · Atlas</PageTitle>
 
 <h1>Recherche</h1>
-<p>Champ unique intelligent (entreprise / marque), et 3e mode « Vérifier un nom » (F-060). Écran à implémenter — cf. doc 12 §7 et doc 14.</p>
+
+<form class="search-bar" @onsubmit="SearchAsync" @onsubmit:preventDefault role="search">
+    <label for="q" class="sr-only">Rechercher une entreprise (nom ou SIREN)</label>
+    <span class="search-icon" aria-hidden="true">🔍</span>
+    <input id="q" type="search" @bind="query" @bind:event="oninput"
+           placeholder="Nom d'entreprise ou SIREN…" autocomplete="off"
+           aria-describedby="q-hint" />
+    <button type="submit" class="search-go" disabled="@(busy || !CanSearch)">Rechercher</button>
+</form>
+
+<p id="q-hint" class="search-hint">
+    @if (IsSirenCandidate)
+    {
+        <span>✓ SIREN détecté — accès direct à la fiche</span>
+    }
+    else
+    {
+        <span>Saisissez au moins 2 caractères, ou un SIREN à 9 chiffres.</span>
+    }
+</p>
+
+<section aria-live="polite" aria-busy="@busy" class="search-results">
+    @switch (state)
+    {
+        case SearchState.Loading:
+            <p role="status" class="state-msg">Recherche en cours…</p>
+            break;
+
+        case SearchState.Error:
+            <p role="alert" class="state-msg state-error">@message</p>
+            break;
+
+        case SearchState.Empty:
+            <p class="state-msg">Aucun résultat pour « @lastQuery ».</p>
+            break;
+
+        case SearchState.DirectHit when directCompany is not null:
+            <h2 class="sr-only">Entreprise correspondant au SIREN</h2>
+            <div class="direct-card">
+                <span class="direct-icon" aria-hidden="true">🏢</span>
+                <div class="direct-main">
+                    <p class="direct-name">@directCompany.Denomination</p>
+                    <p class="direct-sub">@directCompany.FormeJuridique @(directCompany.Adresse?.City)</p>
+                </div>
+                <span class="direct-soon" title="Ouverture de la fiche au jalon M2">Fiche → M2</span>
+            </div>
+            break;
+
+        case SearchState.Results when results is not null:
+            <h2 class="sr-only">@results.TotalCount résultat(s)</h2>
+            <p class="results-count">@results.TotalCount entreprise(s) trouvée(s)</p>
+            <ul class="results-list">
+                @foreach (CompanySummaryResponse company in results.Items)
+                {
+                    <li>
+                        <CompanySummaryCard Company="company" />
+                    </li>
+                }
+            </ul>
+            break;
+
+        default:
+            <p class="state-msg state-idle">Lancez une recherche pour afficher des entreprises.</p>
+            break;
+    }
+</section>
+
+@code {
+    private const int PageSize = 20;
+
+    private string query = string.Empty;
+    private string lastQuery = string.Empty;
+    private bool busy;
+    private string? message;
+    private SearchState state = SearchState.Idle;
+    private PagedResult<CompanySummaryResponse>? results;
+    private CompanyResponse? directCompany;
+
+    private string TrimmedQuery => query.Trim();
+
+    private string DigitsOnly => new(TrimmedQuery.Where(char.IsDigit).ToArray());
+
+    private bool IsSirenCandidate => DigitsOnly.Length == 9 && TrimmedQuery.All(c => char.IsDigit(c) || c == ' ');
+
+    private bool CanSearch => IsSirenCandidate || TrimmedQuery.Length >= 2;
+
+    private async Task SearchAsync()
+    {
+        if (busy || !CanSearch)
+        {
+            return;
+        }
+
+        busy = true;
+        message = null;
+        directCompany = null;
+        results = null;
+        state = SearchState.Loading;
+        lastQuery = TrimmedQuery;
+
+        if (IsSirenCandidate)
+        {
+            await SearchBySirenAsync(DigitsOnly);
+        }
+        else
+        {
+            await SearchByNameAsync(TrimmedQuery);
+        }
+
+        busy = false;
+    }
+
+    private async Task SearchBySirenAsync(string siren)
+    {
+        ApiResult<CompanyResponse> result = await Api.GetCompanyBySirenAsync(siren);
+        if (result.IsSuccess)
+        {
+            directCompany = result.Value;
+            state = SearchState.DirectHit;
+            return;
+        }
+
+        if (result.ErrorCode == "companies.not_found")
+        {
+            state = SearchState.Empty;
+            return;
+        }
+
+        message = MapError(result.ErrorCode);
+        state = SearchState.Error;
+    }
+
+    private async Task SearchByNameAsync(string name)
+    {
+        ApiResult<PagedResult<CompanySummaryResponse>> result =
+            await Api.SearchCompaniesAsync(name, page: 1, pageSize: PageSize);
+
+        if (!result.IsSuccess)
+        {
+            message = MapError(result.ErrorCode);
+            state = SearchState.Error;
+            return;
+        }
+
+        results = result.Value;
+        state = results is null || results.Items.Count == 0 ? SearchState.Empty : SearchState.Results;
+    }
+
+    private static string MapError(string? code) => code switch
+    {
+        "inpi.not_connected" => "Connectez votre compte INPI (page Profil) pour lancer une recherche.",
+        "companies.invalid_siren" => "SIREN invalide : 9 chiffres avec un contrôle Luhn valide.",
+        "unauthorized" => "Votre session a expiré. Reconnectez-vous.",
+        "network" => "Service indisponible. Vérifiez votre connexion et réessayez.",
+        _ => "Une erreur est survenue pendant la recherche. Réessayez.",
+    };
+
+    private enum SearchState
+    {
+        Idle,
+        Loading,
+        Empty,
+        Error,
+        Results,
+        DirectHit,
+    }
+}
