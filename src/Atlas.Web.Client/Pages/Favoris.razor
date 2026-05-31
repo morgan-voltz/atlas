@@ -1,7 +1,164 @@
 @page "/favoris"
 @attribute [Authorize]
+@inject IAtlasApiClient Api
 
-<PageTitle>Favoris · Atlas</PageTitle>
+@* Favoris (M4, doc 12 §8 + doc 14 §3) — signature desktop list-detail à deux panneaux : la liste
+   des entreprises suivies à gauche, la fiche sélectionnée à droite (CompanyDetail réutilisé de M2).
+   Sous le point de rupture, on retombe sur l'empilement (liste OU fiche). Watchlists/tags (F-053/
+   F-030) absents du backend → différés ; cet écran couvre les favoris plats (F-017). *@
 
-<h1>Favoris</h1>
-<p>Vos entités suivies et watchlists (modèle « Tous + listes »). Écran à implémenter — cf. doc 12 §8 et doc 14.</p>
+<PageTitle>@PageTitleText</PageTitle>
+
+<div class="fav-shell @(HasSelection ? "has-selection" : null)">
+
+    <section class="fav-list" aria-label="Mes entreprises suivies">
+        <header class="fav-header">
+            <h1 class="fav-title">Favoris</h1>
+            @if (state == ListState.Loaded)
+            {
+                <span class="fav-count">@favorites.Count suivie(s)</span>
+            }
+        </header>
+
+        @switch (state)
+        {
+            case ListState.Loading:
+                <p role="status" class="fav-msg">Chargement de vos favoris…</p>
+                break;
+
+            case ListState.Error:
+                <div class="fav-error" role="alert">
+                    <p class="fav-error-msg">@message</p>
+                    <button type="button" class="fav-retry" @onclick="LoadFavoritesAsync">Réessayer</button>
+                </div>
+                break;
+
+            case ListState.Empty:
+                @* Vide d'onboarding (doc 12 §14) : invite à agir, avec amorçage. *@
+                <div class="fav-empty" role="status">
+                    <p class="fav-empty-title">Aucune entreprise suivie</p>
+                    <p class="fav-empty-sub">Cherche une entreprise et suis-la pour la retrouver ici.</p>
+                    <a class="fav-empty-action" href="recherche">Rechercher une entreprise</a>
+                </div>
+                break;
+
+            case ListState.Loaded:
+                <ul class="fav-rows">
+                    @foreach (CompanyFavoriteResponse fav in favorites)
+                    {
+                        <li class="fav-row @(fav.Siren == Selected ? "selected" : null)">
+                            <a class="fav-row-link" href="favoris?e=@fav.Siren" aria-current="@(fav.Siren == Selected ? "true" : null)">
+                                <span class="fav-name">@(string.IsNullOrWhiteSpace(fav.Name) ? "Entreprise" : fav.Name)</span>
+                                <span class="fav-sub">
+                                    <span class="mono">@FormatSiren(fav.Siren)</span>
+                                    <span class="fav-dot" aria-hidden="true">·</span>
+                                    <span>suivie depuis le @fav.AddedAt.ToString("d MMM yyyy", Culture)</span>
+                                </span>
+                            </a>
+                            <button type="button" class="fav-remove" title="Retirer du suivi"
+                                    aria-label="Retirer @(string.IsNullOrWhiteSpace(fav.Name) ? fav.Siren : fav.Name) du suivi"
+                                    @onclick="() => RemoveAsync(fav.Siren)" disabled="@(removingSiren == fav.Siren)">
+                                @(removingSiren == fav.Siren ? "…" : "✕")
+                            </button>
+                        </li>
+                    }
+                </ul>
+                break;
+        }
+    </section>
+
+    <section class="fav-detail" aria-label="Fiche de l'entreprise sélectionnée">
+        @if (HasSelection)
+        {
+            <p class="fav-back"><a href="favoris">← Favoris</a></p>
+            <CompanyDetail Siren="@Selected" OnFavoriteChanged="LoadFavoritesAsync" OnCompanyLoaded="OnCompanyLoaded" />
+        }
+        else
+        {
+            <div class="fav-placeholder">
+                <p>Sélectionne une entreprise à gauche pour voir sa fiche.</p>
+            </div>
+        }
+    </section>
+
+</div>
+
+@code {
+    private static readonly System.Globalization.CultureInfo Culture = new("fr-FR");
+
+    [SupplyParameterFromQuery(Name = "e")]
+    private string? Selected { get; set; }
+
+    private ListState state = ListState.Loading;
+    private IReadOnlyList<CompanyFavoriteResponse> favorites = [];
+    private string? message;
+    private string? removingSiren;
+    private string? selectedName;
+
+    private bool HasSelection => !string.IsNullOrEmpty(Selected);
+
+    private string PageTitleText => HasSelection && !string.IsNullOrWhiteSpace(selectedName)
+        ? $"{selectedName} · Favoris · Atlas"
+        : "Favoris · Atlas";
+
+    protected override async Task OnInitializedAsync() => await LoadFavoritesAsync();
+
+    private async Task LoadFavoritesAsync()
+    {
+        state = ListState.Loading;
+        message = null;
+
+        ApiResult<IReadOnlyList<CompanyFavoriteResponse>> result = await Api.GetMyCompanyFavoritesAsync();
+        if (!result.IsSuccess)
+        {
+            message = MapError(result.ErrorCode);
+            state = ListState.Error;
+            return;
+        }
+
+        favorites = result.Value ?? [];
+        state = favorites.Count == 0 ? ListState.Empty : ListState.Loaded;
+    }
+
+    private async Task RemoveAsync(string siren)
+    {
+        if (removingSiren is not null)
+        {
+            return;
+        }
+
+        removingSiren = siren;
+        ApiResult result = await Api.RemoveCompanyFavoriteAsync(siren);
+        removingSiren = null;
+
+        if (result.IsSuccess)
+        {
+            await LoadFavoritesAsync();
+        }
+        else
+        {
+            message = MapError(result.ErrorCode);
+            state = ListState.Error;
+        }
+    }
+
+    private void OnCompanyLoaded(CompanyResponse? company) => selectedName = company?.Denomination;
+
+    private static string MapError(string? code) => code switch
+    {
+        "unauthorized" => "Votre session a expiré. Reconnectez-vous.",
+        "network" => "Service indisponible. Vérifiez votre connexion et réessayez.",
+        _ => "Une erreur est survenue. Réessayez.",
+    };
+
+    private static string FormatSiren(string siren) =>
+        siren.Length == 9 ? $"{siren[..3]} {siren[3..6]} {siren[6..]}" : siren;
+
+    private enum ListState
+    {
+        Loading,
+        Loaded,
+        Empty,
+        Error,
+    }
+}

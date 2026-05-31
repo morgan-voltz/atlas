@@ -20,4 +20,10 @@ public interface IAtlasApiClient
         CancellationToken ct = default);
 
     Task<ApiResult<CompanyResponse>> GetCompanyBySirenAsync(string siren, CancellationToken ct = default);
+
+    Task<ApiResult<IReadOnlyList<CompanyFavoriteResponse>>> GetMyCompanyFavoritesAsync(CancellationToken ct = default);
+
+    Task<ApiResult> AddCompanyFavoriteAsync(string siren, string? name, CancellationToken ct = default);
+
+    Task<ApiResult> RemoveCompanyFavoriteAsync(string siren, CancellationToken ct = default);
 }

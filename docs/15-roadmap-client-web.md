@@ -39,7 +39,7 @@ Chaque jalon = une tranche verticale livrant de la valeur utilisable de bout en 
 | **M1 — Connexion + Recherche** | login (token mémoire + refresh cookie HttpOnly) **et** écran Recherche de bout en bout | 1ʳᵉ tranche : valide toute la chaîne — `AtlasApiClient`, auth, garde de route, premiers composants (carte-aperçu, états) | ✅ |
 | **M2 — Fiche entreprise** | depuis un résultat, fiche en cartes-sections, provenance épinglée, états de couverture | réutilise carte-section + le client API de M1 | 🟡 |
 | **M3 — Accueil / feed** | fil des mouvements des entités suivies (cartes-aperçu *event*) | dépend des favoris (lecture) ; garde-fous anti-« réseau social » | ⬜ |
-| **M4 — Favoris / Watchlists + list-detail 2 panneaux** | gestion des favoris **et** introduction du **list-detail à 2 panneaux** (signature desktop, réutilisé ensuite) | la signature desktop (doc 14 §3) arrive ici puis se généralise | ⬜ |
+| **M4 — Favoris / Watchlists + list-detail 2 panneaux** | gestion des favoris **et** introduction du **list-detail à 2 panneaux** (signature desktop, réutilisé ensuite) | la signature desktop (doc 14 §3) arrive ici puis se généralise | 🟡 |
 | **M5 — Veille** | flux, palier de lecture, pont vers fiche « à vérifier » | réutilise list-detail (M4) | ⬜ |
 | **M6 — Profil & compte** | profil, sous-pages compte / connexion INPI / données (RGPD) | — | ⬜ |
 | **M7 — Onboarding complet** | création de compte, vérification email, défi 2FA, proposition INPI | complète l'auth minimale de M1 | ⬜ |
@@ -60,7 +60,7 @@ Un écran n'est **✅** que lorsque **toutes** ses colonnes le sont. DoD = templ
 | Recherche (cœur M1 ; « Vérifier un nom » F-060 = backlog séparé) | M1 | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | Fiche entreprise (Identité + Dirigeants ; Bilans/BODACC/Étabts/PI = features à venir) | M2 | 🟡 | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | 🟡 |
 | Accueil / feed | M3 | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
-| Favoris / Watchlists | M4 | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
+| Favoris (plats + list-detail 2 panneaux ; watchlists/tags F-053/F-030 = backend différé) | M4 | 🟡 | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | 🟡 |
 | Veille | M5 | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
 | Profil + sous-pages | M6 | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
 | Auth / onboarding | M1/M7 | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | 🟡 |

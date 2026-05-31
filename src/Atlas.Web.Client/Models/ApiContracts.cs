@@ -38,6 +38,12 @@ public sealed record DirigeantResponse(string Nom, string? Qualite);
 /// <summary>Élément de <c>GET /companies?name=…</c> (carte-aperçu de résultat de recherche).</summary>
 public sealed record CompanySummaryResponse(string Siren, string Denomination, string? Ville, string? NafCode);
 
+/// <summary>Élément de <c>GET /favorites/companies</c> (entreprise suivie — F-017).</summary>
+public sealed record CompanyFavoriteResponse(string Siren, string? Name, DateTimeOffset AddedAt);
+
+/// <summary>Corps de <c>POST /favorites/companies</c>.</summary>
+public sealed record AddCompanyFavoriteRequest(string Siren, string? Name);
+
 /// <summary>
 /// Extrait de ProblemDetails (RFC 9457) renvoyé par l'API en cas d'erreur. Le champ <c>code</c>
 /// (extension projet) porte le code métier stable utilisé pour choisir le bon message côté UI.
