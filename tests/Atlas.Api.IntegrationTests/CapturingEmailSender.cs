@@ -15,6 +15,8 @@ public sealed class CapturingEmailSender : IEmailSender
 
     public string? LastVerificationToken { get; private set; }
 
+    public string? LastPasswordResetToken { get; private set; }
+
     public Task SendEmailVerificationAsync(
         EmailAddress recipient,
         UserId userId,
@@ -23,6 +25,17 @@ public sealed class CapturingEmailSender : IEmailSender
     {
         LastUserId = userId.Value;
         LastVerificationToken = verificationToken;
+        return Task.CompletedTask;
+    }
+
+    public Task SendPasswordResetAsync(
+        EmailAddress recipient,
+        UserId userId,
+        string resetToken,
+        CancellationToken ct = default)
+    {
+        LastUserId = userId.Value;
+        LastPasswordResetToken = resetToken;
         return Task.CompletedTask;
     }
 

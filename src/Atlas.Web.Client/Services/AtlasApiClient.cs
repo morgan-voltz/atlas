@@ -93,6 +93,30 @@ internal sealed class AtlasApiClient(HttpClient httpClient, ITokenStore tokenSto
                 $"auth/verify-email?userId={Uri.EscapeDataString(userId)}&token={Uri.EscapeDataString(token)}"),
             ct);
 
+    public Task<ApiResult> ResendVerificationAsync(string email, CancellationToken ct = default) =>
+        SendNoContentAsync(
+            () => new HttpRequestMessage(HttpMethod.Post, "auth/resend-verification")
+            {
+                Content = JsonContent.Create(new { email }),
+            },
+            ct);
+
+    public Task<ApiResult> RequestPasswordResetAsync(string email, CancellationToken ct = default) =>
+        SendNoContentAsync(
+            () => new HttpRequestMessage(HttpMethod.Post, "auth/forgot-password")
+            {
+                Content = JsonContent.Create(new { email }),
+            },
+            ct);
+
+    public Task<ApiResult> ResetPasswordAsync(string userId, string token, string newPassword, CancellationToken ct = default) =>
+        SendNoContentAsync(
+            () => new HttpRequestMessage(HttpMethod.Post, "auth/reset-password")
+            {
+                Content = JsonContent.Create(new { userId, token, newPassword }),
+            },
+            ct);
+
     public async Task<ApiResult> Verify2faAsync(string challengeToken, string code, CancellationToken ct = default)
     {
         HttpResponseMessage response;

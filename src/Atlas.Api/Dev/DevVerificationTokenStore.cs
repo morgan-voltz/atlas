@@ -12,11 +12,20 @@ internal sealed class DevVerificationTokenStore
     private readonly ConcurrentDictionary<string, DevVerificationEntry> _byEmail =
         new(StringComparer.OrdinalIgnoreCase);
 
+    private readonly ConcurrentDictionary<string, DevVerificationEntry> _resetByEmail =
+        new(StringComparer.OrdinalIgnoreCase);
+
     public void Record(string email, Guid userId, string token) =>
         _byEmail[email] = new DevVerificationEntry(userId, token);
 
     public bool TryGet(string email, out DevVerificationEntry entry) =>
         _byEmail.TryGetValue(email, out entry!);
+
+    public void RecordReset(string email, Guid userId, string token) =>
+        _resetByEmail[email] = new DevVerificationEntry(userId, token);
+
+    public bool TryGetReset(string email, out DevVerificationEntry entry) =>
+        _resetByEmail.TryGetValue(email, out entry!);
 }
 
 internal sealed record DevVerificationEntry(Guid UserId, string Token);

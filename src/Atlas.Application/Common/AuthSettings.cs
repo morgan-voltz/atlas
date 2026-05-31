@@ -7,6 +7,8 @@ public sealed class AuthSettings
 {
     public TimeSpan EmailVerificationTokenLifetime { get; init; } = TimeSpan.FromHours(24);
 
+    public TimeSpan PasswordResetTokenLifetime { get; init; } = TimeSpan.FromHours(1);
+
     public TimeSpan RefreshTokenLifetime { get; init; } = TimeSpan.FromDays(30);
 
     public TimeSpan AccessTokenLifetime { get; init; } = TimeSpan.FromMinutes(15);

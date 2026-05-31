@@ -22,6 +22,15 @@ public interface IAtlasApiClient
     /// <summary>Défi 2FA : échange le jeton de défi + un code TOTP/secours contre une session (stocke le bearer).</summary>
     Task<ApiResult> Verify2faAsync(string challengeToken, string code, CancellationToken ct = default);
 
+    /// <summary>Renvoi du lien de vérification d'email (réponse uniforme, anti-énumération).</summary>
+    Task<ApiResult> ResendVerificationAsync(string email, CancellationToken ct = default);
+
+    /// <summary>Demande de réinitialisation de mot de passe (réponse uniforme, anti-énumération).</summary>
+    Task<ApiResult> RequestPasswordResetAsync(string email, CancellationToken ct = default);
+
+    /// <summary>Réinitialise le mot de passe à partir du lien (userId + token) et d'un nouveau mot de passe.</summary>
+    Task<ApiResult> ResetPasswordAsync(string userId, string token, string newPassword, CancellationToken ct = default);
+
     Task<ApiResult<PagedResult<CompanySummaryResponse>>> SearchCompaniesAsync(
         string name,
         int page,

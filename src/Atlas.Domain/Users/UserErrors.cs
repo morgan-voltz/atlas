@@ -20,6 +20,8 @@ public static class UserErrors
 
     public static readonly DomainError InvalidOrExpiredVerificationToken = new InvalidVerificationTokenError();
 
+    public static readonly DomainError InvalidOrExpiredPasswordResetToken = new InvalidPasswordResetTokenError();
+
     public static readonly DomainError InvalidOrExpiredRefreshToken = new InvalidRefreshTokenError();
 
     public static readonly DomainError TwoFactorAlreadyEnabled = new TwoFactorAlreadyEnabledError();
@@ -55,6 +57,9 @@ public static class UserErrors
 
     private sealed record InvalidVerificationTokenError()
         : DomainError("users.invalid_verification_token", "Le lien de vérification est invalide ou expiré.");
+
+    private sealed record InvalidPasswordResetTokenError()
+        : DomainError("users.invalid_password_reset_token", "Le lien de réinitialisation est invalide ou expiré.");
 
     private sealed record InvalidRefreshTokenError()
         : DomainError("users.invalid_refresh_token", "La session est invalide ou expirée. Veuillez vous reconnecter.");

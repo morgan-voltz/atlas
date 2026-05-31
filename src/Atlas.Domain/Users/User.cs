@@ -10,6 +10,8 @@ public sealed class User : Entity<UserId>
 {
     private string? _emailVerificationTokenHash;
     private DateTimeOffset? _emailVerificationTokenExpiresAt;
+    private string? _passwordResetTokenHash;
+    private DateTimeOffset? _passwordResetTokenExpiresAt;
 
     private User()
         : base(default)
@@ -99,6 +101,55 @@ public sealed class User : Entity<UserId>
         EmailVerifiedAt = now;
         _emailVerificationTokenHash = null;
         _emailVerificationTokenExpiresAt = null;
+        return Result.Ok();
+    }
+
+    /// <summary>
+    /// Régénère le token de vérification d'email (renvoi du lien). Sans effet si l'email est déjà
+    /// vérifié (statut ≠ <see cref="UserStatus.PendingEmailVerification"/>). Le token est fourni
+    /// déjà hashé ; le clair part par email, jamais persisté.
+    /// </summary>
+    public void RegenerateEmailVerificationToken(string newTokenHash, DateTimeOffset now, TimeSpan lifetime)
+    {
+        if (Status != UserStatus.PendingEmailVerification)
+        {
+            return;
+        }
+
+        _emailVerificationTokenHash = newTokenHash;
+        _emailVerificationTokenExpiresAt = now.Add(lifetime);
+    }
+
+    /// <summary>
+    /// Démarre une réinitialisation de mot de passe : mémorise le hash du token (le clair part par
+    /// email) et son expiration. Remplace toute demande précédente non utilisée.
+    /// </summary>
+    public void BeginPasswordReset(string tokenHash, DateTimeOffset now, TimeSpan lifetime)
+    {
+        _passwordResetTokenHash = tokenHash;
+        _passwordResetTokenExpiresAt = now.Add(lifetime);
+    }
+
+    /// <summary>
+    /// Réinitialise le mot de passe à partir du hash du token porté par le lien. Invalide le token
+    /// (usage unique) et réarme le compteur de tentatives. L'appelant doit révoquer les sessions
+    /// actives (refresh tokens) après succès.
+    /// </summary>
+    public Result ResetPassword(string providedTokenHash, PasswordHash newPasswordHash, DateTimeOffset now)
+    {
+        if (_passwordResetTokenHash is null
+            || _passwordResetTokenExpiresAt is null
+            || now > _passwordResetTokenExpiresAt.Value
+            || !FixedTimeEquals(_passwordResetTokenHash, providedTokenHash))
+        {
+            return Result.Fail(UserErrors.InvalidOrExpiredPasswordResetToken);
+        }
+
+        PasswordHash = newPasswordHash;
+        _passwordResetTokenHash = null;
+        _passwordResetTokenExpiresAt = null;
+        FailedLoginAttempts = 0;
+        LockoutEndsAt = null;
         return Result.Ok();
     }
 

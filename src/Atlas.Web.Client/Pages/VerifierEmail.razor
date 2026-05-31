@@ -5,7 +5,7 @@
 @* Vérification d'email (M7, doc 12 §10). Deux usages :
    - sans token : état d'ATTENTE après inscription (jamais un cul-de-sac — rappel spam, modifier l'adresse) ;
    - avec userId+token (lien d'activation) : on vérifie, puis on confirme et on annonce le palier INPI à venir.
-   « Renvoyer le lien » est différé : pas d'endpoint backend de renvoi à ce jour. *@
+   « Renvoyer le lien » appelle /auth/resend-verification (réponse uniforme, anti-énumération). *@
 
 <PageTitle>Vérification de l'email · Atlas</PageTitle>
 
@@ -44,12 +44,23 @@
             Cliquez le lien qu'il contient pour activer votre compte.
         </p>
         <p class="auth-muted-note">Pensez à vérifier votre dossier spam.</p>
+        @if (resendMessage is not null)
+        {
+            <p class="auth-info" role="status" aria-live="polite">@resendMessage</p>
+        }
+        @if (HasEmail)
+        {
+            <p class="auth-secondary">
+                <button type="button" class="link-button" @onclick="ResendAsync" disabled="@resending">
+                    @(resending ? "Envoi…" : "Renvoyer le lien")
+                </button>
+            </p>
+        }
         <p class="auth-footer">
             Mauvaise adresse ? <a href="inscription">Modifier</a>
             <span class="auth-dot" aria-hidden="true">·</span>
             <a href="connexion">Se connecter</a>
         </p>
-        <p class="auth-muted" title="Disponible prochainement">Renvoyer le lien</p>
         break;
 }
 
@@ -65,8 +76,22 @@
 
     private ViewState state = ViewState.Pending;
     private string? message;
+    private bool resending;
+    private string? resendMessage;
 
     private bool HasEmail => !string.IsNullOrWhiteSpace(Email);
+
+    private async Task ResendAsync()
+    {
+        resending = true;
+        resendMessage = null;
+
+        await Api.ResendVerificationAsync(Email!);
+
+        // Réponse volontairement uniforme (le backend ne révèle pas l'existence du compte).
+        resendMessage = "Si un compte en attente correspond, un nouvel email de vérification a été envoyé.";
+        resending = false;
+    }
 
     protected override async Task OnInitializedAsync()
     {

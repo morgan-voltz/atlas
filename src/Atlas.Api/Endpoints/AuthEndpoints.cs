@@ -4,8 +4,10 @@ using Atlas.Application.Common;
 using Atlas.Application.Users;
 using Atlas.Application.Users.Login;
 using Atlas.Application.Users.Logout;
+using Atlas.Application.Users.PasswordReset;
 using Atlas.Application.Users.Refresh;
 using Atlas.Application.Users.Register;
+using Atlas.Application.Users.ResendVerification;
 using Atlas.Application.Users.TwoFactor;
 using Atlas.Application.Users.VerifyEmail;
 using Atlas.Shared.Result;
@@ -27,6 +29,9 @@ internal static class AuthEndpoints
         // mot de passe / code TOTP / token de refresh).
         group.MapPost("/register", RegisterAsync).RequireRateLimiting(RateLimitOptions.AuthStrictPolicy);
         group.MapGet("/verify-email", VerifyEmailAsync);
+        group.MapPost("/resend-verification", ResendVerificationAsync).RequireRateLimiting(RateLimitOptions.AuthStrictPolicy);
+        group.MapPost("/forgot-password", ForgotPasswordAsync).RequireRateLimiting(RateLimitOptions.AuthStrictPolicy);
+        group.MapPost("/reset-password", ResetPasswordAsync).RequireRateLimiting(RateLimitOptions.AuthStrictPolicy);
         group.MapPost("/login", LoginAsync).RequireRateLimiting(RateLimitOptions.AuthStrictPolicy);
         group.MapPost("/refresh", RefreshAsync).RequireRateLimiting(RateLimitOptions.AuthStrictPolicy);
         group.MapPost("/logout", LogoutAsync);
@@ -67,6 +72,42 @@ internal static class AuthEndpoints
 
         return result.IsSuccess
             ? Results.Ok(new { message = "Email vérifié. Votre compte est actif." })
+            : result.Error!.ToProblem();
+    }
+
+    private static async Task<IResult> ResendVerificationAsync(
+        ResendVerificationRequest request,
+        ISender sender,
+        CancellationToken ct)
+    {
+        // Réponse uniforme (anti-énumération) : on ne révèle pas si l'adresse existe ni son statut.
+        Result result = await sender.Send(new ResendVerificationCommand(request.Email), ct);
+        return result.IsSuccess
+            ? Results.Ok(new { message = "Si un compte en attente correspond, un nouvel email de vérification a été envoyé." })
+            : result.Error!.ToProblem();
+    }
+
+    private static async Task<IResult> ForgotPasswordAsync(
+        ForgotPasswordRequest request,
+        ISender sender,
+        CancellationToken ct)
+    {
+        // Réponse uniforme (anti-énumération) : on ne révèle pas si l'adresse existe.
+        Result result = await sender.Send(new RequestPasswordResetCommand(request.Email), ct);
+        return result.IsSuccess
+            ? Results.Ok(new { message = "Si un compte correspond, un email de réinitialisation a été envoyé." })
+            : result.Error!.ToProblem();
+    }
+
+    private static async Task<IResult> ResetPasswordAsync(
+        ResetPasswordRequest request,
+        ISender sender,
+        CancellationToken ct)
+    {
+        Result result = await sender.Send(
+            new ResetPasswordCommand(request.UserId, request.Token, request.NewPassword), ct);
+        return result.IsSuccess
+            ? Results.Ok(new { message = "Mot de passe réinitialisé. Vous pouvez vous connecter." })
             : result.Error!.ToProblem();
     }
 

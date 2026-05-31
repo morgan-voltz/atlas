@@ -1,0 +1,66 @@
+@page "/mot-de-passe-oublie"
+@layout CenteredLayout
+@inject IAtlasApiClient Api
+
+@* Mot de passe oublié (M7, doc 12 §10). Demande d'un lien de réinitialisation. Réponse volontairement
+   uniforme (anti-énumération) : on n'indique jamais si l'adresse existe. Le lien arrive par email
+   (en dev, écrit dans les logs / exposé via /dev/password-reset-token). *@
+
+<PageTitle>Mot de passe oublié · Atlas</PageTitle>
+
+@if (submitted)
+{
+    <h1 class="auth-title">Vérifiez votre email</h1>
+    <p class="auth-intro">
+        Si un compte correspond à <strong>@form.Email</strong>, un email contenant un lien de
+        réinitialisation vient d'être envoyé. Le lien expire sous une heure.
+    </p>
+    <p class="auth-muted-note">Pensez à vérifier votre dossier spam.</p>
+    <p class="auth-footer"><a href="connexion">Retour à la connexion</a></p>
+}
+else
+{
+    <h1 class="auth-title">Mot de passe oublié</h1>
+    <p class="auth-intro">Saisissez votre adresse : nous vous enverrons un lien pour définir un nouveau mot de passe.</p>
+
+    <EditForm Model="form" OnValidSubmit="SubmitAsync" class="auth-form">
+        <DataAnnotationsValidator />
+
+        <div class="field">
+            <label for="email">Email</label>
+            <InputText id="email" @bind-Value="form.Email" type="email" autocomplete="username"
+                       placeholder="vous@cabinet.fr" disabled="@busy" />
+            <ValidationMessage For="() => form.Email" />
+        </div>
+
+        <button type="submit" class="btn-primary" disabled="@busy" aria-busy="@busy">
+            @(busy ? "Envoi…" : "Envoyer le lien")
+        </button>
+    </EditForm>
+
+    <p class="auth-footer"><a href="connexion">Retour à la connexion</a></p>
+}
+
+@code {
+    private readonly EmailForm form = new();
+    private bool busy;
+    private bool submitted;
+
+    private async Task SubmitAsync()
+    {
+        busy = true;
+
+        await Api.RequestPasswordResetAsync(form.Email);
+
+        // Réponse uniforme quel que soit le résultat backend (anti-énumération).
+        submitted = true;
+        busy = false;
+    }
+
+    private sealed class EmailForm
+    {
+        [System.ComponentModel.DataAnnotations.Required(ErrorMessage = "L'email est requis.")]
+        [System.ComponentModel.DataAnnotations.EmailAddress(ErrorMessage = "Format d'email invalide.")]
+        public string Email { get; set; } = string.Empty;
+    }
+}
