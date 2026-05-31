@@ -32,3 +32,21 @@ python3 build_charter.py   # régénère la charte HTML (puis WeasyPrint -> PDF)
 ```
 
 Aucun thème n'est ajouté s'il ne passe pas le vérificateur de contraste.
+
+## `source/themes.json` — rôle et format
+
+`themes.json` est la **représentation machine** des thèmes, **générée** par `generate.py` à partir
+de `palettes.py` (la vraie source). On ne l'édite **jamais** à la main : il est régénéré et sert
+d'entrée aux aperçus (`build_preview.py`) et à la charte (`build_charter.py`).
+
+- **Propriétaire** : ce kit (`docs/atlas-themes-kit/atlas-themes/source/`). C'est l'unique endroit
+  où les thèmes et leurs tokens (couleurs sémantiques `primary`, `surface`, `warning`/`error`…) sont
+  définis ; le reste de la doc le **référence** sans le redéfinir.
+- **Format** : un objet par thème (7 thèmes) avec ses tokens clair/sombre. Les `*.xaml`
+  (`maui/Resources/Themes/`) en sont la projection pour MAUI ; le client web mappera les mêmes tokens.
+- **Tokens typographiques** : les rôles de police (corps = Atkinson Hyperlegible, titres = IBM Plex
+  Serif, mono = IBM Plex Mono) relèvent de [`docs/16-polices-et-lisibilite.md`](../../16-polices-et-lisibilite.md)
+  (source de vérité lisibilité) ; leur intégration aux tokens passe par cette même chaîne.
+- **Préférences utilisateur** : thème et densité sont des préférences *d'appareil* ; police,
+  espacement et accessibilité sont des préférences *de compte* synchronisées — cf. **F-062**
+  (`docs/features/F-062-synchronisation-preferences-multi-surface.md`).

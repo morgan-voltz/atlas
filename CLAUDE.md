@@ -20,7 +20,7 @@ Avant toute contribution significative, consulter le document approprié dans `d
 | Quand tu fais... | Lis d'abord |
 |---|---|
 | Une décision d'architecture ou un nouveau choix structurant | `docs/01-decisions-architecturales.md` (index) + `docs/ADR/` (un fichier par ADR) |
-| Une nouvelle feature | `docs/02-roadmap-features.md` |
+| Une nouvelle feature | `docs/02-roadmap-features.md` (index) + `docs/features/` (une fiche par feature) |
 | Une intégration d'une nouvelle API publique | `docs/03-catalogue-apis-publiques.md` |
 | Tout ce qui touche aux credentials INPI, données personnelles, ou stockage de secrets | `docs/04-securite-rgpd.md` |
 | La gestion du repo, des branches, ou de la CI | `docs/05-strategie-repos.md` |
@@ -31,9 +31,11 @@ Avant toute contribution significative, consulter le document approprié dans `d
 | Créer un nouveau projet `.csproj` ou modifier la solution | `docs/10-layout-solution-dotnet.md` |
 | Ajouter, modifier ou supprimer un endpoint HTTP | `docs/11-api-endpoints.md` |
 | Concevoir une vue MAUI (navigation, list-detail, page vs carte, densité mobile/desktop) | `docs/12-modele-ux-client-maui.md` |
+| Lancer ou tester l'application en local de bout en bout (Postgres, API, Bruno, INPI) | `docs/13-harness-test-local-e2e.md` |
 | Concevoir une vue du client web Blazor (rail, list-detail 2 panneaux, routing/URLs) — delta de doc 12 | `docs/14-modele-ux-client-web.md` |
 | Planifier ou suivre l'implémentation du client web (jalons en tranches verticales, Definition of Done par écran) | `docs/15-roadmap-client-web.md` |
-| Lancer ou tester l'application en local de bout en bout (Postgres, API, Bruno, INPI) | `docs/13-harness-test-local-e2e.md` |
+| Choisir une police, régler l'espacement / la lisibilité (accessibilité typographique) | `docs/16-polices-et-lisibilite.md` |
+| Comprendre le contexte métier et les besoins par rôle | `docs/persona/carte-personas.md` |
 
 ---
 

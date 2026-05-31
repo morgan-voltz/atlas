@@ -561,12 +561,9 @@ Le test informel : "**est-ce que ma grand-mère qui ne fait pas d'informatique p
 
 ### 10.3 Polices facilitantes
 
-Polices recommandées pour la dyslexie :
-- **OpenDyslexic** (gratuite, optionnelle à proposer)
-- **Atkinson Hyperlegible** (Braille Institute, gratuite)
-- Polices sans empattement de manière générale (Roboto, Inter, etc.)
+> **Source de vérité : [`docs/16-polices-et-lisibilite.md`](16-polices-et-lisibilite.md).** Ce document fait foi pour le choix de police, l'espacement et la taille — ne pas dupliquer la doctrine ici.
 
-**Proposer dans les paramètres** : option "Police adaptée à la dyslexie" qui bascule en OpenDyslexic.
+Principe retenu (cf. doc 16) : on **n'impose pas** « la » police dyslexie ; on **offre le choix + des réglages d'espacement/taille**, car la recherche montre que l'espacement et la taille comptent plus que le dessin des lettres. Défaut **corps = Atkinson Hyperlegible** ; OpenDyslexic et autres familles **proposées** dans les préférences (synchronisées multi-surface via **F-062**).
 
 ---
 

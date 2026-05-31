@@ -112,7 +112,7 @@ Du plus consulté au plus spécialisé : **Identité → Dirigeants → Bilans/F
 - Les gabarits dérivent directement des **7 personas** (rubrique « Données & sources qui comptent ») : Comptable, Cabinet PI, Compliance, Investisseur, Avocat… Un gabarit **« Général »** est le défaut pour qui ne choisit rien.
 - L'utilisateur **affine** par section : un simple **activé/désactivé** (« pas envie ») + l'**épingle** (remonter). Le choix utilisateur **prime toujours** sur le gabarit.
 - **Garde-fou (catégorie 3, non négociable) :** le toggle est une préférence *utilisateur* ; il ne devient **jamais** un moyen pour le *système* de cacher un fait de couverture. Une section **affichée** ne supprime jamais son caveat (« Comptes confidentiels », « UBO exclu par doctrine »…). Masquer = choix éclairé de l'utilisateur, **jamais** une omission trompeuse du système (cohérent ADR-012).
-- Gabarit, toggles et épingles vivent dans **Profil** et **persistent multi-device** (ADR-001).
+- Gabarit, toggles et épingles vivent dans **Profil** et **persistent multi-device** (réalisé par **F-062**, sous ADR-001).
 
 > Terme à figer au glossaire (`docs/08-vocabulaire-ubiquitaire.md`) : **« gabarit de fiche »** (vue d'affichage pré-réglée), pour éviter tout synonyme silencieux. Ce mécanisme de recomposition par gabarit est aussi la **graine de la vue 360 / dossier cible** (cf. §16).
 
@@ -351,7 +351,7 @@ Mobile : pleine largeur, ≥ 44 px, actions au swipe / appui long / overflow. De
 La densité est une **préférence utilisateur, jamais une divergence de design** : **un seul composant, deux densités**. La direction par défaut est **« aérée »** (date et source sur leur propre ligne) ; un réglage optionnel propose une variante **compacte** (lignes resserrées) pour les usages intensifs au poste.
 - Le réglage agit sur l'**espacement** (padding vertical, interligne, date/source sur une ligne dédiée ou condensées). Il ne touche **ni au contenu, ni à l'anatomie** : on resserre l'espace, on ne retire jamais d'information (R5, masquer ≠ amputer).
 - **Garde-fou** : même en mode compact, la **cible tactile reste ≥ 44 px** — on resserre le visuel, pas la zone tappable.
-- Vit dans **Profil** (avec le thème et l'accessibilité) et **persiste par utilisateur, multi-device** (ADR-001).
+- Vit dans **Profil**. La **densité** est une **préférence d'appareil** (locale, non synchronisée — comme le thème) : elle est conçue pour varier selon l'écran (cf. **F-062**). À distinguer de l'accessibilité/police, qui sont des *préférences de compte* synchronisées.
 
 ### Contrat d'accessibilité (doc 06)
 - Chaque ligne = un `article` au sein d'un `feed` / `CollectionView`.
@@ -387,7 +387,7 @@ Déployée · **repliée** · repliée-par-pertinence (R6, signalée) · **épin
 
 ### Comportement
 - L'en-tête entier replie/déploie (cible ≥ 44). L'épingle est une action secondaire (bouton + alternative clavier).
-- L'état déployé/replié **et** l'épinglage **persistent par utilisateur, multi-device** (ADR-001).
+- L'état déployé/replié **et** l'épinglage **persistent par utilisateur, multi-device** (réalisé par **F-062**, sous ADR-001).
 - Le lien d'approfondissement ouvre une page détail, jamais une section qui enfle.
 
 ### Responsive (R2/R4)
