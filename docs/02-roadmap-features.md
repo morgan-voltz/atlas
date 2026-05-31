@@ -252,11 +252,11 @@ compte INPI habilité — couvert par la punch-list « Validation contre l'API I
 
 1. **Approfondissement de la fiche entreprise** — au-delà du RNE / PI, on enrichit avec établissements (Sirene), cotation boursière, marchés publics et indicateurs financiers descriptifs.
 2. **Organisation & capitalisation** — l'utilisateur range et emporte sa connaissance (watchlists, annotations & tags, mode offline mobile).
-3. **Veille étendue & signaux** — le cluster veille du MVP 2 monte d'un cran : surveillance PI automatisée par règles utilisateur + signaux de risque descriptif.
+3. **Veille étendue & signaux** — le cluster veille du MVP 2 monte d'un cran : surveillance PI automatisée par règles utilisateur, signaux de risque descriptif, et **veille réglementaire UE (EUR-Lex) rattachée au secteur** des entités suivies.
 4. **Outillage PI avancé** — killer feature pour les cabinets PI : portefeuille IP et antériorité avec matching intelligent.
 5. **Exposition tiers** — Atlas devient une plateforme : API publique pour les intégrateurs, serveur MCP pour les agents IA.
 
-**Récap V2** (13 features) :
+**Récap V2** (15 features) :
 
 | Grappe | # | Feature | Complexité |
 |---|---|---|---|
@@ -269,6 +269,8 @@ compte INPI habilité — couvert par la punch-list « Validation contre l'API I
 | 2 — Orga | F-029 | Mode offline mobile avec sync | ★★★★ |
 | 3 — Veille | F-027 | Veille PI automatisée (règles utilisateur) | ★★★★ |
 | 3 — Veille | F-055 | Signaux de risque (descriptif) | ★★★ |
+| 3 — Veille | F-063 | Source de veille réglementaire EUR-Lex | ★★★★ |
+| 3 — Veille | F-064 | Matching sectoriel NAF de la veille | ★★★ |
 | 4 — PI | F-025 | Tableau de bord portefeuille IP | ★★★★★ |
 | 4 — PI | F-026 | Antériorité marque (matching intelligent) | ★★★★★ |
 | 5 — Exposition | F-028 | API publique du projet | ★★★★ |
@@ -291,6 +293,8 @@ compte INPI habilité — couvert par la punch-list « Validation contre l'API I
 - [**F-029 — Mode offline mobile avec sync**](features/F-029-mode-offline-mobile-avec-sync.md) — 
 - [**F-027 — Veille PI automatisée (règles utilisateur)**](features/F-027-veille-pi-automatisee-regles-utilisateu.md) — Reformulée 29 mai 2026 — précision du périmètre pour la distinguer de F-046 (cluster veille MVP 2).
 - [**F-055 — Signaux de risque (descriptif)**](features/F-055-signaux-de-risque-descriptif.md) — 
+- [**F-063 — Source de veille réglementaire EUR-Lex**](features/F-063-source-veille-reglementaire-eur-lex.md) — Spécifiée le 31 mai 2026, cadrée par ADR-020. Pendant *réglementaire* de F-041 ; livre la classification native EUR-Lex (EuroVoc + directory code), sans NAF. Fondation de F-064.
+- [**F-064 — Matching sectoriel NAF de la veille**](features/F-064-matching-sectoriel-naf-veille.md) — Spécifiée le 31 mai 2026, cadrée par ADR-020. Pendant *sectoriel* de F-047 (du nom d'entité au secteur) ; sortie `MatchCandidate` « secteur semble concerné — à vérifier », routage anti-noyade par `Scope`.
 - [**F-025 — Tableau de bord portefeuille IP**](features/F-025-tableau-de-bord-portefeuille-ip.md) — 
 - [**F-026 — Recherche d'antériorité marque avec matching intelligent**](features/F-026-recherche-d-anteriorite-marque-avec-mat.md) — Architecture liée : F-026 respecte la posture de ADR-014 (matching conservateur unifié — produit des `MatchCandidate`, jamais de verdict de disponibilité), mais son moteur reste totalement séparé des 3 matchers à base de noms (F-047, F-055, F-031) : similarité phonétique / visuelle / conceptuelle + classes de Nice = mécanique entièrement à part.
 - [**F-028 — API publique du projet**](features/F-028-api-publique-du-projet.md) — 

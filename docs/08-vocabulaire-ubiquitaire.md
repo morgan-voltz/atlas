@@ -881,6 +881,22 @@ L'adapter MCP (`Atlas.Mcp`, F-052) est une **surface curée lecture-d'abord**, p
 
 **Garde-fous** : pas d'outil « omnibus » à entrée libre. Surface d'écriture étroite + approbation humaine pour chaque écriture. Validation d'audience du jeton (pas de *token passthrough*).
 
+### 12.8 Matching sectoriel par crosswalk éditorial (ADR-020)
+
+Le rattachement d'un texte réglementaire (EUR-Lex, F-063) au **secteur (NAF)** des entités suivies (F-064) repose sur un **crosswalk éditorial** sujet → NAF : aucune table officielle EuroVoc → NACE n'existe, le pont est donc **construit, conservateur, et versionné dans le repo** (le `git diff` *est* l'audit de curation). La sortie reste un `MatchCandidate` (§12.5), jamais un verdict.
+
+| Terme | Définition | Côté |
+|---|---|---|
+| **`SectorMappingRule`** (record) | Une règle du crosswalk : `Scheme` + `SourceKey` (clé source, stable/opaque) + `SourceLabel` (dénormalisé, pour l'œil du curateur) → `Divisions` (cible 1→N), `Scope`, `Curation`. **Donnée de référence versionnée** (fichier repo seedé en base, comme les `VeillePack` de F-042). | Domain |
+| **`SourceScheme`** (enum) | Discriminant de la classification source : `EuroVoc`, `EurLexDirectory`, plus tard `JorfNor`, `FrCode`. La clé source varie selon le schéma ; la **cible est toujours NAF**. | Domain |
+| **`NafDivision`** (VO) | Division NAF (**2 chiffres**, ex. `10`) — granularité plancher du crosswalk. Pas la section (trop grossière), pas le 5-positions (fausse précision = violation de doctrine). Les sections se dérivent par préfixe. | Domain |
+| **`MappingScope`** (enum) | `Sectoral` / `Horizontal`. Levier **anti-noyade** : un texte horizontal (RGPD, droit du travail, fiscalité) n'est **pas masqué** mais **routé** vers un canal « réglementaire transverse » opt-in. Le bruit se maîtrise au routage, jamais en cachant un fait. | Domain |
+| **`Curation`** (record) | Provenance de la règle elle-même : `ValidatedBy`, `ValidatedAt`, `Confidence` (`MappingConfidence`), `Rationale?`. La doctrine « tout a une source » repliée sur la table de référence — une correspondance *est* une affirmation. | Domain |
+| **`ISectorClassifier`** | Service de **domaine pur** (pas d'I/O) : `(URIs EuroVoc + directory code) → divisions NAF candidates + Scope`. Charge le crosswalk en mémoire. L'adapter EUR-Lex **ne connaît pas le NAF** : il livre la classif native, le classifier traduit. | Domain (service) |
+| **`FeedItemSectorMatch`** | Persistance d'un match sectoriel `FeedItem` ↔ secteur suivi (analogue de `FeedItemFavoriteMatch` de F-047). Porte un `MatchCandidate`, jamais un lien « confirmé ». | Application |
+
+**Garde-fous** : crosswalk **conservateur** (dans le doute, ne pas mapper — un mapping manquant = silence honnête, un mapping faux = bruit + faux verdict) ; **validation humaine** de chaque règle (via PR) ; ne **jamais** fusionner la table éditoriale source→NAF avec la table **officielle** NACE rév.2 ↔ 2.1 (anti-pattern « fusionner deux natures », ADR-013).
+
 ---
 
 ## 13. Faux-amis et pièges fréquents
@@ -991,6 +1007,7 @@ Pour navigation rapide. À maintenir au fil des ajouts.
 | `BopiPublication` | §6.6 |
 | `Company` | §5.1 |
 | `CompanyStatus` | §5.9 |
+| `Curation` | §12.8 |
 | `Design` | §6.4 |
 | `Dirigeant` | §5.5 |
 | `Document` | §7.1 |
@@ -998,23 +1015,30 @@ Pour navigation rapide. À maintenir au fil des ajouts.
 | `ExternalContentSource` (port) | §9.1, §11.2 |
 | `Favorite` | §8.3 |
 | `FeedItem` | §9.3 |
+| `FeedItemSectorMatch` | §12.8 |
 | `FeedSource` | §9.2 |
 | `FinancialStatement` | §7.3 |
 | `FormeJuridique` | §5.4 |
 | `InpiCredentials` | §4.4 |
 | `IntellectualPropertyAsset` | §6.1 |
+| `ISectorClassifier` | §12.8 |
 | `LegalAct` | §7.2 |
 | `Mandataire` | §5.6 |
+| `MappingScope` | §12.8 |
+| `MatchCandidate` | §12.5 |
 | `Naf` | §3.4 |
+| `NafDivision` | §12.8 |
 | `NiceClassification` | §3.9 |
 | `Notification` | §10.1 |
 | `Patent` | §6.3 |
 | `PatentFascicle` | §7.4 |
 | `Result<T>` | §12.2 |
 | `SearchQuery` | §8.1 |
+| `SectorMappingRule` | §12.8 |
 | `Session` | §4.5 |
 | `Siren` | §3.1 |
 | `Siret` | §3.2 |
+| `SourceScheme` | §12.8 |
 | `Timeline` | §9.6 |
 | `Trademark` | §6.2 |
 | `TvaNumber` | §3.6 |

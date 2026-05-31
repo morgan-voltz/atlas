@@ -147,6 +147,7 @@ Cf. [`TrademarksEndpoints.cs`](../src/Atlas.Api/Endpoints/TrademarksEndpoints.cs
 |---|---|---|
 | `trademarks.not_found` | 404 | Numéro de dépôt inconnu |
 | `trademarks.image_not_found` | 404 | Pas d'image associée |
+| `inpi.pi_unavailable` | 502 | Source INPI Propriété Industrielle injoignable (`apidiffusion` down / dé-enregistrée, timeout). À ne **pas** confondre avec un résultat vide ni avec un problème d'accès. Extension optionnelle `retryAfterSeconds`. Cf. ADR-018. |
 
 ---
 
@@ -164,6 +165,7 @@ Cf. [`PatentsEndpoints.cs`](../src/Atlas.Api/Endpoints/PatentsEndpoints.cs). �
 | `patents.invalid_publication_number` | 400 | Format invalide (longueur 4-32, lettres/chiffres/`-`/`.`/`/`) |
 | `patents.not_found` | 404 | Numéro de publication inconnu |
 | `patents.empty_search` | 400 | Aucun critère de recherche fourni |
+| `inpi.pi_unavailable` | 502 | Source INPI Propriété Industrielle injoignable (`apidiffusion` down / dé-enregistrée, timeout). À ne **pas** confondre avec un résultat vide ni avec un problème d'accès. Extension optionnelle `retryAfterSeconds`. Cf. ADR-018. |
 
 ---
 

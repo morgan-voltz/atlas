@@ -13,7 +13,7 @@
 ## Sommaire
 
 - [Vision du projet](#vision-du-projet)
-- [Décisions (ADR-001 → ADR-017)](#décisions-adr-001--adr-017)
+- [Décisions (ADR-001 → ADR-020)](#décisions-adr-001--adr-020)
 - [Décisions à prendre ultérieurement](#décisions-à-prendre-ultérieurement)
 - [Roadmap macro](#roadmap-macro)
 - [Glossaire](#glossaire)
@@ -41,7 +41,7 @@ Le projet propose une **alternative open source** qui :
 
 ---
 
-## Décisions (ADR-001 → ADR-017)
+## Décisions (ADR-001 → ADR-020)
 
 > Synthèses ; le détail (contexte, rationale, conséquences) est dans chaque fichier de [`docs/ADR/`](ADR/).
 
@@ -85,11 +85,20 @@ Le projet propose une **alternative open source** qui :
   Read-model `CompanyDossier` à sections auto-descriptives, 5 états `SectionState`, résolution snapshot-first (backbone de F-056).
 - **[ADR-016 — Sécurité & doctrine de la surface agentique (MCP)](ADR/ADR-016-securite-doctrine-surface-agentique.md)** ✅
   Surface curée **lecture-d'abord**, doctrine inline avec la donnée, contenu externe = donnée jamais instruction, credentials qui ne traversent jamais.
+- **[ADR-020 — Matching sectoriel de la veille par crosswalk éditorial](ADR/ADR-020-matching-sectoriel-crosswalk-editorial.md)** ✅
+  Pont **sujet → NAF** irréductiblement **éditorial** (aucune table officielle EuroVoc→NACE) : crosswalk multi-schémas (`SectorMappingRule`, discriminant `Scheme`), conservateur, granularité **division NAF (2 chiffres)** ; flag **`Scope` (Sectoral / Horizontal)** comme levier anti-noyade par **routage, jamais masquage** ; donnée de référence **versionnée dans le repo** (le `git diff` *est* l'audit de curation, comme F-042) ; comportement = service de domaine pur `ISectorClassifier` ; sortie = **`MatchCandidate`** (ADR-014), jamais un verdict. Implémenté par **F-063 / F-064**.
 
 ### Clients
 
 - **[ADR-017 — Framework du client web : Blazor Web App](ADR/ADR-017-framework-web-blazor.md)** ✅ *(amendé 30 mai 2026 — WASM pur v1)*
   Client web = **Blazor Web App**, **WASM pur** pour l'app authentifiée v1 ; `Atlas.Web.Client` = consommateur HTTP pur (`Domain` + `Shared` only, NetArchTest). Résout le point laissé ouvert par ADR-007. UX : `docs/14`.
+
+### Robustesse & exploitation
+
+- **[ADR-018 — Dégradation gracieuse des sources amont & code d'erreur dédié](ADR/ADR-018-degradation-gracieuse-sources-amont.md)** ✅
+  Trois faits jamais confondus (**indisponible** ≠ **vide de couverture** ≠ **problème d'accès**) ; code métier **`inpi.pi_unavailable`** (502) sur `/trademarks*` et `/patents*` classifié dans l'adapter ; dégradation **à portée locale** (`SectionState`, ADR-015) ; rendu client honnête réutilisant le composant Erreur. Pendant *humain* de la doctrine ADR-016. UX : `docs/12 §14`, `docs/14`.
+- **[ADR-019 — Serveur de préproduction (alpha & beta) : VPS unique tout-en-un](ADR/ADR-019-serveur-preproduction.md)** ✅
+  Préprod = **un seul VPS auto-géré** (API + PostgreSQL + Hangfire in-process + statiques WASM) en docker-compose miroir du harness local (doc 13) ; 2 vCPU / 4 Go ; **région UE** (**Hetzner** pressenti, provider révisable — c'est la région UE, pas la marque, qui fait la conformité) ; always-on derrière reverse proxy TLS ; clé de chiffrement en posture préprod assumée ; `pg_dump` quotidien ; **maintenance par l'auteur, délégation différée** sur critère de bascule explicite. **Ne tranche que la préprod** — le choix de l'hébergeur de **prod** reste ouvert.
 
 ---
 
@@ -100,7 +109,7 @@ Les sujets suivants sont **identifiés** mais **non encore tranchés**. Ils sero
 | Sujet | Pourquoi attendre |
 |---|---|
 | Nom du projet | À figer avant la création du repo |
-| Choix de l'hébergeur (OVHcloud, Scaleway, Clever Cloud, Hetzner...) | Décision en phase déploiement |
+| Choix de l'hébergeur de **production** (OVHcloud, Scaleway, Clever Cloud, Hetzner...) | **Préprod tranchée par ADR-019** (VPS unique FR/UE) ; **prod reste ouverte** — décision en phase déploiement |
 | Outil de paiement (Stripe, Lemon Squeezy, Paddle) | Décision phase 3 (mois 12–24) |
 | Stratégie de cache (Redis ? In-memory ?) | Décision en phase architecture détaillée |
 | Gestion de queue pour les tâches asynchrones (Hangfire, MassTransit + RabbitMQ) | Décision en phase architecture détaillée |
