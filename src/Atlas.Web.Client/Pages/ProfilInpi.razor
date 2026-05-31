@@ -1,0 +1,168 @@
+@page "/profil/inpi"
+@attribute [Authorize]
+@inject IAtlasApiClient Api
+
+@* Connexion INPI (F-003, doc 12 §9) — composant vital : sans lui, aucune donnée entreprise.
+   Trois états : connecté / invalide (reconnecter) / non connecté (onboarding). Garde-fou absolu :
+   les InpiCredentials ne sont JAMAIS affichés ni relus côté client (saisis, envoyés, oubliés). *@
+
+<PageTitle>Connexion INPI · Atlas</PageTitle>
+
+<div class="inpi-page">
+    <p class="back-link"><a href="profil">← Profil</a></p>
+    <h1>Connexion INPI</h1>
+
+    <section aria-live="polite" aria-busy="@(state == PageState.Loading)">
+        @switch (state)
+        {
+            case PageState.Loading:
+                <p role="status" class="muted">Chargement du statut…</p>
+                break;
+
+            case PageState.Connected:
+                <div class="status-card">
+                    <p class="status-line ok"><span aria-hidden="true">✓ </span>Connecté</p>
+                    @if (status?.LastTestedAt is { } tested)
+                    {
+                        <p class="status-meta">Dernier test réussi le @tested.ToString("d MMMM yyyy", Culture)</p>
+                    }
+                    <div class="status-actions">
+                        <button type="button" class="btn-secondary" @onclick="() => showForm = !showForm">
+                            Mettre à jour les identifiants
+                        </button>
+                        <button type="button" class="btn-ghost" @onclick="DisconnectAsync" disabled="@busy">
+                            @(busy ? "…" : "Déconnecter")
+                        </button>
+                    </div>
+                </div>
+                @if (showForm) { @ConnectForm }
+                break;
+
+            case PageState.Invalid:
+                <div class="status-card warn" role="alert">
+                    <p class="status-line warn"><span aria-hidden="true">⚠ </span>Connexion INPI invalide</p>
+                    <p class="status-meta">Tes identifiants ne sont plus acceptés par l'INPI. Reconnecte-toi pour rétablir l'accès aux données.</p>
+                </div>
+                @ConnectForm
+                <div class="status-actions">
+                    <button type="button" class="btn-ghost" @onclick="DisconnectAsync" disabled="@busy">Déconnecter</button>
+                </div>
+                break;
+
+            case PageState.NotConnected:
+                <div class="onboarding">
+                    <p>Atlas interroge l'INPI <strong>en ton nom</strong> pour afficher les fiches entreprises (Registre National des Entreprises). Connecte ton compte technique INPI pour activer la recherche et les fiches.</p>
+                </div>
+                @ConnectForm
+                break;
+        }
+    </section>
+
+    <p class="security-note">
+        <span aria-hidden="true">🔒 </span>
+        Tes identifiants INPI sont chiffrés (AES-256-GCM) et <strong>ne sont jamais affichés</strong>. Ils servent uniquement à interroger l'INPI en ton nom.
+    </p>
+</div>
+
+@code {
+    private static readonly System.Globalization.CultureInfo Culture = new("fr-FR");
+
+    private PageState state = PageState.Loading;
+    private InpiConnectionStatusResponse? status;
+    private bool showForm;
+    private bool busy;
+
+    // Champs du formulaire — jamais préremplis, jamais relus depuis le serveur.
+    private string username = string.Empty;
+    private string password = string.Empty;
+    private string? formError;
+
+    private bool CanSubmit => !busy && username.Trim().Length > 0 && password.Length > 0;
+
+    protected override async Task OnInitializedAsync() => await LoadStatusAsync();
+
+    private async Task LoadStatusAsync()
+    {
+        state = PageState.Loading;
+        ApiResult<InpiConnectionStatusResponse> result = await Api.GetInpiStatusAsync();
+        status = result.IsSuccess ? result.Value : null;
+
+        state = status switch
+        {
+            { Connected: true } s when string.Equals(s.Status, "Invalid", StringComparison.OrdinalIgnoreCase) => PageState.Invalid,
+            { Connected: true } => PageState.Connected,
+            _ => PageState.NotConnected,
+        };
+        showForm = false;
+    }
+
+    private async Task SubmitAsync()
+    {
+        if (!CanSubmit)
+        {
+            return;
+        }
+
+        busy = true;
+        formError = null;
+
+        ApiResult result = await Api.ConnectInpiAsync(username.Trim(), password);
+        busy = false;
+
+        if (result.IsSuccess)
+        {
+            username = string.Empty;
+            password = string.Empty; // on oublie le secret dès que possible
+            await LoadStatusAsync();
+            return;
+        }
+
+        formError = MapConnectError(result.ErrorCode);
+    }
+
+    private async Task DisconnectAsync()
+    {
+        busy = true;
+        ApiResult result = await Api.DisconnectInpiAsync();
+        busy = false;
+        if (result.IsSuccess)
+        {
+            await LoadStatusAsync();
+        }
+    }
+
+    private static string MapConnectError(string? code) => code switch
+    {
+        "inpi.invalid_credentials" => "Identifiants INPI invalides. Vérifie ton identifiant technique et ton mot de passe.",
+        "inpi.api_access_not_allowed" => "Ce compte INPI n'est pas habilité à l'API. Demande l'accès « API / SFTP » sur data.inpi.fr.",
+        "validation.failed" => "Identifiant et mot de passe sont requis.",
+        "network" => "Service indisponible. Réessaye dans un moment.",
+        _ => "La connexion INPI a échoué. Réessaye.",
+    };
+
+    private RenderFragment ConnectForm => @<EditForm Model="this" OnValidSubmit="SubmitAsync" class="inpi-form">
+        @if (formError is not null)
+        {
+            <p class="form-error" role="alert">@formError</p>
+        }
+        <div class="field">
+            <label for="inpi-user">Identifiant technique INPI</label>
+            <input id="inpi-user" type="text" autocomplete="off" @bind="username" @bind:event="oninput" disabled="@busy" />
+        </div>
+        <div class="field">
+            <label for="inpi-pass">Mot de passe INPI</label>
+            <input id="inpi-pass" type="password" autocomplete="off" @bind="password" @bind:event="oninput" disabled="@busy" />
+        </div>
+        <button type="submit" class="btn-primary" disabled="@(!CanSubmit)">
+            @(busy ? "Connexion…" : "Connecter mon compte INPI")
+        </button>
+    </EditForm>;
+
+    private enum PageState
+    {
+        Loading,
+        Connected,
+        Invalid,
+        NotConnected,
+    }
+}

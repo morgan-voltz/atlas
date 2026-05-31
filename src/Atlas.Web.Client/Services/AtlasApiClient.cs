@@ -105,6 +105,48 @@ internal sealed class AtlasApiClient(HttpClient httpClient, ITokenStore tokenSto
             () => new HttpRequestMessage(HttpMethod.Delete, $"favorites/companies/{Uri.EscapeDataString(siren)}"),
             ct);
 
+    public Task<ApiResult<InpiConnectionStatusResponse>> GetInpiStatusAsync(CancellationToken ct = default) =>
+        GetAsync<InpiConnectionStatusResponse>("inpi/connection", ct);
+
+    public Task<ApiResult> ConnectInpiAsync(string username, string password, CancellationToken ct = default) =>
+        SendNoContentAsync(
+            () => new HttpRequestMessage(HttpMethod.Post, "inpi/connection")
+            {
+                Content = JsonContent.Create(new ConnectInpiRequest(username, password)),
+            },
+            ct);
+
+    public Task<ApiResult> DisconnectInpiAsync(CancellationToken ct = default) =>
+        SendNoContentAsync(() => new HttpRequestMessage(HttpMethod.Delete, "inpi/connection"), ct);
+
+    public async Task<ApiResult<string>> ExportMyDataAsync(CancellationToken ct = default)
+    {
+        try
+        {
+            using HttpResponseMessage response =
+                await SendWithAuthAsync(() => new HttpRequestMessage(HttpMethod.Get, "account/export"), ct);
+
+            if (response.IsSuccessStatusCode)
+            {
+                return ApiResult<string>.Ok(await response.Content.ReadAsStringAsync(ct));
+            }
+
+            if (response.StatusCode == HttpStatusCode.Unauthorized)
+            {
+                return ApiResult<string>.Fail("unauthorized");
+            }
+
+            return ApiResult<string>.Fail(await ReadProblemCodeAsync(response, ct) ?? "unexpected");
+        }
+        catch (HttpRequestException)
+        {
+            return ApiResult<string>.Fail("network");
+        }
+    }
+
+    public Task<ApiResult> DeleteMyAccountAsync(CancellationToken ct = default) =>
+        SendNoContentAsync(() => new HttpRequestMessage(HttpMethod.Delete, "account"), ct);
+
     private async Task<ApiResult<T>> GetAsync<T>(string url, CancellationToken ct)
     {
         try

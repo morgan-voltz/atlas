@@ -4,25 +4,94 @@
 @inject AtlasAuthenticationStateProvider AuthState
 @inject NavigationManager Navigation
 
+@* Profil = hub de réglages (doc 12 §9), pas une longue page : domaines hétérogènes, certains
+   sensibles → sous-pages. Le statut INPI (info vitale) est visible dès le hub. *@
+
 <PageTitle>Profil · Atlas</PageTitle>
 
-<h1>Profil</h1>
-<p>Compte, session, connexion INPI, préférences, données. Écran à implémenter — cf. doc 12 §9 et doc 14.</p>
+<div class="profil-hub">
+    <h1>Profil</h1>
 
-<AuthorizeView>
-    <Authorized>
-        <p class="profil-identity">
-            Connecté en tant que <strong>@(context.User.Identity?.Name ?? "utilisateur")</strong>.
-        </p>
-    </Authorized>
-</AuthorizeView>
+    <AuthorizeView>
+        <Authorized>
+            <p class="profil-identity">Connecté en tant que <strong>@(context.User.Identity?.Name ?? "utilisateur")</strong>.</p>
+        </Authorized>
+    </AuthorizeView>
 
-<button type="button" class="btn-logout" @onclick="LogoutAsync" disabled="@busy">
-    @(busy ? "Déconnexion…" : "Se déconnecter")
-</button>
+    <h2 class="hub-family">Mon compte</h2>
+    <nav class="hub-list" aria-label="Réglages du compte">
+        <a class="hub-item" href="profil/inpi">
+            <span class="hub-item-main">
+                <span class="hub-item-title">Connexion INPI</span>
+                <span class="hub-item-sub">Indispensable pour accéder aux données entreprises</span>
+            </span>
+            <span class="hub-status @InpiChipClass">@InpiChipLabel</span>
+            <span class="hub-chevron" aria-hidden="true">›</span>
+        </a>
+        <a class="hub-item" href="profil/donnees">
+            <span class="hub-item-main">
+                <span class="hub-item-title">Données &amp; confidentialité</span>
+                <span class="hub-item-sub">Exporter mes données, supprimer mon compte (RGPD)</span>
+            </span>
+            <span class="hub-chevron" aria-hidden="true">›</span>
+        </a>
+    </nav>
+
+    <h2 class="hub-family">Application</h2>
+    <p class="hub-soon">Thème, densité, langue, affichage &amp; accessibilité — à venir (jalon ultérieur).</p>
+
+    <div class="logout-zone">
+        @if (!confirmingLogout)
+        {
+            <button type="button" class="btn-logout" @onclick="() => confirmingLogout = true">Se déconnecter</button>
+        }
+        else
+        {
+            <p class="logout-confirm-text">
+                Te déconnecter ? Tu devras ressaisir ton email et ton mot de passe pour revenir.
+                Tes identifiants INPI restent chiffrés côté serveur.
+            </p>
+            <div class="logout-actions">
+                <button type="button" class="btn-logout danger" @onclick="LogoutAsync" disabled="@busy">
+                    @(busy ? "Déconnexion…" : "Confirmer la déconnexion")
+                </button>
+                <button type="button" class="btn-cancel" @onclick="() => confirmingLogout = false" disabled="@busy">Annuler</button>
+            </div>
+        }
+    </div>
+</div>
 
 @code {
     private bool busy;
+    private bool confirmingLogout;
+    private InpiConnectionStatusResponse? inpiStatus;
+    private bool inpiStatusLoaded;
+
+    private string InpiChipLabel => !inpiStatusLoaded
+        ? "…"
+        : inpiStatus is { Connected: true } s
+            ? (IsInvalid(s) ? "À reconnecter" : "Connecté")
+            : "Non connecté";
+
+    private string InpiChipClass => !inpiStatusLoaded
+        ? "neutral"
+        : inpiStatus is { Connected: true } s
+            ? (IsInvalid(s) ? "warn" : "ok")
+            : "neutral";
+
+    private static bool IsInvalid(InpiConnectionStatusResponse s) =>
+        string.Equals(s.Status, "Invalid", StringComparison.OrdinalIgnoreCase);
+
+    protected override async Task OnInitializedAsync()
+    {
+        ApiResult<InpiConnectionStatusResponse> result = await Api.GetInpiStatusAsync();
+        if (result.IsSuccess)
+        {
+            inpiStatus = result.Value;
+        }
+
+        inpiStatusLoaded = true;
+    }
 
     private async Task LogoutAsync()
     {

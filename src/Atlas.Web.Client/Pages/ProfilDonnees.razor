@@ -1,0 +1,144 @@
+@page "/profil/donnees"
+@attribute [Authorize]
+@inject IAtlasApiClient Api
+@inject AtlasAuthenticationStateProvider AuthState
+@inject NavigationManager Navigation
+
+@* Données & confidentialité (doc 12 §9) — export RGPD (art. 20) bénin en haut ; suppression de
+   compte (art. 17) en zone danger isolée en bas, confirmation forte. Le texte dit la vérité :
+   effacement sous 30 j, données de facturation conservées et anonymisées (obligation légale). *@
+
+<PageTitle>Données &amp; confidentialité · Atlas</PageTitle>
+
+<div class="donnees-page">
+    <p class="back-link"><a href="profil">← Profil</a></p>
+    <h1>Données &amp; confidentialité</h1>
+
+    <h2 class="family">Mes données</h2>
+    <div class="export-card">
+        <div class="export-main">
+            <p class="export-title">Exporter mes données</p>
+            <p class="export-sub">Archive JSON : compte, connexion INPI (statut), historique de recherches (RGPD art. 20).</p>
+        </div>
+        @if (exportUrl is null)
+        {
+            <button type="button" class="btn-secondary" @onclick="ExportAsync" disabled="@exporting">
+                @(exporting ? "Préparation…" : "Préparer l'export")
+            </button>
+        }
+        else
+        {
+            <a class="btn-primary" href="@exportUrl" download="atlas-mes-donnees.json" @onclick="() => exportUrl = null">
+                Télécharger le .json
+            </a>
+        }
+    </div>
+    @if (exportError is not null)
+    {
+        <p class="inline-error" role="alert">@exportError</p>
+    }
+
+    <h2 class="family danger-label">Zone sensible</h2>
+    <div class="danger-zone">
+        <p class="danger-title"><span aria-hidden="true">⚠ </span>Supprimer mon compte</p>
+        <p class="danger-text">
+            Effacement sous 30 jours. Tes données personnelles et tes identifiants INPI sont supprimés ;
+            certaines données de facturation sont conservées et <strong>anonymisées</strong> (obligation légale).
+            Cette action est irréversible.
+        </p>
+
+        @if (!confirmingDelete)
+        {
+            <button type="button" class="btn-danger" @onclick="() => confirmingDelete = true">Supprimer définitivement…</button>
+        }
+        else
+        {
+            <div class="delete-confirm">
+                <label for="confirm-email">Pour confirmer, ressaisis ton email (<strong>@UserEmail</strong>)</label>
+                <input id="confirm-email" type="email" autocomplete="off" @bind="confirmEmail" @bind:event="oninput" disabled="@deleting" />
+                @if (deleteError is not null)
+                {
+                    <p class="inline-error" role="alert">@deleteError</p>
+                }
+                <div class="delete-actions">
+                    <button type="button" class="btn-danger" @onclick="DeleteAsync" disabled="@(!CanDelete)">
+                        @(deleting ? "Suppression…" : "Supprimer mon compte")
+                    </button>
+                    <button type="button" class="btn-cancel" @onclick="CancelDelete" disabled="@deleting">Annuler</button>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+    private bool exporting;
+    private string? exportUrl;
+    private string? exportError;
+
+    private bool confirmingDelete;
+    private string confirmEmail = string.Empty;
+    private bool deleting;
+    private string? deleteError;
+
+    private string? UserEmail { get; set; }
+
+    private bool CanDelete => !deleting
+        && UserEmail is not null
+        && string.Equals(confirmEmail.Trim(), UserEmail, StringComparison.OrdinalIgnoreCase);
+
+    protected override async Task OnInitializedAsync()
+    {
+        AuthenticationState authState = await AuthState.GetAuthenticationStateAsync();
+        UserEmail = authState.User.Identity?.Name;
+    }
+
+    private async Task ExportAsync()
+    {
+        exporting = true;
+        exportError = null;
+
+        ApiResult<string> result = await Api.ExportMyDataAsync();
+        exporting = false;
+
+        if (result.IsSuccess && result.Value is not null)
+        {
+            // Data-URL téléchargeable : pas de JS interop, l'archive ne quitte pas le navigateur.
+            exportUrl = "data:application/json;charset=utf-8," + Uri.EscapeDataString(result.Value);
+            return;
+        }
+
+        exportError = result.ErrorCode == "network"
+            ? "Service indisponible. Réessaye dans un moment."
+            : "L'export a échoué. Réessaye.";
+    }
+
+    private void CancelDelete()
+    {
+        confirmingDelete = false;
+        confirmEmail = string.Empty;
+        deleteError = null;
+    }
+
+    private async Task DeleteAsync()
+    {
+        if (!CanDelete)
+        {
+            return;
+        }
+
+        deleting = true;
+        deleteError = null;
+
+        ApiResult result = await Api.DeleteMyAccountAsync();
+        if (result.IsSuccess)
+        {
+            AuthState.NotifyUserLogout();
+            Navigation.NavigateTo("connexion", forceLoad: false);
+            return;
+        }
+
+        deleting = false;
+        deleteError = "La suppression a échoué. Réessaye dans un moment.";
+    }
+}
