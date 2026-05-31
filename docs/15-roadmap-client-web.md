@@ -36,7 +36,7 @@ Chaque jalon = une tranche verticale livrant de la valeur utilisable de bout en 
 | Jalon | Contenu | Pourquoi en premier / dépendances | Statut |
 |---|---|:--:|:--:|
 | **M0 — Fondations** | scaffold + navigation/routing | socle (cf. §1) | ✅ |
-| **M1 — Connexion + Recherche** | login (token mémoire + refresh cookie HttpOnly) **et** écran Recherche de bout en bout | 1ʳᵉ tranche : valide toute la chaîne — `AtlasApiClient`, auth, garde de route, premiers composants (carte-aperçu, états) | ⬜ |
+| **M1 — Connexion + Recherche** | login (token mémoire + refresh cookie HttpOnly) **et** écran Recherche de bout en bout | 1ʳᵉ tranche : valide toute la chaîne — `AtlasApiClient`, auth, garde de route, premiers composants (carte-aperçu, états) | 🟡 |
 | **M2 — Fiche entreprise** | depuis un résultat, fiche en cartes-sections, provenance épinglée, états de couverture | réutilise carte-section + le client API de M1 | ⬜ |
 | **M3 — Accueil / feed** | fil des mouvements des entités suivies (cartes-aperçu *event*) | dépend des favoris (lecture) ; garde-fous anti-« réseau social » | ⬜ |
 | **M4 — Favoris / Watchlists + list-detail 2 panneaux** | gestion des favoris **et** introduction du **list-detail à 2 panneaux** (signature desktop, réutilisé ensuite) | la signature desktop (doc 14 §3) arrive ici puis se généralise | ⬜ |
@@ -57,13 +57,13 @@ Un écran n'est **✅** que lorsque **toutes** ses colonnes le sont. DoD = templ
 
 | Écran | Jalon | Maquette | Données | États | Responsive | A11y | Clavier | URL/titre | Statut |
 |---|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|
-| Recherche (+ « Vérifier un nom », F-060) | M1 | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
+| Recherche (+ « Vérifier un nom », F-060) | M1 | 🟡 | ✅ | ✅ | 🟡 | ✅ | ✅ | ✅ | 🟡 |
 | Fiche entreprise | M2 | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
 | Accueil / feed | M3 | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
 | Favoris / Watchlists | M4 | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
 | Veille | M5 | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
 | Profil + sous-pages | M6 | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
-| Auth / onboarding | M1/M7 | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
+| Auth / onboarding | M1/M7 | 🟡 | ✅ | ✅ | 🟡 | ✅ | ✅ | ✅ | 🟡 |
 
 Renvois doctrine par écran : Recherche doc 12 §7 ; Fiche §4 ; Accueil §5 ; Favoris §8 ; Veille §6 ; Profil §9 ; Auth §10.
 

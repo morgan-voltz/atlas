@@ -1,0 +1,15 @@
+@inject NavigationManager Navigation
+
+@* Redirige vers la page de connexion en conservant l'URL demandée (deep-link dégradé, doc 14) :
+   après login, on pourra réacheminer l'utilisateur vers sa destination initiale. *@
+
+@code {
+    protected override void OnInitialized()
+    {
+        string returnUrl = Navigation.ToBaseRelativePath(Navigation.Uri);
+        string target = string.IsNullOrEmpty(returnUrl) || returnUrl.StartsWith("connexion", StringComparison.OrdinalIgnoreCase)
+            ? "connexion"
+            : $"connexion?returnUrl={Uri.EscapeDataString(returnUrl)}";
+        Navigation.NavigateTo(target, forceLoad: false, replace: true);
+    }
+}

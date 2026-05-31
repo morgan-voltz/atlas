@@ -1,0 +1,28 @@
+@* Carte-aperçu d'un résultat entreprise (doc 12 §7 / kit doc 15 §4). Présentation seule en M1 ;
+   l'ouverture de la fiche (navigation vers /entreprise/{siren}) arrive avec M2. *@
+
+<article class="result-row">
+    <div class="result-main">
+        <p class="result-name">@Company.Denomination</p>
+        <p class="result-sub">
+            <span class="result-siren">@FormatSiren(Company.Siren)</span>
+            @if (!string.IsNullOrWhiteSpace(Company.Ville))
+            {
+                <span class="result-dot" aria-hidden="true">·</span><span>@Company.Ville</span>
+            }
+            @if (!string.IsNullOrWhiteSpace(Company.NafCode))
+            {
+                <span class="result-dot" aria-hidden="true">·</span><span>NAF @Company.NafCode</span>
+            }
+        </p>
+    </div>
+</article>
+
+@code {
+    [Parameter]
+    [EditorRequired]
+    public required CompanySummaryResponse Company { get; set; }
+
+    private static string FormatSiren(string siren) =>
+        siren.Length == 9 ? $"{siren[..3]} {siren[3..6]} {siren[6..]}" : siren;
+}

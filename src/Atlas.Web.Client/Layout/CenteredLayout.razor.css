@@ -1,0 +1,19 @@
+.auth-shell {
+    min-height: 100dvh;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 2.5rem 1.25rem;
+    background: #f4f7fa;
+}
+
+.auth-card {
+    width: 100%;
+    max-width: 26rem;
+}
+
+@media (min-width: 768px) {
+    .auth-shell {
+        align-items: center;
+    }
+}
