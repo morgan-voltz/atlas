@@ -73,7 +73,10 @@
 
 /* ---- Formulaire ---------------------------------------------------------- */
 
-.inpi-form {
+/* .inpi-form est porté par le <form> rendu par EditForm (composant enfant) : son élément ne reçoit
+   pas l'attribut de scope de cette page. On le cible donc via ::deep depuis l'ancêtre scoped
+   .inpi-page, sinon la carte (fond/bordure/padding/gap) ne s'applique jamais. */
+.inpi-page ::deep .inpi-form {
     display: flex;
     flex-direction: column;
     gap: 1rem;
