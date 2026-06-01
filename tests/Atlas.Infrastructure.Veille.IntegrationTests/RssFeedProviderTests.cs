@@ -88,6 +88,26 @@ public sealed class RssFeedProviderTests : IDisposable
         result.IsFailure.Should().BeTrue();
     }
 
+    [Fact]
+    public async Task FetchAsync_rejects_feed_with_external_entity_dtd_without_resolving_it()
+    {
+        // Durcissement anti-XXE (audit Lot 1) : un flux portant une DTD avec entité externe doit
+        // être rejeté proprement (Result.Fail), sans que l'entité « file:/// » soit résolue.
+        const string xxe = """
+        <?xml version="1.0" encoding="utf-8"?>
+        <!DOCTYPE rss [ <!ENTITY xxe SYSTEM "file:///etc/passwd"> ]>
+        <rss version="2.0"><channel><title>&xxe;</title><link>https://x.test</link>
+        <description>d</description></channel></rss>
+        """;
+        StubFeed("/feed", 200, xxe);
+
+        Result<IReadOnlyList<FeedItemDraft>> result = await CreateProvider()
+            .FetchAsync(SourceFor("/feed"), since: null, CancellationToken.None);
+
+        result.IsFailure.Should().BeTrue();
+        result.Error!.Code.Should().Be("veille.fetch_failed");
+    }
+
     private static RssFeedProvider CreateProvider() => new(new HttpClient());
 
     private FeedSource SourceFor(string path) =>

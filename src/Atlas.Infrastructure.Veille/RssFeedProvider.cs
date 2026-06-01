@@ -49,6 +49,9 @@ internal sealed class RssFeedProvider(HttpClient httpClient) : IExternalContentS
         Feed feed;
         try
         {
+            // Durcissement anti-XXE (audit Lot 1) : on rejette toute DTD avant de confier le flux
+            // à FeedReader, qui parse du XML provenant d'une URL fournie par l'utilisateur.
+            SafeXmlGuard.EnsureSafe(payload);
             feed = FeedReader.ReadFromByteArray(payload);
         }
         catch (XmlException)

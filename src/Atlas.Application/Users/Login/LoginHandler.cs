@@ -16,6 +16,11 @@ internal sealed class LoginHandler(
     ITwoFactorChallengeService challengeService,
     AuthSettings settings) : IRequestHandler<LoginCommand, Result<LoginResultDto>>
 {
+    // Hash factice (anti-énumération par timing, audit Lot 1) : quand l'email est inconnu, on exécute
+    // tout de même un Verify Argon2id complet pour que le temps de réponse ne révèle pas l'existence
+    // du compte. Calculé une fois via le hasher injecté pour rester aligné sur le coût réel.
+    private static PasswordHash? _dummyHash;
+
     public async Task<Result<LoginResultDto>> Handle(LoginCommand request, CancellationToken cancellationToken)
     {
         Result<EmailAddress> emailResult = EmailAddress.Create(request.Email);
@@ -27,6 +32,9 @@ internal sealed class LoginHandler(
         User? user = await userRepository.GetByEmailAsync(emailResult.Value, cancellationToken);
         if (user is null)
         {
+            // Verify factice à coût équivalent (cf. _dummyHash) avant de répondre, pour ne pas
+            // distinguer « email inconnu » d'« email connu, mot de passe faux » par le timing.
+            passwordHasher.Verify(request.Password, _dummyHash ??= passwordHasher.Hash("atlas-timing-equalizer"));
             return Result<LoginResultDto>.Fail(UserErrors.InvalidCredentials);
         }
 
