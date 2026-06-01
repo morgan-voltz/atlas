@@ -12,15 +12,21 @@
 
 ## État du projet
 
-**MVP 1 — backend complet, clients et documentation amorcés.** Fonctionnalités livrées : inscription /
-connexion, 2FA, connexion d'un compte INPI, recherche entreprise (SIREN / dénomination), recherche et
-fiche de marques, historique de recherches, RGPD (export / suppression), client MAUI (mobile + desktop),
-site de documentation. **Client web Blazor (WASM)** amorcé : scaffold + squelette de navigation (rail
-5 destinations + routing) — suivi dans la [roadmap client web](docs/15-roadmap-client-web.md).
+**Backend (MVP 1 + MVP 2) complet ; client web v1 livré.** Côté **backend** : inscription / connexion,
+2FA TOTP, renvoi de vérification & réinitialisation de mot de passe, connexion d'un compte INPI, recherche
+entreprise (SIREN / dénomination), actes & bilans RNE, favoris, RGPD (export / suppression), et le
+**cluster Veille** (agrégation RSS / Atom, BODACC, timeline unifiée, déduplication, règles de surveillance,
+alertes email / push).
 
-Certaines intégrations INPI sont alignées sur la documentation officielle mais restent à confirmer par un
-appel authentifié réel (cf. statuts 🟡 dans la [roadmap](docs/02-roadmap-features.md)). Détail des
-changements dans [`CHANGELOG.md`](CHANGELOG.md).
+Le **client web Blazor (WASM pur, cf. ADR-017)** est **complet (jalons M0 → M7)** et vérifié de bout en
+bout en navigateur : onboarding (inscription, vérification email, défi 2FA), connexion, recherche, fiche
+entreprise, fil d'accueil, favoris (list-detail à deux panneaux), veille, profil / connexion INPI / RGPD —
+suivi dans la [roadmap client web](docs/15-roadmap-client-web.md).
+
+Les **clients natifs** suivent [ADR-026](docs/ADR/ADR-026-clients-natifs-maui-avalonia.md) : **MAUI** pour
+le mobile (Android / iOS, slice amorcé), **Avalonia** pour le desktop (Windows / macOS / Linux, à construire).
+La **recherche PI** (marques / brevets) reste à débloquer côté INPI (cf. statuts 🟡 dans la
+[roadmap](docs/02-roadmap-features.md)). Détail des changements dans [`CHANGELOG.md`](CHANGELOG.md).
 
 ## Démarrage rapide
 
@@ -40,9 +46,15 @@ dotnet ef database update \
 # Lancer l'API en local
 dotnet run --project src/Atlas.Api
 
-# Compiler le client MAUI (Android)
+# Lancer le client web (hôte Blazor — sert le client WASM interactif)
+dotnet run --project src/Atlas.Web
+
+# Compiler le client mobile MAUI (Android)
 dotnet build src/Atlas.Maui -f net10.0-android
 ```
+
+> Pour un cycle complet en local (PostgreSQL conteneurisé, migrations, API, collection Bruno),
+> voir le [harness de test e2e](docs/13-harness-test-local-e2e.md).
 
 Configuration backend (`src/Atlas.Api/appsettings.json` ou variables d'environnement) :
 `ConnectionStrings:Atlas` (PostgreSQL), `Jwt:PrivateKeyPem` (clé RSA), `Crypto:KeyBase64`
@@ -57,7 +69,7 @@ Configuration backend (`src/Atlas.Api/appsettings.json` ou variables d'environne
   - `Atlas.Application.Premium` — use cases premium isolés
   - `Atlas.Infrastructure.*` — adapters (Inpi, Persistence, Veille, Messaging, Security, Cache, Storage)
   - `Atlas.Api` — Web API ASP.NET Core (composition root serveur)
-  - `Atlas.Maui` — client multi-plateformes natif (Android, iOS, Windows, macOS)
+  - `Atlas.Maui` — client natif **mobile** (Android, iOS) — cf. ADR-026 (le desktop migre vers Avalonia)
   - `Atlas.Web` — hôte du client web Blazor Web App (composition root web)
   - `Atlas.Web.Client` — interactivité Blazor WebAssembly (mêmes règles d'archi que MAUI : `Domain` + `Shared` uniquement)
 - **tests/** — projets de tests (unitaires, intégration, architecture)
