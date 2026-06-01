@@ -1,3 +1,90 @@
+/*
+ * List-detail à deux panneaux (doc 14 §3), même patron que Favoris/Veille. Desktop (≥ 880 px) :
+ * recherche + résultats à gauche, fiche à droite. Sous le point de rupture : empilement temporel —
+ * on montre la liste, OU la fiche si un résultat est sélectionné (.has-selection), avec un retour.
+ */
+
+.rech-shell {
+    min-width: 0;
+}
+
+.rech-title {
+    margin: 0 0 1rem;
+    font-size: 1.5rem;
+}
+
+/* ---- Empilement (étroit, défaut) ---------------------------------------- */
+
+.rech-detail {
+    display: none;
+}
+
+.has-selection .rech-list {
+    display: none;
+}
+
+.has-selection .rech-detail {
+    display: block;
+}
+
+.rech-back {
+    margin: 0 0 1rem;
+    font-size: 0.85rem;
+}
+
+.rech-back a {
+    color: var(--on-surface-variant);
+    text-decoration: none;
+}
+
+.rech-back a:hover {
+    text-decoration: underline;
+}
+
+.rech-back a:focus-visible {
+    outline: 2px solid var(--focus);
+    outline-offset: 2px;
+}
+
+/* ---- Deux panneaux (desktop) -------------------------------------------- */
+
+@media (min-width: 880px) {
+    .rech-shell {
+        display: flex;
+        gap: 1.5rem;
+        align-items: flex-start;
+    }
+
+    .rech-list {
+        display: block !important;
+        flex: 0 0 24rem;
+        position: sticky;
+        top: 1.5rem;
+    }
+
+    .rech-detail {
+        display: block !important;
+        flex: 1;
+        min-width: 0;
+    }
+
+    .rech-back {
+        display: none;
+    }
+}
+
+/* ---- Panneau droit vide (desktop) --------------------------------------- */
+
+.rech-placeholder {
+    padding: 2.5rem 1.5rem;
+    text-align: center;
+    color: var(--on-surface-variant);
+    border: 1px dashed var(--outline);
+    border-radius: var(--radius-lg);
+}
+
+/* ---- Barre de recherche -------------------------------------------------- */
+
 .search-bar {
     display: flex;
     align-items: center;
@@ -90,6 +177,8 @@
     padding: 0;
 }
 
+/* ---- Accès direct (SIREN détecté) --------------------------------------- */
+
 .direct-card {
     display: flex;
     align-items: center;
@@ -109,6 +198,12 @@
 .direct-card:focus-visible {
     outline: 3px solid var(--focus);
     outline-offset: 2px;
+}
+
+/* Sélectionné : bordure + fond, jamais la couleur seule (doc 06). */
+.direct-card.selected {
+    background: var(--surface-variant);
+    box-shadow: inset 3px 0 0 var(--primary);
 }
 
 .direct-icon {
