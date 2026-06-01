@@ -1,3 +1,5 @@
+using System.Net;
+using System.Net.Sockets;
 using Atlas.Domain.Veille;
 using Atlas.Infrastructure.Veille.Deduplication;
 using Microsoft.Extensions.Configuration;
@@ -14,7 +16,11 @@ public static class DependencyInjection
     {
         services.Configure<VeilleOptions>(configuration.GetSection(VeilleOptions.SectionName));
 
-        services.AddHttpClient<IExternalContentSource, RssFeedProvider>(ConfigureClient);
+        services.AddHttpClient<IExternalContentSource, RssFeedProvider>(ConfigureClient)
+            // Anti-SSRF (audit Lot 1) : chaque connexion TCP — fetch initial, redirection 3xx ou
+            // résolution DNS — est validée contre les plages internes. Couvre le rebinding DNS et
+            // les redirections, que le seul filtrage du nom d'hôte ne peut pas attraper (TOCTOU).
+            .ConfigurePrimaryHttpMessageHandler(CreateSsrfSafeHandler);
 
         services.AddSingleton<IFeedSubscriptionPolicy, FeedSubscriptionPolicy>();
         services.AddSingleton<IDeduplicationPolicy, DeduplicationPolicy>();
@@ -27,5 +33,42 @@ public static class DependencyInjection
         VeilleOptions options = provider.GetRequiredService<IOptions<VeilleOptions>>().Value;
         client.Timeout = TimeSpan.FromSeconds(options.HttpTimeoutSeconds);
         client.DefaultRequestHeaders.UserAgent.ParseAdd(options.UserAgent);
+    }
+
+    private static SocketsHttpHandler CreateSsrfSafeHandler() => new()
+    {
+        // Les redirections restent suivies (de nombreux flux légitimes en usent), mais chaque
+        // connexion résultante repasse par ConnectCallback : aucune ne peut atteindre une IP interne.
+        AllowAutoRedirect = true,
+        MaxAutomaticRedirections = 5,
+        ConnectCallback = SsrfSafeConnectAsync,
+    };
+
+    private static async ValueTask<Stream> SsrfSafeConnectAsync(
+        SocketsHttpConnectionContext context,
+        CancellationToken ct)
+    {
+        DnsEndPoint endpoint = context.DnsEndPoint;
+
+        IPAddress[] resolved = await Dns.GetHostAddressesAsync(endpoint.Host, ct);
+        IPAddress[] allowed = Array.FindAll(resolved, ip => !PrivateNetworkGuard.IsBlockedIp(ip));
+        if (allowed.Length == 0)
+        {
+            throw new HttpRequestException(
+                $"Connexion refusée : l'hôte « {endpoint.Host} » résout vers une adresse interne (anti-SSRF).");
+        }
+
+        var socket = new Socket(SocketType.Stream, ProtocolType.Tcp) { NoDelay = true };
+        try
+        {
+            // On se connecte uniquement aux adresses validées (pas de re-résolution => pas de TOCTOU).
+            await socket.ConnectAsync(allowed, endpoint.Port, ct);
+            return new NetworkStream(socket, ownsSocket: true);
+        }
+        catch
+        {
+            socket.Dispose();
+            throw;
+        }
     }
 }

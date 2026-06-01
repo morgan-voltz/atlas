@@ -95,6 +95,18 @@ public class LoginHandlerTests
     }
 
     [Fact]
+    public async Task Handle_with_unknown_email_still_runs_a_password_verify_to_equalize_timing()
+    {
+        // Anti-énumération par timing (audit Lot 1) : un email inconnu doit déclencher un Verify
+        // factice, sinon le temps de réponse trahit l'absence de compte.
+        _users.GetByEmailAsync(Arg.Any<EmailAddress>(), Arg.Any<CancellationToken>()).Returns((User?)null);
+
+        await CreateHandler().Handle(new LoginCommand("ghost@example.com", "password"), CancellationToken.None);
+
+        _hasher.Received(1).Verify("password", Arg.Any<PasswordHash>());
+    }
+
+    [Fact]
     public async Task Handle_with_unverified_email_fails()
     {
         User pending = PendingUser();
