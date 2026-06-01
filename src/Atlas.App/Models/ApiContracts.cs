@@ -11,6 +11,9 @@ public sealed record LoginRequest(string Email, string Password);
 /// (<c>Atlas.Api.Endpoints.AccessTokenResponse</c> : propriété <c>ExpiresAt</c>).</summary>
 public sealed record AccessTokenResponse(string AccessToken, System.DateTimeOffset ExpiresAt);
 
+/// <summary>Corps de <c>POST /auth/2fa/verify</c> (défi TOTP). Le challenge token reste en mémoire, hors URL.</summary>
+public sealed record VerifyTwoFactorRequest(string ChallengeToken, string Code);
+
 /// <summary>Résultat résumé d'une entreprise (liste de recherche, favoris).</summary>
 public sealed record CompanySummaryResponse(string Siren, string Denomination, string? Ville, string? NafCode);
 

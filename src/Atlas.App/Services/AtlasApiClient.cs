@@ -79,6 +79,42 @@ public sealed class AtlasApiClient(HttpClient httpClient, ITokenStore tokenStore
         return Result<LoginResult>.Fail(ApiErrors.RequestFailed((int)response.StatusCode));
     }
 
+    /// <summary>
+    /// Valide le défi 2FA (<c>POST /auth/2fa/verify</c>) : le challenge token (issu du login, gardé en
+    /// mémoire) + le code TOTP/secours. En cas de succès, range l'access token (refresh en cookie).
+    /// </summary>
+    public async Task<Result> VerifyTwoFactorAsync(string challengeToken, string code, CancellationToken ct = default)
+    {
+        HttpResponseMessage response;
+        try
+        {
+            response = await httpClient
+                .PostAsJsonAsync("auth/2fa/verify", new VerifyTwoFactorRequest(challengeToken, code), AtlasJsonContext.Default.VerifyTwoFactorRequest, ct)
+                .ConfigureAwait(false);
+        }
+        catch (HttpRequestException)
+        {
+            return Result.Fail(ApiErrors.Unreachable());
+        }
+
+        if (!response.IsSuccessStatusCode)
+        {
+            return Result.Fail(ApiErrors.InvalidTwoFactorCode());
+        }
+
+        AccessTokenResponse? token = await response.Content
+            .ReadFromJsonAsync(AtlasJsonContext.Default.AccessTokenResponse, ct)
+            .ConfigureAwait(false);
+
+        if (token is null || string.IsNullOrEmpty(token.AccessToken))
+        {
+            return Result.Fail(ApiErrors.RequestFailed((int)response.StatusCode));
+        }
+
+        tokenStore.SetAccessToken(token.AccessToken);
+        return Result.Ok();
+    }
+
     /// <summary>Termine la session locale (l'access token en mémoire). Le serveur révoque le refresh via /auth/logout.</summary>
     public void ClearSession() => tokenStore.Clear();
 
