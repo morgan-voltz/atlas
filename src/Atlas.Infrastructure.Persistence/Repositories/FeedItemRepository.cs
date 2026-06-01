@@ -153,7 +153,7 @@ internal sealed class FeedItemRepository(AtlasDbContext dbContext) : IFeedItemRe
             .ToListAsync(ct);
 
         // Regroupement en mémoire (audit Lot 3, E5a : remplace un ContinueWith qui bloquait sur .Result).
-        Dictionary<Guid, List<FavoriteMention>> mentionsByItem = mentionRows
+        var mentionsByItem = mentionRows
             .GroupBy(x => x.ItemId)
             .ToDictionary(
                 g => g.Key,

@@ -59,7 +59,7 @@ internal sealed class RefreshFavoritesHandler(
 
             // Précharge tous les snapshots du user en une requête (audit Lot 3, E4b) : évite un
             // GetCurrentAsync par favori (N+1). Au plus un snapshot par siren.
-            Dictionary<Siren, CompanyFavoriteSnapshot> snapshotsBySiren =
+            var snapshotsBySiren =
                 (await snapshots.GetByUserAsync(userId, cancellationToken)).ToDictionary(snap => snap.Siren);
 
             foreach (CompanyFavorite favorite in userFavorites)
