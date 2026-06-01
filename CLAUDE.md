@@ -24,16 +24,16 @@ Avant toute contribution significative, consulter le document approprié dans `d
 | Une intégration d'une nouvelle API publique | `docs/03-catalogue-apis-publiques.md` |
 | Tout ce qui touche aux credentials INPI, données personnelles, ou stockage de secrets | `docs/04-securite-rgpd.md` |
 | La gestion du repo, des branches, ou de la CI | `docs/05-strategie-repos.md` |
-| Toute interface utilisateur (MAUI, API publique) — accessibilité (exigence bloquante) | `docs/06-accessibilite.md` |
+| Toute interface utilisateur (client Uno `Atlas.App`, API publique) — accessibilité (exigence bloquante) | `docs/06-accessibilite.md` |
 | Une source de veille (RSS, BODACC, etc.) | `docs/07-flux-rss-veille.md` |
 | Nommer une classe, méthode, ou concept métier | `docs/08-vocabulaire-ubiquitaire.md` |
 | Comprendre où placer du code (couche, projet) | `docs/09-architecture-detaillee.md` |
 | Créer un nouveau projet `.csproj` ou modifier la solution | `docs/10-layout-solution-dotnet.md` |
 | Ajouter, modifier ou supprimer un endpoint HTTP | `docs/11-api-endpoints.md` |
-| Concevoir une vue MAUI (navigation, list-detail, page vs carte, densité mobile/desktop) | `docs/12-modele-ux-client-maui.md` |
+| Concevoir une vue cliente — doctrine UX commune, agnostique de la techno (navigation, list-detail, page vs carte, densité) | `docs/12-modele-ux-client-maui.md` |
 | Lancer ou tester l'application en local de bout en bout (Postgres, API, Bruno, INPI) | `docs/13-harness-test-local-e2e.md` |
-| Concevoir une vue du client web Blazor (rail, list-detail 2 panneaux, routing/URLs) — delta de doc 12 | `docs/14-modele-ux-client-web.md` |
-| Planifier ou suivre l'implémentation du client web (jalons en tranches verticales, Definition of Done par écran) | `docs/15-roadmap-client-web.md` |
+| Concevoir une vue au format large / par surface Uno (rail, list-detail 2 panneaux, routing/URLs de la tête WebAssembly) — delta multi-surface de doc 12 | `docs/14-modele-ux-client-web.md` |
+| Planifier ou suivre l'implémentation du client (historique Blazor transitoire M0–M7 + bascule Uno `Atlas.App`) | `docs/15-roadmap-client-web.md` |
 | Choisir une police, régler l'espacement / la lisibilité (accessibilité typographique) | `docs/16-polices-et-lisibilite.md` |
 | Comprendre le contexte métier et les besoins par rôle | `docs/persona/carte-personas.md` |
 
@@ -185,7 +185,7 @@ Plusieurs pratiques sont **strictement interdites** dans le projet. Elles sont s
 
 **Ne jamais ajouter de dépendance externe à `Atlas.Domain`** au-delà de celles déjà autorisées (libs de base .NET, `MediatR.Contracts`, `FluentValidation.Abstractions`). Si tu penses avoir besoin de quelque chose, c'est probablement qu'il faut le mettre dans un port et l'implémenter ailleurs.
 
-**Ne jamais sauter la checklist d'accessibilité** lors d'une PR sur l'UI MAUI ou les pages publiques. C'est une exigence bloquante de la Definition of Done (ADR-008). Cf. `docs/06-accessibilite.md`.
+**Ne jamais sauter la checklist d'accessibilité** lors d'une PR sur l'UI cliente (Uno `Atlas.App` — ou le client Blazor transitoire) ou les pages publiques. C'est une exigence bloquante de la Definition of Done (ADR-008). Cf. `docs/06-accessibilite.md`.
 
 **Ne jamais utiliser `Newtonsoft.Json`** sauf raison technique impérieuse. Le standard du projet est `System.Text.Json`.
 
@@ -220,8 +220,11 @@ dotnet ef database update \
 
 # Lancement local
 dotnet run --project src/Atlas.Api                    # API
-dotnet build src/Atlas.Maui -f net10.0-android        # MAUI Android
-dotnet build src/Atlas.Maui -f net10.0-ios            # MAUI iOS
+# Client Uno Atlas.App (une fois intégré au repo — cf. ADR-029 / docs/10) :
+dotnet run --project src/Atlas.App -f net10.0-desktop     # tête desktop (Skia : Win/macOS/Linux)
+dotnet run --project src/Atlas.App -f net10.0-browserwasm # tête web (WebAssembly)
+# Transition : le client web Blazor reste lançable
+dotnet run --project src/Atlas.Web                    # client web Blazor (transitoire)
 
 # Outils de qualité
 dotnet format                                          # format selon .editorconfig
@@ -253,7 +256,7 @@ Le build CI passe entièrement, y compris les tests d'architecture dans `Atlas.A
 
 Les tests unitaires couvrent les nouveaux comportements ajoutés. Pas de seuil de couverture imposé, mais un comportement ajouté sans test est inacceptable.
 
-La checklist d'accessibilité (cf. `docs/06-accessibilite.md` §12) est passée pour toute modification de l'UI MAUI ou des endpoints publics.
+La checklist d'accessibilité (cf. `docs/06-accessibilite.md` §12) est passée pour toute modification de l'UI cliente (Uno `Atlas.App` ou client Blazor transitoire) ou des endpoints publics.
 
 Le vocabulaire ubiquitaire est respecté. Les nouveaux concepts sont ajoutés au glossaire dans `docs/08-vocabulaire-ubiquitaire.md`.
 
@@ -275,7 +278,7 @@ Pour une **intégration concrète avec une technologie externe** (INPI, PostgreS
 
 Pour le **wiring DI et la configuration HTTP**, c'est dans `Atlas.Api`. C'est la composition root, le seul endroit qui voit tout.
 
-Pour une **vue ou un ViewModel**, c'est dans `Atlas.Maui`. Et seulement si le concept est purement présentation client. La logique métier reste côté backend.
+Pour une **vue ou un ViewModel**, c'est dans `Atlas.App` (client Uno — ou, en transition, `Atlas.Web.Client`). Et seulement si le concept est purement présentation client. La logique métier reste côté backend.
 
 Si après ces règles tu ne sais toujours pas où mettre quelque chose, c'est probablement que la chose en question est mal définie ou qu'elle mélange plusieurs responsabilités. Découper avant de coder.
 

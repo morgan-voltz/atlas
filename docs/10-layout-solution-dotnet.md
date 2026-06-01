@@ -1,12 +1,12 @@
 # Layout de la solution .NET — projet Atlas
 
-> ⛔ **ADR-029 (UI unifiée Uno Platform)** — La couche cliente cible devient **`Atlas.App`** (Uno, C#/XAML WinUI, toutes surfaces : WebAssembly + desktop Win/macOS/Linux + iOS/Android), qui **remplacera** `Atlas.Maui` (jamais créé), Avalonia et `Atlas.Web`/`Atlas.Web.Client`. Ce layout sera **mis à jour** à l'intégration Uno ; en transition, `Atlas.Web`/`Atlas.Web.Client` (Blazor) restent les projets clients en vigueur jusqu'au spike Uno concluant.
+> ✅ **ADR-029 (UI unifiée Uno Platform)** — Ce layout décrit désormais la couche cliente cible **`Atlas.App`** (Uno, single project, C#/XAML WinUI, six cibles : WebAssembly + desktop Skia Win/macOS/Linux + iOS/Android), qui **remplace** `Atlas.Maui` (jamais créé), le desktop Avalonia (ADR-026) et le client web Blazor `Atlas.Web`/`Atlas.Web.Client` (ADR-017). **Transition** : tant que le **spike Uno multi-cible** n'est pas concluant, le client Blazor `Atlas.Web.Client` reste l'app web en vigueur et n'est **retiré qu'après** ce spike (garde-fou ADR-029). Le projet `Atlas.App` n'est pas encore intégré au repo (chantier séparé : CPM/`global.json`, NetArchTest, matrice CI).
 
 > Spécification complète de la structure physique de la solution **`Atlas.sln`** : arborescence des dossiers, liste des projets `.csproj`, frameworks cibles, références inter-projets, fichiers de configuration centralisés, et commandes `dotnet` pour reproduire la solution depuis zéro.
 > Ce document traduit en structure concrète les décisions prises dans les ADRs (doc 01) et l'architecture détaillée (doc 09).
 
-**Version** : 1.0
-**Date de dernière mise à jour** : 26 mai 2026
+**Version** : 1.1
+**Date de dernière mise à jour** : 1ᵉʳ juin 2026 (refonte client : `Atlas.App` Uno remplace `Atlas.Maui`/`Atlas.Web` — ADR-029)
 **Nom de code projet** : Atlas (provisoire)
 **.NET cible** : .NET 10 LTS (supporté jusqu'à novembre 2028)
 
@@ -19,7 +19,7 @@
 3. Le rôle des fichiers de configuration racine
 4. Inventaire détaillé des projets de production
 5. Inventaire détaillé des projets de tests
-6. Cas particulier — Atlas.Maui et le multi-targeting
+6. Cas particulier — Atlas.App (Uno) et le multi-targeting
 7. Gestion centralisée des versions NuGet
 8. Le fichier global.json et le pinning du SDK
 9. Scripts de création de la solution depuis zéro
@@ -268,33 +268,30 @@ atlas/                                            (racine du repository git)
 │   │   ├── appsettings.Development.json
 │   │   └── appsettings.Production.json
 │   │
-│   └── Atlas.Maui/                               (client multi-plateformes)
-│       ├── Atlas.Maui.csproj                     (multi-target : Android, iOS, Windows, macOS)
-│       ├── MauiProgram.cs
+│   └── Atlas.App/                                (client Uno — UI unique multi-cible, cf. ADR-029)
+│       ├── Atlas.App.csproj                      (Uno.Sdk ; single project, TargetFrameworks browserwasm/desktop/android/ios/maccatalyst)
 │       ├── App.xaml / App.xaml.cs
-│       ├── AppShell.xaml / AppShell.xaml.cs
-│       ├── Views/
+│       ├── GlobalUsings.cs
+│       ├── Presentation/                         (pages XAML + ViewModels, MVVM)
 │       │   ├── Auth/
 │       │   ├── Companies/
 │       │   ├── Trademarks/
 │       │   └── Veille/
-│       ├── ViewModels/
-│       │   ├── Companies/
-│       │   └── ...
 │       ├── Services/
 │       │   ├── IAtlasApiClient.cs
 │       │   └── AtlasApiClient.cs
 │       ├── Storage/
-│       │   └── LocalStorage.cs
-│       ├── Resources/
-│       │   ├── Styles/
-│       │   ├── Fonts/
-│       │   └── Images/
-│       └── Platforms/                            (code spécifique par plateforme)
+│       │   └── LocalStorage.cs                   (cache offline ; secure storage natif côté desktop/mobile)
+│       ├── Styles/                               (ResourceDictionary XAML : tokens, thème clair/sombre)
+│       ├── Assets/                               (icônes, splash, images)
+│       ├── Strings/                              (ressources de localisation)
+│       ├── Package.appxmanifest / app.manifest
+│       └── Platforms/                            (têtes & code spécifique par cible)
 │           ├── Android/
 │           ├── iOS/
 │           ├── MacCatalyst/
-│           └── Windows/
+│           ├── Desktop/                          (Skia ; couvre Windows, macOS, Linux)
+│           └── WebAssembly/
 │
 ├── tests/                                        (code de tests)
 │   │
@@ -363,7 +360,7 @@ La solution compte douze projets de production. Cette section décrit chacun d'e
 
 ### 4.1 Atlas.Shared
 
-Le projet `Atlas.Shared` est le projet de plus bas niveau de la solution. Il contient des utilitaires absolument transverses qui peuvent être utilisés par n'importe quelle couche, y compris le domaine et MAUI. Son framework cible est `netstandard2.1` pour maximiser la portabilité, notamment vers MAUI qui supporte netstandard. Il ne référence aucun autre projet de la solution.
+Le projet `Atlas.Shared` est le projet de plus bas niveau de la solution. Il contient des utilitaires absolument transverses qui peuvent être utilisés par n'importe quelle couche, y compris le domaine et le client Uno (`Atlas.App`). Son framework cible est `netstandard2.1` pour maximiser la portabilité, notamment vers toutes les têtes Uno (WebAssembly, desktop, mobile) qui reposent sur `net10.0` (sur-ensemble de netstandard2.1). Il ne référence aucun autre projet de la solution.
 
 Le contenu de ce projet doit rester volontairement minimal. On y trouve typiquement le type générique `Result<T>` qui encapsule un succès ou un échec, le type `PagedResult<T>` qui représente une page de résultats avec ses métadonnées, et quelques constantes globales. Si tu hésites à mettre quelque chose dans `Atlas.Shared`, la règle est simple : si c'est du métier, va dans `Atlas.Domain`, sinon va dans `Atlas.Shared`.
 
@@ -433,11 +430,15 @@ C'est volontaire et nécessaire : la composition root est le seul endroit où l'
 
 Les packages NuGet typiques incluent `Microsoft.AspNetCore.App` (framework reference, pas un package classique), `Swashbuckle.AspNetCore` pour OpenAPI/Swagger, et `Serilog.AspNetCore` pour le logging.
 
-### 4.13 Atlas.Maui
+### 4.13 Atlas.App (client Uno)
 
-Le projet `Atlas.Maui` est l'application cliente multi-plateforme. Son framework cible est en réalité **multiple** : `net10.0-android`, `net10.0-ios`, `net10.0-maccatalyst`, et `net10.0-windows10.0.19041.0`. Il référence uniquement `Atlas.Domain` et `Atlas.Shared`, conformément à la règle de sécurité énoncée dans la doc 09 : le client mobile ne doit pas avoir accès au code Infrastructure qui contient les détails techniques sensibles.
+Le projet `Atlas.App` est l'**application cliente unique** d'Atlas, écrite une seule fois en **C#/XAML (dialecte WinUI)** avec **Uno Platform** et projetée sur **six cibles** (cf. **ADR-029**) : `net10.0-browserwasm` (web), `net10.0-desktop` (Skia — couvre Windows, macOS et **Linux**), `net10.0-android`, `net10.0-ios` et `net10.0-maccatalyst`. C'est un **single project** Uno (`<Project Sdk="Uno.Sdk">`, `UnoSingleProject`) : un seul `.csproj` multi-cible, le code spécifique à chaque tête vivant sous `Platforms/`.
 
-La section suivante développe les particularités de ce projet multi-target.
+Il référence uniquement `Atlas.Domain` et `Atlas.Shared`, conformément à la règle de sécurité énoncée dans la doc 09 et **ADR-002** : le client — y compris la tête WebAssembly, décompilable dans le navigateur — ne doit jamais accéder au code `Infrastructure` (détails techniques et secrets). Cette règle est **verrouillée par un test NetArchTest dédié**, exactement comme prévu pour l'ancien `Atlas.Maui`/`Atlas.Web.Client`.
+
+> **Transition (ADR-029)** : `Atlas.App` (Uno) **remplace** `Atlas.Maui` (jamais créé), le desktop Avalonia (ADR-026) et le client web Blazor `Atlas.Web`/`Atlas.Web.Client` (ADR-017). En attendant un **spike Uno multi-cible concluant**, le client Blazor `Atlas.Web.Client` reste l'app web en vigueur (et n'est retiré qu'après ce spike).
+
+La section suivante développe les particularités de ce projet multi-cible.
 
 ---
 
@@ -459,24 +460,31 @@ Le projet `Atlas.Architecture.Tests` cible `net10.0`, référence tous les proje
 
 ---
 
-## 6. Cas particulier — Atlas.Maui et le multi-targeting
+## 6. Cas particulier — Atlas.App (Uno) et le multi-targeting
 
-Le projet `Atlas.Maui` mérite une section dédiée parce qu'il est structurellement différent des autres. Là où un projet ASP.NET Core compile vers un seul binaire ciblant `net10.0`, un projet MAUI compile vers plusieurs binaires différents simultanément, chacun adapté à une plateforme cible.
+Le projet `Atlas.App` mérite une section dédiée parce qu'il est structurellement différent des autres. Là où un projet ASP.NET Core compile vers un seul binaire ciblant `net10.0`, un **single project Uno** compile vers plusieurs binaires différents simultanément, chacun adapté à une cible — depuis **une base de code unique** (C#/XAML WinUI), ce qui est précisément la motivation d'ADR-029 pour un porteur solo.
 
-La déclaration des frameworks cibles dans le `.csproj` ressemble à ceci :
+La déclaration repose sur le SDK Uno et ressemble à ceci :
 
 ```xml
-<TargetFrameworks>net10.0-android;net10.0-ios;net10.0-maccatalyst</TargetFrameworks>
-<TargetFrameworks Condition="$([MSBuild]::IsOSPlatform('windows'))">$(TargetFrameworks);net10.0-windows10.0.19041.0</TargetFrameworks>
+<Project Sdk="Uno.Sdk">
+  <PropertyGroup>
+    <TargetFrameworks>net10.0-browserwasm;net10.0-desktop;net10.0-android;net10.0-ios;net10.0-maccatalyst</TargetFrameworks>
+    <OutputType>Exe</OutputType>
+    <UnoSingleProject>true</UnoSingleProject>
+    <!-- Activation déclarative de briques Uno (rendu, extensions…) -->
+    <UnoFeatures>SkiaRenderer;Hosting;Http;Mvvm;</UnoFeatures>
+  </PropertyGroup>
+</Project>
 ```
 
-La subtilité ici est que le framework Windows ne peut être compilé que sur une machine Windows. Si on tente de compiler sur Linux ou macOS, MSBuild génère une erreur. La condition `$([MSBuild]::IsOSPlatform('windows'))` ajoute le framework Windows uniquement quand c'est pertinent, ce qui permet à un développeur Mac ou Linux de travailler sur la solution sans erreur, en sachant simplement qu'il ne pourra pas tester le binaire Windows depuis sa machine.
+La cible **`net10.0-desktop`** est une tête **Skia** unique qui couvre **Windows, macOS et Linux** — c'est elle qui apporte la souveraineté desktop (Linux natif) visée par ADR-029. Les têtes **`net10.0-ios`/`net10.0-maccatalyst`** ne se compilent que sur une machine macOS (workloads Apple) ; en pratique on conditionne donc la liste des `TargetFrameworks` selon l'OS de build pour qu'un poste Windows/Linux puisse travailler sur la solution sans erreur — la matrice CI multi-tête (à mettre en place) couvre les cibles manquantes.
 
-Le code commun à toutes les plateformes vit à la racine du projet et dans les dossiers `Views/`, `ViewModels/`, `Services/`. Le code spécifique à une plateforme vit dans `Platforms/Android/`, `Platforms/iOS/`, etc. Ces dossiers sont traités automatiquement par MSBuild : leur contenu est compilé uniquement lors du build pour la plateforme correspondante.
+Le code commun à toutes les cibles vit à la racine du projet et dans `Presentation/` (pages + ViewModels) et `Services/`. Le code spécifique à une tête vit dans `Platforms/WebAssembly/`, `Platforms/Desktop/`, `Platforms/Android/`, etc. ; son contenu n'est compilé que pour la cible correspondante. Le service natif par-OS (secure storage, notifications, fichiers) s'implémente derrière une abstraction commune, avec une réalisation par tête au besoin.
 
-Les packages NuGet de base d'un projet MAUI incluent `Microsoft.Maui.Controls`, `CommunityToolkit.Maui` pour les utilitaires communautaires, `CommunityToolkit.Mvvm` pour le pattern MVVM avec source generators, `Refit.HttpClientFactory` pour les clients HTTP typés vers l'API Atlas, et `sqlite-net-pcl` pour le stockage SQLite local utile au mode hors ligne.
+La gestion des dépendances Uno passe **principalement par `<UnoFeatures>`** (le SDK Uno résout les versions cohérentes du bundle) plutôt que par des `<PackageReference>` classiques ; les packages additionnels (ex. `CommunityToolkit.Mvvm`) restent gérés en CPM via `Directory.Packages.props` comme partout ailleurs.
 
-Un point important pour Atlas : le projet MAUI référence `Atlas.Domain` pour partager les value objects et entités. Cela impose une contrainte : `Atlas.Domain` doit être compatible avec tous les frameworks MAUI, ce qui en pratique signifie qu'il doit cibler `net10.0` ou un netstandard récent. Comme `net10.0` est désormais le standard et qu'il est supporté par MAUI 10, on cible directement `net10.0` sans passer par netstandard.
+Un point important pour Atlas : `Atlas.App` référence `Atlas.Domain` (value objects, entités) et `Atlas.Shared`. Cela impose que ces deux projets soient compatibles avec **toutes** les têtes Uno. Comme chaque tête est un `net10.0-*` reposant sur `net10.0`, et que `Atlas.Shared` cible `netstandard2.1` (sur-ensemble compatible), la contrainte est satisfaite sans effort — on cible directement `net10.0` sans détour par un netstandard intermédiaire côté `Domain`.
 
 ---
 
@@ -543,15 +551,15 @@ Le fichier `Directory.Packages.props` ressemble à ceci, simplifié pour montrer
     <PackageVersion Include="Microsoft.AspNetCore.Mvc.Testing" Version="10.0.0" />
     <PackageVersion Include="NetArchTest.Rules" Version="2.0.0" />
     
-    <!-- MAUI -->
-    <PackageVersion Include="Microsoft.Maui.Controls" Version="10.0.0" />
-    <PackageVersion Include="CommunityToolkit.Maui" Version="11.0.0" />
+    <!-- Client Uno (Atlas.App) — le bundle Uno est piloté par <UnoFeatures>/Uno.Sdk ;
+         on ne versionne en CPM que les packages additionnels hors bundle -->
     <PackageVersion Include="CommunityToolkit.Mvvm" Version="9.0.0" />
     <PackageVersion Include="Refit.HttpClientFactory" Version="9.0.0" />
-    <PackageVersion Include="sqlite-net-pcl" Version="1.10.0" />
   </ItemGroup>
 </Project>
 ```
+
+> La version du SDK Uno (`Uno.Sdk`) se fixe dans `global.json` (propriété `msbuild-sdks`), pas en `Directory.Packages.props` — c'est le SDK qui aligne ensuite les versions des composants Uno activés via `<UnoFeatures>`.
 
 Les numéros de version ci-dessus sont des estimations basées sur ce qui devrait exister en mai 2026 ; à toi de les vérifier au moment de la mise en place via `dotnet list package` ou directement sur nuget.org. L'idée importante est le **principe** : versions centralisées, mise à jour en un seul endroit.
 
@@ -658,13 +666,13 @@ for module in Inpi Persistence Veille Messaging Security Cache Storage; do
   dotnet add src/Atlas.Api/Atlas.Api.csproj reference "src/Atlas.Infrastructure.$module/Atlas.Infrastructure.$module.csproj"
 done
 
-# Création du projet Maui (nécessite workload installé : dotnet workload install maui)
+# Création du client Uno (nécessite les templates : dotnet new install Uno.Templates)
 cd src
-dotnet new maui -n Atlas.Maui -f net10.0
+dotnet new unoapp -preset recommended -platforms wasm desktop android ios -o Atlas.App -n Atlas.App
 cd ..
-dotnet sln add src/Atlas.Maui/Atlas.Maui.csproj
-dotnet add src/Atlas.Maui/Atlas.Maui.csproj reference src/Atlas.Domain/Atlas.Domain.csproj
-dotnet add src/Atlas.Maui/Atlas.Maui.csproj reference src/Atlas.Shared/Atlas.Shared.csproj
+dotnet sln add src/Atlas.App/Atlas.App.csproj
+dotnet add src/Atlas.App/Atlas.App.csproj reference src/Atlas.Domain/Atlas.Domain.csproj
+dotnet add src/Atlas.App/Atlas.App.csproj reference src/Atlas.Shared/Atlas.Shared.csproj
 
 # Création des projets de tests
 cd tests
@@ -804,13 +812,13 @@ La directive `text=auto eol=lf` normalise les fins de ligne en LF (style Unix) p
 
 Pour planifier sereinement la migration future vers .NET 11 quand elle deviendra pertinente, on documente ici la procédure type. La migration entre versions majeures de .NET est devenue très simple depuis .NET 5, mais elle reste une opération qui mérite préparation.
 
-La première étape est de mettre à jour le fichier `global.json` pour pointer vers le nouveau SDK et de vérifier que toute l'équipe a installé ce SDK localement. La deuxième étape consiste à mettre à jour tous les `<TargetFramework>` ou `<TargetFrameworks>` dans les `.csproj` pour passer de `net10.0` à `net11.0` (et `net11.0-android` pour MAUI, etc.). La troisième étape est de mettre à jour les versions de packages NuGet dans `Directory.Packages.props` pour utiliser les versions compatibles `net11.0`, en commençant par les packages Microsoft (`Microsoft.EntityFrameworkCore`, `Microsoft.AspNetCore.*`, etc.).
+La première étape est de mettre à jour le fichier `global.json` pour pointer vers le nouveau SDK et de vérifier que toute l'équipe a installé ce SDK localement. La deuxième étape consiste à mettre à jour tous les `<TargetFramework>` ou `<TargetFrameworks>` dans les `.csproj` pour passer de `net10.0` à `net11.0` (et `net11.0-browserwasm`, `net11.0-desktop`, `net11.0-android`… pour le client Uno, etc.). La troisième étape est de mettre à jour les versions de packages NuGet dans `Directory.Packages.props` pour utiliser les versions compatibles `net11.0`, en commençant par les packages Microsoft (`Microsoft.EntityFrameworkCore`, `Microsoft.AspNetCore.*`, etc.).
 
 Une fois ces trois étapes effectuées, on lance `dotnet restore` puis `dotnet build` pour identifier les éventuelles erreurs de compilation. Dans la grande majorité des cas, il n'y en a aucune. Les rares cas où il faut intervenir concernent généralement des APIs marquées obsolètes dans la nouvelle version, qu'on peut remplacer en suivant les avertissements du compilateur.
 
 Enfin, on lance la suite complète de tests pour valider qu'il n'y a pas de régression de comportement. Si tout passe, la migration est terminée et on peut commiter le tout sous forme d'un seul changeset dédié.
 
-Le choix entre rester sur .NET 10 LTS ou migrer vers .NET 11 STS dépend des bénéfices concrets apportés par .NET 11. En général, on migre quand .NET 11 apporte une fonctionnalité dont on a besoin (par exemple une amélioration MAUI ou Entity Framework Core spécifique), et on reste sur le LTS si rien ne motive le changement. Le support de .NET 10 jusqu'en novembre 2028 nous donne beaucoup de marge.
+Le choix entre rester sur .NET 10 LTS ou migrer vers .NET 11 STS dépend des bénéfices concrets apportés par .NET 11. En général, on migre quand .NET 11 apporte une fonctionnalité dont on a besoin (par exemple une amélioration Uno Platform ou Entity Framework Core spécifique), et on reste sur le LTS si rien ne motive le changement. Le support de .NET 10 jusqu'en novembre 2028 nous donne beaucoup de marge.
 
 ---
 
@@ -828,7 +836,7 @@ Pour servir de référence rapide, voici le tableau récapitulatif des référen
 | Atlas.Application.Premium | Atlas.Application, Atlas.Domain, Atlas.Shared |
 | Atlas.Infrastructure.* | Atlas.Application, Atlas.Domain, Atlas.Shared |
 | Atlas.Api | tous les précédents |
-| Atlas.Maui | Atlas.Domain, Atlas.Shared (uniquement) |
+| Atlas.App (Uno) | Atlas.Domain, Atlas.Shared (uniquement) |
 
 ### A.2 Récapitulatif des frameworks cibles
 
@@ -840,7 +848,7 @@ Pour servir de référence rapide, voici le tableau récapitulatif des référen
 | Atlas.Application.Premium | net10.0 |
 | Atlas.Infrastructure.* | net10.0 |
 | Atlas.Api | net10.0 |
-| Atlas.Maui | net10.0-android, net10.0-ios, net10.0-maccatalyst, net10.0-windows* |
+| Atlas.App (Uno) | net10.0-browserwasm, net10.0-desktop, net10.0-android, net10.0-ios, net10.0-maccatalyst |
 | Tous les projets de tests | net10.0 |
 
 ### A.3 Checklist de mise en place

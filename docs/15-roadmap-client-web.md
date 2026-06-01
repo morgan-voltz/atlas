@@ -1,13 +1,13 @@
-# Roadmap — client web (Atlas.Web)
+# Roadmap — client (Uno) & historique du client web transitoire
 
-> ⛔ **ADR-029 (UI unifiée Uno Platform)** — Le client web Blazor décrit ici est **remplacé par Uno** (le web devient une cible WebAssembly d'Uno). Cette feuille de route reste **l'historique de ce qui a été livré** (M0–M7 + kit de composants) ; le client Blazor reste l'app courante **jusqu'à un spike Uno concluant** (garde-fou ADR-029), après quoi la roadmap basculera sur `Atlas.App` (Uno). Doctrine UX (`docs/12`) inchangée.
+> ✅ **ADR-029 (UI unifiée Uno Platform)** — La cible est désormais **`Atlas.App` (Uno)**, une UI unique pour six surfaces (le web devient la **tête WebAssembly**). Ce document a **deux parties** : (1) l'**historique** de ce qui a été livré sur le **client web Blazor transitoire** (`Atlas.Web.Client`) — M0–M7 + kit de composants, **conservé tel quel** comme référence fonctionnelle et acquis réutilisable ; (2) la **bascule vers Uno** (§7). Le client Blazor reste l'app web **en vigueur jusqu'à un spike Uno multi-cible concluant** (garde-fou ADR-029). Doctrine UX (`docs/12`) inchangée ; delta multi-surface = `docs/14` (refondu Uno).
 
-> Feuille de route **d'implémentation** du client web Blazor (`Atlas.Web` / `Atlas.Web.Client`).
+> Feuille de route **d'implémentation** du client. **§1–§6 = historique du client web Blazor transitoire** (`Atlas.Web` / `Atlas.Web.Client`) ; **§7 = bascule Uno** (`Atlas.App`).
 > Document **distinct** du backlog produit (`docs/02-roadmap-features.md`, `F-NNN`) et de la doctrine
-> UX (`docs/12` tronc commun + `docs/14` delta web). Ici : **comment on bâtit le client**.
+> UX (`docs/12` tronc commun + `docs/14` déclinaison multi-surface). Ici : **comment on bâtit le client**.
 
-**Version** : 1.0 — **Date** : 31 mai 2026 — **Portée** : `Atlas.Web` (app authentifiée, WASM pur).
-**Cadre** : **ADR-017** (Blazor Web App, WASM pur), **ADR-002** (client pur de l'API), **ADR-008 / doc 06** (accessibilité, bloquante).
+**Version** : 2.0 — **Date** : 1ᵉʳ juin 2026 — **Portée** : historique `Atlas.Web.Client` (transitoire) + cible `Atlas.App` (Uno).
+**Cadre** : **ADR-029** (UI unifiée Uno, WASM pur pour la tête web ; remplace ADR-017/ADR-026), **ADR-002** (client pur de l'API), **ADR-008 / doc 06** (accessibilité, bloquante).
 
 Légende : ✅ fait & vérifié · 🟡 partiel · ⬜ à faire.
 
@@ -18,15 +18,17 @@ amont). Chaque écran est « fini » au sens de sa **Definition of Done** (§3),
 
 ---
 
-## 1. Cadre
+## 1. Cadre (historique — client Blazor transitoire)
 
-Le client web est le **3ᵉ form-factor** d'un même produit (R1) : 90 % de la doctrine vient de `docs/12`
-(agnostique) ; `docs/14` ne décrit que les deltas web (rail, list-detail 2 panneaux, routing/URLs).
+> Cette section et les §2–§6 documentent le client web **Blazor** tel que bâti en MVP 1. Avec **ADR-029**, ce client est **transitoire** : il reste en vigueur jusqu'au spike Uno concluant, puis cède la place à `Atlas.App` (Uno — cf. §7). On le conserve ici comme **acquis** (parcours, contrats API, kit, vérifications E2E) directement réutilisable sous Uno.
+
+Le client web est une **surface** d'un même produit (R1) : 90 % de la doctrine vient de `docs/12`
+(agnostique) ; `docs/14` décrit la déclinaison multi-surface (rail, list-detail 2 panneaux, routing/URLs propre à la tête WASM).
 Topologie : **consommateur HTTP pur** de `Atlas.Api` (ADR-002) ; `Atlas.Web.Client` ne référence que
-`Domain` + `Shared` (verrouillé par NetArchTest). Maquettes de référence : `docs/design/phone_mode/`.
+`Domain` + `Shared` (verrouillé par NetArchTest) — règle reprise telle quelle par `Atlas.App`. Maquettes de référence : `docs/design/phone_mode/`.
 
-**Fondations — ✅ faites** (30-31 mai 2026, PR #81-#85) : décision framework (ADR-017, WASM pur),
-modèle UX web (doc 14), scaffold `Atlas.Web`/`Atlas.Web.Client` (CPM, NetArchTest), squelette de
+**Fondations — ✅ faites** (30-31 mai 2026, PR #81-#85, sur le client Blazor transitoire) : décision framework d'alors (ADR-017, WASM pur — depuis remplacé par ADR-029),
+modèle UX (doc 14), scaffold `Atlas.Web`/`Atlas.Web.Client` (CPM, NetArchTest), squelette de
 navigation (rail 5 destinations) + routing + page 404.
 
 ---
@@ -110,11 +112,30 @@ Pas des phases : vérifiées **sur chaque écran** (intégrées à la DoD §3).
 
 ---
 
-## 6. Hors périmètre (v1)
+## 6. Hors périmètre (de l'historique Blazor)
 
-- **Pages publiques / SEO** (landing, marketing) — exclues (app authentifiée seule) ; leur ajout rouvrirait WASM-pur vs modèle unifié (avenant ADR-017). Doc 14 §1/§7.
+- **Pages publiques / SEO** (landing, marketing) — exclues (app authentifiée seule) ; leur ajout exigerait un rendu serveur (avenant ADR-029). Doc 14 §1/§7.
 - **PWA / hors-ligne** — à évaluer ultérieurement. Doc 14 §7.
-- **Client MAUI** — suivi séparément (F-009/F-010 de `docs/02`) ; priorité au web d'abord.
+- **Clients natifs** (desktop/mobile) — sous ADR-029 ils ne sont plus « suivis séparément » : ce sont des **têtes de la même base `Atlas.App`** (cf. §7), plus des projets distincts (MAUI/Avalonia abandonnés).
+
+---
+
+## 7. Bascule vers Uno (`Atlas.App`)
+
+> Chantier d'intégration **non démarré** (séparé de cette roadmap historique). Cadré ici pour fixer l'ordre ; le détail des jalons Uno sera écrit au lancement du chantier.
+
+L'**acquis Blazor (§1–§5) est directement réutilisable** : contrats `AtlasApiClient`, parcours écran par écran, états, vérifications E2E, kit de composants (à porter en XAML WinUI), breakpoints 640/880 px. La doctrine UX (`docs/12`) et la déclinaison multi-surface (`docs/14`, refondu Uno) ne changent pas.
+
+**Garde-fou ADR-029 (ordre sûr)** — on ne retire `Atlas.Web`/`Atlas.Web.Client` **qu'après** un spike Uno multi-cible concluant. Séquence pressentie :
+
+| Étape | Contenu | Statut |
+|---|---|:--:|
+| **U0 — Spike** | écran carte-aperçu + liste sur WASM + desktop ; valider XAML WinUI, rendu Linux, poids WASM | 🟡 partiel (1ᵉʳ juin 2026 : WASM/desktop OK, ~9,5 Mo Release ; Linux/mobile à valider) |
+| **U1 — Intégration repo** | `Atlas.App` dans la solution : `Uno.Sdk`/`global.json`, CPM, **NetArchTest** (→ Domain + Shared), **matrice CI multi-tête** | ⬜ |
+| **U2 — Preuve ADR-002** | référencer `Atlas.Domain`, recâbler `AtlasApiClient` (auth mémoire + refresh cookie/secure storage) | ⬜ |
+| **U3 — Portage du kit** | atomes + cartes + états en UserControls XAML ; thème clair/sombre via `ResourceDictionary` | ⬜ |
+| **U4 — Re-livraison écran par écran** | rejouer M1→M7 en tranches verticales (même DoD §3), en réutilisant contrats et parcours | ⬜ |
+| **U5 — Retrait du Blazor** | supprimer `Atlas.Web`/`Atlas.Web.Client` une fois U0–U4 validés multi-cible | ⬜ |
 
 ## Renvois
 
@@ -122,10 +143,10 @@ Pas des phases : vérifiées **sur chaque écran** (intégrées à la DoD §3).
 |---|---|
 | Backlog produit / features | `docs/02-roadmap-features.md` (`F-NNN`) |
 | Doctrine UX (tronc commun) | `docs/12-modele-ux-client-maui.md` |
-| Doctrine UX (delta web) | `docs/14-modele-ux-client-web.md` |
-| Décision framework web | `ADR-017` |
+| Doctrine UX (déclinaison multi-surface) | `docs/14-modele-ux-client-web.md` |
+| Décision UI unifiée (Uno, 6 cibles) | `ADR-029` (remplace ADR-017/ADR-026) |
 | Maquettes UI | `docs/design/phone_mode/` |
 | Accessibilité (bloquant) | `docs/06-accessibilite.md`, ADR-008 |
-| Placement solution | `docs/10-layout-solution-dotnet.md` |
+| Placement solution (`Atlas.App`) | `docs/10-layout-solution-dotnet.md` |
 
-*Document évolutif. Cocher les colonnes de DoD (§3) et les statuts (§2, §4) au fil des PR.*
+*Document évolutif. §1–§6 = historique figé du client Blazor transitoire ; §7 = bascule Uno (cocher les étapes U0–U5 au fil du chantier d'intégration).*
