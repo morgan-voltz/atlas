@@ -27,7 +27,7 @@ internal static class SafeXmlGuard
         ArgumentNullException.ThrowIfNull(payload);
 
         using var stream = new MemoryStream(payload, writable: false);
-        using XmlReader reader = XmlReader.Create(stream, HardenedSettings);
+        using var reader = XmlReader.Create(stream, HardenedSettings);
         while (reader.Read())
         {
             // Parcours complet : DtdProcessing.Prohibit fait lever XmlException sur toute DOCTYPE.
