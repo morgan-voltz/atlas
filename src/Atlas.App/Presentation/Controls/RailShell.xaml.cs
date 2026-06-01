@@ -20,6 +20,19 @@ public sealed partial class RailShell : UserControl
     /// <summary>Levé quand une destination est choisie (porte le <c>Tag</c> de l'entrée : « accueil », « recherche »…).</summary>
     public event EventHandler<string>? DestinationSelected;
 
+    /// <summary>Sélectionne programmatiquement une destination par son tag (met à jour le rail).</summary>
+    public void SelectDestination(string tag)
+    {
+        foreach (object item in Nav.MenuItems)
+        {
+            if (item is NavigationViewItem { Tag: string t } navItem && t == tag)
+            {
+                Nav.SelectedItem = navItem;
+                return;
+            }
+        }
+    }
+
     private void OnSelectionChanged(NavigationView sender, NavigationViewSelectionChangedEventArgs args)
     {
         if (args.SelectedItem is NavigationViewItem { Tag: string tag })

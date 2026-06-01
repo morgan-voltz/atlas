@@ -1,42 +1,45 @@
 using System;
-using System.Collections.Generic;
-using Atlas.App.Presentation.Pages;
+using Atlas.App.Presentation;
 using Microsoft.UI.Xaml.Controls;
 
 namespace Atlas.App;
 
 /// <summary>
-/// Coque applicative (U4.0) : héberge le rail (RailShell) et route chaque destination vers sa page
-/// dans le Frame interne. Le routage par URL côté WASM et l'auth seront câblés en U4.1+ (docs/15 §7).
+/// Coque applicative (U4.0/U4) : héberge le rail (RailShell) et route chaque destination vers sa page
+/// dans le Frame interne. Sur la tête WebAssembly, l'URL (hash) reflète la destination et permet le
+/// deep-link (doc 14 §4) via <see cref="WasmRouting"/>.
 /// </summary>
 public sealed partial class MainPage : Page
 {
-    private static readonly Dictionary<string, Type> Destinations = new()
-    {
-        ["accueil"] = typeof(AccueilPage),
-        ["recherche"] = typeof(RecherchePage),
-        ["veille"] = typeof(VeillePage),
-        ["favoris"] = typeof(FavorisPage),
-        ["profil"] = typeof(ProfilPage),
-    };
-
     public MainPage()
     {
         this.InitializeComponent();
         this.Loaded += (_, _) =>
         {
             Shell.DestinationSelected += OnDestinationSelected;
-            // Destination par défaut (l'entrée Accueil est sélectionnée dans le rail).
-            Shell.NavigationFrame.Navigate(typeof(AccueilPage));
+
+            // Deep-link : sur WASM, on démarre sur la destination de l'URL si elle est connue.
+            string initial = WasmRouting.GetTag() is { } tag && Routes.IsKnown(tag) ? tag : Routes.Default;
+            Shell.SelectDestination(initial);
+            NavigateTo(initial);
         };
     }
 
-    private void OnDestinationSelected(object? sender, string tag)
+    private void OnDestinationSelected(object? sender, string tag) => NavigateTo(tag);
+
+    private void NavigateTo(string tag)
     {
-        if (Destinations.TryGetValue(tag, out Type? pageType) &&
-            Shell.NavigationFrame.CurrentSourcePageType != pageType)
+        if (Routes.PageFor(tag) is not { } pageType)
+        {
+            return;
+        }
+
+        if (Shell.NavigationFrame.CurrentSourcePageType != pageType)
         {
             Shell.NavigationFrame.Navigate(pageType);
         }
+
+        // Reflète la destination dans l'URL (no-op hors WASM).
+        WasmRouting.SetTag(tag);
     }
 }
