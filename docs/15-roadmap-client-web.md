@@ -122,7 +122,7 @@ Pas des phases : vérifiées **sur chaque écran** (intégrées à la DoD §3).
 
 ## 7. Bascule vers Uno (`Atlas.App`)
 
-> Chantier d'intégration **démarré** (U1/U2 livrés le 1ᵉʳ juin 2026, PR #120). Le détail des jalons restants (U3+) est affiné au fil du chantier.
+> Chantier d'intégration **démarré** (U1/U2/U3 livrés le 1ᵉʳ juin 2026). Le détail des jalons restants (U4+) est affiné au fil du chantier.
 
 L'**acquis Blazor (§1–§5) est directement réutilisable** : contrats `AtlasApiClient`, parcours écran par écran, états, vérifications E2E, kit de composants (à porter en XAML WinUI), breakpoints 640/880 px. La doctrine UX (`docs/12`) et la déclinaison multi-surface (`docs/14`, refondu Uno) ne changent pas.
 
@@ -133,7 +133,7 @@ L'**acquis Blazor (§1–§5) est directement réutilisable** : contrats `AtlasA
 | **U0 — Spike** | écran carte-aperçu + liste sur WASM + desktop ; valider XAML WinUI, rendu Linux, poids WASM | 🟡 partiel (1ᵉʳ juin 2026 : WASM/desktop OK, ~9,5 Mo Release ; Linux/mobile au runtime à valider) |
 | **U1 — Intégration repo** | `Atlas.App` (Uno single project) dans `Atlas.slnx` : `Uno.Sdk` 6.5.36 pin dans `global.json`, **CPM isolé** (`Directory.Packages.props`/`Directory.Build.props` locaux), **job CI `uno-build`** (têtes desktop Skia + WebAssembly) | ✅ (PR #120) |
 | **U2 — Preuve ADR-002** | `Atlas.App` → **Domain + Shared uniquement** (verrouillé par `CsprojDependencyTests`) ; `MainPage` consomme `Domain.Siren` ; `AtlasApiClient` = stub du point d'entrée HTTP unique. *Reste : auth (token mémoire + refresh cookie/secure storage) à câbler avec les vrais écrans (U4)* | ✅ (PR #120) |
-| **U3 — Portage du kit** | atomes + cartes + états en UserControls XAML ; thème clair/sombre via `ResourceDictionary` | ⬜ |
+| **U3 — Portage du kit** | thème clair/sombre (`ThemeDictionaries`) ; atomes `Chip`/`Provenance`/`LabeledField` ; cartes `CompanySummaryCard`/`SectionCard` (4 états)/`FeedEventCard` ; `CardSkeleton` ; coque `RailShell` (`NavigationView`) ; `ListDetailView` (2 panneaux, doc 14 §3) — en UserControls XAML WinUI. *Reste : bundling des polices (TTF), différé* | ✅ (PR #123/#124/#125) |
 | **U4 — Re-livraison écran par écran** | rejouer M1→M7 en tranches verticales (même DoD §3), en réutilisant contrats et parcours | ⬜ |
 | **U5 — Retrait du Blazor** | supprimer `Atlas.Web`/`Atlas.Web.Client` une fois U0–U4 validés multi-cible | ⬜ |
 
