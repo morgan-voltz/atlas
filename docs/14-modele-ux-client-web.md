@@ -151,10 +151,11 @@ les 6 règles ; page-vs-carte ; le kit (atomes, carte-aperçu, carte-section, é
 | Placement `Atlas.App` dans la solution | `docs/10-layout-solution-dotnet.md` |
 | Maquettes (3 formats : téléphone / intermédiaire / full) | [`docs/design/`](design/README.md) |
 
-> **À faire à l'intégration Uno** :
-> - **Porter le kit et les écrans en XAML WinUI** (UserControls), reconfirmer les breakpoints en `AdaptiveTrigger.MinWindowWidth`.
-> - Câbler le **routeur Uno** (chemins → URL sur la tête WASM ; pile de navigation sur les têtes natives) en respectant les garde-fous de §4.
-> - `CLAUDE.md` référence déjà doc 12/14/06 ; vérifier la cohérence des liens une fois `Atlas.App` créé.
+> **État d'intégration Uno (1ᵉʳ juin 2026)** :
+> - ✅ **Kit et écrans portés en XAML WinUI** (UserControls : Chip/Provenance/LabeledField, cartes, SectionCard, ListDetailView, RailShell ; pages Accueil/Recherche/Veille/Favoris/Profil/Login) — cf. `docs/15` §7 (U3/U4).
+> - ✅ **Routage** câblé : rail `NavigationView` → `Frame` ; **URL/hash sur la tête WASM** (deep-link + back/forward), no-op natif. *(Reconfirmer les breakpoints en `AdaptiveTrigger.MinWindowWidth` reste un raffinement : le list-detail bascule actuellement par mesure de largeur en code.)*
+> - ✅ `CLAUDE.md` référence doc 12/14/06.
+> - ⏳ Reste : têtes mobiles (iOS/Android) ; validation du routing WASM en navigateur.
 
 ---
 

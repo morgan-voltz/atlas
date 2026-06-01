@@ -60,3 +60,7 @@ La pile front C#/.NET sérieuse en 2026 : **MAUI** (officiel, mobile mûr, pas d
 ---
 
 *ADR figé le 30 mai 2026. Atlas adopte **Uno Platform** comme UI unique sur Windows/macOS/Linux/iOS/Android/WebAssembly. Remplace ADR-017 (Blazor web, caduc) et ADR-026 (MAUI+Avalonia, caduc), amende ADR-007 (MAUI/Avalonia/Blazor retirés). Motivation : souveraineté (Linux desktop natif, indépendance Microsoft côté desktop) + un seul paradigme d'UI pour un porteur solo. Décision prise tôt (aucun client natif écrit) pour un coût de changement minimal. La doctrine UX (doc 12) est préservée — agnostique de la techno. Spike Uno recommandé avant de retirer le squelette Blazor existant.*
+
+---
+
+**Suivi d'implémentation (1ᵉʳ juin 2026)** — la « feuille de route Uno » est détaillée et suivie dans `docs/15` §7 (étapes U0–U5). État : **U1→U3 livrés** (intégration repo, preuve ADR-002 par NetArchTest, kit XAML) ; **U4 quasi complet** (`Atlas.App` couvre auth/2FA/refresh, INPI, recherche, fiche, favoris, veille en données réelles + routing URL WASM, validé E2E sur desktop via le harness `docs/13`). Têtes activées : **WebAssembly + desktop Skia** (iOS/Android à ajouter). **Garde-fou respecté** : `Atlas.Web`/`Atlas.Web.Client` (Blazor) et `Atlas.Maui` restent en place — leur retrait (**U5**) est conditionné à un spike multi-cible (Linux/mobile) concluant.

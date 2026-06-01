@@ -219,8 +219,9 @@ dotnet ef database update \
   --startup-project src/Atlas.Api
 
 # Lancement local
-dotnet run --project src/Atlas.Api                    # API
-# Client Uno Atlas.App (une fois intégré au repo — cf. ADR-029 / docs/10) :
+dotnet run --project src/Atlas.Api --launch-profile https  # API en https://localhost:7201
+# (profil https requis pour le refresh du client Uno : le cookie atlas_refresh est Secure, non transmis sur http)
+# Client Uno Atlas.App (intégré au repo, cf. ADR-029 / docs/10 ; têtes actives : desktop + wasm) :
 dotnet run --project src/Atlas.App -f net10.0-desktop     # tête desktop (Skia : Win/macOS/Linux)
 dotnet run --project src/Atlas.App -f net10.0-browserwasm # tête web (WebAssembly)
 # Transition : le client web Blazor reste lançable
