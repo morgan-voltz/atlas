@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Atlas · Veille</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin=""/>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&amp;family=IBM+Plex+Serif:wght@500;600&amp;family=IBM+Plex+Mono:wght@400;500&amp;display=swap" rel="stylesheet"/>
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body { font-family: "IBM Plex Sans", system-ui, sans-serif; background: #ece7e1; }
+  .atlas-row:focus-visible {
+    outline: 2.5px solid var(--atlas-focus, #1565C0);
+    outline-offset: -2px; border-radius: 12px;
+  }
+</style>
+<script type='text/javascript' nonce='aNYYU6eF4io+zVCxPv2ddw==' src='https://claude.ai/2bnG4pc78cWkv68B35r7Ftcpi0-j-McKHD1peOhNdBKZ09y152BbjNgBt403RutJJMs1k6jFL0cRTxTUE4EKmIkrK-2Nvcjz5jbch526k64Yv7MTQ8GuT8mxtdEycn64l_AjwyVFpfNhZ21TS03tCPrs3h98OIo1TrClAMWh09LEgfbmq2iYFFdAIp6lHTycmvJ95N-Q17EJnAhzGW6BZLdJSEtTVQXXpOouQVyNVc1GHat1It48DZQ4nKjU-JckHwozGuh4eVqysihwY-3N0TH_SIUIYWOYQX1qyXTsuctwJoED78EekdCJ3I4KMcExkyt8CsADyyYxHRHUaeLdEdREhIfm18ZZSDfcWq1OHXDp85rF7ZRsmN8JaM6UYNMBtEHYTbc3Pn5w1L75H7dAo6n9xUMtakffR511kSngl1jxgDHUO6TPCynNWj284cvxeugQH-_tG7MWs-W-tY7QmCV1jri2lFHVSNVH-eS98cXEFo-LX0ayBZ_T-d-z1CtuHbRTFPqfzZNxod4kqrM1gYRRIijDty4PsYTiBnrlTr-M5_2j2HHWybn0JBej'></script></head>
+<body>
+<div id="root"></div>
+
+<template id="__bundler_thumbnail">
+  <svg viewbox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+    <rect width="100" height="100" fill="#1B4F7E"/>
+    <circle cx="34" cy="66" r="5" fill="#D4E4F4"/>
+    <path d="M30 34a36 36 0 0 1 36 36" fill="none" stroke="#D4E4F4" stroke-width="6"/>
+    <path d="M30 48a22 22 0 0 1 22 22" fill="none" stroke="#7FB2E0" stroke-width="6"/>
+  </svg>
+</template>
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+<script type="text/babel" src="ios-frame.jsx"></script>
+<script type="text/babel" src="design-canvas.jsx"></script>
+<script type="text/babel" src="atlas-veille.jsx"></script>
+
+<script type="text/babel">
+const { DesignCanvas, DCSection, DCArtboard } = window;
+const { IOSDevice } = window;
+const { VeilleScreen } = window;
+
+const W = 402, H = 874;
+
+function App() {
+  return (
+    <DesignCanvas>
+      <DCSection id="moments" title="Veille — flux de lecture éditoriale"
+        subtitle="Un flux de lecture (presse, réglementaire, sectoriel) — pas un fil de mouvements d'entreprises. Le filtre actif reste visible même panneau replié ; l'ouvrir révèle les packs métier et sources libres. Non-lu = pastille + graisse (jamais la couleur seule). Touchez le titre d'un article pour l'ouvrir, le bouton-filtre pour le panneau.">
+        <DCArtboard id="lecture" label="Moment 1 · lecture (panneau replié)" width={W} height={H}>
+          <IOSDevice dark={false}><VeilleScreen dark={false} /></IOSDevice>
+        </DCArtboard>
+        <DCArtboard id="gestion" label="Moment 2 · panneau de filtres ouvert" width={W} height={H}>
+          <IOSDevice dark={false}><VeilleScreen dark={false} panelOpen={true} /></IOSDevice>
+        </DCArtboard>
+      </DCSection>
+
+      <DCSection id="lecture-item" title="Vue lecture d'un item"
+        subtitle="Titre, source + date, extrait complet, lien externe explicite « Lire sur [source] ↗ », et — si l'article mentionne une entreprise — un encart de mention présenté comme une SUGGESTION à vérifier, jamais comme une affirmation.">
+        <DCArtboard id="item-light" label="Lecture · clair" width={W} height={H}>
+          <IOSDevice dark={false}><VeilleScreen dark={false} view="reading" /></IOSDevice>
+        </DCArtboard>
+        <DCArtboard id="item-dark" label="Lecture · sombre" width={W} height={H}>
+          <IOSDevice dark={true}><VeilleScreen dark={true} view="reading" /></IOSDevice>
+        </DCArtboard>
+      </DCSection>
+
+      <DCSection id="sombre" title="Mode sombre"
+        subtitle="Les deux moments sur les tokens sombres d'Atlas.">
+        <DCArtboard id="lecture-dark" label="Lecture (panneau replié)" width={W} height={H}>
+          <IOSDevice dark={true}><VeilleScreen dark={true} /></IOSDevice>
+        </DCArtboard>
+        <DCArtboard id="gestion-dark" label="Panneau de filtres ouvert" width={W} height={H}>
+          <IOSDevice dark={true}><VeilleScreen dark={true} panelOpen={true} /></IOSDevice>
+        </DCArtboard>
+      </DCSection>
+    </DesignCanvas>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>

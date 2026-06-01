@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Atlas · Recherche (web)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin=""/>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&amp;family=IBM+Plex+Serif:wght@500;600&amp;family=IBM+Plex+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body { font-family: "Atkinson Hyperlegible", system-ui, sans-serif; background: #f0eee9; }
+
+  /* Focus visible — exigence d'accessibilité (doc 06) */
+  .atlas-row:focus-visible, .atlas-field:focus-within,
+  [role="option"]:focus-visible, [role="listbox"]:focus-visible {
+    outline: 2.5px solid var(--atlas-focus, #1565C0);
+    outline-offset: -2px; border-radius: 12px;
+  }
+  /* Survol discret, neutre (ne casse ni le sélectionné ni l'actif) */
+  .atlas-row:hover:not([aria-selected="true"]):not([aria-current="page"]):not([aria-checked="true"]) {
+    background: rgba(127,140,158,0.12);
+  }
+  ::selection { background: rgba(27,79,126,0.22); }
+</style>
+<script type='text/javascript' nonce='/2UQa+ITDoCmZbPdbrMieQ==' src='https://claude.ai/ntF4VvxYOqktYkuoEhgJl0FP4LbNSMNu-7mr-zYrIk3iwmYbLWGCWc421o9qk-DuQymsTR8pN8Ch04bgh2-Sa4awN2WlCm5Xy82uuu531fmMY5ynjXIwY9umgu-l8am3cbH5ZAOSHmXGYI-a4x0D-KSjyECE-37yLtx7MEwBEBZ5d7lOMAw38_IMZWh23mJ1mwmTXrXeSp-20PuXQ-0QKqsd6g7kxk5btJz4lR9H8zrlIauprGAgGfbTmYvi6wFtkRY6zbdb4PfPNXyCV7ShBmvhuMhxHfIdR9GXBZ8fpFf9Jkp0jkkfid7ahT7i36IOEX6-lTGHqcC96ZFiPpIi-BbAPAiE6lt86uWfDR-jO8m5qlalUJYeSGD2DP1vD7E-WSL4iHUEcn3nCPIJLmtJkXlvEDpBDIolO-VHXqqdGQr2TNgz5DLSjp82uNJmmrACQySstIxxYaLxsWe7mrfy0eHH9NDtkGnY5ebEiviQyVFwLlAlI1eb-_m5k7Hqs-QhhN8ILXq_Owgnx5TP2_cFmMqwDG9TBnXg_Y9abA94MlOp-GhW58KaXASA6V1R2MRjaYKXxs5v'></script></head>
+<body>
+<div id="root"></div>
+
+<template id="__bundler_thumbnail">
+  <svg viewbox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+    <rect width="100" height="100" fill="#1B4F7E"/>
+    <rect x="20" y="26" width="26" height="48" rx="5" fill="#D4E4F4"/>
+    <rect x="52" y="26" width="28" height="48" rx="5" fill="#7FB2E0"/>
+  </svg>
+</template>
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+<script type="text/babel" src="design-canvas.jsx"></script>
+<script type="text/babel" src="atlas-web-core.jsx"></script>
+<script type="text/babel" src="atlas-web-screens.jsx"></script>
+
+<script type="text/babel">
+const { DesignCanvas, DCSection, DCArtboard } = window;
+const { RechercheWeb } = window;
+
+// Cadre de fenêtre — pour situer l'échelle (n'est pas un composant du produit).
+function WindowFrame({ w, h, dark, children }) {
+  const bar = dark ? '#0D1722' : '#E7EFF8';
+  const dot = dark ? '#2C3E50' : '#B9CCDF';
+  return (
+    <div style={{ width:w, height:h, display:'flex', flexDirection:'column',
+      borderRadius:14, overflow:'hidden', boxShadow:'0 1px 2px rgba(19,32,46,0.06), 0 18px 50px rgba(19,32,46,0.16)',
+      border:`1px solid rgba(19,32,46,0.10)` }}>
+      <div style={{ flexShrink:0, height:38, background:bar, display:'flex', alignItems:'center',
+        gap:7, padding:'0 14px', borderBottom:`1px solid rgba(19,32,46,0.08)` }}>
+        <span style={{ width:11, height:11, borderRadius:'50%', background:dot }} />
+        <span style={{ width:11, height:11, borderRadius:'50%', background:dot }} />
+        <span style={{ width:11, height:11, borderRadius:'50%', background:dot }} />
+        <span style={{ marginLeft:12, fontFamily:'IBM Plex Mono, monospace', fontSize:12,
+          color: dark ? '#5A7490' : '#7E97AE' }}>atlas.app/recherche?q=beaumont&type=entreprise</span>
+      </div>
+      <div style={{ flex:1, minHeight:0 }}>{children}</div>
+    </div>
+  );
+}
+
+const DW = 1440, DH = 904, NW = 700, NH = 880;
+
+function App() {
+  return (
+    <DesignCanvas>
+      <DCSection id="large" title="Format large (~1440 px) — list-detail"
+        subtitle="Rail latéral · liste pleine largeur de sa zone (scan dense) · détail à largeur PLAFONNÉE (~720px, aligné à gauche, jamais étiré). Les lignes sont vivantes : cliquez une entreprise à gauche, la fiche se met à jour à droite sans changer de page. ↑/↓ navigue, Entrée ouvre.">
+        <DCArtboard id="desktop-clair" label="Desktop · clair" width={DW} height={DH}>
+          <WindowFrame w={DW} h={DH} dark={false}><RechercheWeb dark={false} layout="desktop" /></WindowFrame>
+        </DCArtboard>
+        <DCArtboard id="desktop-sombre" label="Desktop · sombre" width={DW} height={DH}>
+          <WindowFrame w={DW} h={DH} dark={true}><RechercheWeb dark={true} layout="desktop" /></WindowFrame>
+        </DCArtboard>
+      </DCSection>
+
+      <DCSection id="reduite" title="Fenêtre réduite (~700 px) — empilement (R2)"
+        subtitle="Sous le point de rupture, le rail devient une barre d'onglets en bas et le list-detail retombe en empilement : on voit la liste seule, et cliquer un résultat amène à la fiche en plein écran avec un retour. Même contenu, présentation empilée. La liste de la maquette « Liste » est cliquable → bascule vers la fiche.">
+        <DCArtboard id="reduite-liste" label="Fenêtre réduite · liste seule" width={NW} height={NH}>
+          <WindowFrame w={NW} h={NH} dark={false}><RechercheWeb dark={false} layout="narrow" initialView="list" /></WindowFrame>
+        </DCArtboard>
+        <DCArtboard id="reduite-fiche" label="Fenêtre réduite · fiche plein écran (+ retour)" width={NW} height={NH}>
+          <WindowFrame w={NW} h={NH} dark={false}><RechercheWeb dark={false} layout="narrow" initialView="detail" initialSelected="e1" /></WindowFrame>
+        </DCArtboard>
+        <DCArtboard id="reduite-sombre" label="Fenêtre réduite · liste · sombre" width={NW} height={NH}>
+          <WindowFrame w={NW} h={NH} dark={true}><RechercheWeb dark={true} layout="narrow" initialView="list" /></WindowFrame>
+        </DCArtboard>
+      </DCSection>
+    </DesignCanvas>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>

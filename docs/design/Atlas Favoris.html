@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Atlas · Favoris</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin=""/>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&amp;family=IBM+Plex+Serif:wght@500;600&amp;family=IBM+Plex+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body { font-family: "IBM Plex Sans", system-ui, sans-serif; background: #ece7e1; }
+  [role="tablist"]::-webkit-scrollbar { display: none; }
+  .atlas-row:focus-visible {
+    outline: 2.5px solid var(--atlas-focus, #1565C0);
+    outline-offset: -2px; border-radius: 12px;
+  }
+</style>
+<script type='text/javascript' nonce='JD8tFGQrZljPx0/ykSqZlQ==' src='https://claude.ai/bcDo10vf3zJk2alfgTmdPApG4jwMk3l-f2PC0nCaVMNHHu4iXdVfbsCTTlIB_7S5V4BQo9Hdwl6yHu_i_qNEzE17XAwuGP7P-AKjJzZWRhtC6cHJSI056JSMHk2GAF4rb0r1VMbQEP0_u8h4i-EgOWmMe65BlAdCDGtdX9rlfozUquzWSqE6srAzc24O08mkHmfoewsQKXNl_ykIM1sbfigkkU7xdE3LK8s4xYa2kMYqFm1VNlzx61KKVGSYIuJjdtu57206gy71RkY2RWP3jRPMeAfsq9ULLNmn10UKDnRlmwBV1fMaM-7QWRJNfnpGUnObuieolvhOoOCmklpPrUCKJn0LwUnBvSXpAAo8BhOiD6WSKWZzcv1ECgkp7ikNOcNW0-DE1KrDPMyuxbv2KslBWVaO4wq9NN330SY5T7_yycyEJNOJkrbk4InqIrYJvsisIjCf67dsQGAeSIFes_uVUG4CQrirKTkhi0TasBbmBVC0Iw77gwyAn_uUbxOHxhBOz9M0ye3tl5OPMDh1wf2cJr1vlNnJ4X_YkM8vbo1c6rZVRNmDlDRcDyzrHg'></script></head>
+<body>
+<div id="root"></div>
+
+<template id="__bundler_thumbnail">
+  <svg viewbox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+    <rect width="100" height="100" fill="#1B4F7E"/>
+    <path d="M50 30l5.5 11l12 1.7l-8.7 8.5l2 12L50 67l-10.8 5.7l2-12L32.5 52l12-1.7z" fill="#D4E4F4"/>
+  </svg>
+</template>
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+<script type="text/babel" src="ios-frame.jsx"></script>
+<script type="text/babel" src="design-canvas.jsx"></script>
+<script type="text/babel" src="atlas-favoris.jsx"></script>
+
+<script type="text/babel">
+const { DesignCanvas, DCSection, DCArtboard } = window;
+const { IOSDevice } = window;
+const { FavorisScreen } = window;
+
+const W = 402, H = 874;
+
+function App() {
+  return (
+    <DesignCanvas>
+      <DCSection id="moments" title="Favoris — gestion du portefeuille surveillé"
+        subtitle="Écran de gestion (pas un fil : aucun badge « nouveauté »). Sélecteur de puces défilable ; « Tous » par défaut. Choisir une liste révèle EN PLUS les filtres par tag (libellé + pastille, jamais la couleur seule) et l'accès à sa timeline filtrée. Les puces et tags sont navigables au clavier.">
+        <DCArtboard id="tous" label="« Tous » · le portefeuille" width={W} height={H}>
+          <IOSDevice dark={false}><FavorisScreen dark={false} initialList="tous" /></IOSDevice>
+        </DCArtboard>
+        <DCArtboard id="liste" label="Liste « Concurrence » ouverte" width={W} height={H}>
+          <IOSDevice dark={false}><FavorisScreen dark={false} initialList="concurrence" /></IOSDevice>
+        </DCArtboard>
+      </DCSection>
+
+      <DCSection id="actions" title="Actions sur une carte"
+        subtitle="Le kebab ⋮ est TOUJOURS visible — c'est la voie accessible (Retirer du suivi · Ajouter à une liste). Le swipe vers la gauche est un simple raccourci qui révèle « Retirer » (rouge = action système destructive, pas un jugement sur l'entité). Ici, la 1ʳᵉ carte montre le menu ouvert, la 2ᵉ le swipe révélé.">
+        <DCArtboard id="actions-demo" label="Kebab ouvert + swipe révélé" width={W} height={H}>
+          <IOSDevice dark={false}><FavorisScreen dark={false} initialList="tous" demo={true} /></IOSDevice>
+        </DCArtboard>
+      </DCSection>
+
+      <DCSection id="vides" title="États vides"
+        subtitle="Vide global (nouveau compte → boucle chercher/suivre) et vide d'une liste (ajouter ou importer des SIREN).">
+        <DCArtboard id="vide-global" label="Vide global · aucun favori" width={W} height={H}>
+          <IOSDevice dark={false}><FavorisScreen dark={false} mode="empty-global" /></IOSDevice>
+        </DCArtboard>
+        <DCArtboard id="vide-liste" label="Vide d'une liste" width={W} height={H}>
+          <IOSDevice dark={false}><FavorisScreen dark={false} mode="empty-list" /></IOSDevice>
+        </DCArtboard>
+      </DCSection>
+
+      <DCSection id="sombre" title="Mode sombre"
+        subtitle="Les deux moments sur les tokens sombres d'Atlas.">
+        <DCArtboard id="tous-dark" label="« Tous »" width={W} height={H}>
+          <IOSDevice dark={true}><FavorisScreen dark={true} initialList="tous" /></IOSDevice>
+        </DCArtboard>
+        <DCArtboard id="liste-dark" label="« Concurrence »" width={W} height={H}>
+          <IOSDevice dark={true}><FavorisScreen dark={true} initialList="concurrence" /></IOSDevice>
+        </DCArtboard>
+      </DCSection>
+    </DesignCanvas>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>
