@@ -1,32 +1,92 @@
+using System.Net;
 using System.Net.Http;
+using System.Net.Http.Json;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
+using Atlas.App.Models;
 using Atlas.Domain.Companies;
 using Atlas.Shared.Result;
 
 namespace Atlas.App.Services;
 
-/// <summary>
-/// Unique point d'entrée du client Uno vers le backend (ADR-002 : topologie « client pur de l'API »).
-/// Toute interaction réseau passe par ici ; aucune logique métier sensible ni aucun secret ne vit côté
-/// client (code décompilable, surtout la tête WASM). Le client ne référence que <c>Atlas.Domain</c> et
-/// <c>Atlas.Shared</c> — jamais <c>Atlas.Infrastructure.*</c> (verrouillé par Atlas.Architecture.Tests).
-///
-/// Stub U1/U2 : la signature et la construction de requête sont posées ; le mapping de la réponse vers
-/// un DTO client et l'auth (access token en mémoire + refresh cookie/secure storage, ADR-010) seront
-/// câblés à l'étape U2/U4 (cf. docs/15 §7).
-/// </summary>
-public sealed class AtlasApiClient(HttpClient httpClient)
+/// <summary>État d'une tentative de connexion (doc 12 §10 ; ADR-010).</summary>
+public enum LoginStatus
 {
-    private readonly HttpClient _httpClient = httpClient;
+    /// <summary>Connecté : l'access token est en mémoire (le refresh vit dans le cookie/secure storage).</summary>
+    Authenticated,
+
+    /// <summary>2FA requise : un défi TOTP doit être résolu (challenge token hors URL).</summary>
+    TwoFactorRequired,
+}
+
+/// <summary>Résultat d'une connexion réussie ou en attente de 2FA.</summary>
+public sealed record LoginResult(LoginStatus Status, string? ChallengeToken);
+
+/// <summary>
+/// Unique point d'entrée du client Uno vers le backend (ADR-002 : « client pur de l'API »). Ne
+/// référence que <c>Atlas.Domain</c> + <c>Atlas.Shared</c> (verrouillé par Atlas.Architecture.Tests).
+/// L'access token est posé sur chaque requête par <see cref="AuthHeaderHandler"/>.
+/// </summary>
+public sealed class AtlasApiClient(HttpClient httpClient, ITokenStore tokenStore)
+{
+    /// <summary>
+    /// Connecte l'utilisateur (<c>POST /auth/login</c>). En cas de succès, range l'access token en
+    /// mémoire ; le refresh token rotatif est posé en cookie HttpOnly par l'API (jamais vu ici).
+    /// </summary>
+    public async Task<Result<LoginResult>> LoginAsync(string email, string password, CancellationToken ct = default)
+    {
+        HttpResponseMessage response;
+        try
+        {
+            response = await httpClient
+                .PostAsJsonAsync("auth/login", new LoginRequest(email, password), AtlasJsonContext.Default.LoginRequest, ct)
+                .ConfigureAwait(false);
+        }
+        catch (HttpRequestException)
+        {
+            return Result<LoginResult>.Fail(ApiErrors.Unreachable());
+        }
+
+        if (response.StatusCode is HttpStatusCode.Unauthorized or HttpStatusCode.BadRequest)
+        {
+            return Result<LoginResult>.Fail(ApiErrors.InvalidCredentials());
+        }
+
+        if (!response.IsSuccessStatusCode)
+        {
+            return Result<LoginResult>.Fail(ApiErrors.RequestFailed((int)response.StatusCode));
+        }
+
+        using JsonDocument doc = JsonDocument.Parse(
+            await response.Content.ReadAsStringAsync(ct).ConfigureAwait(false));
+        JsonElement root = doc.RootElement;
+
+        if (root.TryGetProperty("twoFactorRequired", out JsonElement twoFa) && twoFa.GetBoolean())
+        {
+            string? challenge = root.TryGetProperty("challengeToken", out JsonElement c) ? c.GetString() : null;
+            return Result<LoginResult>.Ok(new LoginResult(LoginStatus.TwoFactorRequired, challenge));
+        }
+
+        if (root.TryGetProperty("accessToken", out JsonElement at) && at.GetString() is { Length: > 0 } accessToken)
+        {
+            tokenStore.SetAccessToken(accessToken);
+            return Result<LoginResult>.Ok(new LoginResult(LoginStatus.Authenticated, null));
+        }
+
+        return Result<LoginResult>.Fail(ApiErrors.RequestFailed((int)response.StatusCode));
+    }
+
+    /// <summary>Termine la session locale (l'access token en mémoire). Le serveur révoque le refresh via /auth/logout.</summary>
+    public void ClearSession() => tokenStore.Clear();
 
     /// <summary>
-    /// Récupère la fiche d'une entreprise par son SIREN. Le <see cref="Siren"/> (value object validé
-    /// côté domaine) est la seule entrée acceptée — pas de <c>string</c> nu (cf. CLAUDE.md).
+    /// Récupère la fiche brute d'une entreprise par SIREN (value object validé côté domaine).
+    /// Le mapping vers un DTO client arrive avec l'écran Fiche (U4 suite).
     /// </summary>
     public async Task<Result<string>> GetCompanyRawAsync(Siren siren, CancellationToken ct = default)
     {
-        using var response = await _httpClient
+        using HttpResponseMessage response = await httpClient
             .GetAsync($"companies/{siren.Value}", ct)
             .ConfigureAwait(false);
 

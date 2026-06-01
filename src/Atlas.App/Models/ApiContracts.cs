@@ -4,6 +4,13 @@ namespace Atlas.App.Models;
 // records, sans référencer Atlas.Application (où vivent les DTOs serveur). Calés sur les contrats
 // exposés par Atlas.Api. Repris de Atlas.Web.Client/Models/ApiContracts.cs lors du portage Uno.
 
+/// <summary>Corps de la requête de connexion (<c>POST /auth/login</c>).</summary>
+public sealed record LoginRequest(string Email, string Password);
+
+/// <summary>Réponse d'un access token (login réussi, refresh) — calé sur le contrat de l'API
+/// (<c>Atlas.Api.Endpoints.AccessTokenResponse</c> : propriété <c>ExpiresAt</c>).</summary>
+public sealed record AccessTokenResponse(string AccessToken, System.DateTimeOffset ExpiresAt);
+
 /// <summary>Résultat résumé d'une entreprise (liste de recherche, favoris).</summary>
 public sealed record CompanySummaryResponse(string Siren, string Denomination, string? Ville, string? NafCode);
 
