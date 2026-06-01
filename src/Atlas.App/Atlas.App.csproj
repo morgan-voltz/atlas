@@ -1,0 +1,39 @@
+<Project Sdk="Uno.Sdk">
+  <PropertyGroup>
+    <TargetFrameworks>net10.0-browserwasm;net10.0-desktop</TargetFrameworks>
+
+    <OutputType>Exe</OutputType>
+    <UnoSingleProject>true</UnoSingleProject>
+
+    <!-- Display name -->
+    <ApplicationTitle>Atlas</ApplicationTitle>
+    <!-- App Identifier -->
+    <ApplicationId>fr.atlas.app</ApplicationId>
+    <!-- Versions -->
+    <ApplicationDisplayVersion>1.0</ApplicationDisplayVersion>
+    <ApplicationVersion>1</ApplicationVersion>
+    <!-- Package Publisher -->
+    <ApplicationPublisher>Projet Atlas</ApplicationPublisher>
+    <!-- Package Description -->
+    <Description>Atlas — client Uno (UI unifiée multi-cible, ADR-029).</Description>
+
+    <!--
+      UnoFeatures are used to quickly add and manage features enabled for your app.
+      https://aka.platform.uno/singleproject-features
+    -->
+    <UnoFeatures>
+      SkiaRenderer;
+    </UnoFeatures>
+  </PropertyGroup>
+
+  <!--
+    ADR-002 / ADR-029 : le client ne référence QUE Domain + Shared, jamais
+    Infrastructure.* (code décompilable côté client, surtout la tête WASM).
+    Verrouillé par Atlas.Architecture.Tests (CsprojDependencyTests).
+  -->
+  <ItemGroup>
+    <ProjectReference Include="..\Atlas.Domain\Atlas.Domain.csproj" />
+    <ProjectReference Include="..\Atlas.Shared\Atlas.Shared.csproj" />
+  </ItemGroup>
+
+</Project>

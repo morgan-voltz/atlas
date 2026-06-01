@@ -47,6 +47,38 @@ public class CsprojDependencyTests
     }
 
     /// <summary>
+    /// ADR-029 / ADR-002 — Cas particulier `Atlas.App` (client Uno multi-cible, single project) :
+    /// même règle que <c>Atlas.Maui</c>, et tout particulièrement pour la tête WebAssembly
+    /// (code décompilable dans le navigateur). Le client ne doit JAMAIS référencer
+    /// <c>Atlas.Infrastructure.*</c>, <c>Atlas.Application</c> ni <c>Atlas.Api</c> — uniquement
+    /// <c>Atlas.Domain</c> et <c>Atlas.Shared</c>, toute interaction passant par l'API HTTP
+    /// (<c>AtlasApiClient</c>). Testé au niveau csproj car le projet est multi-cible
+    /// (net10.0-browserwasm/desktop…) et non référençable depuis ce projet net10.0.
+    /// </summary>
+    [Fact]
+    public void Atlas_App_csproj_should_only_reference_Domain_and_Shared()
+    {
+        List<string> references = ReadProjectReferences("src/Atlas.App/Atlas.App.csproj");
+
+        references.Should().NotContain(
+            r => r.Contains("Atlas.Application", StringComparison.Ordinal),
+            "Atlas.App ne doit pas embarquer la couche Application (handlers métier, ports) — risque de décompilation.");
+
+        references.Should().NotContain(
+            r => r.Contains("Atlas.Infrastructure", StringComparison.Ordinal),
+            "Atlas.App ne doit pas embarquer un adapter d'infrastructure (HttpClient INPI, EF, KMS…) — risque de décompilation, surtout côté WASM. Voir CLAUDE.md / ADR-029.");
+
+        references.Should().NotContain(
+            r => r.Contains("Atlas.Api", StringComparison.Ordinal),
+            "Atlas.App ne doit pas référencer la composition root API.");
+
+        IEnumerable<string> atlasReferences = references.Where(r => r.Contains("Atlas.", StringComparison.Ordinal));
+        atlasReferences.Should().OnlyContain(
+            r => r.Contains("Atlas.Domain", StringComparison.Ordinal) || r.Contains("Atlas.Shared", StringComparison.Ordinal),
+            "Atlas.App ne doit référencer que Atlas.Domain et Atlas.Shared.");
+    }
+
+    /// <summary>
     /// Aucune Atlas.Infrastructure.* ne doit en référencer une autre. La composition se fait
     /// dans <c>Atlas.Api</c> (composition root). Cross-référence = ports & adapters cassés —
     /// un adapter en deviendrait un autre.

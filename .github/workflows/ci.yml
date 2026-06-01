@@ -64,3 +64,28 @@ jobs:
           name: coverage
           path: TestResults/**/coverage.cobertura.xml
           if-no-files-found: ignore
+
+  # Client Uno Atlas.App (ADR-029) : verrouille le multi-tête sur les cibles
+  # buildables sur Linux — WebAssembly (souveraineté web) + desktop Skia (= tête
+  # Linux/Win/macOS). iOS/maccatalyst exigent macOS, Android un workload mobile :
+  # hors de ce job (à ajouter sur un runner dédié si besoin). Job séparé car la
+  # restauration des workloads Uno (emscripten) est plus lourde que le backend.
+  uno-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      # Restaure les workloads requis par le single project Uno (wasm-tools pour
+      # la tête WebAssembly). La tête desktop Skia n'en demande pas.
+      - name: Restore Uno workloads
+        run: dotnet workload restore src/Atlas.App/Atlas.App.csproj
+
+      - name: Build Uno desktop head (Skia — Linux/Win/macOS)
+        run: dotnet build src/Atlas.App/Atlas.App.csproj -f net10.0-desktop -c Release
+
+      - name: Build Uno WebAssembly head
+        run: dotnet build src/Atlas.App/Atlas.App.csproj -f net10.0-browserwasm -c Release
