@@ -1,0 +1,21 @@
+<Page x:Class="Atlas.App.Presentation.Pages.FavorisPage"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      Background="{ThemeResource AtlasBgBrush}">
+  <ScrollViewer>
+    <StackPanel Padding="24" Spacing="6" MaxWidth="720">
+      <StackPanel Orientation="Horizontal" Spacing="10" Margin="0,0,0,8">
+        <TextBlock Text="Favoris"
+                   FontFamily="{ThemeResource AtlasFontHeading}"
+                   FontSize="24"
+                   Foreground="{ThemeResource AtlasOnSurfaceBrush}" />
+        <TextBlock x:Name="Count"
+                   VerticalAlignment="Bottom"
+                   Margin="0,0,0,4"
+                   FontSize="13"
+                   Foreground="{ThemeResource AtlasOnSurfaceVariantBrush}" />
+      </StackPanel>
+      <StackPanel x:Name="List" Spacing="0" />
+    </StackPanel>
+  </ScrollViewer>
+</Page>

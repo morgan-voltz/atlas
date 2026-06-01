@@ -1,0 +1,35 @@
+<Page x:Class="Atlas.App.Presentation.Pages.RecherchePage"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:c="using:Atlas.App.Presentation.Controls"
+      Background="{ThemeResource AtlasBgBrush}">
+  <Grid Padding="24" RowSpacing="14">
+    <Grid.RowDefinitions>
+      <RowDefinition Height="Auto" />
+      <RowDefinition Height="Auto" />
+      <RowDefinition Height="*" />
+    </Grid.RowDefinitions>
+
+    <TextBlock Grid.Row="0"
+               Text="Recherche"
+               FontFamily="{ThemeResource AtlasFontHeading}"
+               FontSize="24"
+               Foreground="{ThemeResource AtlasOnSurfaceBrush}" />
+
+    <TextBox x:Name="Query"
+             Grid.Row="1"
+             PlaceholderText="Nom d'entreprise ou SIREN…"
+             TextChanged="OnQueryChanged"
+             MaxWidth="520"
+             HorizontalAlignment="Left" />
+
+    <c:ListDetailView x:Name="ListDetail" Grid.Row="2" BackLabel="← Résultats">
+      <StackPanel x:Name="Results" Spacing="2" />
+      <c:ListDetailView.DetailContent>
+        <c:SectionCard x:Name="Detail" Title="Sélectionnez un résultat" Source="RNE (INPI)">
+          <c:LabeledField Label="Localisation" x:Name="DetailField" />
+        </c:SectionCard>
+      </c:ListDetailView.DetailContent>
+    </c:ListDetailView>
+  </Grid>
+</Page>
