@@ -14,6 +14,15 @@ public sealed record AccessTokenResponse(string AccessToken, System.DateTimeOffs
 /// <summary>Résultat résumé d'une entreprise (liste de recherche, favoris).</summary>
 public sealed record CompanySummaryResponse(string Siren, string Denomination, string? Ville, string? NafCode);
 
+/// <summary>
+/// Corps de <c>POST /inpi/connection</c> (F-003). Identifiants techniques INPI : transmis une fois
+/// à l'API (chiffrés au repos côté serveur), JAMAIS persistés ni journalisés côté client (CLAUDE.md).
+/// </summary>
+public sealed record ConnectInpiRequest(string Username, string Password);
+
+/// <summary>Réponse de <c>GET /inpi/connection</c> (statut, sans aucun secret).</summary>
+public sealed record InpiConnectionStatusResponse(bool Connected, string? Status, System.DateTimeOffset? LastTestedAt);
+
 /// <summary>Mention d'un favori dans un item de veille (puce navigable vers la fiche).</summary>
 public sealed record FavoriteMentionResponse(string Siren, string Name);
 

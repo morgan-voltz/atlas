@@ -22,4 +22,11 @@ public static class ApiErrors
     /// <summary>État dégradé honnête (doc 12 §10) : la donnée RNE exige une connexion INPI.</summary>
     public static ApiError InpiNotConnected() =>
         new("inpi.not_connected", "Connectez votre compte INPI (Profil) pour rechercher des entreprises.");
+
+    /// <summary>Le compte INPI n'est pas habilité à l'API (un compte portail standard ne suffit pas).</summary>
+    public static ApiError InpiAccessNotAllowed() =>
+        new("inpi.api_access_not_allowed", "Ce compte INPI n'est pas habilité à l'API INPI (un compte portail standard ne suffit pas).");
+
+    public static ApiError InpiConnectionFailed() =>
+        new("inpi.connection_failed", "La connexion INPI a échoué. Vérifiez vos identifiants.");
 }

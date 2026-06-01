@@ -13,6 +13,8 @@ namespace Atlas.App.Models;
 [JsonSerializable(typeof(AccessTokenResponse))]
 [JsonSerializable(typeof(CompanySummaryResponse))]
 [JsonSerializable(typeof(PagedResult<CompanySummaryResponse>))]
+[JsonSerializable(typeof(ConnectInpiRequest))]
+[JsonSerializable(typeof(InpiConnectionStatusResponse))]
 [JsonSerializable(typeof(TimelineItemResponse))]
 [JsonSerializable(typeof(FavoriteMentionResponse))]
 internal sealed partial class AtlasJsonContext : JsonSerializerContext;

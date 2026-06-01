@@ -125,6 +125,74 @@ public sealed class AtlasApiClient(HttpClient httpClient, ITokenStore tokenStore
             paged?.Items ?? System.Array.Empty<CompanySummaryResponse>());
     }
 
+    /// <summary>Statut de la connexion INPI (<c>GET /inpi/connection</c>, F-003) — sans aucun secret.</summary>
+    public async Task<Result<InpiConnectionStatusResponse>> GetInpiStatusAsync(CancellationToken ct = default)
+    {
+        try
+        {
+            InpiConnectionStatusResponse? status = await httpClient
+                .GetFromJsonAsync("inpi/connection", AtlasJsonContext.Default.InpiConnectionStatusResponse, ct)
+                .ConfigureAwait(false);
+            return status is null
+                ? Result<InpiConnectionStatusResponse>.Fail(ApiErrors.RequestFailed(204))
+                : Result<InpiConnectionStatusResponse>.Ok(status);
+        }
+        catch (HttpRequestException)
+        {
+            return Result<InpiConnectionStatusResponse>.Fail(ApiErrors.Unreachable());
+        }
+    }
+
+    /// <summary>
+    /// Connecte un compte INPI (<c>POST /inpi/connection</c>, F-003). Les identifiants ne sont ni
+    /// persistés ni journalisés côté client ; l'API les chiffre au repos (CLAUDE.md / ADR-004).
+    /// </summary>
+    public async Task<Result> ConnectInpiAsync(string username, string password, CancellationToken ct = default)
+    {
+        HttpResponseMessage response;
+        try
+        {
+            response = await httpClient
+                .PostAsJsonAsync("inpi/connection", new ConnectInpiRequest(username, password), AtlasJsonContext.Default.ConnectInpiRequest, ct)
+                .ConfigureAwait(false);
+        }
+        catch (HttpRequestException)
+        {
+            return Result.Fail(ApiErrors.Unreachable());
+        }
+
+        if (response.IsSuccessStatusCode)
+        {
+            return Result.Ok();
+        }
+
+        string problem = await response.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
+        if (problem.Contains("inpi.api_access_not_allowed", StringComparison.Ordinal))
+        {
+            return Result.Fail(ApiErrors.InpiAccessNotAllowed());
+        }
+
+        return Result.Fail(ApiErrors.InpiConnectionFailed());
+    }
+
+    /// <summary>Déconnecte le compte INPI (<c>DELETE /inpi/connection</c>).</summary>
+    public async Task<Result> DisconnectInpiAsync(CancellationToken ct = default)
+    {
+        try
+        {
+            using HttpResponseMessage response = await httpClient
+                .DeleteAsync("inpi/connection", ct)
+                .ConfigureAwait(false);
+            return response.IsSuccessStatusCode
+                ? Result.Ok()
+                : Result.Fail(ApiErrors.RequestFailed((int)response.StatusCode));
+        }
+        catch (HttpRequestException)
+        {
+            return Result.Fail(ApiErrors.Unreachable());
+        }
+    }
+
     /// <summary>
     /// Récupère la fiche brute d'une entreprise par SIREN (value object validé côté domaine).
     /// Le mapping vers un DTO client arrive avec l'écran Fiche (U4 suite).
