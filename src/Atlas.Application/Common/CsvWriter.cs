@@ -36,7 +36,7 @@ public static class CsvWriter
         // Rows
         foreach (T item in items)
         {
-            string line = string.Join(",", columns.Select(c => Escape(FormatValue(c.Selector(item)))));
+            string line = string.Join(",", columns.Select(c => Escape(NeutralizeFormula(FormatValue(c.Selector(item))))));
             writer.WriteLine(line);
         }
 
@@ -53,6 +53,23 @@ public static class CsvWriter
         IFormattable formattable => formattable.ToString(null, CultureInfo.InvariantCulture),
         _ => value.ToString() ?? string.Empty,
     };
+
+    // Caractères qui, en tête de cellule, déclenchent l'interprétation comme formule par Excel/LibreOffice.
+    private static readonly char[] FormulaTriggers = ['=', '+', '-', '@', '\t', '\r'];
+
+    /// <summary>
+    /// Anti-injection de formule CSV (audit Lot 4 — F2) : préfixe d'une apostrophe les valeurs débutant
+    /// par un caractère déclencheur, neutralisant l'exécution sans perdre la donnée. Les champs des
+    /// exports favoris (Name/Title) proviennent du client, donc potentiellement hostiles.
+    /// </summary>
+    private static string NeutralizeFormula(string field)
+    {
+        if (field.Length > 0 && Array.IndexOf(FormulaTriggers, field[0]) >= 0)
+        {
+            return "'" + field;
+        }
+        return field;
+    }
 
     private static string Escape(string field)
     {

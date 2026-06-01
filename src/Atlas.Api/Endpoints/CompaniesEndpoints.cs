@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using Atlas.Api.Reports;
+using Atlas.Api.Security;
 using Atlas.Application.Companies;
 using Atlas.Application.Companies.DownloadCompanyAttachment;
 using Atlas.Application.Companies.GetCompanyAttachments;
@@ -22,8 +23,8 @@ internal static class CompaniesEndpoints
         // F-013 — actes et bilans
         group.MapGet("/{siren}/attachments", GetAttachmentsAsync);
         group.MapGet("/{siren}/attachments/{attachmentId}/download", DownloadAttachmentAsync);
-        // F-022 — rapport PDF de fiche entreprise
-        group.MapGet("/{siren}/report.pdf", DownloadReportPdfAsync);
+        // F-022 — rapport PDF de fiche entreprise. Rate limiting dédié (M3) : génération PDF + 2 appels INPI.
+        group.MapGet("/{siren}/report.pdf", DownloadReportPdfAsync).RequireRateLimiting(RateLimitOptions.ExpensivePolicy);
 
         return routes;
     }

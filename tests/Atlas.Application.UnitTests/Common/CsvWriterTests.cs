@@ -49,6 +49,23 @@ public class CsvWriterTests
         text.Should().Contain("\"line1\nline2\",3,2024-03-01");
     }
 
+    [Theory]
+    [InlineData("=1+1")]
+    [InlineData("+1+1")]
+    [InlineData("-2+3")]
+    [InlineData("@SUM(A1)")]
+    public void Neutralizes_csv_formula_injection_in_values(string payload)
+    {
+        // Audit Lot 4 — F2 : les cellules débutant par un caractère de formule sont préfixées d'une
+        // apostrophe pour ne pas être exécutées par Excel/LibreOffice (Name/Title viennent du client).
+        byte[] bytes = CsvWriter.WriteToBytes(
+            new[] { new Row(payload, 1, new DateOnly(2026, 1, 1)) },
+            RowColumns);
+        string text = Encoding.UTF8.GetString(bytes[3..]); // skip BOM
+
+        text.Should().Contain("'" + payload);
+    }
+
     [Fact]
     public void Empty_items_writes_only_header()
     {
