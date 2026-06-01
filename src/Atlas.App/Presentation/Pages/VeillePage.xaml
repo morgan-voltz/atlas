@@ -1,7 +1,6 @@
 <Page x:Class="Atlas.App.Presentation.Pages.VeillePage"
       xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-      xmlns:c="using:Atlas.App.Presentation.Controls"
       Background="{ThemeResource AtlasBgBrush}">
   <ScrollViewer>
     <StackPanel Padding="24" Spacing="12" MaxWidth="720">
@@ -10,10 +9,18 @@
                  FontSize="24"
                  Foreground="{ThemeResource AtlasOnSurfaceBrush}" />
       <TextBlock Text="Le flux éditorial de vos sources (RSS, BODACC, BOPI…)."
-                 FontSize="13"
-                 Margin="0,0,0,8"
+                 FontSize="13" Margin="0,0,0,4"
                  Foreground="{ThemeResource AtlasOnSurfaceVariantBrush}" />
-      <StackPanel x:Name="Feed" Spacing="0" />
+
+      <StackPanel x:Name="StatusPanel" Spacing="8">
+        <TextBlock x:Name="StatusText" Visibility="Collapsed" TextWrapping="Wrap" FontSize="14"
+                   Foreground="{ThemeResource AtlasOnSurfaceVariantBrush}" />
+        <Button x:Name="RetryButton" Visibility="Collapsed" Content="Réessayer" Click="OnRetry"
+                HorizontalAlignment="Left"
+                Foreground="{ThemeResource AtlasOnPrimaryBrush}" Background="{ThemeResource AtlasPrimaryBrush}" />
+      </StackPanel>
+
+      <StackPanel x:Name="Feed" Spacing="12" />
     </StackPanel>
   </ScrollViewer>
 </Page>

@@ -125,6 +125,45 @@ public sealed class AtlasApiClient(HttpClient httpClient, ITokenStore tokenStore
             paged?.Items ?? System.Array.Empty<CompanySummaryResponse>());
     }
 
+    /// <summary>Fil Accueil : mouvements des entités suivies (<c>GET /feed/timeline?mentionsFavoritesOnly=true</c>, F-044).</summary>
+    public Task<Result<IReadOnlyList<TimelineItemResponse>>> GetAccueilFeedAsync(CancellationToken ct = default) =>
+        GetTimelineAsync("feed/timeline?mentionsFavoritesOnly=true&page=1&pageSize=30", ct);
+
+    /// <summary>Fil Veille : flux éditorial des sources (<c>GET /feed/timeline?editorialOnly=true</c>, F-047).</summary>
+    public Task<Result<IReadOnlyList<TimelineItemResponse>>> GetVeilleFeedAsync(CancellationToken ct = default) =>
+        GetTimelineAsync("feed/timeline?editorialOnly=true&page=1&pageSize=30", ct);
+
+    private async Task<Result<IReadOnlyList<TimelineItemResponse>>> GetTimelineAsync(string url, CancellationToken ct)
+    {
+        try
+        {
+            PagedResult<TimelineItemResponse>? paged = await httpClient
+                .GetFromJsonAsync(url, AtlasJsonContext.Default.PagedResultTimelineItemResponse, ct)
+                .ConfigureAwait(false);
+            return Result<IReadOnlyList<TimelineItemResponse>>.Ok(paged?.Items ?? Array.Empty<TimelineItemResponse>());
+        }
+        catch (HttpRequestException)
+        {
+            return Result<IReadOnlyList<TimelineItemResponse>>.Fail(ApiErrors.Unreachable());
+        }
+    }
+
+    /// <summary>Marque un item de veille comme lu (<c>PATCH /feed/items/{id}/state</c>).</summary>
+    public async Task<Result> MarkFeedItemReadAsync(Guid id, CancellationToken ct = default)
+    {
+        try
+        {
+            using HttpResponseMessage response = await httpClient
+                .PatchAsJsonAsync($"feed/items/{id}/state", new SetFeedItemStateRequest(true, null, null), AtlasJsonContext.Default.SetFeedItemStateRequest, ct)
+                .ConfigureAwait(false);
+            return response.IsSuccessStatusCode ? Result.Ok() : Result.Fail(ApiErrors.RequestFailed((int)response.StatusCode));
+        }
+        catch (HttpRequestException)
+        {
+            return Result.Fail(ApiErrors.Unreachable());
+        }
+    }
+
     /// <summary>Entreprises suivies (<c>GET /favorites/companies</c>, F-017). Base locale — pas d'INPI requis.</summary>
     public async Task<Result<IReadOnlyList<CompanyFavoriteResponse>>> GetFavoriteCompaniesAsync(CancellationToken ct = default)
     {
