@@ -1,4 +1,3 @@
-using System.Security.Claims;
 using Atlas.Application.Users.Accessibility;
 using Atlas.Domain.Users;
 using Atlas.Shared.Result;
@@ -24,32 +23,22 @@ internal static class AccessibilityEndpoints
         return routes;
     }
 
-    private static async Task<IResult> GetAsync(ClaimsPrincipal principal, ISender sender, CancellationToken ct)
+    private static async Task<IResult> GetAsync(CurrentUser user, ISender sender, CancellationToken ct)
     {
-        if (!principal.TryGetUserId(out Guid userId))
-        {
-            return Results.Unauthorized();
-        }
-
         Result<AccessibilityPreferencesDto> result =
-            await sender.Send(new GetAccessibilityPreferencesQuery(userId), ct);
+            await sender.Send(new GetAccessibilityPreferencesQuery(user.Id), ct);
         return result.IsSuccess ? Results.Ok(result.Value) : result.Error!.ToProblem();
     }
 
     private static async Task<IResult> UpdateAsync(
-        ClaimsPrincipal principal,
+        CurrentUser user,
         UpdateAccessibilityPreferencesRequest body,
         ISender sender,
         CancellationToken ct)
     {
-        if (!principal.TryGetUserId(out Guid userId))
-        {
-            return Results.Unauthorized();
-        }
-
         Result result = await sender.Send(
             new UpdateAccessibilityPreferencesCommand(
-                userId,
+                user.Id,
                 body.HighContrast,
                 body.ReduceMotion,
                 body.FontPreference),

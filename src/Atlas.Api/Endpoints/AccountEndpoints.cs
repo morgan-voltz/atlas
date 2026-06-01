@@ -1,4 +1,3 @@
-using System.Security.Claims;
 using Atlas.Application.Users.Privacy;
 using Atlas.Shared.Result;
 using MediatR;
@@ -17,25 +16,15 @@ internal static class AccountEndpoints
         return routes;
     }
 
-    private static async Task<IResult> ExportAsync(ClaimsPrincipal principal, ISender sender, CancellationToken ct)
+    private static async Task<IResult> ExportAsync(CurrentUser user, ISender sender, CancellationToken ct)
     {
-        if (!principal.TryGetUserId(out Guid userId))
-        {
-            return Results.Unauthorized();
-        }
-
-        Result<UserDataExportDto> result = await sender.Send(new ExportUserDataQuery(userId), ct);
+        Result<UserDataExportDto> result = await sender.Send(new ExportUserDataQuery(user.Id), ct);
         return result.IsSuccess ? Results.Ok(result.Value) : result.Error!.ToProblem();
     }
 
-    private static async Task<IResult> DeleteAsync(ClaimsPrincipal principal, ISender sender, CancellationToken ct)
+    private static async Task<IResult> DeleteAsync(CurrentUser user, ISender sender, CancellationToken ct)
     {
-        if (!principal.TryGetUserId(out Guid userId))
-        {
-            return Results.Unauthorized();
-        }
-
-        Result result = await sender.Send(new DeleteAccountCommand(userId), ct);
+        Result result = await sender.Send(new DeleteAccountCommand(user.Id), ct);
         return result.IsSuccess ? Results.NoContent() : result.Error!.ToProblem();
     }
 }

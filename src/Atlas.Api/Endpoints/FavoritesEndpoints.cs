@@ -1,4 +1,3 @@
-using System.Security.Claims;
 using Atlas.Application.Common;
 using Atlas.Application.Favorites;
 using Atlas.Application.Favorites.AddCompanyFavorite;
@@ -56,17 +55,12 @@ internal static class FavoritesEndpoints
 
     private static async Task<IResult> AddCompanyAsync(
         AddCompanyFavoriteRequest request,
-        ClaimsPrincipal principal,
+        CurrentUser user,
         ISender sender,
         CancellationToken ct)
     {
-        if (!principal.TryGetUserId(out Guid userId))
-        {
-            return Results.Unauthorized();
-        }
-
         Result result = await sender.Send(
-            new AddCompanyFavoriteCommand(userId, request.Siren, request.Name),
+            new AddCompanyFavoriteCommand(user.Id, request.Siren, request.Name),
             ct);
 
         return result.IsSuccess ? Results.NoContent() : result.Error!.ToProblem();
@@ -74,68 +68,36 @@ internal static class FavoritesEndpoints
 
     private static async Task<IResult> RemoveCompanyAsync(
         string siren,
-        ClaimsPrincipal principal,
+        CurrentUser user,
         ISender sender,
         CancellationToken ct)
     {
-        if (!principal.TryGetUserId(out Guid userId))
-        {
-            return Results.Unauthorized();
-        }
-
-        Result result = await sender.Send(new RemoveCompanyFavoriteCommand(userId, siren), ct);
+        Result result = await sender.Send(new RemoveCompanyFavoriteCommand(user.Id, siren), ct);
         return result.IsSuccess ? Results.NoContent() : result.Error!.ToProblem();
     }
 
     private static async Task<IResult> GetMyCompaniesAsync(
-        ClaimsPrincipal principal,
+        CurrentUser user,
         ISender sender,
         CancellationToken ct)
     {
-        if (!principal.TryGetUserId(out Guid userId))
-        {
-            return Results.Unauthorized();
-        }
-
-        Result<IReadOnlyList<CompanyFavoriteDto>> result = await sender.Send(new GetMyCompanyFavoritesQuery(userId), ct);
+        Result<IReadOnlyList<CompanyFavoriteDto>> result = await sender.Send(new GetMyCompanyFavoritesQuery(user.Id), ct);
         return result.IsSuccess ? Results.Ok(result.Value) : result.Error!.ToProblem();
     }
 
-    private static async Task<IResult> ExportCompaniesAsync(
-        ClaimsPrincipal principal,
-        ISender sender,
-        CancellationToken ct)
-    {
-        if (!principal.TryGetUserId(out Guid userId))
-        {
-            return Results.Unauthorized();
-        }
-
-        Result<IReadOnlyList<CompanyFavoriteDto>> result = await sender.Send(new GetMyCompanyFavoritesQuery(userId), ct);
-        if (result.IsFailure)
-        {
-            return result.Error!.ToProblem();
-        }
-
-        byte[] csv = FavoritesExports.CompaniesToCsv(result.Value!);
-        return Results.File(csv, "text/csv; charset=utf-8", "favoris-entreprises.csv");
-    }
+    private static Task<IResult> ExportCompaniesAsync(CurrentUser user, ISender sender, CancellationToken ct) =>
+        ExportAsync(new GetMyCompanyFavoritesQuery(user.Id), FavoritesExports.CompaniesToCsv, "favoris-entreprises.csv", sender, ct);
 
     // ── Trademarks (F-018) ──────────────────────────────────────────────────────────
 
     private static async Task<IResult> AddTrademarkAsync(
         AddTrademarkFavoriteRequest request,
-        ClaimsPrincipal principal,
+        CurrentUser user,
         ISender sender,
         CancellationToken ct)
     {
-        if (!principal.TryGetUserId(out Guid userId))
-        {
-            return Results.Unauthorized();
-        }
-
         Result result = await sender.Send(
-            new AddTrademarkFavoriteCommand(userId, request.DepositNumber, request.Name),
+            new AddTrademarkFavoriteCommand(user.Id, request.DepositNumber, request.Name),
             ct);
 
         return result.IsSuccess ? Results.NoContent() : result.Error!.ToProblem();
@@ -143,69 +105,37 @@ internal static class FavoritesEndpoints
 
     private static async Task<IResult> RemoveTrademarkAsync(
         string depositNumber,
-        ClaimsPrincipal principal,
+        CurrentUser user,
         ISender sender,
         CancellationToken ct)
     {
-        if (!principal.TryGetUserId(out Guid userId))
-        {
-            return Results.Unauthorized();
-        }
-
-        Result result = await sender.Send(new RemoveTrademarkFavoriteCommand(userId, depositNumber), ct);
+        Result result = await sender.Send(new RemoveTrademarkFavoriteCommand(user.Id, depositNumber), ct);
         return result.IsSuccess ? Results.NoContent() : result.Error!.ToProblem();
     }
 
     private static async Task<IResult> GetMyTrademarksAsync(
-        ClaimsPrincipal principal,
+        CurrentUser user,
         ISender sender,
         CancellationToken ct)
     {
-        if (!principal.TryGetUserId(out Guid userId))
-        {
-            return Results.Unauthorized();
-        }
-
         Result<IReadOnlyList<TrademarkFavoriteDto>> result =
-            await sender.Send(new GetMyTrademarkFavoritesQuery(userId), ct);
+            await sender.Send(new GetMyTrademarkFavoritesQuery(user.Id), ct);
         return result.IsSuccess ? Results.Ok(result.Value) : result.Error!.ToProblem();
     }
 
-    private static async Task<IResult> ExportTrademarksAsync(
-        ClaimsPrincipal principal,
-        ISender sender,
-        CancellationToken ct)
-    {
-        if (!principal.TryGetUserId(out Guid userId))
-        {
-            return Results.Unauthorized();
-        }
-
-        Result<IReadOnlyList<TrademarkFavoriteDto>> result = await sender.Send(new GetMyTrademarkFavoritesQuery(userId), ct);
-        if (result.IsFailure)
-        {
-            return result.Error!.ToProblem();
-        }
-
-        byte[] csv = FavoritesExports.TrademarksToCsv(result.Value!);
-        return Results.File(csv, "text/csv; charset=utf-8", "favoris-marques.csv");
-    }
+    private static Task<IResult> ExportTrademarksAsync(CurrentUser user, ISender sender, CancellationToken ct) =>
+        ExportAsync(new GetMyTrademarkFavoritesQuery(user.Id), FavoritesExports.TrademarksToCsv, "favoris-marques.csv", sender, ct);
 
     // ── Patents (F-018) ─────────────────────────────────────────────────────────────
 
     private static async Task<IResult> AddPatentAsync(
         AddPatentFavoriteRequest request,
-        ClaimsPrincipal principal,
+        CurrentUser user,
         ISender sender,
         CancellationToken ct)
     {
-        if (!principal.TryGetUserId(out Guid userId))
-        {
-            return Results.Unauthorized();
-        }
-
         Result result = await sender.Send(
-            new AddPatentFavoriteCommand(userId, request.PublicationNumber, request.Title),
+            new AddPatentFavoriteCommand(user.Id, request.PublicationNumber, request.Title),
             ct);
 
         return result.IsSuccess ? Results.NoContent() : result.Error!.ToProblem();
@@ -213,52 +143,42 @@ internal static class FavoritesEndpoints
 
     private static async Task<IResult> RemovePatentAsync(
         string publicationNumber,
-        ClaimsPrincipal principal,
+        CurrentUser user,
         ISender sender,
         CancellationToken ct)
     {
-        if (!principal.TryGetUserId(out Guid userId))
-        {
-            return Results.Unauthorized();
-        }
-
-        Result result = await sender.Send(new RemovePatentFavoriteCommand(userId, publicationNumber), ct);
+        Result result = await sender.Send(new RemovePatentFavoriteCommand(user.Id, publicationNumber), ct);
         return result.IsSuccess ? Results.NoContent() : result.Error!.ToProblem();
     }
 
     private static async Task<IResult> GetMyPatentsAsync(
-        ClaimsPrincipal principal,
+        CurrentUser user,
         ISender sender,
         CancellationToken ct)
     {
-        if (!principal.TryGetUserId(out Guid userId))
-        {
-            return Results.Unauthorized();
-        }
-
         Result<IReadOnlyList<PatentFavoriteDto>> result =
-            await sender.Send(new GetMyPatentFavoritesQuery(userId), ct);
+            await sender.Send(new GetMyPatentFavoritesQuery(user.Id), ct);
         return result.IsSuccess ? Results.Ok(result.Value) : result.Error!.ToProblem();
     }
 
-    private static async Task<IResult> ExportPatentsAsync(
-        ClaimsPrincipal principal,
+    private static Task<IResult> ExportPatentsAsync(CurrentUser user, ISender sender, CancellationToken ct) =>
+        ExportAsync(new GetMyPatentFavoritesQuery(user.Id), FavoritesExports.PatentsToCsv, "favoris-brevets.csv", sender, ct);
+
+    // Factorisation des exports CSV (audit Lot 4b — F4) : même flux query → CSV → fichier téléchargeable.
+    private static async Task<IResult> ExportAsync<TDto>(
+        IRequest<Result<IReadOnlyList<TDto>>> query,
+        Func<IReadOnlyList<TDto>, byte[]> toCsv,
+        string fileName,
         ISender sender,
         CancellationToken ct)
     {
-        if (!principal.TryGetUserId(out Guid userId))
-        {
-            return Results.Unauthorized();
-        }
-
-        Result<IReadOnlyList<PatentFavoriteDto>> result = await sender.Send(new GetMyPatentFavoritesQuery(userId), ct);
+        Result<IReadOnlyList<TDto>> result = await sender.Send(query, ct);
         if (result.IsFailure)
         {
             return result.Error!.ToProblem();
         }
 
-        byte[] csv = FavoritesExports.PatentsToCsv(result.Value!);
-        return Results.File(csv, "text/csv; charset=utf-8", "favoris-brevets.csv");
+        return Results.File(toCsv(result.Value!), "text/csv; charset=utf-8", fileName);
     }
 }
 

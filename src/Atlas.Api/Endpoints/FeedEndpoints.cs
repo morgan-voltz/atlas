@@ -1,4 +1,3 @@
-using System.Security.Claims;
 using Atlas.Application.Veille.AddUserFeedSource;
 using Atlas.Application.Veille.GetMySubscriptions;
 using Atlas.Application.Veille.GetRecentFeedItems;
@@ -51,19 +50,14 @@ internal static class FeedEndpoints
     }
 
     private static async Task<IResult> CreateRuleAsync(
-        ClaimsPrincipal principal,
+        CurrentUser user,
         CreateFeedRuleRequest request,
         ISender sender,
         CancellationToken ct)
     {
-        if (!principal.TryGetUserId(out Guid userId))
-        {
-            return Results.Unauthorized();
-        }
-
         Result<FeedRuleDto> result = await sender.Send(
             new CreateFeedRuleCommand(
-                userId,
+                user.Id,
                 request.Name,
                 request.KeywordPattern,
                 request.SourceId,
@@ -78,36 +72,26 @@ internal static class FeedEndpoints
     }
 
     private static async Task<IResult> ListRulesAsync(
-        ClaimsPrincipal principal,
+        CurrentUser user,
         ISender sender,
         CancellationToken ct)
     {
-        if (!principal.TryGetUserId(out Guid userId))
-        {
-            return Results.Unauthorized();
-        }
-
         Result<IReadOnlyList<FeedRuleDto>> result =
-            await sender.Send(new ListMyFeedRulesQuery(userId), ct);
+            await sender.Send(new ListMyFeedRulesQuery(user.Id), ct);
 
         return result.IsSuccess ? Results.Ok(result.Value) : result.Error!.ToProblem();
     }
 
     private static async Task<IResult> UpdateRuleAsync(
-        ClaimsPrincipal principal,
+        CurrentUser user,
         Guid id,
         UpdateFeedRuleRequest request,
         ISender sender,
         CancellationToken ct)
     {
-        if (!principal.TryGetUserId(out Guid userId))
-        {
-            return Results.Unauthorized();
-        }
-
         Result<FeedRuleDto> result = await sender.Send(
             new UpdateFeedRuleCommand(
-                userId,
+                user.Id,
                 id,
                 request.Name,
                 request.KeywordPattern,
@@ -122,22 +106,17 @@ internal static class FeedEndpoints
     }
 
     private static async Task<IResult> DeleteRuleAsync(
-        ClaimsPrincipal principal,
+        CurrentUser user,
         Guid id,
         ISender sender,
         CancellationToken ct)
     {
-        if (!principal.TryGetUserId(out Guid userId))
-        {
-            return Results.Unauthorized();
-        }
-
-        Result result = await sender.Send(new DeleteFeedRuleCommand(userId, id), ct);
+        Result result = await sender.Send(new DeleteFeedRuleCommand(user.Id, id), ct);
         return result.IsSuccess ? Results.NoContent() : result.Error!.ToProblem();
     }
 
     private static async Task<IResult> GetTimelineAsync(
-        ClaimsPrincipal principal,
+        CurrentUser user,
         ISender sender,
         CancellationToken ct,
         int? page = null,
@@ -152,14 +131,9 @@ internal static class FeedEndpoints
         bool mentionsFavoritesOnly = false,
         bool editorialOnly = false)
     {
-        if (!principal.TryGetUserId(out Guid userId))
-        {
-            return Results.Unauthorized();
-        }
-
         Result<PagedResult<TimelineItemDto>> result = await sender.Send(
             new GetTimelineQuery(
-                userId, page ?? 1, pageSize ?? 20, sourceId, after, before, keyword,
+                user.Id, page ?? 1, pageSize ?? 20, sourceId, after, before, keyword,
                 unread, favorites, includeArchived, mentionsFavoritesOnly, editorialOnly),
             ct);
 
@@ -167,61 +141,41 @@ internal static class FeedEndpoints
     }
 
     private static async Task<IResult> SetItemStateAsync(
-        ClaimsPrincipal principal,
+        CurrentUser user,
         Guid id,
         SetFeedItemStateRequest request,
         ISender sender,
         CancellationToken ct)
     {
-        if (!principal.TryGetUserId(out Guid userId))
-        {
-            return Results.Unauthorized();
-        }
-
         Result<FeedItemStateDto> result = await sender.Send(
-            new SetFeedItemStateCommand(userId, id, request.IsRead, request.IsFavorite, request.IsArchived), ct);
+            new SetFeedItemStateCommand(user.Id, id, request.IsRead, request.IsFavorite, request.IsArchived), ct);
 
         return result.IsSuccess ? Results.Ok(result.Value) : result.Error!.ToProblem();
     }
 
     private static async Task<IResult> AddSourceAsync(
-        ClaimsPrincipal principal,
+        CurrentUser user,
         AddFeedSourceRequest request,
         ISender sender,
         CancellationToken ct)
     {
-        if (!principal.TryGetUserId(out Guid userId))
-        {
-            return Results.Unauthorized();
-        }
-
         Result<VeilleSubscriptionDto> result =
-            await sender.Send(new AddUserFeedSourceCommand(userId, request.Url, request.Name), ct);
+            await sender.Send(new AddUserFeedSourceCommand(user.Id, request.Url, request.Name), ct);
 
         return result.IsSuccess
             ? Results.Created($"/feed/subscriptions/{result.Value!.SubscriptionId}", result.Value)
             : result.Error!.ToProblem();
     }
 
-    private static async Task<IResult> GetSubscriptionsAsync(ClaimsPrincipal principal, ISender sender, CancellationToken ct)
+    private static async Task<IResult> GetSubscriptionsAsync(CurrentUser user, ISender sender, CancellationToken ct)
     {
-        if (!principal.TryGetUserId(out Guid userId))
-        {
-            return Results.Unauthorized();
-        }
-
-        Result<IReadOnlyList<VeilleSubscriptionDto>> result = await sender.Send(new GetMySubscriptionsQuery(userId), ct);
+        Result<IReadOnlyList<VeilleSubscriptionDto>> result = await sender.Send(new GetMySubscriptionsQuery(user.Id), ct);
         return result.IsSuccess ? Results.Ok(result.Value) : result.Error!.ToProblem();
     }
 
-    private static async Task<IResult> UnsubscribeAsync(ClaimsPrincipal principal, Guid id, ISender sender, CancellationToken ct)
+    private static async Task<IResult> UnsubscribeAsync(CurrentUser user, Guid id, ISender sender, CancellationToken ct)
     {
-        if (!principal.TryGetUserId(out Guid userId))
-        {
-            return Results.Unauthorized();
-        }
-
-        Result result = await sender.Send(new UnsubscribeFromFeedSourceCommand(userId, id), ct);
+        Result result = await sender.Send(new UnsubscribeFromFeedSourceCommand(user.Id, id), ct);
         return result.IsSuccess ? Results.NoContent() : result.Error!.ToProblem();
     }
 

@@ -1,4 +1,3 @@
-using System.Security.Claims;
 using Atlas.Application.Veille.ApplyVeillePack;
 using Atlas.Application.Veille.GetMyVeillePacks;
 using Atlas.Application.Veille.GetVeilleCatalog;
@@ -52,36 +51,21 @@ internal static class VeillePackEndpoints
         return routes;
     }
 
-    private static async Task<IResult> GetMineAsync(ClaimsPrincipal principal, ISender sender, CancellationToken ct)
+    private static async Task<IResult> GetMineAsync(CurrentUser user, ISender sender, CancellationToken ct)
     {
-        if (!principal.TryGetUserId(out Guid userId))
-        {
-            return Results.Unauthorized();
-        }
-
-        Result<IReadOnlyList<MyVeillePackDto>> result = await sender.Send(new GetMyVeillePacksQuery(userId), ct);
+        Result<IReadOnlyList<MyVeillePackDto>> result = await sender.Send(new GetMyVeillePacksQuery(user.Id), ct);
         return result.IsSuccess ? Results.Ok(result.Value) : result.Error!.ToProblem();
     }
 
-    private static async Task<IResult> ApplyAsync(ClaimsPrincipal principal, string code, ISender sender, CancellationToken ct)
+    private static async Task<IResult> ApplyAsync(CurrentUser user, string code, ISender sender, CancellationToken ct)
     {
-        if (!principal.TryGetUserId(out Guid userId))
-        {
-            return Results.Unauthorized();
-        }
-
-        Result<ApplyVeillePackResult> result = await sender.Send(new ApplyVeillePackCommand(userId, code), ct);
+        Result<ApplyVeillePackResult> result = await sender.Send(new ApplyVeillePackCommand(user.Id, code), ct);
         return result.IsSuccess ? Results.Ok(result.Value) : result.Error!.ToProblem();
     }
 
-    private static async Task<IResult> SyncAsync(ClaimsPrincipal principal, string code, ISender sender, CancellationToken ct)
+    private static async Task<IResult> SyncAsync(CurrentUser user, string code, ISender sender, CancellationToken ct)
     {
-        if (!principal.TryGetUserId(out Guid userId))
-        {
-            return Results.Unauthorized();
-        }
-
-        Result<ApplyVeillePackResult> result = await sender.Send(new SyncVeillePackCommand(userId, code), ct);
+        Result<ApplyVeillePackResult> result = await sender.Send(new SyncVeillePackCommand(user.Id, code), ct);
         return result.IsSuccess ? Results.Ok(result.Value) : result.Error!.ToProblem();
     }
 
@@ -96,19 +80,14 @@ internal static class VeillePackEndpoints
     }
 
     private static async Task<IResult> CreateUserPackAsync(
-        ClaimsPrincipal principal,
+        CurrentUser user,
         CreateUserVeillePackRequest request,
         ISender sender,
         CancellationToken ct)
     {
-        if (!principal.TryGetUserId(out Guid userId))
-        {
-            return Results.Unauthorized();
-        }
-
         Result<VeillePackMarketplaceDto> result = await sender.Send(
             new CreateUserVeillePackCommand(
-                userId,
+                user.Id,
                 request.Code,
                 request.Name,
                 request.Description ?? string.Empty,
@@ -121,82 +100,52 @@ internal static class VeillePackEndpoints
     }
 
     private static async Task<IResult> GetMyAuthoredAsync(
-        ClaimsPrincipal principal, ISender sender, CancellationToken ct)
+        CurrentUser user, ISender sender, CancellationToken ct)
     {
-        if (!principal.TryGetUserId(out Guid userId))
-        {
-            return Results.Unauthorized();
-        }
-
         Result<IReadOnlyList<VeillePackMarketplaceDto>> result =
-            await sender.Send(new GetMyAuthoredPacksQuery(userId), ct);
+            await sender.Send(new GetMyAuthoredPacksQuery(user.Id), ct);
         return result.IsSuccess ? Results.Ok(result.Value) : result.Error!.ToProblem();
     }
 
     private static async Task<IResult> PublishAsync(
-        ClaimsPrincipal principal, string code, ISender sender, CancellationToken ct)
+        CurrentUser user, string code, ISender sender, CancellationToken ct)
     {
-        if (!principal.TryGetUserId(out Guid userId))
-        {
-            return Results.Unauthorized();
-        }
-
         Result<VeillePackMarketplaceDto> result =
-            await sender.Send(new PublishVeillePackCommand(userId, code), ct);
+            await sender.Send(new PublishVeillePackCommand(user.Id, code), ct);
         return result.IsSuccess ? Results.Ok(result.Value) : result.Error!.ToProblem();
     }
 
     private static async Task<IResult> UnpublishAsync(
-        ClaimsPrincipal principal, string code, ISender sender, CancellationToken ct)
+        CurrentUser user, string code, ISender sender, CancellationToken ct)
     {
-        if (!principal.TryGetUserId(out Guid userId))
-        {
-            return Results.Unauthorized();
-        }
-
         Result<VeillePackMarketplaceDto> result =
-            await sender.Send(new UnpublishVeillePackCommand(userId, code), ct);
+            await sender.Send(new UnpublishVeillePackCommand(user.Id, code), ct);
         return result.IsSuccess ? Results.Ok(result.Value) : result.Error!.ToProblem();
     }
 
     private static async Task<IResult> LikeAsync(
-        ClaimsPrincipal principal, string code, ISender sender, CancellationToken ct)
+        CurrentUser user, string code, ISender sender, CancellationToken ct)
     {
-        if (!principal.TryGetUserId(out Guid userId))
-        {
-            return Results.Unauthorized();
-        }
-
-        Result result = await sender.Send(new LikeVeillePackCommand(userId, code), ct);
+        Result result = await sender.Send(new LikeVeillePackCommand(user.Id, code), ct);
         return result.IsSuccess ? Results.NoContent() : result.Error!.ToProblem();
     }
 
     private static async Task<IResult> UnlikeAsync(
-        ClaimsPrincipal principal, string code, ISender sender, CancellationToken ct)
+        CurrentUser user, string code, ISender sender, CancellationToken ct)
     {
-        if (!principal.TryGetUserId(out Guid userId))
-        {
-            return Results.Unauthorized();
-        }
-
-        Result result = await sender.Send(new UnlikeVeillePackCommand(userId, code), ct);
+        Result result = await sender.Send(new UnlikeVeillePackCommand(user.Id, code), ct);
         return result.IsSuccess ? Results.NoContent() : result.Error!.ToProblem();
     }
 
     private static async Task<IResult> ReportAsync(
-        ClaimsPrincipal principal,
+        CurrentUser user,
         string code,
         ReportVeillePackRequest request,
         ISender sender,
         CancellationToken ct)
     {
-        if (!principal.TryGetUserId(out Guid userId))
-        {
-            return Results.Unauthorized();
-        }
-
         Result result = await sender.Send(
-            new ReportVeillePackCommand(userId, code, request.Reason),
+            new ReportVeillePackCommand(user.Id, code, request.Reason),
             ct);
         return result.IsSuccess ? Results.Accepted() : result.Error!.ToProblem();
     }

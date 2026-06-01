@@ -1,4 +1,3 @@
-using System.Security.Claims;
 using Atlas.Api.Security;
 using Atlas.Application.Common;
 using Atlas.Application.Users;
@@ -179,46 +178,31 @@ internal static class AuthEndpoints
     }
 
     private static async Task<IResult> SetupTwoFactorAsync(
-        ClaimsPrincipal principal,
+        CurrentUser user,
         ISender sender,
         CancellationToken ct)
     {
-        if (!principal.TryGetUserId(out Guid userId))
-        {
-            return Results.Unauthorized();
-        }
-
-        Result<TwoFactorSetupDto> result = await sender.Send(new SetupTwoFactorCommand(userId), ct);
+        Result<TwoFactorSetupDto> result = await sender.Send(new SetupTwoFactorCommand(user.Id), ct);
         return result.IsSuccess ? Results.Ok(result.Value) : result.Error!.ToProblem();
     }
 
     private static async Task<IResult> EnableTwoFactorAsync(
         EnableTwoFactorRequest request,
-        ClaimsPrincipal principal,
+        CurrentUser user,
         ISender sender,
         CancellationToken ct)
     {
-        if (!principal.TryGetUserId(out Guid userId))
-        {
-            return Results.Unauthorized();
-        }
-
-        Result<TwoFactorEnabledDto> result = await sender.Send(new EnableTwoFactorCommand(userId, request.Code), ct);
+        Result<TwoFactorEnabledDto> result = await sender.Send(new EnableTwoFactorCommand(user.Id, request.Code), ct);
         return result.IsSuccess ? Results.Ok(result.Value) : result.Error!.ToProblem();
     }
 
     private static async Task<IResult> DisableTwoFactorAsync(
         DisableTwoFactorRequest request,
-        ClaimsPrincipal principal,
+        CurrentUser user,
         ISender sender,
         CancellationToken ct)
     {
-        if (!principal.TryGetUserId(out Guid userId))
-        {
-            return Results.Unauthorized();
-        }
-
-        Result result = await sender.Send(new DisableTwoFactorCommand(userId, request.Code), ct);
+        Result result = await sender.Send(new DisableTwoFactorCommand(user.Id, request.Code), ct);
         return result.IsSuccess ? Results.NoContent() : result.Error!.ToProblem();
     }
 
