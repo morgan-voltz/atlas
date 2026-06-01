@@ -3,13 +3,27 @@
 @* Présentation desktop des 5 destinations (doc 12 §3) en rail latéral (doc 14 §2).
    Mêmes 5 destinations que MAUI ; seule la présentation change. Plafond : jamais de 6e entrée. *@
 <div class="app-shell">
+    @* Icône (aria-hidden) + libellé : l'icône n'est visible qu'en barre d'onglets mobile, où elle
+       porte l'affordance et permet de réduire le libellé pour éviter que les 5 entrées se touchent
+       (cf. maquette BottomTabBar, icône au-dessus du libellé). Sur le rail desktop, l'icône est
+       masquée — présentation texte inchangée. *@
     <nav class="rail" aria-label="Navigation principale">
         <div class="rail-brand">Atlas</div>
-        <NavLink class="rail-link" href="/accueil">Accueil</NavLink>
-        <NavLink class="rail-link" href="/recherche">Recherche</NavLink>
-        <NavLink class="rail-link" href="/veille">Veille</NavLink>
-        <NavLink class="rail-link" href="/favoris">Favoris</NavLink>
-        <NavLink class="rail-link" href="/profil">Profil</NavLink>
+        <NavLink class="rail-link" href="/accueil">
+            <span class="rail-icon" aria-hidden="true">🏠</span><span class="rail-label">Accueil</span>
+        </NavLink>
+        <NavLink class="rail-link" href="/recherche">
+            <span class="rail-icon" aria-hidden="true">🔍</span><span class="rail-label">Recherche</span>
+        </NavLink>
+        <NavLink class="rail-link" href="/veille">
+            <span class="rail-icon" aria-hidden="true">📡</span><span class="rail-label">Veille</span>
+        </NavLink>
+        <NavLink class="rail-link" href="/favoris">
+            <span class="rail-icon" aria-hidden="true">⭐</span><span class="rail-label">Favoris</span>
+        </NavLink>
+        <NavLink class="rail-link" href="/profil">
+            <span class="rail-icon" aria-hidden="true">👤</span><span class="rail-label">Profil</span>
+        </NavLink>
     </nav>
 
     <main class="app-main">
