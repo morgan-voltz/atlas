@@ -1,4 +1,6 @@
 using System;
+using System.Net;
+using System.Net.Http;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Atlas.App.Services;
@@ -24,14 +26,30 @@ public static class AppServices
     {
         var services = new ServiceCollection();
 
+        // CookieContainer partagé : conserve le refresh cookie HttpOnly (atlas_refresh) côté desktop,
+        // pour que le client « refresh » puisse rejouer /auth/refresh. Sur WebAssembly, c'est le
+        // navigateur qui gère le cookie (handler primaire non personnalisé).
+        var cookies = new CookieContainer();
+
         services.AddSingleton<ITokenStore, InMemoryTokenStore>();
         services.AddTransient<AuthHeaderHandler>();
+        services.AddTransient<SessionRefreshHandler>();
 
-        services.AddHttpClient<AtlasApiClient>(client =>
-            {
-                client.BaseAddress = new Uri(DevApiBaseAddress);
-            })
+        // Client dédié au refresh : partage le CookieContainer, SANS Bearer ni handler de refresh
+        // (évite toute récursion).
+        IHttpClientBuilder refresh = services.AddHttpClient("refresh", c => c.BaseAddress = new Uri(DevApiBaseAddress));
+
+        // Client principal : refresh (outer) → Bearer (inner) → handler primaire.
+        IHttpClientBuilder main = services
+            .AddHttpClient<AtlasApiClient>(c => c.BaseAddress = new Uri(DevApiBaseAddress))
+            .AddHttpMessageHandler<SessionRefreshHandler>()
             .AddHttpMessageHandler<AuthHeaderHandler>();
+
+        if (!OperatingSystem.IsBrowser())
+        {
+            refresh.ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler { CookieContainer = cookies, UseCookies = true });
+            main.ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler { CookieContainer = cookies, UseCookies = true });
+        }
 
         _provider = services.BuildServiceProvider();
     }
