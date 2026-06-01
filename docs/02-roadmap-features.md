@@ -35,6 +35,8 @@ La **recherche PI** (marques F-006/F-007, brevets F-015/F-016) reste **🟡 / bl
 (auth PI et droits OK ; **correctif POST→GET + contrat GET à établir**). Les autres 🟡 : clients
 MAUI compilés non QA (F-009/F-010), contenu légal UI du RGPD (F-012). Détail dans chaque fiche.
 
+> **Transition UI (ADR-029, 30 mai 2026)** : les clients livrés ou amorcés ci-dessus (MAUI mobile/desktop F-009/F-010, web Blazor) sont **en transition vers Uno Platform** — une UI unique `Atlas.App` pour 6 surfaces (WebAssembly + desktop Win/macOS/Linux + iOS/Android). Les statuts ci-dessus reflètent l'état des clients **actuels** (qui restent en vigueur jusqu'au spike Uno concluant) ; la doctrine UX (`docs/12`) est préservée, agnostique de la techno.
+
 ---
 
 ## État d'avancement — MVP 2
@@ -136,7 +138,7 @@ Pour chaque feature, on documente :
 - [**F-007 — Vue détaillée d'une marque**](features/F-007-vue-detaillee-d-une-marque.md) — Statut : 🟡 Implémenté (MVP 1, 27 mai 2026) — à valider contre l'API réelle.
 - [**F-008 — Historique des recherches utilisateur**](features/F-008-historique-des-recherches-utilisateur.md) — Statut : ✅ Implémenté (MVP 1, 27 mai 2026).
 - [**F-009 — Client MAUI mobile (Android/iOS) avec fonctions de base**](features/F-009-client-maui-mobile-android-ios-avec-fon.md) — Statut : 🟡 Slice navigable implémenté (MVP 1, 27 mai 2026), compilé Android (non lancé/capturé : pas d'émulateur ici).
-- [**F-010 — Client desktop (Windows/macOS/Linux)**](features/F-010-client-maui-desktop-windows-macos.md) — Statut : 🟡 Amorcé (MVP 1, 27 mai 2026). **Requalifié par ADR-026 (31 mai 2026)** : desktop = **Avalonia** (couvre Linux), plus MAUI. Le travail MAUI-Windows déjà fait sert de référence d'écrans ; les ViewModels (noyau partagé) se réutilisent.
+- [**F-010 — Client desktop (Windows/macOS/Linux)**](features/F-010-client-maui-desktop-windows-macos.md) — Statut : 🟡 Amorcé (MVP 1, 27 mai 2026). **Requalifié par ADR-029 (UI unifiée Uno, 30 mai 2026)** : desktop (Win/macOS/Linux), mobile et web sont désormais une **cible unique `Atlas.App` (Uno)** — ADR-029 remplace l'ADR-026 (MAUI+Avalonia) et l'ADR-017 (Blazor web). Le travail MAUI-Windows déjà fait sert de référence d'écrans ; les ViewModels (noyau partagé) se transposent à Uno.
 - [**F-011 — Documentation utilisateur basique**](features/F-011-documentation-utilisateur-basique.md) — Statut : ✅ Implémenté (MVP 1, 27 mai 2026).
 - [**F-012 — Conformité RGPD MVP**](features/F-012-conformite-rgpd-mvp.md) — Statut : 🟡 Backend implémenté (MVP 1, 27 mai 2026).
 

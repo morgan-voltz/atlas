@@ -1,5 +1,7 @@
 # Architecture détaillée — Backend Atlas
 
+> ⛔ **ADR-029 (UI unifiée Uno Platform)** — Les adapters primaires clients décrits ici (`Atlas.Maui`, et le web Blazor) sont **remplacés par `Atlas.App`** (Uno, C#/XAML WinUI, toutes surfaces : WebAssembly + desktop Win/macOS/Linux + iOS/Android). La **règle d'archi est inchangée** (le client ne référence que `Domain` + `Shared`, jamais `Infrastructure` ; tout passe par l'API HTTP). Les §8.2 (et toute mention MAUI/Blazor) seront **réécrites** à l'intégration Uno ; en transition, le client Blazor `Atlas.Web.Client` reste en vigueur jusqu'au spike Uno concluant.
+
 > Architecture technique détaillée du backend Atlas, suivant le pattern **Ports & Adapters (Hexagonal Architecture)** d'Alistair Cockburn, dans sa formulation moderne dite **Clean Architecture** (Robert C. Martin).
 > Ce document spécifie les couches, les ports, les adapters, les règles de dépendance et les flows typiques.
 
@@ -742,6 +744,8 @@ Implémentations concrètes des ports, dans `Atlas.Infrastructure.*`.
 7. **Output caching** (pour les lectures)
 
 ### 8.2 Atlas.Maui
+
+> ⛔ **Transitoire (ADR-029)** — Cette section documente l'adapter MAUI tel qu'amorcé en MVP 1. La cible est **`Atlas.App` (Uno)** ; le détail ci-dessous reste pour référence (les patterns MVVM, `AtlasApiClient`, stockage local et résilience Polly se transposent à Uno) jusqu'à la réécriture à l'intégration Uno.
 
 **Stack** : .NET MAUI sur .NET 9
 

@@ -1,5 +1,7 @@
 # F-009 — Client MAUI mobile (Android/iOS) avec fonctions de base
 
+> ⛔ **ADR-029 (UI unifiée Uno Platform)** — Le client mobile devient une **cible de `Atlas.App` (Uno)** (iOS/Android, aux côtés du desktop et du web). Le slice MAUI décrit ici reste l'app **actuelle** jusqu'au spike Uno concluant ; ViewModels, `AtlasApiClient` et la doctrine UX (`docs/12`, agnostique) se transposent à Uno. ADR-029 remplace l'ADR-026.
+
 > **Statut** : 🟡 Slice navigable implémenté (MVP 1, 27 mai 2026), **compilé Android** (non lancé/capturé : pas d'émulateur ici). Fondation : `AtlasApiClient` (seul point d'entrée vers l'API, refresh sur 401), `ITokenStore` via SecureStorage (Keychain/Keystore — aucun credential INPI sur le device), MVVM (CommunityToolkit). Écrans : Login → recherche entreprise (SIREN/nom) → fiche entreprise → historique ; Shell + onglets. **Reste** : écrans marques (F-006/F-007, même patron), auto-login au démarrage, bannière cookies/CGU, et **lancement/QA sur émulateur réel**. Respecte la règle d'archi (Atlas.Maui → Domain + Shared uniquement).
 
 > **Doctrine UX** : F-009 et F-010 suivent le **modèle UX adaptatif** posé par `docs/12-modele-ux-client-maui.md` — **un seul modèle mental, deux densités** (R1), adaptation à la **largeur** disponible et non à la plateforme (R2), **list-detail** comme épine dorsale récursive (R3), **5 destinations** plafonnées (Accueil / Recherche / Veille / Favoris / Profil). Toute nouvelle vue MAUI doit s'y conformer.
