@@ -12,6 +12,13 @@
     background: var(--surface-variant);
 }
 
+/* Sélectionné en list-detail : mis en avant par bordure + fond, jamais par la couleur seule (doc 06). */
+.result-row.selected {
+    background: var(--surface-variant);
+    box-shadow: inset 3px 0 0 var(--primary);
+    border-radius: var(--radius-sm);
+}
+
 .result-row:focus-visible {
     outline: 3px solid var(--focus);
     outline-offset: -3px;

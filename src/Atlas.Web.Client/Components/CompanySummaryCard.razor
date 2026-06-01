@@ -1,7 +1,10 @@
-@* Carte-aperçu d'un résultat entreprise (doc 12 §7/§12). Toute la ligne est un lien vers la
-   fiche (/entreprise/{siren}, M2). Le SIREN est rendu en police mono (glyphes non ambigus, doc 16). *@
+@* Carte-aperçu d'un résultat entreprise (doc 12 §7/§12). Toute la ligne est un lien. Par défaut
+   il pointe vers la fiche (/entreprise/{siren}, M2) ; en list-detail (Recherche, doc 14 §3) l'hôte
+   fournit un Href de sélection (recherche?e={siren}) et marque la ligne active via Selected.
+   Le SIREN est rendu en police mono (glyphes non ambigus, doc 16). *@
 
-<a class="result-row" href="entreprise/@Company.Siren">
+<a class="result-row @(Selected ? "selected" : null)" href="@TargetHref"
+   aria-current="@(Selected ? "true" : null)">
     <div class="result-main">
         <p class="result-name">@Company.Denomination</p>
         <p class="result-sub">
@@ -23,6 +26,16 @@
     [Parameter]
     [EditorRequired]
     public required CompanySummaryResponse Company { get; set; }
+
+    /// <summary>Cible du lien. Par défaut la fiche ; surchargée pour la sélection list-detail.</summary>
+    [Parameter]
+    public string? Href { get; set; }
+
+    /// <summary>Ligne active (panneau de droite affiché). Mise en avant bordure + fond (doc 06).</summary>
+    [Parameter]
+    public bool Selected { get; set; }
+
+    private string TargetHref => Href ?? $"entreprise/{Company.Siren}";
 
     private static string FormatSiren(string siren) =>
         siren.Length == 9 ? $"{siren[..3]} {siren[3..6]} {siren[6..]}" : siren;
