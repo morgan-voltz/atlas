@@ -46,9 +46,7 @@ Avant toute contribution significative, consulter le document approprié dans `d
 | Runtime | .NET 10 LTS (supporté jusqu'à novembre 2028) |
 | Langage | C# 13 (file-scoped namespaces, primary constructors, etc.) |
 | Backend Web | ASP.NET Core 10 + Minimal APIs |
-| Client mobile | .NET MAUI 10 (Android, iOS) — cf. ADR-026 |
-| Client desktop | Avalonia (Windows, macOS, Linux) — cf. ADR-026 (amende ADR-007) |
-| Client web | Blazor WASM (cf. ADR-017) |
+| Clients (web + desktop + mobile) | **Uno Platform** — C#/XAML WinUI, cibles WebAssembly + desktop (Win/macOS/Linux) + iOS/Android (cf. **ADR-029**, remplace MAUI/Avalonia/Blazor). *Transition : le client Blazor `Atlas.Web.Client` reste en place jusqu'à un spike Uno concluant.* |
 | Base de données | PostgreSQL via EF Core 10 + Npgsql |
 | Messaging in-process | MediatR 13 (CQRS léger) |
 | Validation | FluentValidation 12 |
@@ -90,14 +88,12 @@ Le projet suit une architecture **hexagonale** stricte. Les règles de dépendan
 | `Atlas.Application.Premium` | `Atlas.Application`, `Atlas.Domain`, `Atlas.Shared` |
 | `Atlas.Infrastructure.*` | `Atlas.Application`, `Atlas.Domain`, `Atlas.Shared` |
 | `Atlas.Api` | tous les précédents |
-| `Atlas.Maui` | **uniquement** `Atlas.Domain` et `Atlas.Shared` |
-| `Atlas.Web.Client` | **uniquement** `Atlas.Domain` et `Atlas.Shared` |
+| `Atlas.Web.Client` (client Blazor — transition, jusqu'au spike Uno) | **uniquement** `Atlas.Domain` et `Atlas.Shared` |
+| `Atlas.App` (UI **Uno**, toutes cibles — cf. ADR-029) | **uniquement** `Atlas.Domain` et `Atlas.Shared` |
 
 **Le principe à retenir** : les dépendances pointent toujours vers l'intérieur de l'hexagone. Le domaine ne sait rien des détails techniques. L'infrastructure implémente les ports définis par le domaine, jamais l'inverse.
 
-**Cas particulier `Atlas.Maui`** : le client mobile ne doit **jamais** référencer `Atlas.Infrastructure.*` parce que le code serait livré sur les terminaux des utilisateurs et pourrait être décompilé. Toute interaction passe par l'API HTTP via `Atlas.Maui/Services/AtlasApiClient.cs`.
-
-**Cas particulier `Atlas.Web.Client`** (assembly d'interactivité Blazor WASM, cf. ADR-017) : **même règle et même raison** que `Atlas.Maui` — le code part dans le navigateur, donc décompilable. Il ne référence que `Atlas.Domain` + `Atlas.Shared`, jamais `Atlas.Infrastructure.*`, et consomme l'API HTTP. L'hôte `Atlas.Web` (Blazor Web App), lui, peut référencer davantage (comme `Atlas.Api`) ; seul l'assembly client interactif est contraint. À verrouiller par un test NetArchTest dédié, comme pour `Atlas.Maui`.
+**Cas particulier — la couche UI cliente** : qu'il s'agisse du client **Blazor `Atlas.Web.Client`** (actuel) ou, à terme, de l'**UI Uno `Atlas.App`** (cible **ADR-029**, toutes surfaces : WebAssembly + desktop + mobile), le code **part chez l'utilisateur** (navigateur / terminal) donc est **décompilable**. Il ne référence donc **jamais** `Atlas.Infrastructure.*` : uniquement `Atlas.Domain` + `Atlas.Shared`, toute interaction passant par l'API HTTP (`AtlasApiClient`). **Zéro secret, zéro logique sensible** côté client. Verrouillé par un test **NetArchTest** dédié. *Transition ADR-029 : `Atlas.App` (Uno) remplacera `Atlas.Maui` (jamais créé), Avalonia et `Atlas.Web.Client` ; le client Blazor reste en vigueur jusqu'au spike Uno concluant.*
 
 ---
 

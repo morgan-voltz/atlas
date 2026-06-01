@@ -1,5 +1,7 @@
 # Roadmap — client web (Atlas.Web)
 
+> ⛔ **ADR-029 (UI unifiée Uno Platform)** — Le client web Blazor décrit ici est **remplacé par Uno** (le web devient une cible WebAssembly d'Uno). Cette feuille de route reste **l'historique de ce qui a été livré** (M0–M7 + kit de composants) ; le client Blazor reste l'app courante **jusqu'à un spike Uno concluant** (garde-fou ADR-029), après quoi la roadmap basculera sur `Atlas.App` (Uno). Doctrine UX (`docs/12`) inchangée.
+
 > Feuille de route **d'implémentation** du client web Blazor (`Atlas.Web` / `Atlas.Web.Client`).
 > Document **distinct** du backlog produit (`docs/02-roadmap-features.md`, `F-NNN`) et de la doctrine
 > UX (`docs/12` tronc commun + `docs/14` delta web). Ici : **comment on bâtit le client**.

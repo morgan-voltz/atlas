@@ -1,5 +1,7 @@
 # Modèle UX — client web (Blazor)
 
+> ⛔ **ADR-029 (UI unifiée Uno Platform)** — Le client web Blazor est **remplacé par Uno** : le web devient une **cible d'Uno** (WebAssembly) parmi six, plus un client séparé. Le **fond reste valable** (doctrine UX agnostique : rail, list-detail 2 panneaux, routing/URLs) ; ce document sera **refondu** (« delta web d'Uno ») lors de l'intégration Uno. Le client Blazor décrit ici reste en vigueur **jusqu'au spike Uno concluant** (garde-fou ADR-029).
+
 > Doctrine d'expérience utilisateur du **client web** d'Atlas (`Atlas.Web`, Blazor).
 > Ce document est un **delta** : il ne réénonce pas la doctrine commune, il décrit **uniquement ce qui diffère du natif**. Pour tout le tronc commun — les 6 règles, page-vs-carte, le list-detail (R3), les 5 destinations, la fiche, le flux, la Veille, la recherche, les favoris, le profil, le kit de composants, la doctrine « descriptif, jamais de verdict » — la référence reste **`docs/12-modele-ux-client-maui.md`**, qui est **agnostique de la techno**.
 >

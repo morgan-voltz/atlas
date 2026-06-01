@@ -13,7 +13,7 @@
 ## Sommaire
 
 - [Vision du projet](#vision-du-projet)
-- [Décisions (ADR-001 → ADR-028)](#décisions-adr-001--adr-028)
+- [Décisions (ADR-001 → ADR-029)](#décisions-adr-001--adr-029)
 - [Décisions à prendre ultérieurement](#décisions-à-prendre-ultérieurement)
 - [Roadmap macro](#roadmap-macro)
 - [Glossaire](#glossaire)
@@ -41,7 +41,7 @@ Le projet propose une **alternative open source** qui :
 
 ---
 
-## Décisions (ADR-001 → ADR-028)
+## Décisions (ADR-001 → ADR-029)
 
 > Synthèses ; le détail (contexte, rationale, conséquences) est dans chaque fichier de [`docs/ADR/`](ADR/).
 
@@ -59,8 +59,8 @@ Le projet propose une **alternative open source** qui :
   **AGPL v3** : copyleft fort (protège contre le fork SaaS fermé), compatible dual-licensing futur.
 - **[ADR-006 — Modèle économique : open core](ADR/ADR-006-modele-economique.md)** ✅
   OSS pur d'abord, puis **SaaS hébergé** ; frontière cœur / premium isolée structurellement (`Atlas.Application.Premium`).
-- **[ADR-007 — Stack technique .NET / MAUI](ADR/ADR-007-stack-dotnet-maui.md)** ✅ *(amendé par ADR-026 — desktop → Avalonia)*
-  **Tout-.NET** (une seule stack) : ASP.NET Core, **Blazor pour le web** (précisé par ADR-017), clients natifs **MAUI (mobile) + Avalonia (desktop)** (amendé par ADR-026).
+- **[ADR-007 — Stack technique .NET / MAUI](ADR/ADR-007-stack-dotnet-maui.md)** ✅ *(amendé par ADR-026 puis **ADR-029** — UI unique Uno)*
+  **Tout-.NET** (une seule stack) : ASP.NET Core ; côté UI, **Uno Platform** (C#/XAML WinUI sur Win/macOS/Linux/iOS/Android/WebAssembly) remplace MAUI, Avalonia **et** Blazor Web App — cf. **ADR-029**.
 - **[ADR-008 — Accessibilité WCAG 2.2 AA + RGAA 4.1.2](ADR/ADR-008-accessibilite-wcag.md)** ✅
   Accessibilité **bloquante** dans la Definition of Done de toute UI.
 - **[ADR-009 — Veille comme feature majeure + open core](ADR/ADR-009-veille-open-core.md)** ✅
@@ -90,13 +90,15 @@ Le projet propose une **alternative open source** qui :
 
 ### Clients
 
-- **[ADR-017 — Framework du client web : Blazor Web App](ADR/ADR-017-framework-web-blazor.md)** ✅ *(amendé 30 mai 2026 — WASM pur v1)*
-  Client web = **Blazor Web App**, **WASM pur** pour l'app authentifiée v1 ; `Atlas.Web.Client` = consommateur HTTP pur (`Domain` + `Shared` only, NetArchTest). Résout le point laissé ouvert par ADR-007. UX : `docs/14`.
-- **[ADR-026 — Clients natifs : MAUI (mobile) + Avalonia (desktop)](ADR/ADR-026-clients-natifs-maui-avalonia.md)** ✅
+- **[ADR-017 — Framework du client web : Blazor Web App](ADR/ADR-017-framework-web-blazor.md)** ⛔ **Remplacé par ADR-029** (Uno)
+  *(D'origine : client web Blazor Web App, **WASM pur**, `Atlas.Web.Client` consommateur HTTP pur Domain+Shared.)* Le web devient une **cible d'Uno** (ADR-029) ; le squelette Blazor reste **jusqu'au spike Uno concluant**. UX : `docs/14`.
+- **[ADR-026 — Clients natifs : MAUI (mobile) + Avalonia (desktop)](ADR/ADR-026-clients-natifs-maui-avalonia.md)** ⛔ **Remplacé par ADR-029** (Uno couvre desktop + mobile + web ; Avalonia/MAUI = repli)
   Split par force : **mobile (Android/iOS) reste MAUI**, **desktop (Windows/macOS/Linux) passe à Avalonia** (couvre Linux face à la bascule souveraine DINUM), web Blazor WASM inchangé. **Noyau partagé** (Domain + Shared + `AtlasApiClient` + ViewModels + doctrine UX), seules les Views diffèrent ; client = adapter entrant pur (NetArchTest étendu). **Amende ADR-007** ; requalifie **F-010** (desktop → Avalonia). UX agnostique : `docs/12` (delta desktop éventuel comme `docs/14` pour le web).
 
 - **[ADR-027 — Cache client hors-ligne : fraîcheur datée & grammaire d'états honnêtes](ADR/ADR-027-cache-client-offline-fraicheur.md)** ✅
   Le cache mobile (SQLite, acté) mémorise des **read-models datés** (jamais le domaine, aucun secret — topologie pure ADR-002) ; une donnée servie du cache ne se présente **jamais** « à jour » → **`Stale`** (« hors-ligne · vu le {date} »), absente → **`Unavailable`**, **jamais un vide menteur** (grammaire d'états honnêtes ADR-015 étendue à l'axe réseau, comme ADR-022 au temps) ; bandeau global = **état système** (ADR-012), fraîcheur **par-item** ; **lecture seule** v1, **pas de TTL dur** (on date, on n'expire pas), cache **chiffré + purgé à la déconnexion** (INPI jamais caché). Offline web/desktop = avenants futurs. Implémenté par **F-029** (cache de lecture) / **F-075** (moteur de fraîcheur & sync).
+- **[ADR-029 — UI unifiée Uno Platform](ADR/ADR-029-ui-unifiee-uno.md)** ✅ *(remplace ADR-017 et ADR-026, amende ADR-007)*
+  **Uno Platform** = UI unique **C#/XAML WinUI** projetée sur **6 cibles** (Win/macOS/Linux desktop + iOS/Android + WebAssembly). Motivation : **souveraineté** (Linux desktop natif, indépendance Microsoft côté desktop) + **un seul paradigme d'UI** pour un porteur solo. Topologie **ADR-002 préservée** (UI → `Domain` + `Shared` only, NetArchTest) ; auth bearer/cookie (ADR-010) et **doctrine UX `docs/12`** (agnostique) inchangées. **Spike requis avant de retirer `Atlas.Web`** (garde-fou). Limite assumée : souveraineté réelle **desktop**, pas mobile (.NET mobile dépend des workloads Microsoft). Spike WASM concluant (1ᵉʳ juin 2026, ~9,5 Mo Release).
 
 ### Robustesse & exploitation
 
