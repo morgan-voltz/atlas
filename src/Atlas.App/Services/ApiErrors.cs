@@ -29,4 +29,7 @@ public static class ApiErrors
 
     public static ApiError InpiConnectionFailed() =>
         new("inpi.connection_failed", "La connexion INPI a échoué. Vérifiez vos identifiants.");
+
+    public static ApiError CompanyNotFound(string siren) =>
+        new("companies.not_found", $"Aucune entreprise au RNE pour le SIREN {siren}.");
 }

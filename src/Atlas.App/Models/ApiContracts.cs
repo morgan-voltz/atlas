@@ -14,6 +14,24 @@ public sealed record AccessTokenResponse(string AccessToken, System.DateTimeOffs
 /// <summary>Résultat résumé d'une entreprise (liste de recherche, favoris).</summary>
 public sealed record CompanySummaryResponse(string Siren, string Denomination, string? Ville, string? NafCode);
 
+/// <summary>Adresse postale (siège). Champs optionnels selon la couverture RNE.</summary>
+public sealed record AddressResponse(string? Line, string? PostalCode, string? City, string? Country);
+
+/// <summary>Dirigeant / mandataire d'une unité légale (RNE).</summary>
+public sealed record DirigeantResponse(string Nom, string? Qualite);
+
+/// <summary>Fiche entreprise (<c>GET /companies/{siren}</c>, F-004) — calée sur le contrat de l'API.</summary>
+public sealed record CompanyResponse(
+    string Siren,
+    string Denomination,
+    string? FormeJuridique,
+    string? NafCode,
+    string? NafLabel,
+    AddressResponse? Adresse,
+    System.DateOnly? DateCreation,
+    bool IsDiffusible,
+    System.Collections.Generic.IReadOnlyList<DirigeantResponse> Dirigeants);
+
 /// <summary>
 /// Corps de <c>POST /inpi/connection</c> (F-003). Identifiants techniques INPI : transmis une fois
 /// à l'API (chiffrés au repos côté serveur), JAMAIS persistés ni journalisés côté client (CLAUDE.md).

@@ -32,6 +32,7 @@ public sealed partial class RecherchePage : Page
         this.Loaded += (_, _) =>
         {
             ListDetail.BackRequested += (_, _) => ClearSelection();
+            Detail.ProfilRequested += (_, _) => this.Frame?.Navigate(typeof(ProfilPage));
             ShowMessage("Tapez un nom d'entreprise pour lancer une recherche.");
         };
     }
@@ -116,8 +117,7 @@ public sealed partial class RecherchePage : Page
             card.Selected = card == tapped;
         }
 
-        Detail.Title = company.Denomination;
-        DetailField.FieldContent = company.Ville is { } ville ? $"{ville} · NAF {company.NafCode}" : $"NAF {company.NafCode}";
+        Detail.Siren = company.Siren;
         ListDetail.HasSelection = true;
     }
 
