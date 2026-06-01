@@ -26,4 +26,14 @@ public interface IFavoriteEventRepository
         UserId userId,
         IReadOnlyCollection<string> candidateExternalIds,
         CancellationToken ct = default);
+
+    /// <summary>
+    /// Variante batch (audit Lot 3b, E4c) : pour un ensemble d'utilisateurs et un même lot d'identifiants
+    /// candidats, renvoie en une seule requête les identifiants déjà connus, regroupés par utilisateur.
+    /// Évite le N+1 (un <see cref="GetKnownExternalIdsAsync"/> par favori) du polling BODACC.
+    /// </summary>
+    Task<IReadOnlyDictionary<UserId, IReadOnlyCollection<string>>> GetKnownExternalIdsForUsersAsync(
+        IReadOnlyCollection<UserId> userIds,
+        IReadOnlyCollection<string> candidateExternalIds,
+        CancellationToken ct = default);
 }

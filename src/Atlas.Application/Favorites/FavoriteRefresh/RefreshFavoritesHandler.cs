@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using Atlas.Application.Inpi;
 using Atlas.Domain.Common;
 using Atlas.Domain.Companies;
@@ -24,6 +25,10 @@ internal sealed class RefreshFavoritesHandler(
     ILogger<RefreshFavoritesHandler> logger)
     : IRequestHandler<RefreshFavoritesCommand, Result<FavoriteRefreshSummary>>
 {
+    // Parallélisme borné des appels INPI (audit Lot 3b, M5) : respecte les quotas INPI et le circuit
+    // breaker (Lot 2) tout en accélérant le refresh d'un user à nombreux favoris.
+    private const int MaxInpiConcurrency = 4;
+
     public async Task<Result<FavoriteRefreshSummary>> Handle(
         RefreshFavoritesCommand request,
         CancellationToken cancellationToken)
@@ -62,13 +67,23 @@ internal sealed class RefreshFavoritesHandler(
             var snapshotsBySiren =
                 (await snapshots.GetByUserAsync(userId, cancellationToken)).ToDictionary(snap => snap.Siren);
 
-            foreach (CompanyFavorite favorite in userFavorites)
-            {
-                cancellationToken.ThrowIfCancellationRequested();
-                favoritesProcessed++;
+            // Phase 1 (audit Lot 3b, M5) : fetch INPI en parallèle borné. Appels HTTP uniquement —
+            // on ne touche pas au DbContext ici (il n'est pas thread-safe).
+            var fetched = new ConcurrentBag<(CompanyFavorite Favorite, Result<UniteLegale> Result)>();
+            await Parallel.ForEachAsync(
+                userFavorites,
+                new ParallelOptions { MaxDegreeOfParallelism = MaxInpiConcurrency, CancellationToken = cancellationToken },
+                async (favorite, token) =>
+                {
+                    Result<UniteLegale> companyResult =
+                        await companyProvider.GetBySirenAsync(favorite.Siren, access.Value!, token);
+                    fetched.Add((favorite, companyResult));
+                });
 
-                Result<UniteLegale> companyResult =
-                    await companyProvider.GetBySirenAsync(favorite.Siren, access.Value!, cancellationToken);
+            // Phase 2 : traitement séquentiel (snapshots + notifications) — écritures DbContext sûres.
+            foreach ((CompanyFavorite favorite, Result<UniteLegale> companyResult) in fetched)
+            {
+                favoritesProcessed++;
                 if (companyResult.IsFailure)
                 {
                     favoritesFailed++;

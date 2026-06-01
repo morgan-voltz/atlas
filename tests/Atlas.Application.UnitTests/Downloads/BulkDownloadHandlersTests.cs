@@ -1,12 +1,18 @@
 using Atlas.Application.Downloads.DownloadBulkArchive;
 using Atlas.Application.Downloads.GetBulkDownload;
 using Atlas.Application.Downloads.RequestBulkDownload;
+using Atlas.Application.Downloads.RunBulkDownload;
 using Atlas.Domain.Common;
+using Atlas.Domain.Companies;
+using Atlas.Domain.Companies.Attachments;
 using Atlas.Domain.Downloads;
+using Atlas.Domain.Inpi;
+using Atlas.Domain.Security;
 using Atlas.Domain.Storage;
 using Atlas.Domain.Users;
 using Atlas.Shared.Result;
 using FluentAssertions;
+using Microsoft.Extensions.Logging.Abstractions;
 using NSubstitute;
 
 namespace Atlas.Application.UnitTests.Downloads;
@@ -210,5 +216,57 @@ public class BulkDownloadHandlersTests
         result.IsSuccess.Should().BeTrue();
         result.Value!.FileName.Should().StartWith("atlas-bulk-").And.EndWith(".zip");
         result.Value.Stream.Should().BeSameAs(fakeStream);
+    }
+
+    // ── Run (job arrière-plan) ────────────────────────────────────────────────────
+
+    [Fact]
+    public async Task Run_builds_zip_via_temp_file_and_marks_job_ready()
+    {
+        // Couvre M4 : l'archive est construite sur un fichier temporaire puis streamée vers le storage.
+        Guid userId = Guid.NewGuid();
+        BulkDownloadJob job = BulkDownloadJob.Request(new UserId(userId), [Siren1], Now, TimeSpan.FromHours(24));
+        _jobs.GetByIdAsync(Arg.Any<BulkDownloadJobId>(), Arg.Any<CancellationToken>()).Returns(job);
+
+        var inpiCredentials = Substitute.For<IInpiCredentialsRepository>();
+        inpiCredentials.GetByUserIdAsync(Arg.Any<UserId>(), Arg.Any<CancellationToken>())
+            .Returns(InpiCredentials.Create(new UserId(userId), "enc-u", "enc-p", Now));
+        var crypto = Substitute.For<ICryptoService>();
+        crypto.Decrypt(Arg.Any<string>()).Returns("x");
+
+        var companyProvider = Substitute.For<ICompanyDataProvider>();
+        companyProvider.GetAttachmentsAsync(Arg.Any<Siren>(), Arg.Any<InpiAccessCredentials>(), Arg.Any<CancellationToken>())
+            .Returns(Result<IReadOnlyList<CompanyAttachment>>.Ok(new List<CompanyAttachment>
+            {
+                new("att-1", AttachmentType.Acte, "Statuts", null, null, IsConfidential: false),
+            }));
+        companyProvider.DownloadAttachmentAsync(Arg.Any<Siren>(), "att-1", Arg.Any<InpiAccessCredentials>(), Arg.Any<CancellationToken>())
+            .Returns(Result<AttachmentContent>.Ok(
+                new AttachmentContent(new MemoryStream([1, 2, 3, 4]), "application/pdf", "statuts.pdf")));
+
+        byte[]? captured = null;
+        _storage.When(s => s.SaveAsync(Arg.Any<string>(), Arg.Any<Stream>(), Arg.Any<string>(), Arg.Any<CancellationToken>()))
+            .Do(ci =>
+            {
+                Stream stream = ci.ArgAt<Stream>(1);
+                using var ms = new MemoryStream();
+                stream.CopyTo(ms);
+                captured = ms.ToArray();
+            });
+
+        var handler = new RunBulkDownloadHandler(
+            _jobs, inpiCredentials, crypto, companyProvider, _storage, _clock, _unitOfWork,
+            NullLogger<RunBulkDownloadHandler>.Instance);
+
+        Result result = await handler.Handle(new RunBulkDownloadCommand(job.Id.Value), CancellationToken.None);
+
+        result.IsSuccess.Should().BeTrue();
+        job.Status.Should().Be(BulkDownloadStatus.Ready);
+        captured.Should().NotBeNull();
+        captured!.Length.Should().BeGreaterThan(0);
+        // Signature ZIP « PK » : l'archive a bien été écrite sur le fichier temp puis lue pour l'upload.
+        captured![0].Should().Be(0x50);
+        captured![1].Should().Be(0x4B);
+        await _storage.Received(1).SaveAsync(Arg.Any<string>(), Arg.Any<Stream>(), "application/zip", Arg.Any<CancellationToken>());
     }
 }
