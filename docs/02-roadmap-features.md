@@ -325,6 +325,8 @@ Features identifiées comme valables mais explicitement reportées hors du péri
 ### Clusters d'approfondissement (figés le 31 mai 2026, cadrés par ADR-021 → ADR-025)
 
 > Cinq clusters qui **approfondissent la donnée et l'usage** par-dessus le dossier 360 (F-056) et le graphe (F-034). Rangés en V3+ car leurs **prérequis** (F-056, F-034) y sont aussi ; chaque cluster s'allume dès que son socle est posé. Tous respectent la doctrine **descriptif/candidat, jamais de verdict** (ADR-012/014) et la souveraineté (on-infra / BYOAI).
+>
+> **Candidats à remontée V2** (prérequis légers, indépendants de F-056/F-034) : **F-065** (n'expose que des champs *déjà capturés* — provenance/AsOf/état) et **F-069** (s'appuie sur **F-013 déjà livré**). À remonter si jugés utiles avant que F-056/F-034 ne soient posés ; les autres features restent gouvernées par leurs prérequis V3+.
 
 **Confiance** *(ADR-021)* — rendre la provenance et l'audit tangibles.
 - [**F-065 — Surface de confiance navigable**](features/F-065-surface-de-confiance-navigable.md) — ★★ — Rend la ligne de provenance **traversable** : un tap ouvre « d'où vient cette donnée » (source, référence, horodatage, dernière confirmation ≠ dernier changement, état). Dépend de F-056. Livrable seul.
