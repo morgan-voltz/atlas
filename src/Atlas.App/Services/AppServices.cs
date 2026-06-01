@@ -12,9 +12,10 @@ namespace Atlas.App.Services;
 /// </summary>
 public static class AppServices
 {
-    // Adresse de l'API en développement (harness docs/13 : API sur :5023). À externaliser en
-    // configuration par tête (WASM via origin, natif via appsettings) dans une tranche ultérieure.
-    private const string DevApiBaseAddress = "http://localhost:5023/";
+    // Adresse de l'API en développement (harness docs/13, profil https). On vise HTTPS car le refresh
+    // token est un cookie `Secure` (non transmis sur http). À externaliser en configuration par tête
+    // (WASM via origin, natif via appsettings) dans une tranche ultérieure.
+    private const string DevApiBaseAddress = "https://localhost:7201/";
 
     private static IServiceProvider? _provider;
 
@@ -47,11 +48,22 @@ public static class AppServices
 
         if (!OperatingSystem.IsBrowser())
         {
-            refresh.ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler { CookieContainer = cookies, UseCookies = true });
-            main.ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler { CookieContainer = cookies, UseCookies = true });
+            refresh.ConfigurePrimaryHttpMessageHandler(() => CreateDesktopHandler(cookies));
+            main.ConfigurePrimaryHttpMessageHandler(() => CreateDesktopHandler(cookies));
         }
 
         _provider = services.BuildServiceProvider();
+    }
+
+    // Handler primaire des têtes natives : partage le CookieContainer (refresh cookie Secure).
+    // En DEBUG, accepte le certificat auto-signé du harness dev (https://localhost:7201) — JAMAIS en Release.
+    private static HttpClientHandler CreateDesktopHandler(CookieContainer cookies)
+    {
+        var handler = new HttpClientHandler { CookieContainer = cookies, UseCookies = true };
+#if DEBUG
+        handler.ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator;
+#endif
+        return handler;
     }
 
     /// <summary>Raccourci de résolution.</summary>
