@@ -86,8 +86,8 @@ public class RefreshFavoritesHandlerTests
         User user = NewUser(out _);
         Siren siren = Siren.Create("552032534").Value;
         SetupConnectedUserWithFavorite(user, siren);
-        _snapshots.GetCurrentAsync(user.Id, siren, Arg.Any<CancellationToken>())
-            .Returns((CompanyFavoriteSnapshot?)null);
+        _snapshots.GetByUserAsync(user.Id, Arg.Any<CancellationToken>())
+            .Returns(new List<CompanyFavoriteSnapshot>());
         _companyProvider.GetBySirenAsync(siren, Arg.Any<InpiAccessCredentials>(), Arg.Any<CancellationToken>())
             .Returns(Result<UniteLegale>.Ok(UniteLegale("552032534", "Renault")));
 
@@ -112,7 +112,8 @@ public class RefreshFavoritesHandlerTests
         UniteLegale current = UniteLegale("552032534", "Renault SAS"); // dénomination modifiée
 
         CompanyFavoriteSnapshot previousSnap = CompanyFavoriteSnapshot.Capture(user.Id, previous, Now.AddDays(-1));
-        _snapshots.GetCurrentAsync(user.Id, siren, Arg.Any<CancellationToken>()).Returns(previousSnap);
+        _snapshots.GetByUserAsync(user.Id, Arg.Any<CancellationToken>())
+            .Returns(new List<CompanyFavoriteSnapshot> { previousSnap });
         _companyProvider.GetBySirenAsync(siren, Arg.Any<InpiAccessCredentials>(), Arg.Any<CancellationToken>())
             .Returns(Result<UniteLegale>.Ok(current));
 
@@ -140,7 +141,8 @@ public class RefreshFavoritesHandlerTests
 
         UniteLegale company = UniteLegale("552032534", "Renault");
         CompanyFavoriteSnapshot previousSnap = CompanyFavoriteSnapshot.Capture(user.Id, company, Now.AddDays(-1));
-        _snapshots.GetCurrentAsync(user.Id, siren, Arg.Any<CancellationToken>()).Returns(previousSnap);
+        _snapshots.GetByUserAsync(user.Id, Arg.Any<CancellationToken>())
+            .Returns(new List<CompanyFavoriteSnapshot> { previousSnap });
         _companyProvider.GetBySirenAsync(siren, Arg.Any<InpiAccessCredentials>(), Arg.Any<CancellationToken>())
             .Returns(Result<UniteLegale>.Ok(company));
 

@@ -28,6 +28,19 @@ internal sealed class VeillePackRepository(AtlasDbContext dbContext) : IVeillePa
 
     public void Update(VeillePack pack) => dbContext.VeillePacks.Update(pack);
 
+    // Incréments atomiques côté serveur (audit Lot 3, M7) : un UPDATE ... SET likes_count = likes_count + 1
+    // unique, sans read-modify-write, donc insensible aux likes concurrents.
+    public Task IncrementLikesAsync(VeillePackId id, CancellationToken ct = default) =>
+        dbContext.VeillePacks
+            .Where(pack => pack.Id == id)
+            .ExecuteUpdateAsync(setters => setters.SetProperty(pack => pack.LikesCount, pack => pack.LikesCount + 1), ct);
+
+    public Task DecrementLikesAsync(VeillePackId id, CancellationToken ct = default) =>
+        dbContext.VeillePacks
+            .Where(pack => pack.Id == id)
+            .ExecuteUpdateAsync(
+                setters => setters.SetProperty(pack => pack.LikesCount, pack => Math.Max(0, pack.LikesCount - 1)), ct);
+
     public async Task<PagedResult<VeillePack>> GetPublicMarketplaceAsync(
         int page, int pageSize, CancellationToken ct = default)
     {

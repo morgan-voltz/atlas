@@ -56,6 +56,12 @@ internal sealed class RefreshFavoritesHandler(
             usersProcessed++;
 
             IReadOnlyList<CompanyFavorite> userFavorites = await favorites.GetByUserAsync(userId, cancellationToken);
+
+            // Précharge tous les snapshots du user en une requête (audit Lot 3, E4b) : évite un
+            // GetCurrentAsync par favori (N+1). Au plus un snapshot par siren.
+            var snapshotsBySiren =
+                (await snapshots.GetByUserAsync(userId, cancellationToken)).ToDictionary(snap => snap.Siren);
+
             foreach (CompanyFavorite favorite in userFavorites)
             {
                 cancellationToken.ThrowIfCancellationRequested();
@@ -78,8 +84,7 @@ internal sealed class RefreshFavoritesHandler(
                 }
 
                 UniteLegale current = companyResult.Value!;
-                CompanyFavoriteSnapshot? previous =
-                    await snapshots.GetCurrentAsync(userId, favorite.Siren, cancellationToken);
+                snapshotsBySiren.TryGetValue(favorite.Siren, out CompanyFavoriteSnapshot? previous);
 
                 if (previous is null)
                 {

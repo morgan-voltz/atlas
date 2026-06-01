@@ -11,6 +11,12 @@ internal sealed class CompanyFavoriteSnapshotRepository(AtlasDbContext dbContext
         dbContext.CompanyFavoriteSnapshots
             .FirstOrDefaultAsync(snap => snap.UserId == userId && snap.Siren == siren, ct);
 
+    public async Task<IReadOnlyList<CompanyFavoriteSnapshot>> GetByUserAsync(UserId userId, CancellationToken ct = default) =>
+        // Suivi (tracking) volontaire : le job de refresh peut ensuite Remove/Add ces snapshots.
+        await dbContext.CompanyFavoriteSnapshots
+            .Where(snap => snap.UserId == userId)
+            .ToListAsync(ct);
+
     public async Task AddAsync(CompanyFavoriteSnapshot snapshot, CancellationToken ct = default) =>
         await dbContext.CompanyFavoriteSnapshots.AddAsync(snapshot, ct);
 
