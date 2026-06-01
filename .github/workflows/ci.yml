@@ -79,10 +79,11 @@ jobs:
         with:
           dotnet-version: '10.0.x'
 
-      # Restaure les workloads requis par le single project Uno (wasm-tools pour
-      # la tête WebAssembly). La tête desktop Skia n'en demande pas.
-      - name: Restore Uno workloads
-        run: dotnet workload restore src/Atlas.App/Atlas.App.csproj
+      # La tête WebAssembly requiert le workload wasm-tools (cf. Uno.Wasm.Bootstrap).
+      # La tête desktop Skia n'en demande aucun. Installation explicite : `workload restore`
+      # sur le csproj ne le résout pas (assets WASM détectés mais wasm-tools absent).
+      - name: Install wasm-tools workload
+        run: dotnet workload install wasm-tools
 
       - name: Build Uno desktop head (Skia — Linux/Win/macOS)
         run: dotnet build src/Atlas.App/Atlas.App.csproj -f net10.0-desktop -c Release
