@@ -1,0 +1,56 @@
+name: uno
+
+# Build des têtes du client Uno Atlas.App (ADR-029) : verrouille le multi-tête sur les
+# cibles buildables sur Linux — WebAssembly (souveraineté web) + desktop Skia (= tête
+# Linux/Win/macOS). iOS/maccatalyst exigent macOS, Android un workload mobile : hors de ce
+# job (à ajouter sur un runner dédié si besoin).
+#
+# Filtré par `paths` : ne tourne que quand Atlas.App, ses dépendances (Domain/Shared),
+# le pin du SDK Uno (global.json) ou ce workflow changent — pas sur les PR purement docs.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'src/Atlas.App/**'
+      - 'src/Atlas.Domain/**'
+      - 'src/Atlas.Shared/**'
+      - 'global.json'
+      - '.github/workflows/uno.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'src/Atlas.App/**'
+      - 'src/Atlas.Domain/**'
+      - 'src/Atlas.Shared/**'
+      - 'global.json'
+      - '.github/workflows/uno.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: uno-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  uno-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      # La tête WebAssembly requiert le workload wasm-tools (cf. Uno.Wasm.Bootstrap).
+      # La tête desktop Skia n'en demande aucun. Installation explicite : `workload restore`
+      # sur le csproj ne le résout pas (assets WASM détectés mais wasm-tools absent).
+      - name: Install wasm-tools workload
+        run: dotnet workload install wasm-tools
+
+      - name: Build Uno desktop head (Skia — Linux/Win/macOS)
+        run: dotnet build src/Atlas.App/Atlas.App.csproj -f net10.0-desktop -c Release
+
+      - name: Build Uno WebAssembly head
+        run: dotnet build src/Atlas.App/Atlas.App.csproj -f net10.0-browserwasm -c Release
