@@ -3,6 +3,8 @@
 > Document de référence sur les engagements d'accessibilité du projet et leur mise en œuvre technique.
 > L'accessibilité n'est **pas une option** ni une feature ajoutée tardivement : c'est un **critère de Definition of Done** sur chaque feature livrée.
 
+> ⛔ **ADR-029 (UI unifiée Uno Platform)** — Les sections §4 (MAUI) et §5 (Web/Blazor) ci-dessous décrivent la mise en œuvre par techno **actuelle**. La cible est désormais **`Atlas.App` (Uno)** pour toutes les surfaces. Les **engagements et critères WCAG/RGAA restent inchangés** (ils sont agnostiques de la techno) ; les détails d'implémentation par framework seront consolidés sous Uno à son intégration.
+
 **Version** : 1.0
 **Date de dernière mise à jour** : 26 mai 2026
 
