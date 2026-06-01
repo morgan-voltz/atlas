@@ -15,4 +15,7 @@ public static class ApiErrors
 
     public static ApiError InvalidCredentials() =>
         new("api.invalid_credentials", "Adresse e-mail ou mot de passe incorrect.");
+
+    public static ApiError SessionExpired() =>
+        new("api.session_expired", "Votre session a expiré. Reconnectez-vous.");
 }

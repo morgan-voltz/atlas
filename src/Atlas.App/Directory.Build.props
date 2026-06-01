@@ -15,8 +15,10 @@
     <!-- NU1507 : multiples sources NuGet sous CPM sans source mapping
          NETSDK1201 : RID sans self-contained
          PRI257 : langue par défaut (en) hors ressources incluses
-         CA1010/CA1852 : faux positifs sur le code généré par Uno (UserControls partiels, Program) -->
-    <NoWarn>$(NoWarn);NU1507;NETSDK1201;PRI257;CA1010;CA1852</NoWarn>
+         CA1010/CA1852 : faux positifs sur le code généré par Uno (UserControls partiels, Program)
+         CA1001 : Page avec un CancellationTokenSource (search-as-you-type) — disposer un CTS lié à
+                  une requête en vol est risqué ; cycle de vie géré par la navigation. -->
+    <NoWarn>$(NoWarn);NU1507;NETSDK1201;PRI257;CA1010;CA1852;CA1001</NoWarn>
   </PropertyGroup>
 
 </Project>
