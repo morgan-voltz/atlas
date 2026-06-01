@@ -77,13 +77,6 @@
     display: none;
 }
 
-/* Provenance — jamais masquée indépendamment des données (doc 12 §13). */
-.section-provenance {
-    margin: 0.85rem 0 0;
-    font-size: 0.75rem;
-    color: var(--on-surface-variant);
-}
-
 /* Vide de couverture : informe d'une limite, sans bouton (doc 12 §14). */
 .section-coverage {
     margin: 0.25rem 0;

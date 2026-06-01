@@ -1,0 +1,16 @@
+@* Atome « champ étiqueté » (doc 12 §11) : couple terme/valeur d'une fiche. À placer dans un <dl>
+   (HTML5 autorise un <div> enveloppant <dt>/<dd>). Le terme reste lisible, la valeur porte le contenu. *@
+
+<div class="labeled-field">
+    <dt class="lf-term">@Label</dt>
+    <dd class="lf-value">@ChildContent</dd>
+</div>
+
+@code {
+    [Parameter]
+    [EditorRequired]
+    public required string Label { get; set; }
+
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+}

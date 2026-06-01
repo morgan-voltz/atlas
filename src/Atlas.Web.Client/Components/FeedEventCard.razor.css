@@ -68,24 +68,6 @@
     color: var(--on-surface-variant);
 }
 
-.mention-chip {
-    padding: 0.1rem 0.55rem;
-    border-radius: var(--radius-sm);
-    background: var(--primary-container);
-    color: var(--on-primary-container);
-    text-decoration: none;
-    font-weight: 600;
-}
-
-.mention-chip:hover {
-    text-decoration: underline;
-}
-
-.mention-chip:focus-visible {
-    outline: 2px solid var(--focus);
-    outline-offset: 2px;
-}
-
 .feed-actions {
     display: flex;
     flex-wrap: wrap;

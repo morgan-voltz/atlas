@@ -25,7 +25,7 @@
                 <span class="hub-item-title">Connexion INPI</span>
                 <span class="hub-item-sub">Indispensable pour accéder aux données entreprises</span>
             </span>
-            <span class="hub-status @InpiChipClass">@InpiChipLabel</span>
+            <Chip Tone="@InpiChipTone">@InpiChipLabel</Chip>
             <span class="hub-chevron" aria-hidden="true">›</span>
         </a>
         <a class="hub-item" href="profil/donnees">
@@ -73,11 +73,11 @@
             ? (IsInvalid(s) ? "À reconnecter" : "Connecté")
             : "Non connecté";
 
-    private string InpiChipClass => !inpiStatusLoaded
-        ? "neutral"
+    private Chip.ChipTone InpiChipTone => !inpiStatusLoaded
+        ? Chip.ChipTone.Neutral
         : inpiStatus is { Connected: true } s
-            ? (IsInvalid(s) ? "warn" : "ok")
-            : "neutral";
+            ? (IsInvalid(s) ? Chip.ChipTone.Warn : Chip.ChipTone.Ok)
+            : Chip.ChipTone.Neutral;
 
     private static bool IsInvalid(InpiConnectionStatusResponse s) =>
         string.Equals(s.Status, "Invalid", StringComparison.OrdinalIgnoreCase);

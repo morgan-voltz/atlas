@@ -25,7 +25,7 @@
             <span class="mentions-label">Mentionne :</span>
             @foreach (FavoriteMentionResponse m in Item.MentionedFavorites)
             {
-                <a class="mention-chip" href="entreprise/@m.Siren">@m.Name</a>
+                <Chip Tone="Chip.ChipTone.Info" Href="@($"entreprise/{m.Siren}")">@m.Name</Chip>
             }
         </p>
     }

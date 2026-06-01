@@ -68,41 +68,34 @@
                     <span class="mono id-siren">@FormatSiren(company.Siren)</span>
                     @if (!string.IsNullOrWhiteSpace(company.FormeJuridique))
                     {
-                        <span class="id-badge">@company.FormeJuridique</span>
+                        <Chip Tone="Chip.ChipTone.Info">@company.FormeJuridique</Chip>
                     }
                     @if (!company.IsDiffusible)
                     {
                         @* Diffusion restreinte (catégorie 3, doctrine) : fait de couverture, toujours montré. *@
-                        <span class="id-badge restricted" title="Diffusion restreinte (INSEE)">Diffusion restreinte</span>
+                        <Chip Tone="Chip.ChipTone.Neutral" Title="Diffusion restreinte (INSEE)">Diffusion restreinte</Chip>
                     }
                 </p>
 
                 <dl class="id-facts">
                     @if (!string.IsNullOrWhiteSpace(company.NafCode))
                     {
-                        <div class="id-fact">
-                            <dt>Activité (NAF)</dt>
-                            <dd><span class="mono">@company.NafCode</span>@(string.IsNullOrWhiteSpace(company.NafLabel) ? null : $" — {company.NafLabel}")</dd>
-                        </div>
+                        <LabeledField Label="Activité (NAF)">
+                            <span class="mono">@company.NafCode</span>@(string.IsNullOrWhiteSpace(company.NafLabel) ? null : $" — {company.NafLabel}")
+                        </LabeledField>
                     }
                     @if (company.DateCreation is { } created)
                     {
-                        <div class="id-fact">
-                            <dt>Création</dt>
-                            <dd>@created.ToString("d MMMM yyyy", Culture)</dd>
-                        </div>
+                        <LabeledField Label="Création">@created.ToString("d MMMM yyyy", Culture)</LabeledField>
                     }
                     @if (FormatAddress(company.Adresse) is { } addr)
                     {
-                        <div class="id-fact">
-                            <dt>Siège</dt>
-                            <dd>@addr</dd>
-                        </div>
+                        <LabeledField Label="Siège">@addr</LabeledField>
                     }
                 </dl>
 
                 @* Provenance épinglée — ne se replie jamais (garde-fou R6, doc 12 §4). *@
-                <p class="id-provenance">Source : Registre National des Entreprises (INPI)</p>
+                <Provenance Source="Registre National des Entreprises (INPI)" Separated="true" />
             </header>
 
             @* Pile de cartes-sections — ordre par défaut doc 12 §4 (MVP : Dirigeants ; le reste à venir). *@

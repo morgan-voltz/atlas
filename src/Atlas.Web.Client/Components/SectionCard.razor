@@ -48,7 +48,7 @@
                 @ChildContent
                 @if (!string.IsNullOrWhiteSpace(Source))
                 {
-                    <p class="section-provenance">Source : @Source</p>
+                    <Provenance Source="@Source" />
                 }
                 break;
         }
