@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using Atlas.Api.Security;
 using Atlas.Application.Downloads;
 using Atlas.Application.Downloads.DownloadBulkArchive;
 using Atlas.Application.Downloads.GetBulkDownload;
@@ -17,7 +18,8 @@ internal static class DownloadsEndpoints
     {
         RouteGroupBuilder group = routes.MapGroup("/downloads").WithTags("Downloads").RequireAuthorization();
 
-        group.MapPost("/bulk", RequestBulkAsync);
+        // Rate limiting dédié (M3) : la création de job déclenche de nombreux appels INPI + un job Hangfire.
+        group.MapPost("/bulk", RequestBulkAsync).RequireRateLimiting(RateLimitOptions.ExpensivePolicy);
         group.MapGet("/bulk/{jobId:guid}", GetBulkAsync);
         group.MapGet("/bulk/{jobId:guid}/archive", DownloadArchiveAsync);
 

@@ -76,6 +76,19 @@ internal static class ApiSecurityServiceCollectionExtensions
                         QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
                     }));
 
+            // Politique dédiée aux endpoints coûteux (audit Lot 4 — M3) : bulk download, génération PDF.
+            // Protège le quota INPI de l'utilisateur et le CPU, en plus de la limite globale.
+            options.AddPolicy(RateLimitOptions.ExpensivePolicy, httpContext =>
+                RateLimitPartition.GetFixedWindowLimiter(
+                    partitionKey: GetPartitionKey(httpContext),
+                    factory: _ => new FixedWindowRateLimiterOptions
+                    {
+                        PermitLimit = limits.Expensive.PermitLimit,
+                        Window = TimeSpan.FromSeconds(limits.Expensive.WindowSeconds),
+                        QueueLimit = 0,
+                        QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
+                    }));
+
             options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
         });
 

@@ -21,7 +21,13 @@ public static class DependencyInjection
     {
         string? connectionString = configuration.GetConnectionString("Atlas");
 
-        services.AddDbContext<AtlasDbContext>(options => options.UseNpgsql(connectionString));
+        // Garde-fou (audit Lot 4 — F6) : timeout de commande explicite pour éviter qu'une requête
+        // pendante (lock, plan dégénéré) ne bloque indéfiniment une connexion du pool. Le réglage fin
+        // du pooling/prepared statements reste possible via la chaîne de connexion (côté ops).
+        const int CommandTimeoutSeconds = 30;
+
+        services.AddDbContext<AtlasDbContext>(options =>
+            options.UseNpgsql(connectionString, npgsql => npgsql.CommandTimeout(CommandTimeoutSeconds)));
 
         services.AddScoped<IUnitOfWork>(provider => provider.GetRequiredService<AtlasDbContext>());
         services.AddScoped<IUserRepository, UserRepository>();
