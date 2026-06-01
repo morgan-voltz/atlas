@@ -131,19 +131,34 @@ internal sealed class FeedItemRepository(AtlasDbContext dbContext) : IFeedItemRe
             .ThenByDescending(row => row.item.FetchedAt)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
-            .Select(row => new
-            {
-                row.item,
-                row.state,
-                SourceCount = row.item.ClusterId == null
-                    ? 1
-                    : dbContext.FeedItems
-                        .Where(f => f.ClusterId == row.item.ClusterId)
-                        .Select(f => f.SourceId)
+            .Select(row => new { row.item, row.state })
+            .ToListAsync(ct);
+
+        // SourceCount (badge « N sources rapportent ») calculé séparément pour les seuls items affichés
+        // (audit E5b). Dans la projection paginée, la sous-requête corrélée était évaluée par PostgreSQL pour
+        // TOUTES les lignes ordonnées avant l'OFFSET (≈1000 à la page 50 → ~1,8 s) au lieu des 20 retournées.
+        // Ici l'ensemble externe est restreint aux items affichés et clusterisés → au plus pageSize sous-requêtes.
+        // On réutilise les seules constructions que EF traduit ici : Contains sur FeedItemId (non-nullable, cf.
+        // les mentions) et l'égalité ClusterId == ClusterId (nullable, comme la requête d'origine).
+        List<FeedItemId> clusteredDisplayedIds = rows
+            .Where(row => row.item.ClusterId is not null)
+            .Select(row => row.item.Id)
+            .ToList();
+
+        Dictionary<FeedItemId, int> sourceCountByItem = clusteredDisplayedIds.Count == 0
+            ? []
+            : await dbContext.FeedItems
+                .Where(representative => clusteredDisplayedIds.Contains(representative.Id))
+                .Select(representative => new
+                {
+                    representative.Id,
+                    Count = dbContext.FeedItems
+                        .Where(sibling => sibling.ClusterId == representative.ClusterId)
+                        .Select(sibling => sibling.SourceId)
                         .Distinct()
                         .Count(),
-            })
-            .ToListAsync(ct);
+                })
+                .ToDictionaryAsync(row => row.Id, row => row.Count, ct);
 
         // F-047 : charge en une requête les mentions de favoris pour les items affichés.
         var displayedIds = rows.Select(r => r.item.Id).ToList();
@@ -165,7 +180,9 @@ internal sealed class FeedItemRepository(AtlasDbContext dbContext) : IFeedItemRe
                 row.state != null && row.state.IsRead,
                 row.state != null && row.state.IsFavorite,
                 row.state != null && row.state.IsArchived,
-                row.SourceCount,
+                row.item.ClusterId is null
+                    ? 1
+                    : sourceCountByItem.GetValueOrDefault(row.item.Id, 1),
                 mentionsByItem.TryGetValue(row.item.Id.Value, out List<FavoriteMention>? mentions)
                     ? mentions
                     : []))
