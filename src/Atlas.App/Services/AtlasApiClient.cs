@@ -108,7 +108,13 @@ public sealed class AtlasApiClient(HttpClient httpClient, ITokenStore tokenStore
 
         if (!response.IsSuccessStatusCode)
         {
-            return Result<IReadOnlyList<CompanySummaryResponse>>.Fail(ApiErrors.RequestFailed((int)response.StatusCode));
+            // L'API renvoie un ProblemDetails avec un `code` métier ; on surface l'état dégradé
+            // honnête « connectez INPI » (doc 12 §10) plutôt qu'un « HTTP 409 » opaque.
+            string problem = await response.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
+            ApiError error = problem.Contains("inpi.not_connected", StringComparison.Ordinal)
+                ? ApiErrors.InpiNotConnected()
+                : ApiErrors.RequestFailed((int)response.StatusCode);
+            return Result<IReadOnlyList<CompanySummaryResponse>>.Fail(error);
         }
 
         PagedResult<CompanySummaryResponse>? paged = await response.Content
