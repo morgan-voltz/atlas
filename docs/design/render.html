@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Atlas — rendu maquettes web</title>
+<!-- Polices de la doctrine (doc 16) -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Serif:wght@400;600&display=swap" rel="stylesheet">
+<!-- React 18 + Babel standalone (transformation des .jsx au runtime) -->
+<script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<style>
+  html,body{margin:0;background:#5b6b7a;}
+  *{box-sizing:border-box;}
+  .atlas-row:focus-visible{outline:3px solid #1565C0;outline-offset:-2px;}
+  #frame{margin:24px auto;overflow:hidden;border-radius:18px;box-shadow:0 20px 60px rgba(0,0,0,.35);}
+  #err{color:#fff;font-family:monospace;padding:20px;white-space:pre-wrap;}
+</style>
+</head>
+<body>
+<div id="frame"></div>
+<pre id="err"></pre>
+
+<!-- Montage manuel : fetch → Babel.transform → eval indirect (scopes séparés, échange via window).
+     Paramètres : ?screen=accueil|veille|recherche & layout=desktop|narrow & dark=0|1 -->
+<script>
+(async () => {
+  const fail = (m) => { document.getElementById('err').textContent = 'ERREUR: ' + m;
+    console.error('RENDER-ERR', m); document.body.setAttribute('data-ready', '1'); };
+  try {
+    // Hooks React exposés en global : les .jsx les utilisent en identifiants nus (un seul scope chacun).
+    Object.assign(window, { useState: React.useState, useRef: React.useRef,
+      useEffect: React.useEffect, useCallback: React.useCallback, React, ReactDOM });
+    const get = async (f) => { const r = await fetch(f); if (!r.ok) throw new Error(f + ' → ' + r.status); return r.text(); };
+    const run = (label, src) => {
+      const out = Babel.transform(src, { presets: ['react'], filename: label }).code;
+      (0, eval)(out); // eval indirect : portée globale, mais bindings propres à chaque fichier
+    };
+    run('atlas-web-core.jsx', await get('atlas-web-core.jsx'));
+    run('atlas-web-screens.jsx', await get('atlas-web-screens.jsx'));
+
+    if (!window.AccueilWeb || !window.VeilleWeb || !window.RechercheWeb)
+      throw new Error('composants non enregistrés (AccueilWeb/VeilleWeb/RechercheWeb)');
+
+    const params = new URLSearchParams(location.search);
+    const screen = params.get('screen') || 'accueil';
+    const layout = params.get('layout') || 'narrow';
+    const dark = params.get('dark') === '1';
+    const W = layout === 'desktop' ? 1280 : 760;
+    const H = layout === 'desktop' ? 860 : 880;
+    const COMP = { accueil: window.AccueilWeb, veille: window.VeilleWeb, recherche: window.RechercheWeb };
+    const Screen = COMP[screen] || window.AccueilWeb;
+    const frame = document.getElementById('frame');
+    frame.style.width = W + 'px'; frame.style.height = H + 'px';
+    ReactDOM.createRoot(frame).render(React.createElement(Screen, { dark, layout }));
+
+    requestAnimationFrame(() => requestAnimationFrame(() =>
+      document.body.setAttribute('data-ready', '1')));
+  } catch (e) { fail(e && e.message ? e.message : String(e)); }
+})();
+</script>
+</body>
+</html>
