@@ -4,32 +4,66 @@
       xmlns:c="using:Atlas.App.Presentation.Controls"
       Background="{ThemeResource AtlasBgBrush}">
   <ScrollViewer>
-    <StackPanel Padding="24" Spacing="16" MaxWidth="680">
+    <StackPanel Padding="24" Spacing="16" MaxWidth="560">
       <TextBlock Text="Profil"
                  FontFamily="{ThemeResource AtlasFontHeading}"
                  FontSize="24"
                  Foreground="{ThemeResource AtlasOnSurfaceBrush}" />
 
-      <c:SectionCard Title="Compte" Source="Atlas">
-        <StackPanel Spacing="8">
-          <c:LabeledField Label="Statut INPI">
-            <c:Chip Text="Connecté" Tone="Ok" />
-          </c:LabeledField>
-          <c:LabeledField Label="SIREN test" x:Name="SirenField" />
+      <!-- Connexion INPI (F-003) -->
+      <c:SectionCard Title="Connexion INPI" Source="INPI">
+        <StackPanel Spacing="12">
+
+          <ProgressRing x:Name="StatusBusy" IsActive="True" HorizontalAlignment="Left" />
+
+          <!-- État connecté -->
+          <StackPanel x:Name="ConnectedPanel" Spacing="10" Visibility="Collapsed">
+            <StackPanel Orientation="Horizontal" Spacing="10">
+              <c:Chip Text="Connecté" Tone="Ok" />
+              <TextBlock x:Name="ConnectedDetail"
+                         VerticalAlignment="Center"
+                         FontSize="13"
+                         Foreground="{ThemeResource AtlasOnSurfaceVariantBrush}" />
+            </StackPanel>
+            <Button x:Name="DisconnectButton"
+                    Content="Déconnecter"
+                    Click="OnDisconnect"
+                    HorizontalAlignment="Left"
+                    Background="Transparent"
+                    BorderBrush="{ThemeResource AtlasOutlineBrush}"
+                    BorderThickness="1"
+                    Foreground="{ThemeResource AtlasOnSurfaceVariantBrush}" />
+          </StackPanel>
+
+          <!-- Formulaire de connexion -->
+          <StackPanel x:Name="FormPanel" Spacing="10" Visibility="Collapsed">
+            <TextBlock Text="Connectez votre compte INPI habilité à l'API pour accéder aux données RNE et PI."
+                       TextWrapping="Wrap"
+                       FontSize="13"
+                       Foreground="{ThemeResource AtlasOnSurfaceVariantBrush}" />
+            <TextBox x:Name="InpiUser" Header="Identifiant INPI" />
+            <PasswordBox x:Name="InpiPass" Header="Mot de passe INPI" />
+            <TextBlock x:Name="ErrorText"
+                       Visibility="Collapsed"
+                       TextWrapping="Wrap"
+                       FontSize="13"
+                       Foreground="{ThemeResource AtlasOnErrorContainerBrush}" />
+            <Button x:Name="ConnectButton"
+                    Content="Connecter"
+                    Click="OnConnect"
+                    HorizontalAlignment="Left"
+                    Foreground="{ThemeResource AtlasOnPrimaryBrush}"
+                    Background="{ThemeResource AtlasPrimaryBrush}" />
+          </StackPanel>
+
         </StackPanel>
       </c:SectionCard>
 
-      <c:SectionCard Title="Données &amp; RGPD"
-                     State="CoverageEmpty"
-                     EmptyMessage="L'export de vos données et le droit à l'effacement seront recâblés à l'API en U4." />
+      <!-- Compte (preuve Domain.Siren conservée) -->
+      <c:SectionCard Title="Compte" Source="Atlas">
+        <c:LabeledField Label="SIREN test" x:Name="SirenField" />
+      </c:SectionCard>
 
-      <TextBlock Text="Kit — chips" FontWeight="SemiBold" Foreground="{ThemeResource AtlasOnSurfaceBrush}" />
-      <StackPanel Orientation="Horizontal" Spacing="8">
-        <c:Chip Text="Diffusion restreinte" Tone="Neutral" />
-        <c:Chip Text="SA" Tone="Info" />
-        <c:Chip Text="Connecté" Tone="Ok" />
-        <c:Chip Text="À reconnecter" Tone="Warn" />
-      </StackPanel>
     </StackPanel>
   </ScrollViewer>
 </Page>
