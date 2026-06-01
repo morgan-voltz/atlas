@@ -6,7 +6,7 @@
    pour que la fiche se lise comme un document (doc 06). La provenance vit DANS le corps, avec
    les données, et disparaît avec elles au repli (garde-fou : jamais de donnée sans provenance). *@
 
-<section class="section-card">
+<section class="section-card @(Pinned ? "pinned" : null)">
     <h2 class="section-head">
         <button type="button" class="section-toggle" aria-expanded="@expanded.ToString().ToLowerInvariant()"
                 aria-controls="@BodyId" @onclick="Toggle">
@@ -17,6 +17,17 @@
                 <span class="section-indicator">@Indicator</span>
             }
         </button>
+        @* Épingle = action secondaire « remonter » (doc 12 §13), hors du bouton de repli (HTML valide).
+           Affichée seulement si le parent fournit OnPinToggle ; l'état est porté par aria-pressed +
+           l'accent de la carte, jamais par la seule couleur (doc 06). *@
+        @if (OnPinToggle.HasDelegate)
+        {
+            <button type="button" class="section-pin @(Pinned ? "on" : null)" @onclick="OnPinToggle"
+                    aria-pressed="@Pinned.ToString().ToLowerInvariant()"
+                    aria-label="@(Pinned ? $"Désépingler la section {Title}" : $"Épingler la section {Title} en haut")">
+                <span aria-hidden="true">📌</span>
+            </button>
+        }
     </h2>
 
     <div id="@BodyId" class="section-body" hidden="@(!expanded)">
@@ -93,6 +104,14 @@
     /// <summary>Ouverte par défaut ? Les gabarits/préférences (F-062, M6) piloteront ce défaut plus tard.</summary>
     [Parameter]
     public bool StartExpanded { get; set; } = true;
+
+    /// <summary>Section épinglée (mise en avant). Le réordre « remonter » et la persistance multi-device arrivent avec F-062.</summary>
+    [Parameter]
+    public bool Pinned { get; set; }
+
+    /// <summary>Action d'épinglage (optionnelle) : si fournie, l'épingle s'affiche dans l'en-tête.</summary>
+    [Parameter]
+    public EventCallback OnPinToggle { get; set; }
 
     [Parameter]
     public RenderFragment? ChildContent { get; set; }

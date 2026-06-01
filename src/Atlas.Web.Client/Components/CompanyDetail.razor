@@ -103,7 +103,9 @@
                          Indicator="@(company.Dirigeants.Count > 0 ? company.Dirigeants.Count.ToString() : null)"
                          Source="Registre National des Entreprises (INPI)"
                          State="@(company.Dirigeants.Count == 0 ? SectionCard.SectionState.CoverageEmpty : SectionCard.SectionState.Loaded)"
-                         EmptyMessage="@DirigeantsEmptyMessage">
+                         EmptyMessage="@DirigeantsEmptyMessage"
+                         Pinned="dirigeantsPinned"
+                         OnPinToggle="() => dirigeantsPinned = !dirigeantsPinned">
                 <ul class="dirigeants-list">
                     @foreach (DirigeantResponse d in company.Dirigeants)
                     {
@@ -160,6 +162,9 @@
     private bool followBusy;
     private string? followError;
 
+    // Épingle de section, locale à la session (réordre + persistance multi-device = F-062).
+    private bool dirigeantsPinned;
+
     private string DirigeantsEmptyMessage => company?.IsDiffusible == false
         ? "Diffusion restreinte : dirigeants non communiqués (INSEE)."
         : "Aucun dirigeant publié au RNE pour cette entreprise.";
@@ -182,6 +187,7 @@
         followError = null;
         company = null;
         isFavorite = false;
+        dirigeantsPinned = false;
         loadedSiren = Siren;
         await OnCompanyLoaded.InvokeAsync(null);
 

@@ -40,7 +40,13 @@
             @switch (state)
             {
                 case SearchState.Loading:
-                    <p role="status" class="state-msg">Recherche en cours…</p>
+                    <p role="status" class="sr-only">Recherche en cours…</p>
+                    <ul class="results-list" aria-hidden="true">
+                        @for (int i = 0; i < 6; i++)
+                        {
+                            <li><CardSkeleton /></li>
+                        }
+                    </ul>
                     break;
 
                 case SearchState.Error:
