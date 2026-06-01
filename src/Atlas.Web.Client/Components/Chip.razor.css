@@ -1,0 +1,45 @@
+/* Atome puce/badge (doc 12 §11). Tons calés sur les usages existants : forme juridique, diffusion
+   restreinte, statut INPI, mention de favori. Le ton ne porte jamais seul l'info (libellé présent). */
+
+.chip {
+    display: inline-block;
+    font-size: 0.78rem;
+    font-weight: 600;
+    padding: 0.12rem 0.55rem;
+    border-radius: var(--radius-sm);
+    border: 1px solid transparent;
+    text-decoration: none;
+    white-space: nowrap;
+}
+
+.chip-neutral {
+    color: var(--on-surface-variant);
+    background: transparent;
+    border-color: var(--outline);
+}
+
+.chip-info {
+    color: var(--on-primary-container);
+    background: var(--primary-container);
+}
+
+.chip-ok {
+    color: var(--on-primary-container);
+    background: var(--primary-container);
+    border-color: var(--primary);
+}
+
+.chip-warn {
+    color: var(--on-error-container);
+    background: var(--error-container);
+    border-color: var(--error-outline);
+}
+
+a.chip:hover {
+    text-decoration: underline;
+}
+
+a.chip:focus-visible {
+    outline: 2px solid var(--focus);
+    outline-offset: 2px;
+}

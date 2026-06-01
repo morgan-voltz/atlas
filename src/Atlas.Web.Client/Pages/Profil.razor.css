@@ -61,30 +61,10 @@
     color: var(--on-surface-variant);
 }
 
-/* Pastille de statut INPI — libellé toujours présent, jamais la couleur seule (doc 06). */
-.hub-status {
+/* Statut INPI = atome Chip (libellé toujours présent, jamais la couleur seule, doc 06).
+   On ne lui ajoute ici que le comportement de mise en page propre au hub (ne pas rétrécir). */
+.hub-item ::deep .chip {
     flex-shrink: 0;
-    font-size: 0.78rem;
-    font-weight: 600;
-    padding: 0.12rem 0.55rem;
-    border-radius: var(--radius-sm);
-    border: 1px solid var(--outline);
-}
-
-.hub-status.ok {
-    color: var(--on-primary-container);
-    background: var(--primary-container);
-    border-color: var(--primary);
-}
-
-.hub-status.warn {
-    color: var(--on-error-container);
-    background: var(--error-container);
-    border-color: var(--error-outline);
-}
-
-.hub-status.neutral {
-    color: var(--on-surface-variant);
 }
 
 .hub-chevron {

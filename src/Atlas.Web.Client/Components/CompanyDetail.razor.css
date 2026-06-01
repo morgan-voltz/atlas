@@ -97,56 +97,11 @@
     color: var(--on-surface);
 }
 
-.id-badge {
-    font-size: 0.78rem;
-    font-weight: 600;
-    color: var(--on-primary-container);
-    background: var(--primary-container);
-    border-radius: var(--radius-sm);
-    padding: 0.12rem 0.55rem;
-}
-
-/* Diffusion restreinte : signalée par libellé + bordure, jamais par la seule couleur (doc 06). */
-.id-badge.restricted {
-    color: var(--on-surface-variant);
-    background: transparent;
-    border: 1px solid var(--outline);
-}
-
+/* Conteneur des champs étiquetés (atome LabeledField) — l'anatomie terme/valeur vit dans l'atome. */
 .id-facts {
     margin: 1rem 0 0;
     display: grid;
     gap: 0.55rem;
-}
-
-.id-fact {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.3rem 0.6rem;
-}
-
-.id-fact dt {
-    flex-shrink: 0;
-    width: 8rem;
-    font-size: 0.8rem;
-    font-weight: 600;
-    color: var(--on-surface-variant);
-}
-
-.id-fact dd {
-    flex: 1;
-    min-width: 12rem;
-    margin: 0;
-    font-size: 0.9rem;
-    color: var(--on-surface);
-}
-
-.id-provenance {
-    margin: 1.1rem 0 0;
-    padding-top: 0.7rem;
-    border-top: 1px solid var(--surface-variant);
-    font-size: 0.75rem;
-    color: var(--on-surface-variant);
 }
 
 /* ---- Dirigeants --------------------------------------------------------- */
@@ -320,9 +275,5 @@
 @media (max-width: 640px) {
     .id-name {
         font-size: 1.4rem;
-    }
-
-    .id-fact dt {
-        width: 100%;
     }
 }

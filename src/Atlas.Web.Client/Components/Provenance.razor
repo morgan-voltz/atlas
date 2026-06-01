@@ -1,0 +1,23 @@
+@* Atome « provenance » (doc 12 §4/§13 — la donnée porte toujours sa source ; jamais masquée, R6).
+   Forme canonique « Source : {source} », avec « · {date} » optionnelle (doctrine source · date).
+   Separated = filet + marge quand la provenance clôt un bloc (en-tête de fiche). *@
+
+<p class="provenance @(Separated ? "separated" : null)">Source : @Source@FormattedDate</p>
+
+@code {
+    [Parameter]
+    [EditorRequired]
+    public required string Source { get; set; }
+
+    /// <summary>Date de fraîcheur optionnelle, rendue « · {date} » après la source.</summary>
+    [Parameter]
+    public DateTimeOffset? Date { get; set; }
+
+    /// <summary>Sépare la provenance du bloc au-dessus (filet + marge) ; pour un en-tête de fiche.</summary>
+    [Parameter]
+    public bool Separated { get; set; }
+
+    private static readonly System.Globalization.CultureInfo Culture = new("fr-FR");
+
+    private string? FormattedDate => Date is { } d ? $" · {d.ToString("d MMM yyyy", Culture)}" : null;
+}

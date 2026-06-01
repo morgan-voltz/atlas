@@ -1,0 +1,30 @@
+/* Atome champ étiqueté (doc 12 §11). Terme à largeur fixe + valeur fluide ; passe en pleine
+   largeur sous le point de rupture téléphone (le terme au-dessus de la valeur). */
+
+.labeled-field {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.3rem 0.6rem;
+}
+
+.lf-term {
+    flex-shrink: 0;
+    width: 8rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--on-surface-variant);
+}
+
+.lf-value {
+    flex: 1;
+    min-width: 12rem;
+    margin: 0;
+    font-size: 0.9rem;
+    color: var(--on-surface);
+}
+
+@media (max-width: 640px) {
+    .lf-term {
+        width: 100%;
+    }
+}

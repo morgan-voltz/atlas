@@ -1,0 +1,14 @@
+/* Atome provenance (doc 12 §4/§13). Base = ligne discrète sous les données (cas carte-section).
+   .separated = filet + marge pour clore un en-tête de fiche (cas en-tête d'identité). */
+
+.provenance {
+    margin: 0.85rem 0 0;
+    font-size: 0.75rem;
+    color: var(--on-surface-variant);
+}
+
+.provenance.separated {
+    margin-top: 1.1rem;
+    padding-top: 0.7rem;
+    border-top: 1px solid var(--surface-variant);
+}

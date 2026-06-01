@@ -86,7 +86,8 @@ Extrait **au fil des écrans**, pas en amont. Chaque composant couvre ses **éta
 | Composant | États / variantes | Extrait en | Statut |
 |---|---|:--:|:--:|
 | Layout **rail** (5 destinations) | actif / hover / focus | M0 | ✅ |
-| Atomes (champ étiqueté, badge, **provenance**, chiffre-clé) | — (provenance jamais masquée) | M1 | ⬜ |
+| Atomes : **`Provenance`**, **`Chip`** (badge/statut), **`LabeledField`** (champ étiqueté) | `Chip` tons neutral/info/ok/warn (+ lien) ; `Provenance` « source · date » (variante séparée) ; provenance jamais masquée | M2 (extraits) | ✅ |
+| Atome **`KeyFigure`** (chiffre-clé) | — | — | ⬜ (différé : aucun consommateur avant les indicateurs financiers **F-054** — principe « au fil des écrans ») |
 | **Carte-aperçu** (entity / event) | défaut · hover · pressed · focus · sélectionné · lu/non-lu · skeleton | M1 / M3 | 🟡 (variante *event* livrée M3 : `FeedEventCard`) |
 | **Carte-section** (repliable) | ouvert · replié · épinglé · vide-couverture · erreur-locale · skeleton | M2 | 🟡 |
 | **États** (composants) | chargement (skeleton) · vide (onboarding/couverture) · erreur (locale) · fin de liste | M1 / M3 | ✅ (les 4 exercés sur l'Accueil) |
