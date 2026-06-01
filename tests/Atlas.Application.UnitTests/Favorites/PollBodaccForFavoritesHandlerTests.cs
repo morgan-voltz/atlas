@@ -53,8 +53,8 @@ public class PollBodaccForFavoritesHandlerTests
                 NewAnnouncement("A-1"),
                 NewAnnouncement("A-2", "Procédure collective"),
             }));
-        _events.GetKnownExternalIdsAsync(Arg.Any<UserId>(), Arg.Any<IReadOnlyCollection<string>>(), Arg.Any<CancellationToken>())
-            .Returns(new List<string>());
+        _events.GetKnownExternalIdsForUsersAsync(Arg.Any<IReadOnlyCollection<UserId>>(), Arg.Any<IReadOnlyCollection<string>>(), Arg.Any<CancellationToken>())
+            .Returns(new Dictionary<UserId, IReadOnlyCollection<string>>());
 
         Result<BodaccPollSummary> result = await CreateHandler()
             .Handle(new PollBodaccForFavoritesCommand(), CancellationToken.None);
@@ -81,8 +81,8 @@ public class PollBodaccForFavoritesHandlerTests
                 NewAnnouncement("A-2"),
             }));
         // A-1 déjà connu : on doit créer seulement A-2.
-        _events.GetKnownExternalIdsAsync(u1, Arg.Any<IReadOnlyCollection<string>>(), Arg.Any<CancellationToken>())
-            .Returns(new List<string> { "A-1" });
+        _events.GetKnownExternalIdsForUsersAsync(Arg.Any<IReadOnlyCollection<UserId>>(), Arg.Any<IReadOnlyCollection<string>>(), Arg.Any<CancellationToken>())
+            .Returns(new Dictionary<UserId, IReadOnlyCollection<string>> { [u1] = new[] { "A-1" } });
 
         Result<BodaccPollSummary> result = await CreateHandler()
             .Handle(new PollBodaccForFavoritesCommand(), CancellationToken.None);
@@ -111,8 +111,8 @@ public class PollBodaccForFavoritesHandlerTests
             {
                 NewAnnouncement("B-1"),
             }));
-        _events.GetKnownExternalIdsAsync(Arg.Any<UserId>(), Arg.Any<IReadOnlyCollection<string>>(), Arg.Any<CancellationToken>())
-            .Returns(new List<string>());
+        _events.GetKnownExternalIdsForUsersAsync(Arg.Any<IReadOnlyCollection<UserId>>(), Arg.Any<IReadOnlyCollection<string>>(), Arg.Any<CancellationToken>())
+            .Returns(new Dictionary<UserId, IReadOnlyCollection<string>>());
 
         Result<BodaccPollSummary> result = await CreateHandler()
             .Handle(new PollBodaccForFavoritesCommand(), CancellationToken.None);
@@ -156,8 +156,8 @@ public class PollBodaccForFavoritesHandlerTests
             {
                 new("A-1", annDate, "Création", null, "Excerpt"),
             }));
-        _events.GetKnownExternalIdsAsync(Arg.Any<UserId>(), Arg.Any<IReadOnlyCollection<string>>(), Arg.Any<CancellationToken>())
-            .Returns(new List<string>());
+        _events.GetKnownExternalIdsForUsersAsync(Arg.Any<IReadOnlyCollection<UserId>>(), Arg.Any<IReadOnlyCollection<string>>(), Arg.Any<CancellationToken>())
+            .Returns(new Dictionary<UserId, IReadOnlyCollection<string>>());
 
         await CreateHandler().Handle(new PollBodaccForFavoritesCommand(), CancellationToken.None);
 

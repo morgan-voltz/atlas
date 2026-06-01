@@ -52,4 +52,28 @@ internal sealed class FavoriteEventRepository(AtlasDbContext dbContext) : IFavor
             .Select(evt => evt.ExternalId!)
             .ToListAsync(ct);
     }
+
+    public async Task<IReadOnlyDictionary<UserId, IReadOnlyCollection<string>>> GetKnownExternalIdsForUsersAsync(
+        IReadOnlyCollection<UserId> userIds,
+        IReadOnlyCollection<string> candidateExternalIds,
+        CancellationToken ct = default)
+    {
+        if (userIds.Count == 0 || candidateExternalIds.Count == 0)
+        {
+            return new Dictionary<UserId, IReadOnlyCollection<string>>();
+        }
+
+        var rows = await dbContext.FavoriteEvents
+            .Where(evt => userIds.Contains(evt.UserId)
+                && evt.ExternalId != null
+                && candidateExternalIds.Contains(evt.ExternalId))
+            .Select(evt => new { evt.UserId, ExternalId = evt.ExternalId! })
+            .ToListAsync(ct);
+
+        return rows
+            .GroupBy(row => row.UserId)
+            .ToDictionary(
+                group => group.Key,
+                group => (IReadOnlyCollection<string>)group.Select(row => row.ExternalId).ToHashSet());
+    }
 }

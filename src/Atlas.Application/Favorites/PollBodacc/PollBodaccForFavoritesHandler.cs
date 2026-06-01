@@ -2,6 +2,7 @@ using Atlas.Domain.Bodacc;
 using Atlas.Domain.Common;
 using Atlas.Domain.Companies;
 using Atlas.Domain.Favorites;
+using Atlas.Domain.Users;
 using Atlas.Shared.Result;
 using MediatR;
 using Microsoft.Extensions.Logging;
@@ -65,13 +66,19 @@ internal sealed class PollBodaccForFavoritesHandler(
 
             string[] candidateIds = announcements.Select(a => a.AnnouncementId).ToArray();
 
+            // Audit Lot 3b (E4c) : un seul appel pour tous les users qui suivent ce SIREN (au lieu d'un
+            // GetKnownExternalIdsAsync par favori), puis lookup en mémoire.
+            var userIds = group.Select(favorite => favorite.UserId).Distinct().ToArray();
+            IReadOnlyDictionary<UserId, IReadOnlyCollection<string>> knownByUser =
+                await events.GetKnownExternalIdsForUsersAsync(userIds, candidateIds, cancellationToken);
+
             // Pour chaque user qui suit ce SIREN, créer les events manquants.
             foreach (CompanyFavorite favorite in group)
             {
                 cancellationToken.ThrowIfCancellationRequested();
 
                 IReadOnlyCollection<string> known =
-                    await events.GetKnownExternalIdsAsync(favorite.UserId, candidateIds, cancellationToken);
+                    knownByUser.TryGetValue(favorite.UserId, out IReadOnlyCollection<string>? ids) ? ids : [];
 
                 foreach (BodaccAnnouncement announcement in announcements)
                 {

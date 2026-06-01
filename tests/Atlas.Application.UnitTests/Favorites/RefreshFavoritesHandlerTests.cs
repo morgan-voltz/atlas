@@ -154,6 +154,39 @@ public class RefreshFavoritesHandlerTests
         await _publisher.DidNotReceive().Publish(Arg.Any<CompanyFavoriteChangedNotification>(), Arg.Any<CancellationToken>());
     }
 
+    [Fact]
+    public async Task Processes_all_favorites_when_user_has_several()
+    {
+        // Couvre le fetch parallèle borné (M5) : tous les favoris sont traités, quel que soit l'ordre.
+        User user = NewUser(out _);
+        Siren siren1 = Siren.Create("552032534").Value;
+        Siren siren2 = Siren.Create("652014051").Value;
+
+        _snapshots.GetUserIdsWithFavoritesAsync(Arg.Any<CancellationToken>())
+            .Returns(new List<UserId> { user.Id });
+        _inpiCredentials.GetByUserIdAsync(user.Id, Arg.Any<CancellationToken>())
+            .Returns(InpiCredentials.Create(user.Id, "enc-u", "enc-p", Now));
+        _users.GetByIdAsync(user.Id, Arg.Any<CancellationToken>()).Returns(user);
+        _favorites.GetByUserAsync(user.Id, Arg.Any<CancellationToken>()).Returns(new List<CompanyFavorite>
+        {
+            CompanyFavorite.Mark(user.Id, siren1, "Renault", Now),
+            CompanyFavorite.Mark(user.Id, siren2, "Carrefour", Now),
+        });
+        _snapshots.GetByUserAsync(user.Id, Arg.Any<CancellationToken>())
+            .Returns(new List<CompanyFavoriteSnapshot>()); // premier passage pour les deux
+        _companyProvider.GetBySirenAsync(siren1, Arg.Any<InpiAccessCredentials>(), Arg.Any<CancellationToken>())
+            .Returns(Result<UniteLegale>.Ok(UniteLegale("552032534", "Renault")));
+        _companyProvider.GetBySirenAsync(siren2, Arg.Any<InpiAccessCredentials>(), Arg.Any<CancellationToken>())
+            .Returns(Result<UniteLegale>.Ok(UniteLegale("652014051", "Carrefour")));
+
+        Result<FavoriteRefreshSummary> result = await CreateHandler()
+            .Handle(new RefreshFavoritesCommand(), CancellationToken.None);
+
+        result.IsSuccess.Should().BeTrue();
+        result.Value!.FavoritesProcessed.Should().Be(2);
+        await _snapshots.Received(2).AddAsync(Arg.Any<CompanyFavoriteSnapshot>(), Arg.Any<CancellationToken>());
+    }
+
     private void SetupConnectedUserWithFavorite(User user, Siren siren)
     {
         _snapshots.GetUserIdsWithFavoritesAsync(Arg.Any<CancellationToken>())

@@ -53,8 +53,13 @@ internal sealed class RunBulkDownloadHandler(
 
         try
         {
-            // Construction de l'archive ZIP en mémoire puis écriture dans IFileStorage.
-            using var zipStream = new MemoryStream();
+            // Construit l'archive ZIP sur un fichier temporaire (audit Lot 3b, M4) plutôt qu'en mémoire :
+            // un bulk de plusieurs centaines de SIREN avec pièces volumineuses ne charge plus tout en RAM.
+            // FileOptions.DeleteOnClose supprime le fichier dès la fermeture du flux (succès comme échec).
+            string tempPath = Path.Combine(Path.GetTempPath(), $"atlas-bulk-{job.Id.Value:N}.zip");
+            await using var zipStream = new FileStream(
+                tempPath, FileMode.Create, FileAccess.ReadWrite, FileShare.None,
+                bufferSize: 81920, FileOptions.Asynchronous | FileOptions.DeleteOnClose);
             using (var archive = new ZipArchive(zipStream, ZipArchiveMode.Create, leaveOpen: true))
             {
                 foreach (string rawSiren in job.SirenList)
