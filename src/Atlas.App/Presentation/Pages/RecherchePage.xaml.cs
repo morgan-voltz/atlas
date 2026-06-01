@@ -23,12 +23,17 @@ public sealed partial class RecherchePage : Page
     private readonly AtlasApiClient _api = AppServices.Get<AtlasApiClient>();
     private readonly Dictionary<CompanySummaryCard, CompanySummaryResponse> _cards = new();
 
+    // Anti-rebond : on n'interroge l'API qu'après une courte pause de frappe — évite une requête
+    // par caractère (et les 500 du backend sur des termes partiels), allège le serveur.
+    private readonly DispatcherTimer _debounce = new() { Interval = TimeSpan.FromMilliseconds(350) };
+
     private CancellationTokenSource? _cts;
     private string _lastQuery = string.Empty;
 
     public RecherchePage()
     {
         this.InitializeComponent();
+        _debounce.Tick += OnDebounceTick;
         this.Loaded += (_, _) =>
         {
             ListDetail.BackRequested += (_, _) => ClearSelection();
@@ -37,7 +42,18 @@ public sealed partial class RecherchePage : Page
         };
     }
 
-    private async void OnQueryChanged(object sender, TextChangedEventArgs e) => await SearchAsync(Query.Text.Trim());
+    private void OnQueryChanged(object sender, TextChangedEventArgs e)
+    {
+        // Relance le minuteur à chaque frappe ; la recherche part quand la frappe se stabilise.
+        _debounce.Stop();
+        _debounce.Start();
+    }
+
+    private async void OnDebounceTick(object? sender, object e)
+    {
+        _debounce.Stop();
+        await SearchAsync(Query.Text.Trim());
+    }
 
     private async void OnRetry(object sender, RoutedEventArgs e) => await SearchAsync(_lastQuery);
 
