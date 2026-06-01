@@ -19,38 +19,40 @@
                    FontWeight="Bold"
                    HorizontalAlignment="Center"
                    Foreground="{ThemeResource AtlasOnSurfaceBrush}" />
-        <TextBlock Text="Connectez-vous à votre compte."
-                   FontSize="13"
-                   HorizontalAlignment="Center"
-                   Margin="0,0,0,4"
-                   Foreground="{ThemeResource AtlasOnSurfaceVariantBrush}" />
 
-        <TextBox x:Name="EmailBox"
-                 Header="Adresse e-mail"
-                 InputScope="EmailNameOrAddress"
-                 PlaceholderText="vous@exemple.fr" />
+        <!-- Identifiants -->
+        <StackPanel x:Name="CredentialsPanel" Spacing="14">
+          <TextBlock Text="Connectez-vous à votre compte."
+                     FontSize="13" HorizontalAlignment="Center" Margin="0,0,0,4"
+                     Foreground="{ThemeResource AtlasOnSurfaceVariantBrush}" />
+          <TextBox x:Name="EmailBox" Header="Adresse e-mail" InputScope="EmailNameOrAddress" PlaceholderText="vous@exemple.fr" />
+          <PasswordBox x:Name="PasswordBox" Header="Mot de passe" PlaceholderText="••••••••" />
+          <TextBlock x:Name="ErrorText" Visibility="Collapsed" TextWrapping="Wrap" FontSize="13"
+                     Foreground="{ThemeResource AtlasOnErrorContainerBrush}" />
+          <Button x:Name="LoginButton" Content="Se connecter" Click="OnLoginClick"
+                  HorizontalAlignment="Stretch"
+                  Foreground="{ThemeResource AtlasOnPrimaryBrush}" Background="{ThemeResource AtlasPrimaryBrush}" />
+        </StackPanel>
 
-        <PasswordBox x:Name="PasswordBox"
-                     Header="Mot de passe"
-                     PlaceholderText="••••••••" />
+        <!-- Validation en deux étapes (TOTP) -->
+        <StackPanel x:Name="TwoFactorPanel" Spacing="14" Visibility="Collapsed">
+          <TextBlock Text="Validation en deux étapes"
+                     FontWeight="SemiBold" HorizontalAlignment="Center"
+                     Foreground="{ThemeResource AtlasOnSurfaceBrush}" />
+          <TextBlock Text="Saisissez le code de votre application d'authentification (ou un code de secours)."
+                     FontSize="13" TextWrapping="Wrap" HorizontalAlignment="Center" TextAlignment="Center"
+                     Foreground="{ThemeResource AtlasOnSurfaceVariantBrush}" />
+          <TextBox x:Name="CodeBox" Header="Code" InputScope="Number" PlaceholderText="123456" />
+          <TextBlock x:Name="TwoFactorError" Visibility="Collapsed" TextWrapping="Wrap" FontSize="13"
+                     Foreground="{ThemeResource AtlasOnErrorContainerBrush}" />
+          <Button x:Name="VerifyButton" Content="Valider" Click="OnVerifyClick"
+                  HorizontalAlignment="Stretch"
+                  Foreground="{ThemeResource AtlasOnPrimaryBrush}" Background="{ThemeResource AtlasPrimaryBrush}" />
+          <HyperlinkButton Content="← Retour" Click="OnBackToCredentials" HorizontalAlignment="Center"
+                           Foreground="{ThemeResource AtlasOnSurfaceVariantBrush}" />
+        </StackPanel>
 
-        <TextBlock x:Name="ErrorText"
-                   Visibility="Collapsed"
-                   TextWrapping="Wrap"
-                   FontSize="13"
-                   Foreground="{ThemeResource AtlasOnErrorContainerBrush}" />
-
-        <Button x:Name="LoginButton"
-                Content="Se connecter"
-                Click="OnLoginClick"
-                HorizontalAlignment="Stretch"
-                Foreground="{ThemeResource AtlasOnPrimaryBrush}"
-                Background="{ThemeResource AtlasPrimaryBrush}" />
-
-        <ProgressRing x:Name="Busy"
-                      IsActive="False"
-                      Visibility="Collapsed"
-                      HorizontalAlignment="Center" />
+        <ProgressRing x:Name="Busy" IsActive="False" Visibility="Collapsed" HorizontalAlignment="Center" />
       </StackPanel>
     </Border>
   </Grid>
