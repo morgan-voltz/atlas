@@ -112,7 +112,7 @@ Du plus consulté au plus spécialisé : **Identité → Dirigeants → Bilans/F
 - Les gabarits dérivent directement des **7 personas** (rubrique « Données & sources qui comptent ») : Comptable, Cabinet PI, Compliance, Investisseur, Avocat… Un gabarit **« Général »** est le défaut pour qui ne choisit rien.
 - L'utilisateur **affine** par section : un simple **activé/désactivé** (« pas envie ») + l'**épingle** (remonter). Le choix utilisateur **prime toujours** sur le gabarit.
 - **Garde-fou (catégorie 3, non négociable) :** le toggle est une préférence *utilisateur* ; il ne devient **jamais** un moyen pour le *système* de cacher un fait de couverture. Une section **affichée** ne supprime jamais son caveat (« Comptes confidentiels », « UBO exclu par doctrine »…). Masquer = choix éclairé de l'utilisateur, **jamais** une omission trompeuse du système (cohérent ADR-012).
-- Gabarit, toggles et épingles vivent dans **Profil** et **persistent multi-device** (réalisé par **F-062**, sous ADR-001).
+- Gabarit, toggles et épingles vivent dans **Profil** et **persistent multi-device** (ADR-001).
 
 > Terme à figer au glossaire (`docs/08-vocabulaire-ubiquitaire.md`) : **« gabarit de fiche »** (vue d'affichage pré-réglée), pour éviter tout synonyme silencieux. Ce mécanisme de recomposition par gabarit est aussi la **graine de la vue 360 / dossier cible** (cf. §16).
 
@@ -245,11 +245,13 @@ Regroupement **par nature de la donnée / conséquence**, pas par ressemblance :
 **Mon compte** (sensible)
 - **Compte** : email, mot de passe, **2FA** (F-002, codes de secours). Toute modification exige le mot de passe actuel.
 - **Connexion INPI** : page dédiée (F-003) — composant **vital** (sans lui, aucune donnée métier). Affiche **statut + date de test + tester/déconnecter**. Garde-fou absolu : `InpiCredentials` **jamais affiché en clair, jamais retourné par l'API** (vocabulaire doc 08). Trois états : connecté / invalide (reconnecter, sans dramatiser) / non connecté (onboarding).
-- **Données & confidentialité** : **export** RGPD (art. 20, JSON) en haut = action bénigne ; **suppression de compte** (art. 17) en **zone danger isolée** en bas, confirmation forte (re-saisie). Le texte **dit la vérité** : effacement sous 30 j, mais données de facturation conservées et **anonymisées** par obligation légale — jamais « tout est effacé » (cohérent avec l'honnêteté des caveats partout ailleurs).
+- **Données & confidentialité** : trois zones, par gravité croissante. (1) **Export** RGPD (art. 20, JSON) = action bénigne. (2) **Aider à améliorer Atlas** = contrôle des **métriques anonymes** (cf. F-076) : deux toggles séparés — *rapports de stabilité* (plantages) et *statistiques d'usage* (écrans/parcours agrégés) — **désactivés par défaut (opt-in)**, jamais liés à l'identité, le contenu des recherches/fiches n'étant **jamais** lu. (3) **Suppression de compte** (art. 17) en **zone danger isolée** en bas, confirmation forte (re-saisie). Le texte **dit la vérité** : effacement sous 30 j, mais données de facturation conservées et **anonymisées** par obligation légale — jamais « tout est effacé ».
 
 **Application** (confort / affichage)
-- **Paramètres généraux** : thème (7 thèmes `themes.json`), **densité** (§8/§5), langue, notifications (push/email par catégorie).
-- **Affichage & données** : c'est le **mode « personnaliser »** de la fiche (§4) — gabarit par défaut, sections masquées (R6), préférences d'accessibilité.
+- **Paramètres généraux** — *« comment l'app se présente et me parle »* : thème (7 thèmes `themes.json`), langue, notifications (push/email par catégorie). Confort/comportement pur, sans enjeu d'accessibilité.
+- **Affichage & données** — *« comment je lis et ce que je vois »* : **densité** (§8/§5), **police + espacement + taille** (lisibilité, doc 15), gabarit de fiche par défaut, sections masquées (R6, le **mode « personnaliser »** de la fiche §4), préférences d'accessibilité.
+
+> **Frontière Général ↔ Affichage (gravée).** Tri **par nature, pas par ressemblance** : le **thème** est un goût (→ Général) ; la **police, l'espacement, la taille et la densité** sont des leviers de **lisibilité/accessibilité** (→ Affichage). Tout ce qui adapte l'app à la vue de l'utilisateur est **regroupé au même endroit** — un utilisateur dyslexique/malvoyant trouve tout d'un coup, sans chasse au trésor entre deux sous-pages. Conséquence : « Affichage & données » est la sous-page la plus dense du Profil ; à maquetter en deux blocs (*Lisibilité* : densité/police/espacement/taille — *Contenu des fiches* : gabarits/sections masquées).
 
 **Se déconnecter** : action isolée en bas, teinte `danger` (état système, pas verdict). **Confirmation requise** car non trivialement réversible (re-saisie email + mot de passe pour revenir). Le message dit ce qui se passe et rassure : les credentials INPI restent chiffrés côté serveur.
 
@@ -257,6 +259,7 @@ Regroupement **par nature de la donnée / conséquence**, pas par ressemblance :
 - Le statut INPI (« Connecté ») est visible **dès le hub** — l'info vitale ne demande pas d'entrer.
 - Le `success`/`danger` employés ici qualifient des **états du système** (connexion OK, action destructive), jamais une entité (ADR-012).
 - Le hub porte 6 lignes : confortable pour un écran de réglages (≠ barre d'onglets plafonnée à 5), mais c'est le maximum — pas de 6e famille à la légère.
+- **Télémétrie = opt-in, anonyme, souveraine.** Cohérence d'ADN : Atlas se vend *souverain* à des personas sensibles à la vie privée (avocats, compliance). La métrique est donc **désactivée par défaut**, **anonyme/agrégée** (jamais liée au compte), **auto-hébergée** (rien ne part chez un tiers), et l'app **dit ce qu'elle ne mesure pas**. C'est l'application de « l'app ne fait rien dans le dos de l'utilisateur » aux métriques (cf. F-076, avenant `docs/04-securite-rgpd.md`).
 - **Plomberie d'auth** déjà en place : access token court (15 min) + refresh rotatif (cf. §15) ; la déconnexion révoque la session.
 
 ---
@@ -351,7 +354,7 @@ Mobile : pleine largeur, ≥ 44 px, actions au swipe / appui long / overflow. De
 La densité est une **préférence utilisateur, jamais une divergence de design** : **un seul composant, deux densités**. La direction par défaut est **« aérée »** (date et source sur leur propre ligne) ; un réglage optionnel propose une variante **compacte** (lignes resserrées) pour les usages intensifs au poste.
 - Le réglage agit sur l'**espacement** (padding vertical, interligne, date/source sur une ligne dédiée ou condensées). Il ne touche **ni au contenu, ni à l'anatomie** : on resserre l'espace, on ne retire jamais d'information (R5, masquer ≠ amputer).
 - **Garde-fou** : même en mode compact, la **cible tactile reste ≥ 44 px** — on resserre le visuel, pas la zone tappable.
-- Vit dans **Profil**. La **densité** est une **préférence d'appareil** (locale, non synchronisée — comme le thème) : elle est conçue pour varier selon l'écran (cf. **F-062**). À distinguer de l'accessibilité/police, qui sont des *préférences de compte* synchronisées.
+- Vit dans **Profil** (avec le thème et l'accessibilité) et **persiste par utilisateur, multi-device** (ADR-001).
 
 ### Contrat d'accessibilité (doc 06)
 - Chaque ligne = un `article` au sein d'un `feed` / `CollectionView`.
@@ -387,7 +390,7 @@ Déployée · **repliée** · repliée-par-pertinence (R6, signalée) · **épin
 
 ### Comportement
 - L'en-tête entier replie/déploie (cible ≥ 44). L'épingle est une action secondaire (bouton + alternative clavier).
-- L'état déployé/replié **et** l'épinglage **persistent par utilisateur, multi-device** (réalisé par **F-062**, sous ADR-001).
+- L'état déployé/replié **et** l'épinglage **persistent par utilisateur, multi-device** (ADR-001).
 - Le lien d'approfondissement ouvre une page détail, jamais une section qui enfle.
 
 ### Responsive (R2/R4)
