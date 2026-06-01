@@ -7,7 +7,7 @@
 
 ## Qu'est-ce qu'Atlas
 
-Atlas est un **SaaS open source** développé en C#/.NET 10, qui agrège des données publiques françaises sur les entreprises (RNE) et la propriété industrielle (marques, brevets, dessins & modèles) accessibles via les APIs INPI. Il combine ces données avec un **moteur de veille** qui agrège flux RSS, BODACC, BOPI et actualités sectorielles. Architecture **hexagonale** (Ports & Adapters), backend **ASP.NET Core**, client multi-plateforme **MAUI**. Licence **AGPL v3**.
+Atlas est un **SaaS open source** développé en C#/.NET 10, qui agrège des données publiques françaises sur les entreprises (RNE) et la propriété industrielle (marques, brevets, dessins & modèles) accessibles via les APIs INPI. Il combine ces données avec un **moteur de veille** qui agrège flux RSS, BODACC, BOPI et actualités sectorielles. Architecture **hexagonale** (Ports & Adapters), backend **ASP.NET Core**, clients natifs **MAUI (mobile) + Avalonia (desktop, cf. ADR-026)** et **web Blazor WASM**. Licence **AGPL v3**.
 
 **Nom de code** : `Atlas` est un nom de code provisoire. Le nom définitif sera décidé ultérieurement et un refactoring de masse sera effectué (renommage de solution, namespaces, repo).
 
@@ -46,7 +46,9 @@ Avant toute contribution significative, consulter le document approprié dans `d
 | Runtime | .NET 10 LTS (supporté jusqu'à novembre 2028) |
 | Langage | C# 13 (file-scoped namespaces, primary constructors, etc.) |
 | Backend Web | ASP.NET Core 10 + Minimal APIs |
-| Client | .NET MAUI 10 (Android, iOS, Windows, macOS) |
+| Client mobile | .NET MAUI 10 (Android, iOS) — cf. ADR-026 |
+| Client desktop | Avalonia (Windows, macOS, Linux) — cf. ADR-026 (amende ADR-007) |
+| Client web | Blazor WASM (cf. ADR-017) |
 | Base de données | PostgreSQL via EF Core 10 + Npgsql |
 | Messaging in-process | MediatR 13 (CQRS léger) |
 | Validation | FluentValidation 12 |
