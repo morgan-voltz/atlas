@@ -18,6 +18,15 @@ public interface IVeillePackRepository
     void Update(VeillePack pack);
 
     /// <summary>
+    /// Incrémente atomiquement le compteur de likes (F-049) côté base, sans lecture préalable —
+    /// évite le <em>lost update</em> entre deux likes concurrents (audit Lot 3, M7).
+    /// </summary>
+    Task IncrementLikesAsync(VeillePackId id, CancellationToken ct = default);
+
+    /// <summary>Décrémente atomiquement le compteur de likes, borné à 0 (audit Lot 3, M7).</summary>
+    Task DecrementLikesAsync(VeillePackId id, CancellationToken ct = default);
+
+    /// <summary>
     /// Catalogue communautaire (F-049) — packs publics actifs, triés par <see cref="VeillePack.LikesCount"/>
     /// décroissant puis <see cref="VeillePack.CreatedAt"/> décroissant pour départager.
     /// </summary>

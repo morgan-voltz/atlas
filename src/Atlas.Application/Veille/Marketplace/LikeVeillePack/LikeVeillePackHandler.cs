@@ -37,9 +37,11 @@ internal sealed class LikeVeillePackHandler(
 
         var like = VeillePackLike.Create(pack.Id, userId, clock.UtcNow);
         await likeRepository.AddAsync(like, cancellationToken);
-        pack.IncrementLikes();
-
         await unitOfWork.SaveChangesAsync(cancellationToken);
+
+        // Incrément atomique APRÈS la persistance du like (audit Lot 3, M7) : le compteur ne bouge que
+        // si la ligne de like a bien été créée, et sans lost update entre likes concurrents.
+        await packRepository.IncrementLikesAsync(pack.Id, cancellationToken);
         return Result.Ok();
     }
 }

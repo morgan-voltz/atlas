@@ -39,7 +39,8 @@ public sealed class LikeVeillePackHandlerTests
             new LikeVeillePackCommand(Guid.NewGuid(), "p"), CancellationToken.None);
 
         result.IsSuccess.Should().BeTrue();
-        pack.LikesCount.Should().Be(1);
+        // M7 : l'incrément est atomique côté repository (et non plus un read-modify-write sur l'entité).
+        await _packs.Received(1).IncrementLikesAsync(pack.Id, Arg.Any<CancellationToken>());
         await _likes.Received(1).AddAsync(Arg.Any<VeillePackLike>(), Arg.Any<CancellationToken>());
         await _unitOfWork.Received(1).SaveChangesAsync(Arg.Any<CancellationToken>());
     }
@@ -55,7 +56,7 @@ public sealed class LikeVeillePackHandlerTests
             new LikeVeillePackCommand(Guid.NewGuid(), "p"), CancellationToken.None);
 
         result.IsSuccess.Should().BeTrue();
-        pack.LikesCount.Should().Be(0, "déjà liké → pas de double-comptage");
+        await _packs.DidNotReceive().IncrementLikesAsync(Arg.Any<VeillePackId>(), Arg.Any<CancellationToken>());
         await _likes.DidNotReceive().AddAsync(Arg.Any<VeillePackLike>(), Arg.Any<CancellationToken>());
     }
 

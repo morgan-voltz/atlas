@@ -57,6 +57,8 @@ internal sealed class FeedItemConfiguration : IEntityTypeConfiguration<FeedItem>
         builder.HasIndex(item => new { item.SourceId, item.ContentHash }).IsUnique();
         builder.HasIndex(item => item.PublishedAt);
         builder.HasIndex(item => item.ClusterId);
+        // Audit Lot 3 (M8) : ListFetchedSinceAsync filtre et trie sur fetched_at (job d'évaluation des règles).
+        builder.HasIndex(item => item.FetchedAt);
 
         builder.HasOne<FeedSource>()
             .WithMany()

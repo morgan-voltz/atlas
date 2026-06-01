@@ -147,15 +147,17 @@ internal sealed class FeedItemRepository(AtlasDbContext dbContext) : IFeedItemRe
 
         // F-047 : charge en une requête les mentions de favoris pour les items affichés.
         var displayedIds = rows.Select(r => r.item.Id).ToList();
-        var mentionsByItem = await dbContext.FeedItemFavoriteMatches
+        var mentionRows = await dbContext.FeedItemFavoriteMatches
             .Where(m => m.UserId == userId && displayedIds.Contains(m.FeedItemId))
             .Select(m => new { ItemId = m.FeedItemId.Value, m.Siren, m.MatchedName })
-            .ToListAsync(ct)
-            .ContinueWith(t => t.Result
-                .GroupBy(x => x.ItemId)
-                .ToDictionary(g => g.Key, g => g
-                    .Select(x => new FavoriteMention(x.Siren.Value, x.MatchedName))
-                    .ToList()), ct);
+            .ToListAsync(ct);
+
+        // Regroupement en mémoire (audit Lot 3, E5a : remplace un ContinueWith qui bloquait sur .Result).
+        Dictionary<Guid, List<FavoriteMention>> mentionsByItem = mentionRows
+            .GroupBy(x => x.ItemId)
+            .ToDictionary(
+                g => g.Key,
+                g => g.Select(x => new FavoriteMention(x.Siren.Value, x.MatchedName)).ToList());
 
         IReadOnlyList<TimelineEntry> entries = rows
             .Select(row => new TimelineEntry(

@@ -31,9 +31,10 @@ internal sealed class UnlikeVeillePackHandler(
         }
 
         await likeRepository.RemoveAsync(like, cancellationToken);
-        pack.DecrementLikes();
-
         await unitOfWork.SaveChangesAsync(cancellationToken);
+
+        // Décrément atomique borné à 0 (audit Lot 3, M7), après suppression effective du like.
+        await packRepository.DecrementLikesAsync(pack.Id, cancellationToken);
         return Result.Ok();
     }
 }

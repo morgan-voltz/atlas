@@ -18,7 +18,9 @@ internal sealed class CompanyFavoriteRepository(AtlasDbContext dbContext) : ICom
             .ToListAsync(ct);
 
     public async Task<IReadOnlyList<CompanyFavorite>> GetAllAsync(CancellationToken ct = default) =>
-        await dbContext.CompanyFavorites.ToListAsync(ct);
+        // Lecture seule (jobs BODACC / matching veille) : AsNoTracking évite de charger toute la
+        // table dans le change-tracker (audit Lot 3, E4a).
+        await dbContext.CompanyFavorites.AsNoTracking().ToListAsync(ct);
 
     public Task<int> CountByUserAsync(UserId userId, CancellationToken ct = default) =>
         dbContext.CompanyFavorites.CountAsync(favorite => favorite.UserId == userId, ct);
