@@ -1,0 +1,26 @@
+# Reverse proxy TLS de la préprod Atlas (ADR-019).
+# Domaine unique : le client WASM et l'API sont servis sur la MÊME origine -> aucun CORS.
+#   /api/*  -> API   (le préfixe /api est retiré avant transmission : /api/auth/login -> /auth/login)
+#   /*      -> hôte web (shell Blazor + statiques WASM)
+#
+# TLS automatique via Let's Encrypt (ports 80/443 publics + DNS ${ATLAS_DOMAIN} -> VPS requis).
+# Pour un essai LOCAL sans domaine public, remplacer le bloc site par « localhost » et ajouter
+# « tls internal » (certificat auto-signé Caddy).
+
+{
+	email {$ACME_EMAIL}
+}
+
+{$ATLAS_DOMAIN} {
+	encode zstd gzip
+
+	# API sous le préfixe /api (retiré par handle_path).
+	handle_path /api/* {
+		reverse_proxy api:8080
+	}
+
+	# Tout le reste : hôte web (Blazor Web App, sert le client WASM).
+	handle {
+		reverse_proxy web:8080
+	}
+}

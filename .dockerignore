@@ -1,0 +1,16 @@
+# Réduit le contexte de build Docker (racine du repo) et évite d'embarquer des artefacts locaux.
+**/bin/
+**/obj/
+**/.vs/
+**/.vscode/
+**/node_modules/
+.git/
+.github/
+.idea/
+tests/
+website/
+bruno/
+**/*.user
+**/appsettings.Development.json
+deploy/preprod/.env
+**/.DS_Store

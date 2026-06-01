@@ -19,6 +19,17 @@ public static class DependencyInjection
         // ValidateOnStart fait échouer le démarrage de l'application si la condition n'est pas remplie.
         services.AddOptions<JwtOptions>()
             .Bind(configuration.GetSection(JwtOptions.SectionName))
+            // Secret par fichier (ADR-019) : si la clé inline est absente mais qu'un chemin est fourni,
+            // charge le PEM depuis le fichier monté. S'exécute avant la validation au démarrage.
+            .PostConfigure(opts =>
+            {
+                if (string.IsNullOrWhiteSpace(opts.PrivateKeyPem)
+                    && !string.IsNullOrWhiteSpace(opts.PrivateKeyPemFile)
+                    && File.Exists(opts.PrivateKeyPemFile))
+                {
+                    opts.PrivateKeyPem = File.ReadAllText(opts.PrivateKeyPemFile);
+                }
+            })
             .Validate(
                 opts => environment.IsDevelopment() || !string.IsNullOrWhiteSpace(opts.PrivateKeyPem),
                 "Jwt:PrivateKeyPem doit être configuré hors Development (clé RSA persistée, KMS recommandé).")
@@ -26,6 +37,15 @@ public static class DependencyInjection
 
         services.AddOptions<CryptoOptions>()
             .Bind(configuration.GetSection(CryptoOptions.SectionName))
+            .PostConfigure(opts =>
+            {
+                if (string.IsNullOrWhiteSpace(opts.KeyBase64)
+                    && !string.IsNullOrWhiteSpace(opts.KeyBase64File)
+                    && File.Exists(opts.KeyBase64File))
+                {
+                    opts.KeyBase64 = File.ReadAllText(opts.KeyBase64File).Trim();
+                }
+            })
             .Validate(
                 opts => environment.IsDevelopment() || !string.IsNullOrWhiteSpace(opts.KeyBase64),
                 "Crypto:KeyBase64 doit être configuré hors Development (clé AES-256-GCM, KMS recommandé).")

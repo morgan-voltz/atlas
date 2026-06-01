@@ -1,0 +1,135 @@
+# Préproduction Atlas — VPS unique tout-en-un (ADR-019).
+# API + PostgreSQL + Hangfire in-process + hôte web (statiques WASM) derrière un reverse proxy TLS.
+# Seul Caddy est exposé publiquement (80/443) ; les autres services restent sur le réseau interne.
+#
+#   cd deploy/preprod
+#   cp .env.example .env            # puis renseigner les valeurs (voir README.md)
+#   docker compose up -d --build
+#
+# Topologie (domaine unique) : https://${ATLAS_DOMAIN}/ -> web ; https://${ATLAS_DOMAIN}/api/* -> api.
+name: atlas-preprod
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    container_name: atlas-pp-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: atlas
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?renseigner POSTGRES_PASSWORD dans .env}
+      POSTGRES_DB: atlas
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U atlas -d atlas"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks: [internal]
+
+  api:
+    build:
+      context: ../..
+      dockerfile: src/Atlas.Api/Dockerfile
+    image: atlas-api:preprod
+    container_name: atlas-pp-api
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_HTTP_PORTS: "8080"
+      # Reverse proxy TLS devant l'API : honorer X-Forwarded-Proto/-For (scheme + IP réelle).
+      ForwardedHeaders__Enabled: "true"
+      # Single-VPS : migrations EF appliquées au démarrage (pas d'étape CI séparée).
+      Database__MigrateOnStartup: "true"
+      ConnectionStrings__Atlas: "Host=postgres;Port=5432;Database=atlas;Username=atlas;Password=${POSTGRES_PASSWORD}"
+      # Même origine (Caddy) -> pas de CORS navigateur ; l'API exige néanmoins >= 1 origine hors Development.
+      Cors__AllowedOrigins__0: "https://${ATLAS_DOMAIN}"
+      # Secrets montés en fichiers (ADR-019 §5) — voir secrets: plus bas.
+      Jwt__PrivateKeyPemFile: /run/secrets/jwt_private_key
+      Crypto__KeyBase64File: /run/secrets/crypto_key
+      # Liens d'email pointant vers les pages web du parcours.
+      Email__VerificationBaseUrl: "https://${ATLAS_DOMAIN}/verifier-email"
+      Email__PasswordResetBaseUrl: "https://${ATLAS_DOMAIN}/reinitialiser-mot-de-passe"
+    secrets:
+      - jwt_private_key
+      - crypto_key
+    networks: [internal]
+
+  web:
+    build:
+      context: ../..
+      dockerfile: src/Atlas.Web/Dockerfile
+    image: atlas-web:preprod
+    container_name: atlas-pp-web
+    restart: unless-stopped
+    depends_on:
+      - api
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_HTTP_PORTS: "8080"
+    networks: [internal]
+
+  caddy:
+    image: caddy:2-alpine
+    container_name: atlas-pp-caddy
+    restart: unless-stopped
+    depends_on:
+      - api
+      - web
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      ATLAS_DOMAIN: ${ATLAS_DOMAIN:?renseigner ATLAS_DOMAIN dans .env}
+      ACME_EMAIL: ${ACME_EMAIL:?renseigner ACME_EMAIL dans .env}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    networks: [internal]
+
+  # Sauvegarde légère (ADR-019 §6) : pg_dump quotidien, rétention 14 jours. Pas de PITR (préprod).
+  backup:
+    image: postgres:17-alpine
+    container_name: atlas-pp-backup
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      PGPASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - ./backups:/backups
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        echo "Sauvegardes pg_dump quotidiennes -> /backups (rétention 14)."
+        while true; do
+          ts=$$(date +%Y%m%d-%H%M%S)
+          if pg_dump -h postgres -U atlas -d atlas -F c -f "/backups/atlas-$$ts.dump"; then
+            echo "[backup] OK atlas-$$ts.dump"
+            ls -1t /backups/atlas-*.dump 2>/dev/null | tail -n +15 | xargs -r rm --
+          else
+            echo "[backup] ECHEC du pg_dump" >&2
+          fi
+          sleep 86400
+        done
+    networks: [internal]
+
+volumes:
+  pgdata:
+  caddy-data:
+  caddy-config:
+
+networks:
+  internal:
+    driver: bridge
+
+secrets:
+  jwt_private_key:
+    file: ./secrets/jwt-private-key.pem
+  crypto_key:
+    file: ./secrets/crypto-key.b64
