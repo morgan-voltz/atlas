@@ -122,7 +122,7 @@ Pas des phases : vérifiées **sur chaque écran** (intégrées à la DoD §3).
 
 ## 7. Bascule vers Uno (`Atlas.App`)
 
-> Chantier d'intégration **démarré** (U1/U2/U3 livrés le 1ᵉʳ juin 2026). Le détail des jalons restants (U4+) est affiné au fil du chantier.
+> Chantier d'intégration **bien avancé** (1ᵉʳ juin 2026) : U1→U3 livrés, **U4 quasi complet** (parcours auth→INPI→recherche→fiche→favoris→veille en données réelles, validé E2E ; routing URL WASM). Reste surtout **U5** (retrait du client Blazor) après un spike multi-cible (Linux/mobile) concluant.
 
 L'**acquis Blazor (§1–§5) est directement réutilisable** : contrats `AtlasApiClient`, parcours écran par écran, états, vérifications E2E, kit de composants (à porter en XAML WinUI), breakpoints 640/880 px. La doctrine UX (`docs/12`) et la déclinaison multi-surface (`docs/14`, refondu Uno) ne changent pas.
 
@@ -134,8 +134,8 @@ L'**acquis Blazor (§1–§5) est directement réutilisable** : contrats `AtlasA
 | **U1 — Intégration repo** | `Atlas.App` (Uno single project) dans `Atlas.slnx` : `Uno.Sdk` 6.5.36 pin dans `global.json`, **CPM isolé** (`Directory.Packages.props`/`Directory.Build.props` locaux), **job CI `uno-build`** (têtes desktop Skia + WebAssembly) | ✅ (PR #120) |
 | **U2 — Preuve ADR-002** | `Atlas.App` → **Domain + Shared uniquement** (verrouillé par `CsprojDependencyTests`) ; `MainPage` consomme `Domain.Siren` ; `AtlasApiClient` = stub du point d'entrée HTTP unique. *Reste : auth (token mémoire + refresh cookie/secure storage) à câbler avec les vrais écrans (U4)* | ✅ (PR #120) |
 | **U3 — Portage du kit** | thème clair/sombre (`ThemeDictionaries`) ; atomes `Chip`/`Provenance`/`LabeledField` ; cartes `CompanySummaryCard`/`SectionCard` (4 états)/`FeedEventCard` ; `CardSkeleton` ; coque `RailShell` (`NavigationView`) ; `ListDetailView` (2 panneaux, doc 14 §3) — en UserControls XAML WinUI. *Reste : bundling des polices (TTF), différé* | ✅ (PR #123/#124/#125) |
-| **U4 — Re-livraison écran par écran** | rejouer M1→M7 en tranches verticales (même DoD §3), en réutilisant contrats et parcours | ⬜ |
-| **U5 — Retrait du Blazor** | supprimer `Atlas.Web`/`Atlas.Web.Client` une fois U0–U4 validés multi-cible | ⬜ |
+| **U4 — Re-livraison écran par écran** | DI léger (MS HttpClientFactory) ; **Connexion + 2FA + refresh silencieux** (PR #128/#136/#137) ; **Profil → connexion INPI** (#130) ; **Recherche** réelle + debounce (#129/#133) ; **Fiche entreprise** (#132) ; **Suivre + Favoris** (#134) ; **Accueil/Veille** timeline réelle (#135) ; **routing URL WASM** + deep-link + back/forward (#138/#139). Parcours auth→INPI→recherche→fiche→favoris **validé E2E en réel** (desktop, harness docs/13). | 🟡 quasi complet (1ᵉʳ juin 2026) |
+| **U5 — Retrait du Blazor** | supprimer `Atlas.Web`/`Atlas.Web.Client` (+`Atlas.Maui`) une fois U0–U4 validés multi-cible (spike Linux/mobile) | ⬜ |
 
 ## Renvois
 
