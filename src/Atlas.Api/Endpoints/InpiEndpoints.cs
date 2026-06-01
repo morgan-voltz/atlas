@@ -1,4 +1,3 @@
-using System.Security.Claims;
 using Atlas.Application.Inpi;
 using Atlas.Application.Inpi.ConnectInpiAccount;
 using Atlas.Application.Inpi.DisconnectInpiAccount;
@@ -23,46 +22,31 @@ internal static class InpiEndpoints
 
     private static async Task<IResult> ConnectAsync(
         ConnectInpiRequest request,
-        ClaimsPrincipal principal,
+        CurrentUser user,
         ISender sender,
         CancellationToken ct)
     {
-        if (!principal.TryGetUserId(out Guid userId))
-        {
-            return Results.Unauthorized();
-        }
-
         Result result = await sender.Send(
-            new ConnectInpiAccountCommand(userId, request.Username, request.Password), ct);
+            new ConnectInpiAccountCommand(user.Id, request.Username, request.Password), ct);
 
         return result.IsSuccess ? Results.NoContent() : result.Error!.ToProblem();
     }
 
     private static async Task<IResult> StatusAsync(
-        ClaimsPrincipal principal,
+        CurrentUser user,
         ISender sender,
         CancellationToken ct)
     {
-        if (!principal.TryGetUserId(out Guid userId))
-        {
-            return Results.Unauthorized();
-        }
-
-        Result<InpiConnectionStatusDto> result = await sender.Send(new GetInpiConnectionStatusQuery(userId), ct);
+        Result<InpiConnectionStatusDto> result = await sender.Send(new GetInpiConnectionStatusQuery(user.Id), ct);
         return result.IsSuccess ? Results.Ok(result.Value) : result.Error!.ToProblem();
     }
 
     private static async Task<IResult> DisconnectAsync(
-        ClaimsPrincipal principal,
+        CurrentUser user,
         ISender sender,
         CancellationToken ct)
     {
-        if (!principal.TryGetUserId(out Guid userId))
-        {
-            return Results.Unauthorized();
-        }
-
-        Result result = await sender.Send(new DisconnectInpiAccountCommand(userId), ct);
+        Result result = await sender.Send(new DisconnectInpiAccountCommand(user.Id), ct);
         return result.IsSuccess ? Results.NoContent() : result.Error!.ToProblem();
     }
 }

@@ -1,4 +1,3 @@
-using System.Security.Claims;
 using Atlas.Api.Reports;
 using Atlas.Api.Security;
 using Atlas.Application.Companies;
@@ -33,65 +32,45 @@ internal static class CompaniesEndpoints
         string? name,
         int? page,
         int? pageSize,
-        ClaimsPrincipal principal,
+        CurrentUser user,
         ISender sender,
         CancellationToken ct)
     {
-        if (!principal.TryGetUserId(out Guid userId))
-        {
-            return Results.Unauthorized();
-        }
-
-        var query = new SearchCompaniesByNameQuery(userId, name ?? string.Empty, page ?? 1, pageSize ?? 20);
+        var query = new SearchCompaniesByNameQuery(user.Id, name ?? string.Empty, page ?? 1, pageSize ?? 20);
         Result<PagedResult<CompanySummaryDto>> result = await sender.Send(query, ct);
         return result.IsSuccess ? Results.Ok(result.Value) : result.Error!.ToProblem();
     }
 
     private static async Task<IResult> GetBySirenAsync(
         string siren,
-        ClaimsPrincipal principal,
+        CurrentUser user,
         ISender sender,
         CancellationToken ct)
     {
-        if (!principal.TryGetUserId(out Guid userId))
-        {
-            return Results.Unauthorized();
-        }
-
-        Result<CompanyDto> result = await sender.Send(new GetCompanyBySirenQuery(userId, siren), ct);
+        Result<CompanyDto> result = await sender.Send(new GetCompanyBySirenQuery(user.Id, siren), ct);
         return result.IsSuccess ? Results.Ok(result.Value) : result.Error!.ToProblem();
     }
 
     private static async Task<IResult> GetAttachmentsAsync(
         string siren,
-        ClaimsPrincipal principal,
+        CurrentUser user,
         ISender sender,
         CancellationToken ct)
     {
-        if (!principal.TryGetUserId(out Guid userId))
-        {
-            return Results.Unauthorized();
-        }
-
         Result<IReadOnlyList<CompanyAttachmentDto>> result =
-            await sender.Send(new GetCompanyAttachmentsQuery(userId, siren), ct);
+            await sender.Send(new GetCompanyAttachmentsQuery(user.Id, siren), ct);
         return result.IsSuccess ? Results.Ok(result.Value) : result.Error!.ToProblem();
     }
 
     private static async Task<IResult> DownloadAttachmentAsync(
         string siren,
         string attachmentId,
-        ClaimsPrincipal principal,
+        CurrentUser user,
         ISender sender,
         CancellationToken ct)
     {
-        if (!principal.TryGetUserId(out Guid userId))
-        {
-            return Results.Unauthorized();
-        }
-
         Result<AttachmentContent> result =
-            await sender.Send(new DownloadCompanyAttachmentQuery(userId, siren, attachmentId), ct);
+            await sender.Send(new DownloadCompanyAttachmentQuery(user.Id, siren, attachmentId), ct);
 
         if (result.IsFailure)
         {
@@ -105,17 +84,12 @@ internal static class CompaniesEndpoints
 
     private static async Task<IResult> DownloadReportPdfAsync(
         string siren,
-        ClaimsPrincipal principal,
+        CurrentUser user,
         ISender sender,
         TimeProvider clock,
         CancellationToken ct)
     {
-        if (!principal.TryGetUserId(out Guid userId))
-        {
-            return Results.Unauthorized();
-        }
-
-        Result<CompanyDto> companyResult = await sender.Send(new GetCompanyBySirenQuery(userId, siren), ct);
+        Result<CompanyDto> companyResult = await sender.Send(new GetCompanyBySirenQuery(user.Id, siren), ct);
         if (companyResult.IsFailure)
         {
             return companyResult.Error!.ToProblem();
@@ -124,7 +98,7 @@ internal static class CompaniesEndpoints
         // Les attachments sont best-effort : si la liste échoue (404, INPI down), on génère
         // le PDF avec une liste vide plutôt que de refuser tout le rapport.
         Result<IReadOnlyList<CompanyAttachmentDto>> attachmentsResult =
-            await sender.Send(new GetCompanyAttachmentsQuery(userId, siren), ct);
+            await sender.Send(new GetCompanyAttachmentsQuery(user.Id, siren), ct);
         IReadOnlyList<CompanyAttachmentDto> attachments = attachmentsResult.IsSuccess
             ? attachmentsResult.Value!
             : [];

@@ -1,4 +1,3 @@
-using System.Security.Claims;
 using Atlas.Application.IntellectualProperty;
 using Atlas.Application.IntellectualProperty.GetTrademark;
 using Atlas.Application.IntellectualProperty.SearchTrademarksByName;
@@ -24,47 +23,32 @@ internal static class TrademarksEndpoints
         string? name,
         int? page,
         int? pageSize,
-        ClaimsPrincipal principal,
+        CurrentUser user,
         ISender sender,
         CancellationToken ct)
     {
-        if (!principal.TryGetUserId(out Guid userId))
-        {
-            return Results.Unauthorized();
-        }
-
-        var query = new SearchTrademarksByNameQuery(userId, name ?? string.Empty, page ?? 1, pageSize ?? 20);
+        var query = new SearchTrademarksByNameQuery(user.Id, name ?? string.Empty, page ?? 1, pageSize ?? 20);
         Result<PagedResult<TrademarkSummaryDto>> result = await sender.Send(query, ct);
         return result.IsSuccess ? Results.Ok(result.Value) : result.Error!.ToProblem();
     }
 
     private static async Task<IResult> GetByDepositNumberAsync(
         string depositNumber,
-        ClaimsPrincipal principal,
+        CurrentUser user,
         ISender sender,
         CancellationToken ct)
     {
-        if (!principal.TryGetUserId(out Guid userId))
-        {
-            return Results.Unauthorized();
-        }
-
-        Result<TrademarkDetailDto> result = await sender.Send(new GetTrademarkQuery(userId, depositNumber), ct);
+        Result<TrademarkDetailDto> result = await sender.Send(new GetTrademarkQuery(user.Id, depositNumber), ct);
         return result.IsSuccess ? Results.Ok(result.Value) : result.Error!.ToProblem();
     }
 
     private static async Task<IResult> GetImageAsync(
         string depositNumber,
-        ClaimsPrincipal principal,
+        CurrentUser user,
         ISender sender,
         CancellationToken ct)
     {
-        if (!principal.TryGetUserId(out Guid userId))
-        {
-            return Results.Unauthorized();
-        }
-
-        Result<TrademarkImageDto> result = await sender.Send(new GetTrademarkImageQuery(userId, depositNumber), ct);
+        Result<TrademarkImageDto> result = await sender.Send(new GetTrademarkImageQuery(user.Id, depositNumber), ct);
         return result.IsSuccess
             ? Results.File(result.Value!.Content, result.Value!.ContentType)
             : result.Error!.ToProblem();

@@ -1,4 +1,3 @@
-using System.Security.Claims;
 using Atlas.Application.Search.GetSearchHistory;
 using Atlas.Shared.Result;
 using MediatR;
@@ -14,14 +13,9 @@ internal static class SearchHistoryEndpoints
         return routes;
     }
 
-    private static async Task<IResult> GetAsync(ClaimsPrincipal principal, ISender sender, CancellationToken ct)
+    private static async Task<IResult> GetAsync(CurrentUser user, ISender sender, CancellationToken ct)
     {
-        if (!principal.TryGetUserId(out Guid userId))
-        {
-            return Results.Unauthorized();
-        }
-
-        Result<IReadOnlyList<SearchHistoryEntryDto>> result = await sender.Send(new GetSearchHistoryQuery(userId), ct);
+        Result<IReadOnlyList<SearchHistoryEntryDto>> result = await sender.Send(new GetSearchHistoryQuery(user.Id), ct);
         return result.IsSuccess ? Results.Ok(result.Value) : result.Error!.ToProblem();
     }
 }

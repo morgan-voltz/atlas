@@ -1,4 +1,3 @@
-using System.Security.Claims;
 using Atlas.Application.IntellectualProperty.GetPatent;
 using Atlas.Application.IntellectualProperty.SearchPatents;
 using Atlas.Shared.Result;
@@ -26,33 +25,23 @@ internal static class PatentsEndpoints
         string? applicant,
         int? page,
         int? pageSize,
-        ClaimsPrincipal principal,
+        CurrentUser user,
         ISender sender,
         CancellationToken ct)
     {
-        if (!principal.TryGetUserId(out Guid userId))
-        {
-            return Results.Unauthorized();
-        }
-
-        var query = new SearchPatentsQuery(userId, title, inventor, applicant, page ?? 1, pageSize ?? 20);
+        var query = new SearchPatentsQuery(user.Id, title, inventor, applicant, page ?? 1, pageSize ?? 20);
         Result<PagedResult<PatentSummaryDto>> result = await sender.Send(query, ct);
         return result.IsSuccess ? Results.Ok(result.Value) : result.Error!.ToProblem();
     }
 
     private static async Task<IResult> GetByPublicationNumberAsync(
         string publicationNumber,
-        ClaimsPrincipal principal,
+        CurrentUser user,
         ISender sender,
         CancellationToken ct)
     {
-        if (!principal.TryGetUserId(out Guid userId))
-        {
-            return Results.Unauthorized();
-        }
-
         Result<PatentDetailDto> result =
-            await sender.Send(new GetPatentQuery(userId, publicationNumber), ct);
+            await sender.Send(new GetPatentQuery(user.Id, publicationNumber), ct);
         return result.IsSuccess ? Results.Ok(result.Value) : result.Error!.ToProblem();
     }
 }

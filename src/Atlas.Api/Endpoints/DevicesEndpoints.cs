@@ -1,4 +1,3 @@
-using System.Security.Claims;
 using Atlas.Application.Notifications;
 using Atlas.Application.Notifications.GetMyDevices;
 using Atlas.Application.Notifications.RegisterDevice;
@@ -30,17 +29,12 @@ internal static class DevicesEndpoints
 
     private static async Task<IResult> RegisterAsync(
         RegisterDeviceRequest request,
-        ClaimsPrincipal principal,
+        CurrentUser user,
         ISender sender,
         CancellationToken ct)
     {
-        if (!principal.TryGetUserId(out Guid userId))
-        {
-            return Results.Unauthorized();
-        }
-
         Result<Guid> result = await sender.Send(
-            new RegisterDeviceCommand(userId, request.Platform, request.Token, request.Label),
+            new RegisterDeviceCommand(user.Id, request.Platform, request.Token, request.Label),
             ct);
 
         return result.IsSuccess
@@ -50,31 +44,21 @@ internal static class DevicesEndpoints
 
     private static async Task<IResult> UnregisterAsync(
         Guid id,
-        ClaimsPrincipal principal,
+        CurrentUser user,
         ISender sender,
         CancellationToken ct)
     {
-        if (!principal.TryGetUserId(out Guid userId))
-        {
-            return Results.Unauthorized();
-        }
-
-        Result result = await sender.Send(new UnregisterDeviceCommand(userId, id), ct);
+        Result result = await sender.Send(new UnregisterDeviceCommand(user.Id, id), ct);
         return result.IsSuccess ? Results.NoContent() : result.Error!.ToProblem();
     }
 
     private static async Task<IResult> GetMineAsync(
-        ClaimsPrincipal principal,
+        CurrentUser user,
         ISender sender,
         CancellationToken ct)
     {
-        if (!principal.TryGetUserId(out Guid userId))
-        {
-            return Results.Unauthorized();
-        }
-
         Result<IReadOnlyList<DeviceRegistrationDto>> result =
-            await sender.Send(new GetMyDevicesQuery(userId), ct);
+            await sender.Send(new GetMyDevicesQuery(user.Id), ct);
         return result.IsSuccess ? Results.Ok(result.Value) : result.Error!.ToProblem();
     }
 }

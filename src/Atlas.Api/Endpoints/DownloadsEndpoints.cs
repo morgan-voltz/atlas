@@ -1,4 +1,3 @@
-using System.Security.Claims;
 using Atlas.Api.Security;
 using Atlas.Application.Downloads;
 using Atlas.Application.Downloads.DownloadBulkArchive;
@@ -31,18 +30,13 @@ internal static class DownloadsEndpoints
 
     private static async Task<IResult> RequestBulkAsync(
         BulkDownloadRequest body,
-        ClaimsPrincipal principal,
+        CurrentUser user,
         ISender sender,
         IBulkDownloadEnqueuer enqueuer,
         CancellationToken ct)
     {
-        if (!principal.TryGetUserId(out Guid userId))
-        {
-            return Results.Unauthorized();
-        }
-
         IReadOnlyList<string> sirens = body?.Sirens ?? [];
-        Result<Guid> result = await sender.Send(new RequestBulkDownloadCommand(userId, sirens), ct);
+        Result<Guid> result = await sender.Send(new RequestBulkDownloadCommand(user.Id, sirens), ct);
         if (result.IsFailure)
         {
             return result.Error!.ToProblem();
@@ -58,31 +52,21 @@ internal static class DownloadsEndpoints
 
     private static async Task<IResult> GetBulkAsync(
         Guid jobId,
-        ClaimsPrincipal principal,
+        CurrentUser user,
         ISender sender,
         CancellationToken ct)
     {
-        if (!principal.TryGetUserId(out Guid userId))
-        {
-            return Results.Unauthorized();
-        }
-
-        Result<BulkDownloadJobDto> result = await sender.Send(new GetBulkDownloadQuery(userId, jobId), ct);
+        Result<BulkDownloadJobDto> result = await sender.Send(new GetBulkDownloadQuery(user.Id, jobId), ct);
         return result.IsSuccess ? Results.Ok(result.Value) : result.Error!.ToProblem();
     }
 
     private static async Task<IResult> DownloadArchiveAsync(
         Guid jobId,
-        ClaimsPrincipal principal,
+        CurrentUser user,
         ISender sender,
         CancellationToken ct)
     {
-        if (!principal.TryGetUserId(out Guid userId))
-        {
-            return Results.Unauthorized();
-        }
-
-        Result<BulkArchiveContent> result = await sender.Send(new DownloadBulkArchiveQuery(userId, jobId), ct);
+        Result<BulkArchiveContent> result = await sender.Send(new DownloadBulkArchiveQuery(user.Id, jobId), ct);
         if (result.IsFailure)
         {
             return result.Error!.ToProblem();
