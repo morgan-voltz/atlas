@@ -60,6 +60,30 @@ Configuration backend (`src/Atlas.Api/appsettings.json` ou variables d'environne
 `ConnectionStrings:Atlas` (PostgreSQL), `Jwt:PrivateKeyPem` (clé RSA), `Crypto:KeyBase64`
 (clé AES-256). En production, fournissez ces clés via un KMS.
 
+## Déploiement (préproduction)
+
+La cible de préproduction (alpha / beta) est un **VPS unique tout-en-un** (région UE), conforme à
+[ADR-019](docs/ADR/ADR-019-serveur-preproduction.md) : API + PostgreSQL + jobs Hangfire in-process +
+hôte web (statiques WASM) orchestrés par `docker compose`, derrière un **reverse proxy TLS Caddy**
+(Let's Encrypt). Topologie **domaine unique** : `https://<domaine>/` sert le client web et
+`https://<domaine>/api/*` route vers l'API (même origine, donc pas de CORS).
+
+```bash
+cd deploy/preprod
+cp .env.example .env          # ATLAS_DOMAIN, ACME_EMAIL, POSTGRES_PASSWORD
+mkdir -p secrets              # clés JWT (PEM) + AES (Base64) — voir le README dédié
+docker compose up -d --build
+```
+
+Tout est dans **[`deploy/preprod/`](deploy/preprod/)** (compose, `Caddyfile`, `.env.example`,
+sauvegardes `pg_dump`) ; la procédure complète (génération des clés, migrations au démarrage,
+sauvegarde / restauration, essai local sans domaine) est détaillée dans
+[`deploy/preprod/README.md`](deploy/preprod/README.md). Les images sont produites par les
+`Dockerfile` de `src/Atlas.Api` et `src/Atlas.Web`.
+
+> ⚠️ **Préprod uniquement** : SPOF assumé, secrets en fichiers (pas de KMS), `pg_dump` quotidien
+> (pas de PITR). La topologie de **production** (base managée, KMS, HA) fera l'objet d'un ADR dédié.
+
 ## Structure de la solution
 
 - **src/** — code de production réparti selon l'architecture hexagonale
