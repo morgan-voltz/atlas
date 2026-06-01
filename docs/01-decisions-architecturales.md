@@ -5,7 +5,7 @@
 > Toute évolution d'une décision se fait dans le fichier ADR concerné (statut, date, amendement).
 
 **Version** : 2.0
-**Date de dernière mise à jour** : 31 mai 2026
+**Date de dernière mise à jour** : 1ᵉʳ juin 2026
 **Statut** : décisions figées ; nouvelles décisions ajoutées comme fichiers ADR au fil de l'eau.
 
 ---
@@ -13,7 +13,7 @@
 ## Sommaire
 
 - [Vision du projet](#vision-du-projet)
-- [Décisions (ADR-001 → ADR-026)](#décisions-adr-001--adr-026)
+- [Décisions (ADR-001 → ADR-028)](#décisions-adr-001--adr-028)
 - [Décisions à prendre ultérieurement](#décisions-à-prendre-ultérieurement)
 - [Roadmap macro](#roadmap-macro)
 - [Glossaire](#glossaire)
@@ -41,7 +41,7 @@ Le projet propose une **alternative open source** qui :
 
 ---
 
-## Décisions (ADR-001 → ADR-026)
+## Décisions (ADR-001 → ADR-028)
 
 > Synthèses ; le détail (contexte, rationale, conséquences) est dans chaque fichier de [`docs/ADR/`](ADR/).
 
@@ -95,12 +95,18 @@ Le projet propose une **alternative open source** qui :
 - **[ADR-026 — Clients natifs : MAUI (mobile) + Avalonia (desktop)](ADR/ADR-026-clients-natifs-maui-avalonia.md)** ✅
   Split par force : **mobile (Android/iOS) reste MAUI**, **desktop (Windows/macOS/Linux) passe à Avalonia** (couvre Linux face à la bascule souveraine DINUM), web Blazor WASM inchangé. **Noyau partagé** (Domain + Shared + `AtlasApiClient` + ViewModels + doctrine UX), seules les Views diffèrent ; client = adapter entrant pur (NetArchTest étendu). **Amende ADR-007** ; requalifie **F-010** (desktop → Avalonia). UX agnostique : `docs/12` (delta desktop éventuel comme `docs/14` pour le web).
 
+- **[ADR-027 — Cache client hors-ligne : fraîcheur datée & grammaire d'états honnêtes](ADR/ADR-027-cache-client-offline-fraicheur.md)** ✅
+  Le cache mobile (SQLite, acté) mémorise des **read-models datés** (jamais le domaine, aucun secret — topologie pure ADR-002) ; une donnée servie du cache ne se présente **jamais** « à jour » → **`Stale`** (« hors-ligne · vu le {date} »), absente → **`Unavailable`**, **jamais un vide menteur** (grammaire d'états honnêtes ADR-015 étendue à l'axe réseau, comme ADR-022 au temps) ; bandeau global = **état système** (ADR-012), fraîcheur **par-item** ; **lecture seule** v1, **pas de TTL dur** (on date, on n'expire pas), cache **chiffré + purgé à la déconnexion** (INPI jamais caché). Offline web/desktop = avenants futurs. Implémenté par **F-029** (cache de lecture) / **F-075** (moteur de fraîcheur & sync).
+
 ### Robustesse & exploitation
 
 - **[ADR-018 — Dégradation gracieuse des sources amont & code d'erreur dédié](ADR/ADR-018-degradation-gracieuse-sources-amont.md)** ✅
   Trois faits jamais confondus (**indisponible** ≠ **vide de couverture** ≠ **problème d'accès**) ; code métier **`inpi.pi_unavailable`** (502) sur `/trademarks*` et `/patents*` classifié dans l'adapter ; dégradation **à portée locale** (`SectionState`, ADR-015) ; rendu client honnête réutilisant le composant Erreur. Pendant *humain* de la doctrine ADR-016. UX : `docs/12 §14`, `docs/14`.
 - **[ADR-019 — Serveur de préproduction (alpha & beta) : VPS unique tout-en-un](ADR/ADR-019-serveur-preproduction.md)** ✅
   Préprod = **un seul VPS auto-géré** (API + PostgreSQL + Hangfire in-process + statiques WASM) en docker-compose miroir du harness local (doc 13) ; 2 vCPU / 4 Go ; **région UE** (**Hetzner** pressenti, provider révisable — c'est la région UE, pas la marque, qui fait la conformité) ; always-on derrière reverse proxy TLS ; clé de chiffrement en posture préprod assumée ; `pg_dump` quotidien ; **maintenance par l'auteur, délégation différée** sur critère de bascule explicite. **Ne tranche que la préprod** — le choix de l'hébergeur de **prod** reste ouvert.
+
+- **[ADR-028 — Observabilité du backend (OpenTelemetry, découplage émission/collecte, progressif)](ADR/ADR-028-observabilite-backend.md)** ✅
+  Observabilité **technique** (santé infra, ≠ télémétrie produit **F-076**, **sans RGPD**) : instrumenter **complet** (OTel 3 piliers — logs Serilog / métriques / traces) **dès maintenant**, **découpler l'émission du backend de collecte** (léger en préprod sur le VPS d'ADR-019, stack complète sur **machine dédiée** en prod — jamais sur la box surveillée) ; **alerting externe** au système surveillé (uptime check sur **`/health`** agrégé API/DB/Hangfire/sources) ; stockage **auto-hébergé** (souveraineté), seul le ping de vie externalisé ; jamais de secret/donnée sensible dans les logs (scrubbing). **Complète ADR-018** (la dégradation encaisse, l'observabilité signale). Implémenté par **F-077**.
 
 ### Approfondissement de la donnée (confiance · temps · documents · graphe)
 
