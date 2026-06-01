@@ -1,0 +1,24 @@
+<Project>
+
+  <!--
+    Volontairement isolé du Directory.Packages.props racine.
+
+    Le client Uno utilise Uno.Sdk (version figée dans global.json → msbuild-sdks),
+    qui fournit les versions de ses *implicit packages*. On laisse donc cette liste
+    vide et on DÉSACTIVE le transitive pinning : le CPM strict du repo
+    (CentralPackageTransitivePinningEnabled=true) entre sinon en conflit avec les
+    centaines de packages transitifs tirés par Uno.Sdk.
+
+    Pour changer la version d'Uno : éditer global.json, pas ce fichier.
+    Cf. https://aka.platform.uno/using-uno-sdk — ADR-029, docs/10 §6.
+  -->
+  <PropertyGroup>
+    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+    <CentralPackageTransitivePinningEnabled>false</CentralPackageTransitivePinningEnabled>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Aucun PackageVersion : Uno.Sdk gère ses packages implicites. -->
+  </ItemGroup>
+
+</Project>

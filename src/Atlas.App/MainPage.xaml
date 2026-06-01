@@ -1,0 +1,36 @@
+<Page x:Class="Atlas.App.MainPage"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:local="using:Atlas.App"
+      Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
+  <ScrollViewer IsTabStop="True">
+    <Grid Padding="24">
+      <StackPanel HorizontalAlignment="Center"
+                  VerticalAlignment="Center"
+                  Spacing="8"
+                  MaxWidth="520">
+        <TextBlock Text="Atlas — client Uno"
+                   FontSize="22"
+                   FontWeight="SemiBold"
+                   HorizontalAlignment="Center" />
+        <TextBlock Text="Spike d'intégration (ADR-029, U1/U2). Cette tête consomme un value object du domaine (Atlas.Domain) — preuve qu'un client pur Domain + Shared compile et tourne."
+                   TextWrapping="Wrap"
+                   HorizontalAlignment="Center"
+                   TextAlignment="Center"
+                   Opacity="0.8" />
+        <Border Margin="0,12,0,0"
+                Padding="16"
+                CornerRadius="8"
+                Background="{ThemeResource SystemControlBackgroundListLowBrush}">
+          <StackPanel Spacing="4">
+            <TextBlock Text="Validation SIREN (Domain.Siren)"
+                       FontWeight="SemiBold" />
+            <TextBlock x:Name="SirenResult"
+                       AutomationProperties.AutomationId="SirenResultTextBlock"
+                       TextWrapping="Wrap" />
+          </StackPanel>
+        </Border>
+      </StackPanel>
+    </Grid>
+  </ScrollViewer>
+</Page>

@@ -1,0 +1,21 @@
+<Project>
+
+  <!--
+    Importe les conventions du repo (métadonnées AGPL, langue neutre), puis assouplit
+    ce qui n'a pas de sens pour un projet UI Uno à code XAML généré.
+  -->
+  <Import Project="$([MSBuild]::GetPathOfFileAbove('Directory.Build.props', '$(MSBuildThisFileDirectory)../'))" />
+
+  <PropertyGroup>
+    <!-- Le code-behind XAML et les sources générées par Uno produisent des warnings
+         d'analyseurs/style légitimes : on ne les traite pas en erreurs ici
+         (même esprit que le code généré ailleurs dans le repo). -->
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <EnforceCodeStyleInBuild>false</EnforceCodeStyleInBuild>
+    <!-- NU1507 : multiples sources NuGet sous CPM sans source mapping
+         NETSDK1201 : RID sans self-contained
+         PRI257 : langue par défaut (en) hors ressources incluses -->
+    <NoWarn>$(NoWarn);NU1507;NETSDK1201;PRI257</NoWarn>
+  </PropertyGroup>
+
+</Project>
