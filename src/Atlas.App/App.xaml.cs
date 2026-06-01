@@ -13,6 +13,8 @@ public partial class App : Application
     public App()
     {
         this.InitializeComponent();
+        // Composition root (U4.1) : DI + HttpClientFactory.
+        Atlas.App.Services.AppServices.Initialize();
     }
 
     protected Window? MainWindow { get; private set; }
@@ -43,7 +45,8 @@ public partial class App : Application
             // When the navigation stack isn't restored navigate to the first page,
             // configuring the new page by passing required information as a navigation
             // parameter
-            rootFrame.Navigate(typeof(MainPage), args.Arguments);
+            // Démarrage sur la connexion ; après login, la page bascule sur la coque (MainPage).
+            rootFrame.Navigate(typeof(Atlas.App.Presentation.Pages.LoginPage), args.Arguments);
         }
 
         MainWindow.SetWindowIcon();

@@ -18,7 +18,10 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <!-- Aucun PackageVersion : Uno.Sdk gère ses packages implicites. -->
+    <!-- Uno.Sdk gère ses packages implicites ; on ne versionne ici que les packages explicites
+         du client (DI + HttpClientFactory standard .NET, U4.1). -->
+    <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="10.0.7" />
+    <PackageVersion Include="Microsoft.Extensions.Http" Version="10.0.7" />
   </ItemGroup>
 
 </Project>

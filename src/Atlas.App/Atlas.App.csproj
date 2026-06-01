@@ -36,4 +36,14 @@
     <ProjectReference Include="..\Atlas.Shared\Atlas.Shared.csproj" />
   </ItemGroup>
 
+  <!--
+    DI + HttpClientFactory standard .NET (choix U4.1) : versions explicites car le CPM est
+    désactivé pour Atlas.App (cf. Directory.Packages.props local). On évite volontairement les
+    UnoFeatures Hosting/Http (pile Uno.Extensions) pour rester léger et garder la navigation maison.
+  -->
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
+    <PackageReference Include="Microsoft.Extensions.Http" />
+  </ItemGroup>
+
 </Project>

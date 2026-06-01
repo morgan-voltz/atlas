@@ -9,4 +9,10 @@ public static class ApiErrors
 {
     public static ApiError RequestFailed(int statusCode) =>
         new("api.request_failed", $"L'appel à l'API a échoué (HTTP {statusCode}).");
+
+    public static ApiError Unreachable() =>
+        new("api.unreachable", "Impossible de joindre le serveur Atlas. Vérifiez votre connexion.");
+
+    public static ApiError InvalidCredentials() =>
+        new("api.invalid_credentials", "Adresse e-mail ou mot de passe incorrect.");
 }
