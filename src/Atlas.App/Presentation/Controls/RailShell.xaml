@@ -5,13 +5,13 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:muxc="using:Microsoft.UI.Xaml.Controls">
 
-  <!-- Présentation des 5 destinations (doc 12 §3) en rail latéral (doc 14 §2). NavigationView :
-       mode Left au format large, repli compact (menu) au format réduit. Plafond : jamais de 6e entrée.
-       La sélection est présentationnelle ici ; le routage est câblé à U4. -->
+  <!-- Coque de navigation : 5 destinations (doc 12 §3) en rail latéral (doc 14 §2) via NavigationView,
+       mode Left au format large / repli compact au format réduit. La sélection navigue le Frame interne. -->
   <muxc:NavigationView x:Name="Nav"
                        IsSettingsVisible="False"
                        IsBackButtonVisible="Collapsed"
                        PaneDisplayMode="Auto"
+                       SelectionChanged="OnSelectionChanged"
                        Background="{ThemeResource AtlasBgBrush}">
 
     <muxc:NavigationView.PaneHeader>
@@ -51,8 +51,8 @@
       </muxc:NavigationViewItem>
     </muxc:NavigationView.MenuItems>
 
-    <!-- Zone principale -->
-    <ContentPresenter Content="{x:Bind PageContent, Mode=OneWay}" />
+    <!-- Zone principale : pile de navigation des destinations. -->
+    <Frame x:Name="ContentFrame" />
 
   </muxc:NavigationView>
 

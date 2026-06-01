@@ -1,14 +1,12 @@
-using Microsoft.UI.Xaml;
+using System;
 using Microsoft.UI.Xaml.Controls;
-using Microsoft.UI.Xaml.Markup;
 
 namespace Atlas.App.Presentation.Controls;
 
 /// <summary>
-/// Coque de navigation : rail latéral des 5 destinations (doc 12 §3 / doc 14 §2) via NavigationView.
-/// Le routage réel sera câblé à U4 ; ici la coque héberge le contenu via <see cref="PageContent"/>.
+/// Coque de navigation : rail des 5 destinations (doc 12 §3 / doc 14 §2) via NavigationView.
+/// La sélection est exposée au host (qui mappe le tag → page et navigue <see cref="NavigationFrame"/>).
 /// </summary>
-[ContentProperty(Name = nameof(PageContent))]
 public sealed partial class RailShell : UserControl
 {
     public RailShell()
@@ -16,13 +14,17 @@ public sealed partial class RailShell : UserControl
         this.InitializeComponent();
     }
 
-    public static readonly DependencyProperty PageContentProperty =
-        DependencyProperty.Register(nameof(PageContent), typeof(object), typeof(RailShell), new PropertyMetadata(null));
+    /// <summary>Frame hébergeant la destination courante (<c>ContentFrame</c> du XAML).</summary>
+    public Frame NavigationFrame => ContentFrame;
 
-    /// <summary>Contenu de la zone principale (contenu par défaut du contrôle).</summary>
-    public object? PageContent
+    /// <summary>Levé quand une destination est choisie (porte le <c>Tag</c> de l'entrée : « accueil », « recherche »…).</summary>
+    public event EventHandler<string>? DestinationSelected;
+
+    private void OnSelectionChanged(NavigationView sender, NavigationViewSelectionChangedEventArgs args)
     {
-        get => GetValue(PageContentProperty);
-        set => SetValue(PageContentProperty, value);
+        if (args.SelectedItem is NavigationViewItem { Tag: string tag })
+        {
+            DestinationSelected?.Invoke(this, tag);
+        }
     }
 }
