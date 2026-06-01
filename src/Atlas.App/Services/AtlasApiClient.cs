@@ -194,21 +194,42 @@ public sealed class AtlasApiClient(HttpClient httpClient, ITokenStore tokenStore
     }
 
     /// <summary>
-    /// Récupère la fiche brute d'une entreprise par SIREN (value object validé côté domaine).
-    /// Le mapping vers un DTO client arrive avec l'écran Fiche (U4 suite).
+    /// Fiche d'une entreprise par SIREN (<c>GET /companies/{siren}</c>, F-004). Le <see cref="Siren"/>
+    /// (value object validé côté domaine) est la seule entrée acceptée — pas de <c>string</c> nu.
     /// </summary>
-    public async Task<Result<string>> GetCompanyRawAsync(Siren siren, CancellationToken ct = default)
+    public async Task<Result<CompanyResponse>> GetCompanyAsync(Siren siren, CancellationToken ct = default)
     {
-        using HttpResponseMessage response = await httpClient
-            .GetAsync($"companies/{siren.Value}", ct)
-            .ConfigureAwait(false);
-
-        if (!response.IsSuccessStatusCode)
+        HttpResponseMessage response;
+        try
         {
-            return Result<string>.Fail(ApiErrors.RequestFailed((int)response.StatusCode));
+            response = await httpClient.GetAsync($"companies/{siren.Value}", ct).ConfigureAwait(false);
+        }
+        catch (HttpRequestException)
+        {
+            return Result<CompanyResponse>.Fail(ApiErrors.Unreachable());
         }
 
-        string body = await response.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
-        return Result<string>.Ok(body);
+        if (response.IsSuccessStatusCode)
+        {
+            CompanyResponse? company = await response.Content
+                .ReadFromJsonAsync(AtlasJsonContext.Default.CompanyResponse, ct)
+                .ConfigureAwait(false);
+            return company is null
+                ? Result<CompanyResponse>.Fail(ApiErrors.RequestFailed((int)response.StatusCode))
+                : Result<CompanyResponse>.Ok(company);
+        }
+
+        if (response.StatusCode == HttpStatusCode.Unauthorized)
+        {
+            return Result<CompanyResponse>.Fail(ApiErrors.SessionExpired());
+        }
+
+        // ProblemDetails métier : on surface l'état honnête adéquat (doc 12 §10/§14).
+        string problem = await response.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
+        ApiError error =
+            problem.Contains("inpi.not_connected", StringComparison.Ordinal) ? ApiErrors.InpiNotConnected() :
+            problem.Contains("companies.not_found", StringComparison.Ordinal) ? ApiErrors.CompanyNotFound(siren.Value) :
+            ApiErrors.RequestFailed((int)response.StatusCode);
+        return Result<CompanyResponse>.Fail(error);
     }
 }

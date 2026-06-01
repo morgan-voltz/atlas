@@ -44,9 +44,7 @@
         <StackPanel x:Name="Results" Spacing="2" />
       </StackPanel>
       <c:ListDetailView.DetailContent>
-        <c:SectionCard x:Name="Detail" Title="Sélectionnez un résultat" Source="RNE (INPI)">
-          <c:LabeledField Label="Localisation" x:Name="DetailField" />
-        </c:SectionCard>
+        <c:CompanyDetail x:Name="Detail" />
       </c:ListDetailView.DetailContent>
     </c:ListDetailView>
   </Grid>

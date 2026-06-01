@@ -13,6 +13,7 @@ namespace Atlas.App.Models;
 [JsonSerializable(typeof(AccessTokenResponse))]
 [JsonSerializable(typeof(CompanySummaryResponse))]
 [JsonSerializable(typeof(PagedResult<CompanySummaryResponse>))]
+[JsonSerializable(typeof(CompanyResponse))]
 [JsonSerializable(typeof(ConnectInpiRequest))]
 [JsonSerializable(typeof(InpiConnectionStatusResponse))]
 [JsonSerializable(typeof(TimelineItemResponse))]
