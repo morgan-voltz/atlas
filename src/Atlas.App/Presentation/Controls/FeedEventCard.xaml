@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="utf-8"?>
+<UserControl
+    x:Class="Atlas.App.Presentation.Controls.FeedEventCard"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+  <!-- Carte-aperçu « event » du fil Accueil (doc 12 §5/§12) : qui · quoi a changé · quand · source.
+       Fait, jamais verdict (ADR-012) — aucune couleur danger sur une entité. Non lu = pastille +
+       graisse + barre d'accent (jamais la couleur seule, doc 06). -->
+  <Grid>
+    <Border x:Name="Root"
+          Padding="18,15"
+          Background="{ThemeResource AtlasSurfaceBrush}"
+          BorderBrush="{ThemeResource AtlasSurfaceVariantBrush}"
+          BorderThickness="1"
+          CornerRadius="{ThemeResource AtlasRadiusLg}">
+    <StackPanel Spacing="6">
+
+      <!-- En-tête : pastille non-lu · source · date -->
+      <Grid>
+        <Grid.ColumnDefinitions>
+          <ColumnDefinition Width="Auto" />
+          <ColumnDefinition Width="*" />
+          <ColumnDefinition Width="Auto" />
+        </Grid.ColumnDefinitions>
+
+        <Ellipse x:Name="UnreadDot"
+                 Grid.Column="0"
+                 Width="8" Height="8"
+                 Margin="0,0,8,0"
+                 VerticalAlignment="Center"
+                 Visibility="Collapsed"
+                 Fill="{ThemeResource AtlasPrimaryBrush}" />
+
+        <TextBlock x:Name="SourceText"
+                   Grid.Column="1"
+                   FontSize="12"
+                   FontWeight="SemiBold"
+                   VerticalAlignment="Center"
+                   Foreground="{ThemeResource AtlasOnSurfaceVariantBrush}" />
+
+        <TextBlock x:Name="DateText"
+                   Grid.Column="2"
+                   FontSize="12"
+                   VerticalAlignment="Center"
+                   Foreground="{ThemeResource AtlasOnSurfaceVariantBrush}" />
+      </Grid>
+
+      <TextBlock x:Name="TitleText"
+                 FontSize="16"
+                 TextWrapping="Wrap"
+                 Foreground="{ThemeResource AtlasOnSurfaceBrush}" />
+
+      <TextBlock x:Name="SummaryText"
+                 Visibility="Collapsed"
+                 FontSize="14"
+                 TextWrapping="Wrap"
+                 Foreground="{ThemeResource AtlasOnSurfaceVariantBrush}" />
+
+      <!-- Mentions de favoris -->
+      <StackPanel x:Name="MentionsPanel"
+                  Orientation="Horizontal"
+                  Visibility="Collapsed"
+                  Margin="0,2,0,0">
+        <TextBlock Text="Mentionne :"
+                   FontSize="13"
+                   VerticalAlignment="Center"
+                   Margin="0,0,8,0"
+                   Foreground="{ThemeResource AtlasOnSurfaceVariantBrush}" />
+        <StackPanel x:Name="MentionChips" Orientation="Horizontal" Spacing="6" />
+      </StackPanel>
+
+      <!-- Actions -->
+      <Grid Margin="0,4,0,0">
+        <Grid.ColumnDefinitions>
+          <ColumnDefinition Width="Auto" />
+          <ColumnDefinition Width="Auto" />
+          <ColumnDefinition Width="*" />
+          <ColumnDefinition Width="Auto" />
+        </Grid.ColumnDefinitions>
+
+        <HyperlinkButton x:Name="PrimaryAction"
+                         Grid.Column="0"
+                         Visibility="Collapsed"
+                         Padding="0,0,12,0"
+                         Foreground="{ThemeResource AtlasPrimaryBrush}" />
+
+        <TextBlock x:Name="DedupText"
+                   Grid.Column="1"
+                   Visibility="Collapsed"
+                   FontSize="12"
+                   VerticalAlignment="Center"
+                   Foreground="{ThemeResource AtlasOnSurfaceVariantBrush}" />
+
+        <Button x:Name="MarkReadButton"
+                Grid.Column="3"
+                Visibility="Collapsed"
+                Content="Marquer comme lu"
+                FontSize="13"
+                Click="OnMarkRead"
+                Background="Transparent"
+                BorderBrush="{ThemeResource AtlasOutlineBrush}"
+                BorderThickness="1"
+                Foreground="{ThemeResource AtlasOnSurfaceVariantBrush}" />
+      </Grid>
+
+    </StackPanel>
+    </Border>
+
+    <!-- Barre d'accent « non lu » -->
+    <Rectangle x:Name="UnreadAccent"
+               Width="3"
+               HorizontalAlignment="Left"
+               VerticalAlignment="Stretch"
+               Margin="0,2"
+               RadiusX="2" RadiusY="2"
+               Visibility="Collapsed"
+               Fill="{ThemeResource AtlasPrimaryBrush}" />
+  </Grid>
+
+</UserControl>
