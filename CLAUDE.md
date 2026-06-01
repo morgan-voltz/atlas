@@ -35,6 +35,7 @@ Avant toute contribution significative, consulter le document approprié dans `d
 | Concevoir une vue au format large / par surface Uno (rail, list-detail 2 panneaux, routing/URLs de la tête WebAssembly) — delta multi-surface de doc 12 | `docs/14-modele-ux-client-web.md` |
 | Planifier ou suivre l'implémentation du client (historique Blazor transitoire M0–M7 + bascule Uno `Atlas.App`) | `docs/15-roadmap-client-web.md` |
 | Choisir une police, régler l'espacement / la lisibilité (accessibilité typographique) | `docs/16-polices-et-lisibilite.md` |
+| Comprendre l'état de durcissement sécurité / résilience / perf de l'API et les dettes connues | `docs/17-audit-securite-perf.md` |
 | Comprendre le contexte métier et les besoins par rôle | `docs/persona/carte-personas.md` |
 
 ---
