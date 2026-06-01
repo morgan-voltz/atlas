@@ -1,7 +1,7 @@
 # ADR-017 — Framework du client web : Blazor Web App (interactivité WASM/Auto)
 
-**Statut** : ✅ Accepté
-**Date** : 29 mai 2026 — **amendé le 30 mai 2026** (WASM pur pour la v1 « app authentifiée seule » ; cf. § Amendement et `docs/14-modele-ux-client-web.md`)
+**Statut** : ⛔ **Remplacé par [ADR-029](ADR-029-ui-unifiee-uno.md)** (UI unifiée Uno Platform) — le client web Blazor est **abandonné**. *(Était : ✅ Accepté, amendé le 30 mai 2026 « WASM pur ».)* Le squelette `Atlas.Web`/`Atlas.Web.Client` reste en place **jusqu'à un spike Uno concluant** (garde-fou ADR-029) ; la doctrine UX (`docs/12`/`docs/14`) est préservée.
+**Date** : 29 mai 2026
 
 ## Contexte
 

@@ -1,6 +1,6 @@
 # ADR-026 — Framework des clients natifs : MAUI pour le mobile, Avalonia pour le desktop (Windows / macOS / Linux)
 
-**Statut** : ✅ Accepté
+**Statut** : ⛔ **Remplacé par [ADR-029](ADR-029-ui-unifiee-uno.md)** (UI unifiée Uno Platform couvre desktop **et** mobile **et** web). *(Était : ✅ Accepté.)* Conservé comme trace de la réflexion souveraineté/Linux qui a directement mené à ADR-029 ; Avalonia/MAUI restent un **repli** si le spike Uno échoue.
 **Date** : 31 mai 2026
 
 ## Contexte

@@ -1,9 +1,11 @@
 # ADR-007 — Stack technique .NET / MAUI
 
-**Statut** : ✅ Accepté **— amendé par [ADR-026](ADR-026-clients-natifs-maui-avalonia.md) (31 mai 2026)**
+**Statut** : ✅ Accepté **— amendé par [ADR-026](ADR-026-clients-natifs-maui-avalonia.md) (31 mai 2026), puis [ADR-029](ADR-029-ui-unifiee-uno.md) (30 mai 2026)**
 **Date** : 26 mai 2026
 
 > **Amendement (ADR-026, 31 mai 2026)** — Le client natif n'est plus « MAUI pour iOS/Android/Windows/macOS ». Désormais : **MAUI pour le mobile (Android/iOS)** ; **Avalonia pour le desktop (Windows/macOS/Linux)** — pour couvrir Linux face à la bascule souveraine DINUM. Le web (Blazor WASM, ADR-017) est inchangé. Cf. ADR-026 pour le détail et la requalification de F-010.
+>
+> **Amendement (ADR-029) — ⚠️ supplante l'amendement ci-dessus.** La ligne « Clients » est à nouveau revue : **abandon de MAUI, d'Avalonia et de Blazor Web App** au profit d'**Uno Platform** — UI unique C#/XAML WinUI projetée sur **Windows / macOS / Linux / iOS / Android / WebAssembly**. Uno couvre donc à lui seul ce que MAUI+Avalonia+Blazor visaient. **Remplace ADR-017 et ADR-026** ; topologie ADR-002 préservée (UI → `Domain` + `Shared` only). Cf. ADR-029.
 
 ## Contexte
 

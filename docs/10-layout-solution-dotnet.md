@@ -1,5 +1,7 @@
 # Layout de la solution .NET — projet Atlas
 
+> ⛔ **ADR-029 (UI unifiée Uno Platform)** — La couche cliente cible devient **`Atlas.App`** (Uno, C#/XAML WinUI, toutes surfaces : WebAssembly + desktop Win/macOS/Linux + iOS/Android), qui **remplacera** `Atlas.Maui` (jamais créé), Avalonia et `Atlas.Web`/`Atlas.Web.Client`. Ce layout sera **mis à jour** à l'intégration Uno ; en transition, `Atlas.Web`/`Atlas.Web.Client` (Blazor) restent les projets clients en vigueur jusqu'au spike Uno concluant.
+
 > Spécification complète de la structure physique de la solution **`Atlas.sln`** : arborescence des dossiers, liste des projets `.csproj`, frameworks cibles, références inter-projets, fichiers de configuration centralisés, et commandes `dotnet` pour reproduire la solution depuis zéro.
 > Ce document traduit en structure concrète les décisions prises dans les ADRs (doc 01) et l'architecture détaillée (doc 09).
 
