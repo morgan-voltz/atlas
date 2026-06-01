@@ -55,6 +55,9 @@ public sealed record FavoriteMentionResponse(string Siren, string Name);
 /// <c>"RssItem"</c> (item de flux) et <c>"FavoriteEvent"</c> (mouvement RNE/BODACC d'un favori).
 /// Sous-ensemble des champs consommés par la carte (calé sur Atlas.Web.Client).
 /// </summary>
+/// <summary>Corps de <c>PATCH /feed/items/{id}/state</c> (lu / favori / archivé).</summary>
+public sealed record SetFeedItemStateRequest(bool? IsRead, bool? IsFavorite, bool? IsArchived);
+
 public sealed record TimelineItemResponse(
     string Kind,
     System.Guid Id,
