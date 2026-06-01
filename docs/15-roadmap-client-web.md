@@ -88,8 +88,8 @@ Extrait **au fil des écrans**, pas en amont. Chaque composant couvre ses **éta
 | Layout **rail** (5 destinations) | actif / hover / focus | M0 | ✅ |
 | Atomes : **`Provenance`**, **`Chip`** (badge/statut), **`LabeledField`** (champ étiqueté) | `Chip` tons neutral/info/ok/warn (+ lien) ; `Provenance` « source · date » (variante séparée) ; provenance jamais masquée | M2 (extraits) | ✅ |
 | Atome **`KeyFigure`** (chiffre-clé) | — | — | ⬜ (différé : aucun consommateur avant les indicateurs financiers **F-054** — principe « au fil des écrans ») |
-| **Carte-aperçu** (entity / event) | défaut · hover · pressed · focus · sélectionné · lu/non-lu · skeleton | M1 / M3 | 🟡 (variante *event* livrée M3 : `FeedEventCard`) |
-| **Carte-section** (repliable) | ouvert · replié · épinglé · vide-couverture · erreur-locale · skeleton | M2 | 🟡 |
+| **Carte-aperçu** (entity / event) | défaut · hover · focus · sélectionné · lu/non-lu · skeleton | M1 / M3 | ✅ (entity = `CompanySummaryCard` ; event = `FeedEventCard` ; skeleton = `CardSkeleton`, chargement des listes Recherche/Favoris) |
+| **Carte-section** (repliable) | ouvert · replié · épinglé · vide-couverture · erreur-locale · skeleton | M2 | ✅ (`SectionCard` ; épingle = visuel + `OnPinToggle`, réordre/persistance → F-062) |
 | **États** (composants) | chargement (skeleton) · vide (onboarding/couverture) · erreur (locale) · fin de liste | M1 / M3 | ✅ (les 4 exercés sur l'Accueil) |
 | **Thème** clair/sombre + tokens | clair · sombre (auto `prefers-color-scheme` ; sélecteur persisté → M6/F-062) | M1 | ✅ |
 

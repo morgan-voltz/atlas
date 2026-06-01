@@ -6,7 +6,14 @@
     overflow: hidden;
 }
 
+/* Épinglée : mise en avant par un filet d'accent, jamais par la seule couleur (doc 06). */
+.section-card.pinned {
+    box-shadow: inset 3px 0 0 var(--primary);
+}
+
 .section-head {
+    display: flex;
+    align-items: stretch;
     margin: 0;
     font-size: 1rem;
 }
@@ -15,7 +22,8 @@
     display: flex;
     align-items: center;
     gap: 0.6rem;
-    width: 100%;
+    flex: 1;
+    min-width: 0;
     /* Cible ≥ 44 px (doc 12 §8). */
     min-height: 44px;
     padding: 0.7rem 1rem;
@@ -34,6 +42,34 @@
 }
 
 .section-toggle:focus-visible {
+    outline: 3px solid var(--focus);
+    outline-offset: -3px;
+}
+
+/* Épingle (action secondaire) : opacité atténuée au repos, pleine si épinglée/survolée. */
+.section-pin {
+    flex-shrink: 0;
+    min-width: 44px;
+    padding: 0 0.6rem;
+    font-size: 1rem;
+    line-height: 1;
+    background: transparent;
+    border: 0;
+    border-left: 1px solid var(--surface-variant);
+    cursor: pointer;
+    opacity: 0.5;
+}
+
+.section-pin:hover {
+    background: var(--surface-variant);
+    opacity: 1;
+}
+
+.section-pin.on {
+    opacity: 1;
+}
+
+.section-pin:focus-visible {
     outline: 3px solid var(--focus);
     outline-offset: -3px;
 }

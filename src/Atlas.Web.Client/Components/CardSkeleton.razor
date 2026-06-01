@@ -1,0 +1,8 @@
+@* Squelette d'une carte-aperçu pendant le chargement d'une liste (doc 12 §11/§14) : occupe la
+   forme du contenu à venir, animation discrète. Purement visuel (aria-hidden) — l'annonce d'état
+   (« Chargement… ») reste portée par le parent via un role="status" visuellement masqué. *@
+
+<div class="card-skeleton" aria-hidden="true">
+    <div class="sk-line sk-title"></div>
+    <div class="sk-line sk-sub"></div>
+</div>
