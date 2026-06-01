@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Atlas · Recherche</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin=""/>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&amp;family=IBM+Plex+Serif:wght@500;600&amp;family=IBM+Plex+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body { font-family: "IBM Plex Sans", system-ui, sans-serif; background: #ece7e1; }
+
+  .atlas-sk { position: relative; overflow: hidden; }
+  .atlas-sk::after {
+    content: ""; position: absolute; inset: 0; transform: translateX(-100%);
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.45), transparent);
+    animation: atlas-shimmer 1.4s ease-in-out infinite;
+  }
+  @media (prefers-reduced-motion: reduce) { .atlas-sk::after { animation: none; } }
+  @keyframes atlas-shimmer { 100% { transform: translateX(100%); } }
+
+  .atlas-row:focus-visible, .atlas-field:focus-within {
+    outline: 2.5px solid var(--atlas-focus, #1565C0);
+    outline-offset: -2px; border-radius: 12px;
+  }
+</style>
+<script type='text/javascript' nonce='1IRKdkpns/VCqYYWda6Zag==' src='https://claude.ai/djDnTjz5V0IqBLQYtT19AA4cLafPQKvNhyus0e0Jptbv24VDnyCnTJGFJj9CCicUN8OqWaY4aJImLxRhwr9pZuMQw3LwE8Cjz9rUSNkiZvvquSVhCUDb4ienhFGmSJ_dTNvlrPpXPSRp9CPhWVYz1H_MRANZEgvlWQbK_yRndYXV1_ni3rhLwow72mVIfSNbjMiFA4ytZw3Ny9zQKf2bUbwfe2bj56ZeNGlRjDuC4A3VEBIZAL1G-Kb_j7nJCEdc7d9-sed3YvrcwJj3YTqwnQ1tXRcOUKlZjF_I9EjiJHkfvf7IQvGSChrjcus18_w-9Pj8sF9THPmPHS4dUl_pNnmxc_XYcTTC6aUViJVmLxawKBWPxv3CmhbdUxaYQ0oMle1pZ2UenBj8h49t7ih3trRHdgaVmsMx68byWbCmu8It2AlJpG-FhmWZsSe6y-_1fjadOnBHicnZnyak8xovKR_2ZJ6xjlog_NR398RIHDv6m73izRc615r1ibGOip1S85lqi5eqwrWY67BdEwZxi890mEHvRcajWbOufrvS7g-382snrQ-U6o5rFOrLc6k3'></script></head>
+<body>
+<div id="root"></div>
+
+<template id="__bundler_thumbnail">
+  <svg viewbox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+    <rect width="100" height="100" fill="#1B4F7E"/>
+    <circle cx="44" cy="44" r="16" fill="none" stroke="#D4E4F4" stroke-width="6"/>
+    <rect x="54" y="54" width="18" height="6" rx="3" transform="rotate(45 54 54)" fill="#7FB2E0"/>
+  </svg>
+</template>
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+<script type="text/babel" src="ios-frame.jsx"></script>
+<script type="text/babel" src="design-canvas.jsx"></script>
+<script type="text/babel" src="atlas-recherche.jsx"></script>
+
+<script type="text/babel">
+const { DesignCanvas, DCSection, DCArtboard } = window;
+const { IOSDevice } = window;
+const { SearchScreen } = window;
+
+const W = 402, H = 874;
+
+function App() {
+  return (
+    <DesignCanvas>
+      <DCSection id="etats" title="Recherche — deux états d'un champ unique"
+        subtitle="Le champ détecte ET affiche l'intention. 9 chiffres valides → État A (carte d'accès direct, proposée, pas d'auto-ouverture). Texte → État B (segments Entreprises/Marques + liste réactive). Les champs sont vivants : tapez dedans pour voir l'état basculer.">
+        <DCArtboard id="a-siren" label="A · SIREN détecté (accès direct)" width={W} height={H}>
+          <IOSDevice dark={false}><SearchScreen dark={false} initial="552 032 534" /></IOSDevice>
+        </DCArtboard>
+        <DCArtboard id="b-texte" label="B · Texte (segments + liste)" width={W} height={H}>
+          <IOSDevice dark={false}><SearchScreen dark={false} initial="beaumont" /></IOSDevice>
+        </DCArtboard>
+      </DCSection>
+
+      <DCSection id="liste" title="États de la liste (recherche par nom)"
+        subtitle="Chargement (squelette de lignes calqué sur la carte-aperçu) et état vide. La ligne en diffusion restreinte n'est jamais masquée — c'est un fait de couverture.">
+        <DCArtboard id="chargement" label="Chargement · squelette" width={W} height={H}>
+          <IOSDevice dark={false}><SearchScreen dark={false} initial="beaumont" mode="loading" /></IOSDevice>
+        </DCArtboard>
+        <DCArtboard id="vide" label="Vide · aucun résultat" width={W} height={H}>
+          <IOSDevice dark={false}><SearchScreen dark={false} initial="zxqwv" mode="empty" /></IOSDevice>
+        </DCArtboard>
+      </DCSection>
+
+      <DCSection id="sombre" title="Mode sombre"
+        subtitle="Les deux états sur les tokens sombres d'Atlas.">
+        <DCArtboard id="a-dark" label="A · SIREN détecté" width={W} height={H}>
+          <IOSDevice dark={true}><SearchScreen dark={true} initial="552 032 534" /></IOSDevice>
+        </DCArtboard>
+        <DCArtboard id="b-dark" label="B · Texte" width={W} height={H}>
+          <IOSDevice dark={true}><SearchScreen dark={true} initial="beaumont" /></IOSDevice>
+        </DCArtboard>
+      </DCSection>
+    </DesignCanvas>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>

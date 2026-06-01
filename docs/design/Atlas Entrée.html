@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Atlas · Écrans d'entrée</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin=""/>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&amp;family=IBM+Plex+Serif:wght@500;600;700&amp;family=IBM+Plex+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body { font-family: "IBM Plex Sans", system-ui, sans-serif; background: #ece7e1; }
+  .atlas-row:focus-visible {
+    outline: 2.5px solid var(--atlas-focus, #1565C0);
+    outline-offset: -2px; border-radius: 12px;
+  }
+</style>
+<script type='text/javascript' nonce='lY/4XbzlJHZ0Kfrza9qvPg==' src='https://claude.ai/08kxULq7oi202DMqSwItTHGwX968dqkDp11Mkylox29DO2n809fOaQn5TYO0unUznX21CdRAiXLEt32j2aeRvQm1E5VU3cbnL-XHWhzmYj6RBdiT4f2P4guqO_I3R9tHLTzfEOjfy3qUh0IYxDQ5AEkfPnIquQwrg1P0ZHPM-nQpt9w9sTCSfA8EQWi6XB5nYqxE-GzT8jDniAPtfQqsKN6sVY8QRG1zDjIJh2uiGK0I3z6cLgncGOkM9-GngugiZzYzj5sxF0oqKP0JH4f1YIitDIvFb36Eiv76dvQ-y6t00ueGl_3JjwIiGdYWpg0RvL4SO8EZVsjDFqUP7JeEBReeJ0a_fGy_FCcohSzFOVxsAaGNmKx0Cpb9DPMfvelHyxASrZddY3dfOqJnYx-nuPmXHQutR3teJruK84UnbE0z3TgirlsoENATDCeyuTjgYIdCHmfSIRkh3MUMJyqCkVHvIv2ngJvrQJYsCnW24v-zfdeFKgGSzFlpwYHfdvaHo6a0GLBAKECjey-AshRJP1vnAgvNfRE32whgB1LLr2zlhpaFrcs8TAL7O-G9ajQiHLE'></script></head>
+<body>
+<div id="root"></div>
+
+<template id="__bundler_thumbnail">
+  <svg viewbox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+    <rect width="100" height="100" fill="#1B4F7E"/>
+    <path d="M30 36l10 -5l10 5l10 -5v28l-10 5l-10 -5l-10 5z" fill="none" stroke="#D4E4F4" stroke-width="5" stroke-linejoin="round"/>
+    <path d="M40 31v28M50 36v28" stroke="#7FB2E0" stroke-width="5"/>
+  </svg>
+</template>
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+<script type="text/babel" src="ios-frame.jsx"></script>
+<script type="text/babel" src="design-canvas.jsx"></script>
+<script type="text/babel" src="atlas-auth.jsx"></script>
+
+<script type="text/babel">
+const { DesignCanvas, DCSection, DCArtboard } = window;
+const { IOSDevice } = window;
+const { AuthScreen } = window;
+
+const W = 402, H = 874;
+
+function App() {
+  return (
+    <DesignCanvas>
+      <DCSection id="entree" title="Écrans d'entrée"
+        subtitle="Sobre, institutionnel, beaucoup de blanc. Le bleu est la couleur de marque/action (jamais d'alerte). Champs à labels explicites, mot de passe jamais affiché en clair. Les écrans sont vivants et reliés : « Se connecter » / « Créer un compte » naviguent, le ‹ retour fonctionne.">
+        <DCArtboard id="ouverture" label="1 · Ouverture (choix)" width={W} height={H}>
+          <IOSDevice dark={false}><AuthScreen dark={false} screen="ouverture" /></IOSDevice>
+        </DCArtboard>
+        <DCArtboard id="connexion" label="2 · Connexion" width={W} height={H}>
+          <IOSDevice dark={false}><AuthScreen dark={false} screen="connexion" /></IOSDevice>
+        </DCArtboard>
+        <DCArtboard id="creation" label="3 · Création de compte" width={W} height={H}>
+          <IOSDevice dark={false}><AuthScreen dark={false} screen="creation" /></IOSDevice>
+        </DCArtboard>
+      </DCSection>
+
+      <DCSection id="intermediaires" title="Écrans intermédiaires"
+        subtitle="Vérification email, défi 2FA (6 cases, clavier numérique), et proposition INPI (action différable, identifiants chiffrés jamais affichés).">
+        <DCArtboard id="verif" label="4 · Vérification email" width={W} height={H}>
+          <IOSDevice dark={false}><AuthScreen dark={false} screen="verif" /></IOSDevice>
+        </DCArtboard>
+        <DCArtboard id="twofa" label="5 · Défi 2FA" width={W} height={H}>
+          <IOSDevice dark={false}><AuthScreen dark={false} screen="twofa" /></IOSDevice>
+        </DCArtboard>
+        <DCArtboard id="inpi" label="6 · Proposition INPI" width={W} height={H}>
+          <IOSDevice dark={false}><AuthScreen dark={false} screen="inpi" /></IOSDevice>
+        </DCArtboard>
+      </DCSection>
+
+      <DCSection id="sombre" title="Mode sombre"
+        subtitle="Le parcours sur les tokens sombres d'Atlas.">
+        <DCArtboard id="ouverture-dark" label="Ouverture" width={W} height={H}>
+          <IOSDevice dark={true}><AuthScreen dark={true} screen="ouverture" /></IOSDevice>
+        </DCArtboard>
+        <DCArtboard id="connexion-dark" label="Connexion" width={W} height={H}>
+          <IOSDevice dark={true}><AuthScreen dark={true} screen="connexion" /></IOSDevice>
+        </DCArtboard>
+        <DCArtboard id="twofa-dark" label="Défi 2FA" width={W} height={H}>
+          <IOSDevice dark={true}><AuthScreen dark={true} screen="twofa" /></IOSDevice>
+        </DCArtboard>
+        <DCArtboard id="inpi-dark" label="Proposition INPI" width={W} height={H}>
+          <IOSDevice dark={true}><AuthScreen dark={true} screen="inpi" /></IOSDevice>
+        </DCArtboard>
+      </DCSection>
+    </DesignCanvas>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>

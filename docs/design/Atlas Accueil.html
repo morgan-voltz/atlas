@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Atlas · Accueil — variantes de ligne</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin=""/>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&amp;family=IBM+Plex+Serif:wght@500;600&amp;family=IBM+Plex+Mono:wght@400;500&amp;display=swap" rel="stylesheet"/>
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body { font-family: "IBM Plex Sans", system-ui, sans-serif; background: #ece7e1; }
+
+  /* squelette : animation discrète, désactivée si reduced-motion */
+  .atlas-sk { position: relative; overflow: hidden; }
+  .atlas-sk::after {
+    content: ""; position: absolute; inset: 0;
+    transform: translateX(-100%);
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.45), transparent);
+    animation: atlas-shimmer 1.4s ease-in-out infinite;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .atlas-sk::after { animation: none; }
+  }
+  @keyframes atlas-shimmer { 100% { transform: translateX(100%); } }
+
+  /* focus visible : anneau (token focus), jamais une simple couleur */
+  .atlas-row:focus-visible {
+    outline: 2.5px solid var(--atlas-focus, #1565C0);
+    outline-offset: -2px; border-radius: 12px;
+  }
+</style>
+<script type='text/javascript' nonce='byaAjiWOCfFpvzf8QqNiLQ==' src='https://claude.ai/nC3jbd4p9iMz3Cj-JMvg3jzkdYLFaZQQ4yyOQUXAHEh3c0JU426olOCyB8EszpFABvsMcHCuDgv9nxIrRskhiBvEdrq9wMsR7vhyt2iR8P5yDbtQwo7BadhQeRfU7hJzYVKHXTgcqbCjFE8o2UqsQzvA6fvsBxJ28wb2zKBgbYQRyKirNDphvYZfbVb04J__pWGK-66A7Eh-un4gAdP_-bVnnnErDlvaU9GBhpvWSzuTBPAE-nfgJtJsnt8frPfV_k86L2qyqztWkAek1Q6HUKwJ-FHnFYD_xbPLzP-4vbv0-kecDk0RfbGqooxm0No_0D2xXiilPWBiB6u4gzi1rZoxV54jWA6-TTF9mLNNYM1zZIRv9Bwky3SBv1v0EmBda7CjjQbL8zD0DFi2zfOeKu_cMXgoxzYBwBcqFqp9R5xUWBgIIoGVQqazT2Pdt-FVbYCtOFV6otRzbtK_D6goBG0CRhHjfZQxesgINjr7ToLF9tS_GA0bG02QnCWqYmrfcpmt__37Xk-XCklcuo-NZBRKrUQ1om9rH9mLJEtNtpBXG9h9XbHVnrNYXvQCZg'></script></head>
+<body>
+<div id="root"></div>
+
+<template id="__bundler_thumbnail">
+  <svg viewbox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+    <rect width="100" height="100" fill="#1B4F7E"/>
+    <rect x="30" y="30" width="40" height="9" rx="2" fill="#D4E4F4"/>
+    <rect x="30" y="46" width="40" height="6" rx="2" fill="#7FB2E0"/>
+    <rect x="30" y="60" width="28" height="6" rx="2" fill="#7FB2E0"/>
+  </svg>
+</template>
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+<script type="text/babel" src="ios-frame.jsx"></script>
+<script type="text/babel" src="design-canvas.jsx"></script>
+<script type="text/babel" src="atlas-feed.jsx"></script>
+
+<script type="text/babel">
+const { DesignCanvas, DCSection, DCArtboard } = window;
+const { IOSDevice } = window;
+const { FeedScreen, EmptyScreen, LoadingScreen, EndScreen, ErrorScreen } = window;
+
+const W = 402, H = 874;
+const Phone = ({ dark, children }) => (
+  <IOSDevice dark={dark}>{children}</IOSDevice>
+);
+
+function App() {
+  return (
+    <DesignCanvas>
+      <DCSection id="retenu" title="Fil Accueil — C · Rail chronologique"
+        subtitle="Variante retenue. Timeline regroupée par date, nœuds lu/non-lu (pastille + graisse), libellé d'événement mis en avant, source + date sur la ligne méta. Toute la ligne tappable (≥ 44 px) ; libellé = fait.">
+        <DCArtboard id="c-light" label="Clair" width={W} height={H}>
+          <Phone dark={false}><FeedScreen variant="C" dark={false} /></Phone>
+        </DCArtboard>
+        <DCArtboard id="c-dark" label="Sombre" width={W} height={H}>
+          <Phone dark={true}><FeedScreen variant="C" dark={true} /></Phone>
+        </DCArtboard>
+      </DCSection>
+
+      <DCSection id="etats" title="États du fil (sur la base C)"
+        subtitle="Vide d'onboarding (amorce la boucle chercher → suivre), squelette calqué sur l'anatomie de la ligne, fin de liste « à jour », et erreur de SOURCE — un élément local : le fil agrège plusieurs sources, si l'une tombe le reste s'affiche. success/error réservés aux états système.">
+        <DCArtboard id="vide" label="Vide · onboarding" width={W} height={H}>
+          <Phone dark={false}><EmptyScreen dark={false} /></Phone>
+        </DCArtboard>
+        <DCArtboard id="chargement" label="Chargement · squelette" width={W} height={H}>
+          <Phone dark={false}><LoadingScreen dark={false} /></Phone>
+        </DCArtboard>
+        <DCArtboard id="fin" label="Fin de liste · à jour" width={W} height={H}>
+          <Phone dark={false}><EndScreen dark={false} /></Phone>
+        </DCArtboard>
+        <DCArtboard id="erreur-source" label="Erreur de source (locale)" width={W} height={H}>
+          <Phone dark={false}><ErrorScreen dark={false} /></Phone>
+        </DCArtboard>
+      </DCSection>
+    </DesignCanvas>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>
