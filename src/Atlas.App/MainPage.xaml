@@ -74,6 +74,29 @@
                        State="Error"
                        ErrorMessage="Le chargement des dirigeants a échoué." />
 
+        <!-- List-detail à 2 panneaux (doc 14 §3) -->
+        <TextBlock Text="List-detail à 2 panneaux (doc 14 §3)" FontWeight="SemiBold" Foreground="{ThemeResource AtlasOnSurfaceBrush}" />
+        <Border Padding="16" Background="{ThemeResource AtlasSurfaceBrush}" CornerRadius="{ThemeResource AtlasRadiusMd}">
+          <c:ListDetailView x:Name="ListDetail" BackLabel="← Résultats" MinHeight="220">
+            <!-- Liste (contenu par défaut) -->
+            <StackPanel x:Name="LdList" Spacing="2">
+              <c:CompanySummaryCard x:Name="LdCard1" Tapped="OnResultTapped" />
+              <c:CompanySummaryCard x:Name="LdCard2" Tapped="OnResultTapped" />
+              <c:CompanySummaryCard x:Name="LdCard3" Tapped="OnResultTapped" />
+            </StackPanel>
+            <c:ListDetailView.DetailContent>
+              <c:SectionCard x:Name="LdDetail" Title="Sélectionnez un résultat" Source="RNE (INPI)">
+                <c:LabeledField Label="État" x:Name="LdDetailField" />
+              </c:SectionCard>
+            </c:ListDetailView.DetailContent>
+          </c:ListDetailView>
+        </Border>
+
+        <!-- Fil de veille (FeedEventCard) -->
+        <TextBlock Text="Fil de veille (FeedEventCard)" FontWeight="SemiBold" Foreground="{ThemeResource AtlasOnSurfaceBrush}" />
+        <c:FeedEventCard x:Name="Feed1" />
+        <c:FeedEventCard x:Name="Feed2" />
+
       </StackPanel>
     </ScrollViewer>
   </c:RailShell>

@@ -6,3 +6,23 @@ namespace Atlas.App.Models;
 
 /// <summary>Résultat résumé d'une entreprise (liste de recherche, favoris).</summary>
 public sealed record CompanySummaryResponse(string Siren, string Denomination, string? Ville, string? NafCode);
+
+/// <summary>Mention d'un favori dans un item de veille (puce navigable vers la fiche).</summary>
+public sealed record FavoriteMentionResponse(string Siren, string Name);
+
+/// <summary>
+/// Élément de la timeline unifiée (<c>GET /feed/timeline</c>). <see cref="Kind"/> discrimine
+/// <c>"RssItem"</c> (item de flux) et <c>"FavoriteEvent"</c> (mouvement RNE/BODACC d'un favori).
+/// Sous-ensemble des champs consommés par la carte (calé sur Atlas.Web.Client).
+/// </summary>
+public sealed record TimelineItemResponse(
+    string Kind,
+    System.Guid Id,
+    string Title,
+    string? Url,
+    string? Summary,
+    System.DateTimeOffset OccurredAt,
+    bool IsRead,
+    int SourceCount,
+    System.Collections.Generic.IReadOnlyList<FavoriteMentionResponse> MentionedFavorites,
+    string? EventSiren);
