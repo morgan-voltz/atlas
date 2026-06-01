@@ -1,0 +1,4 @@
+# Secrets et données de préprod — jamais commités (ADR-019 §5).
+.env
+secrets/
+backups/

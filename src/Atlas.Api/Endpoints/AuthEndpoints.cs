@@ -18,7 +18,11 @@ namespace Atlas.Api.Endpoints;
 internal static class AuthEndpoints
 {
     private const string RefreshCookieName = "atlas_refresh";
-    private const string CookiePath = "/auth";
+    // Path racine (et non "/auth") pour rester valide derrière un reverse proxy qui retire un préfixe
+    // (préprod ADR-019 : le client appelle /api/auth/* mais l'API reçoit /auth/*). Le cookie reste
+    // HttpOnly + Secure + SameSite=Strict ; un Path racine le rend simplement joignable quelle que soit
+    // la façon dont le proxy réécrit le chemin.
+    private const string CookiePath = "/";
 
     public static IEndpointRouteBuilder MapAuthEndpoints(this IEndpointRouteBuilder routes)
     {

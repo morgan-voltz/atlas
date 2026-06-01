@@ -17,6 +17,8 @@ using Atlas.Infrastructure.Veille;
 using Hangfire;
 using Hangfire.PostgreSql;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.HttpOverrides;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Serilog;
 
@@ -36,6 +38,20 @@ builder.Services.AddProblemDetails();
 
 // CORS strict + rate limiting (Lot 2b audit). Hors Development, exige au moins une origine CORS.
 builder.Services.AddApiSecurity(builder.Configuration, builder.Environment);
+
+// Derrière un reverse proxy TLS (préprod ADR-019, domaine unique) : honorer X-Forwarded-Proto/-For
+// pour le scheme (UseHttpsRedirection) et l'IP client réelle (rate limiting). Le proxy vit dans le
+// réseau Docker maîtrisé, donc on n'impose pas de liste de proxies de confiance. Activé par config.
+bool behindProxy = builder.Configuration.GetValue("ForwardedHeaders:Enabled", false);
+if (behindProxy)
+{
+    builder.Services.Configure<ForwardedHeadersOptions>(options =>
+    {
+        options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+        options.KnownIPNetworks.Clear();
+        options.KnownProxies.Clear();
+    });
+}
 
 // Couches applicatives et adapters d'infrastructure.
 builder.Services.AddApplication();
@@ -115,6 +131,21 @@ builder.Services
 builder.Services.AddAuthorization();
 
 var app = builder.Build();
+
+// Derrière le reverse proxy : doit être le tout premier middleware (réécrit scheme/IP en amont).
+if (behindProxy)
+{
+    app.UseForwardedHeaders();
+}
+
+// Préprod single-VPS (ADR-019) : applique les migrations EF au démarrage si demandé (pas de CI/étape
+// de migration séparée). Désactivé par défaut ; activé via Database:MigrateOnStartup=true.
+if (builder.Configuration.GetValue("Database:MigrateOnStartup", false))
+{
+    using IServiceScope migrationScope = app.Services.CreateScope();
+    AtlasDbContext database = migrationScope.ServiceProvider.GetRequiredService<AtlasDbContext>();
+    await database.Database.MigrateAsync();
+}
 
 if (app.Environment.IsDevelopment())
 {
