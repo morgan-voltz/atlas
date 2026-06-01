@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<UserControl
+    x:Class="Atlas.App.Presentation.Controls.RailShell"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:muxc="using:Microsoft.UI.Xaml.Controls">
+
+  <!-- Présentation des 5 destinations (doc 12 §3) en rail latéral (doc 14 §2). NavigationView :
+       mode Left au format large, repli compact (menu) au format réduit. Plafond : jamais de 6e entrée.
+       La sélection est présentationnelle ici ; le routage est câblé à U4. -->
+  <muxc:NavigationView x:Name="Nav"
+                       IsSettingsVisible="False"
+                       IsBackButtonVisible="Collapsed"
+                       PaneDisplayMode="Auto"
+                       Background="{ThemeResource AtlasBgBrush}">
+
+    <muxc:NavigationView.PaneHeader>
+      <TextBlock Text="Atlas"
+                 Margin="4,4,0,4"
+                 FontFamily="{ThemeResource AtlasFontHeading}"
+                 FontSize="20"
+                 FontWeight="Bold"
+                 Foreground="{ThemeResource AtlasOnSurfaceBrush}" />
+    </muxc:NavigationView.PaneHeader>
+
+    <muxc:NavigationView.MenuItems>
+      <muxc:NavigationViewItem Content="Accueil" Tag="accueil" IsSelected="True">
+        <muxc:NavigationViewItem.Icon>
+          <FontIcon Glyph="&#xE80F;" />
+        </muxc:NavigationViewItem.Icon>
+      </muxc:NavigationViewItem>
+      <muxc:NavigationViewItem Content="Recherche" Tag="recherche">
+        <muxc:NavigationViewItem.Icon>
+          <FontIcon Glyph="&#xE721;" />
+        </muxc:NavigationViewItem.Icon>
+      </muxc:NavigationViewItem>
+      <muxc:NavigationViewItem Content="Veille" Tag="veille">
+        <muxc:NavigationViewItem.Icon>
+          <FontIcon Glyph="&#xE789;" />
+        </muxc:NavigationViewItem.Icon>
+      </muxc:NavigationViewItem>
+      <muxc:NavigationViewItem Content="Favoris" Tag="favoris">
+        <muxc:NavigationViewItem.Icon>
+          <FontIcon Glyph="&#xE734;" />
+        </muxc:NavigationViewItem.Icon>
+      </muxc:NavigationViewItem>
+      <muxc:NavigationViewItem Content="Profil" Tag="profil">
+        <muxc:NavigationViewItem.Icon>
+          <FontIcon Glyph="&#xE77B;" />
+        </muxc:NavigationViewItem.Icon>
+      </muxc:NavigationViewItem>
+    </muxc:NavigationView.MenuItems>
+
+    <!-- Zone principale -->
+    <ContentPresenter Content="{x:Bind PageContent, Mode=OneWay}" />
+
+  </muxc:NavigationView>
+
+</UserControl>

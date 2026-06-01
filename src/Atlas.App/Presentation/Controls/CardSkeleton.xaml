@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<UserControl
+    x:Class="Atlas.App.Presentation.Controls.CardSkeleton"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    AutomationProperties.AccessibilityView="Raw">
+
+  <!-- Squelette d'une carte-aperçu pendant le chargement d'une liste (doc 12 §11/§14) : occupe la
+       forme du contenu à venir. Purement visuel ; l'annonce « Chargement… » reste portée par le
+       parent. (Animation shimmer différée — tranche U3 suivante ; statique = sûr reduced-motion.) -->
+  <Border Padding="14,13"
+          BorderThickness="0,0,0,1"
+          BorderBrush="{ThemeResource AtlasSurfaceVariantBrush}">
+    <StackPanel Spacing="8">
+      <Border Height="14" Width="160" HorizontalAlignment="Left"
+              CornerRadius="{ThemeResource AtlasRadiusSm}"
+              Background="{ThemeResource AtlasSurfaceVariantBrush}" />
+      <Border Height="11" Width="240" HorizontalAlignment="Left"
+              CornerRadius="{ThemeResource AtlasRadiusSm}"
+              Background="{ThemeResource AtlasSurfaceVariantBrush}" />
+    </StackPanel>
+  </Border>
+
+</UserControl>
