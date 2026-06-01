@@ -14,6 +14,12 @@ public sealed record AccessTokenResponse(string AccessToken, System.DateTimeOffs
 /// <summary>Résultat résumé d'une entreprise (liste de recherche, favoris).</summary>
 public sealed record CompanySummaryResponse(string Siren, string Denomination, string? Ville, string? NafCode);
 
+/// <summary>Élément de <c>GET /favorites/companies</c> (entreprise suivie — F-017).</summary>
+public sealed record CompanyFavoriteResponse(string Siren, string? Name, System.DateTimeOffset AddedAt);
+
+/// <summary>Corps de <c>POST /favorites/companies</c>.</summary>
+public sealed record AddCompanyFavoriteRequest(string Siren, string? Name);
+
 /// <summary>Adresse postale (siège). Champs optionnels selon la couverture RNE.</summary>
 public sealed record AddressResponse(string? Line, string? PostalCode, string? City, string? Country);
 

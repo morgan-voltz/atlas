@@ -125,6 +125,54 @@ public sealed class AtlasApiClient(HttpClient httpClient, ITokenStore tokenStore
             paged?.Items ?? System.Array.Empty<CompanySummaryResponse>());
     }
 
+    /// <summary>Entreprises suivies (<c>GET /favorites/companies</c>, F-017). Base locale — pas d'INPI requis.</summary>
+    public async Task<Result<IReadOnlyList<CompanyFavoriteResponse>>> GetFavoriteCompaniesAsync(CancellationToken ct = default)
+    {
+        try
+        {
+            IReadOnlyList<CompanyFavoriteResponse>? favorites = await httpClient
+                .GetFromJsonAsync("favorites/companies", AtlasJsonContext.Default.IReadOnlyListCompanyFavoriteResponse, ct)
+                .ConfigureAwait(false);
+            return Result<IReadOnlyList<CompanyFavoriteResponse>>.Ok(favorites ?? Array.Empty<CompanyFavoriteResponse>());
+        }
+        catch (HttpRequestException)
+        {
+            return Result<IReadOnlyList<CompanyFavoriteResponse>>.Fail(ApiErrors.Unreachable());
+        }
+    }
+
+    /// <summary>Suit une entreprise (<c>POST /favorites/companies</c>).</summary>
+    public async Task<Result> AddFavoriteCompanyAsync(string siren, string? name, CancellationToken ct = default)
+    {
+        try
+        {
+            using HttpResponseMessage response = await httpClient
+                .PostAsJsonAsync("favorites/companies", new AddCompanyFavoriteRequest(siren, name), AtlasJsonContext.Default.AddCompanyFavoriteRequest, ct)
+                .ConfigureAwait(false);
+            return response.IsSuccessStatusCode ? Result.Ok() : Result.Fail(ApiErrors.RequestFailed((int)response.StatusCode));
+        }
+        catch (HttpRequestException)
+        {
+            return Result.Fail(ApiErrors.Unreachable());
+        }
+    }
+
+    /// <summary>Ne suit plus une entreprise (<c>DELETE /favorites/companies/{siren}</c>).</summary>
+    public async Task<Result> RemoveFavoriteCompanyAsync(string siren, CancellationToken ct = default)
+    {
+        try
+        {
+            using HttpResponseMessage response = await httpClient
+                .DeleteAsync($"favorites/companies/{Uri.EscapeDataString(siren)}", ct)
+                .ConfigureAwait(false);
+            return response.IsSuccessStatusCode ? Result.Ok() : Result.Fail(ApiErrors.RequestFailed((int)response.StatusCode));
+        }
+        catch (HttpRequestException)
+        {
+            return Result.Fail(ApiErrors.Unreachable());
+        }
+    }
+
     /// <summary>Statut de la connexion INPI (<c>GET /inpi/connection</c>, F-003) — sans aucun secret.</summary>
     public async Task<Result<InpiConnectionStatusResponse>> GetInpiStatusAsync(CancellationToken ct = default)
     {
