@@ -745,7 +745,7 @@ Implémentations concrètes des ports, dans `Atlas.Infrastructure.*`.
 
 ### 8.2 Atlas.Maui
 
-> ⛔ **Transitoire (ADR-029)** — Cette section documente l'adapter MAUI tel qu'amorcé en MVP 1. La cible est **`Atlas.App` (Uno)** ; le détail ci-dessous reste pour référence (les patterns MVVM, `AtlasApiClient`, stockage local et résilience Polly se transposent à Uno) jusqu'à la réécriture à l'intégration Uno.
+> ⛔ **Transitoire (ADR-029)** — Cette section documente l'ancien adapter **MAUI** (amorce F-009/F-010), conservée pour référence. La cible **`Atlas.App` (Uno)** est désormais **intégrée au repo** et couvre le parcours réel (auth/INPI/recherche/fiche/favoris/veille) : son `AtlasApiClient` reste l'unique point d'entrée HTTP (ADR-002), avec en plus DI (`Microsoft.Extensions`), `AuthHeaderHandler`/`SessionRefreshHandler` et un kit XAML. Voir `docs/10` §4.13 et `docs/15` §7. Les patterns ci-dessous (MVVM, client typé, cache local) restent valables.
 
 **Stack** : .NET MAUI sur .NET 9
 

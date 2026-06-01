@@ -1,6 +1,6 @@
 # Layout de la solution .NET — projet Atlas
 
-> ✅ **ADR-029 (UI unifiée Uno Platform)** — Ce layout décrit désormais la couche cliente cible **`Atlas.App`** (Uno, single project, C#/XAML WinUI, six cibles : WebAssembly + desktop Skia Win/macOS/Linux + iOS/Android), qui **remplace** `Atlas.Maui` (jamais créé), le desktop Avalonia (ADR-026) et le client web Blazor `Atlas.Web`/`Atlas.Web.Client` (ADR-017). **Transition** : tant que le **spike Uno multi-cible** n'est pas concluant, le client Blazor `Atlas.Web.Client` reste l'app web en vigueur et n'est **retiré qu'après** ce spike (garde-fou ADR-029). Le projet `Atlas.App` n'est pas encore intégré au repo (chantier séparé : CPM/`global.json`, NetArchTest, matrice CI).
+> ✅ **ADR-029 (UI unifiée Uno Platform)** — Ce layout décrit la couche cliente cible **`Atlas.App`** (Uno, single project, C#/XAML WinUI), qui **remplace** `Atlas.Maui` (projet réel, amorce F-009/F-010), le desktop Avalonia (ADR-026) et le client web Blazor `Atlas.Web`/`Atlas.Web.Client` (ADR-017). **`Atlas.App` est intégré au repo** (PR #120 : `Uno.Sdk` pin dans `global.json`, CPM isolé, test NetArchTest, job CI `uno-build`) et couvre désormais le parcours réel (auth/INPI/recherche/fiche/favoris/veille — cf. `docs/15` §7, U4). **Têtes ciblées actuellement : `net10.0-browserwasm` + `net10.0-desktop`** (Skia : Win/macOS/Linux) ; les têtes **iOS/Android/macCatalyst restent à ajouter**. **Transition** : le client Blazor `Atlas.Web.Client` reste l'app web en vigueur et n'est **retiré qu'après** un spike Uno multi-cible (Linux/mobile) concluant (garde-fou ADR-029, U5).
 
 > Spécification complète de la structure physique de la solution **`Atlas.sln`** : arborescence des dossiers, liste des projets `.csproj`, frameworks cibles, références inter-projets, fichiers de configuration centralisés, et commandes `dotnet` pour reproduire la solution depuis zéro.
 > Ce document traduit en structure concrète les décisions prises dans les ADRs (doc 01) et l'architecture détaillée (doc 09).
@@ -432,11 +432,11 @@ Les packages NuGet typiques incluent `Microsoft.AspNetCore.App` (framework refer
 
 ### 4.13 Atlas.App (client Uno)
 
-Le projet `Atlas.App` est l'**application cliente unique** d'Atlas, écrite une seule fois en **C#/XAML (dialecte WinUI)** avec **Uno Platform** et projetée sur **six cibles** (cf. **ADR-029**) : `net10.0-browserwasm` (web), `net10.0-desktop` (Skia — couvre Windows, macOS et **Linux**), `net10.0-android`, `net10.0-ios` et `net10.0-maccatalyst`. C'est un **single project** Uno (`<Project Sdk="Uno.Sdk">`, `UnoSingleProject`) : un seul `.csproj` multi-cible, le code spécifique à chaque tête vivant sous `Platforms/`.
+Le projet `Atlas.App` est l'**application cliente unique** d'Atlas, écrite une seule fois en **C#/XAML (dialecte WinUI)** avec **Uno Platform** (cf. **ADR-029**). C'est un **single project** Uno (`<Project Sdk="Uno.Sdk">`, `UnoSingleProject`) : un seul `.csproj` multi-cible, le code spécifique à chaque tête vivant sous `Platforms/`. **Têtes activées à ce jour** : `net10.0-browserwasm` (web) et `net10.0-desktop` (Skia — couvre Windows, macOS et **Linux**). Les têtes **`net10.0-android`, `net10.0-ios`, `net10.0-maccatalyst`** sont prévues (vocation 6 cibles) mais **pas encore ajoutées** (workloads mobiles / runner macOS). Structure interne réelle : `Presentation/Controls` (kit XAML), `Presentation/Pages` (5 destinations + Login), `Services` (DI + `AtlasApiClient` + handlers auth/refresh), `Models` (DTOs client + `JsonSerializerContext`).
 
 Il référence uniquement `Atlas.Domain` et `Atlas.Shared`, conformément à la règle de sécurité énoncée dans la doc 09 et **ADR-002** : le client — y compris la tête WebAssembly, décompilable dans le navigateur — ne doit jamais accéder au code `Infrastructure` (détails techniques et secrets). Cette règle est **verrouillée par un test NetArchTest dédié**, exactement comme prévu pour l'ancien `Atlas.Maui`/`Atlas.Web.Client`.
 
-> **Transition (ADR-029)** : `Atlas.App` (Uno) **remplace** `Atlas.Maui` (jamais créé), le desktop Avalonia (ADR-026) et le client web Blazor `Atlas.Web`/`Atlas.Web.Client` (ADR-017). En attendant un **spike Uno multi-cible concluant**, le client Blazor `Atlas.Web.Client` reste l'app web en vigueur (et n'est retiré qu'après ce spike).
+> **Transition (ADR-029)** : `Atlas.App` (Uno) **remplace** `Atlas.Maui` (projet réel, amorce F-009/F-010), le desktop Avalonia (ADR-026) et le client web Blazor `Atlas.Web`/`Atlas.Web.Client` (ADR-017). En attendant un **spike Uno multi-cible concluant**, le client Blazor `Atlas.Web.Client` reste l'app web en vigueur (et n'est retiré qu'après ce spike, U5).
 
 La section suivante développe les particularités de ce projet multi-cible.
 
@@ -469,11 +469,12 @@ La déclaration repose sur le SDK Uno et ressemble à ceci :
 ```xml
 <Project Sdk="Uno.Sdk">
   <PropertyGroup>
-    <TargetFrameworks>net10.0-browserwasm;net10.0-desktop;net10.0-android;net10.0-ios;net10.0-maccatalyst</TargetFrameworks>
+    <!-- Têtes activées à ce jour (browserwasm + desktop Skia). Ajouter android/ios/maccatalyst
+         quand les workloads mobiles / un runner macOS seront en place. -->
+    <TargetFrameworks>net10.0-browserwasm;net10.0-desktop</TargetFrameworks>
     <OutputType>Exe</OutputType>
     <UnoSingleProject>true</UnoSingleProject>
-    <!-- Activation déclarative de briques Uno (rendu, extensions…) -->
-    <UnoFeatures>SkiaRenderer;Hosting;Http;Mvvm;</UnoFeatures>
+    <UnoFeatures>SkiaRenderer;</UnoFeatures>
   </PropertyGroup>
 </Project>
 ```
@@ -848,7 +849,7 @@ Pour servir de référence rapide, voici le tableau récapitulatif des référen
 | Atlas.Application.Premium | net10.0 |
 | Atlas.Infrastructure.* | net10.0 |
 | Atlas.Api | net10.0 |
-| Atlas.App (Uno) | net10.0-browserwasm, net10.0-desktop, net10.0-android, net10.0-ios, net10.0-maccatalyst |
+| Atlas.App (Uno) | net10.0-browserwasm, net10.0-desktop *(android/ios/maccatalyst : prévues, pas encore activées)* |
 | Tous les projets de tests | net10.0 |
 
 ### A.3 Checklist de mise en place
