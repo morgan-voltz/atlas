@@ -485,4 +485,302 @@ function RechercheWeb({ dark = false, layout = 'desktop',
   );
 }
 
-Object.assign(window, { RechercheWeb });
+// ═══════════════════════════════════════════════════════════════════════════
+// Accueil (feed) & Veille — composants web responsive (desktop ↔ narrow)
+// Mêmes tokens/rail/onglets que RechercheWeb. narrow = format intermédiaire
+// (640–880 px) : rail → barre d'onglets, panneaux empilés (doc 14 §3).
+// ═══════════════════════════════════════════════════════════════════════════
+
+// Glyphes complémentaires (absents du jeu web-core) — tracés Tabler.
+const WX = {
+  'arrow-up':'<path d="M12 5l0 14"/><path d="M18 11l-6 -6"/><path d="M6 11l6 -6"/>',
+  'adjustments':'<path d="M14 6m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0"/><path d="M4 6l8 0"/><path d="M16 6l4 0"/><path d="M8 12m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0"/><path d="M4 12l2 0"/><path d="M10 12l10 0"/><path d="M17 18m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0"/><path d="M4 18l11 0"/><path d="M19 18l1 0"/>',
+  'filter':'<path d="M4 4h16v2.172a2 2 0 0 1 -.586 1.414l-4.414 4.414v7l-6 2v-8.5l-4.48 -4.928a2 2 0 0 1 -.52 -1.345v-2.227z"/>',
+  'archive':'<path d="M3 4m0 2a2 2 0 0 1 2 -2h14a2 2 0 0 1 2 2v0a2 2 0 0 1 -2 2h-14a2 2 0 0 1 -2 -2z"/><path d="M5 8v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-10"/><path d="M10 12l4 0"/>',
+  'circle':'<path d="M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0"/>',
+  'external-link':'<path d="M12 6h-6a2 2 0 0 0 -2 2v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-6"/><path d="M11 13l9 -9"/><path d="M15 4h5v5"/>',
+};
+function Glyph({ name, size = 20, color = 'currentColor', stroke = 1.9, style = {} }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color}
+      strokeWidth={stroke} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"
+      style={{ flexShrink:0, display:'block', ...style }}
+      dangerouslySetInnerHTML={{ __html: WX[name] || '' }} />
+  );
+}
+
+// ── Données ──────────────────────────────────────────────────────────────────
+const FEED_EVENTS = [
+  { id:1, name:'Ateliers Beaumont', form:'SAS', label:'Nouveau dépôt de comptes annuels', source:'BODACC', when:"Aujourd'hui · 09:14", group:"Aujourd'hui", unread:true },
+  { id:2, name:'Maïa Conseil', form:'SARL', label:'Changement de gérant', source:'RNE', when:"Aujourd'hui · 08:02", group:"Aujourd'hui", unread:true },
+  { id:3, name:'Néo Mobilités', form:'SAS', label:'Augmentation de capital', source:'BODACC', when:"Aujourd'hui · 07:30", group:"Aujourd'hui", unread:true },
+  { id:4, name:'Groupe Vidal Logistique', form:'SA', label:'Transfert de siège social', source:'RNE', when:'Hier · 17:48', group:'Hier', unread:false },
+  { id:5, name:'SCI du Vieux Port', form:'SCI', label:'Dépôt d’acte — modification statutaire', source:'RNE', when:'Hier · 11:20', group:'Hier', unread:false },
+  { id:6, name:'Comptoir Pharmaceutique Lyonnais', form:'SA', label:'Ouverture d’une procédure de sauvegarde', source:'BODACC', when:'Hier · 09:05', group:'Hier', unread:false },
+];
+const FEED_GROUPS = ["Aujourd'hui",'Hier'];
+const VEILLE_ARTICLES = [
+  { id:1, source:'Les Échos', date:'il y a 2 h', dedup:3, unread:true, read:false, fav:false,
+    title:'Réforme de la facturation électronique : le calendrier 2026 précisé',
+    summary:"L'administration publie les modalités d'application pour les PME et précise les obligations de transmission.",
+    mentions:'Ateliers Beaumont' },
+  { id:2, source:'Légifrance', date:'il y a 5 h', dedup:0, unread:true, read:false, fav:false,
+    title:'Décret relatif aux seuils de présentation des comptes',
+    summary:"Le texte relève les seuils en deçà desquels une présentation simplifiée des comptes annuels est admise." },
+  { id:3, source:'INSEE', date:'il y a 8 h', dedup:0, unread:true, read:false, fav:true,
+    title:'Défaillances d’entreprises : note de conjoncture du 1ᵉʳ trimestre',
+    summary:"Le nombre d'ouvertures de procédures collectives se stabilise après deux trimestres de hausse." },
+  { id:4, source:'Banque de France', date:'hier', dedup:0, unread:false, read:true, fav:false,
+    title:'Statistiques de crédit aux entreprises — T1 2026',
+    summary:"L'encours de crédit mobilisé progresse légèrement sur le trimestre, porté par les TPE." },
+];
+
+// ── Atomes communs ────────────────────────────────────────────────────────────
+function SourcePill({ t, children }) {
+  return (
+    <span style={{ flexShrink:0, fontSize:11.5, fontWeight:600, letterSpacing:'0.03em',
+      padding:'3px 8px', borderRadius:7, background:t.surfaceVariant, color:t.onSurfaceVariant,
+      whiteSpace:'nowrap' }}>{children}</span>
+  );
+}
+function DedupPill({ t, n }) {
+  return (
+    <span style={{ fontSize:11, color:t.onSurfaceVariant, background:t.surfaceVariant,
+      padding:'2px 8px', borderRadius:6, fontWeight:500 }}>{n} sources rapportent</span>
+  );
+}
+function DateHeadW({ t, label }) {
+  return (
+    <div style={{ fontSize:11.5, fontWeight:700, letterSpacing:'0.07em', textTransform:'uppercase',
+      color:t.onSurfaceVariant, padding:'18px 4px 8px' }}>{label}</div>
+  );
+}
+function UpToDateW({ t }) {
+  return (
+    <div style={{ textAlign:'center', padding:'26px 16px 34px', display:'flex',
+      flexDirection:'column', alignItems:'center' }}>
+      <Icon name="circle-check" size={20} color={t.success} />
+      <p style={{ margin:'7px 0 0', fontSize:13.5, fontWeight:700, color:t.onSurface, fontFamily:WSANS }}>Vous êtes à jour</p>
+      <p style={{ margin:'3px 0 0', fontSize:12, color:t.onSurfaceVariant }}>Dernière mise à jour il y a 3 minutes</p>
+    </div>
+  );
+}
+
+// ── Accueil (feed) ─────────────────────────────────────────────────────────────
+function FeedEventCard({ t, e }) {
+  return (
+    <div role="article" tabIndex={0} className="atlas-row" style={{
+      display:'flex', alignItems:'center', gap:12, padding:'13px 15px', cursor:'pointer',
+      background:t.surface, border:`1px solid ${t.hairline}`,
+      borderLeft:`3px solid ${e.unread ? t.primary : t.hairline}`,
+      borderRadius:13, marginBottom:8, boxShadow:t.shadow }}>
+      {e.unread && <span style={{ width:8, height:8, borderRadius:'50%', background:t.primary, flexShrink:0 }} />}
+      <div style={{ flex:1, minWidth:0 }}>
+        <p style={{ margin:0, fontSize:15, lineHeight:1.25, color:t.onSurface, fontWeight: e.unread ? 700 : 600,
+          whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>
+          {e.name}<span style={{ fontWeight:400, color:t.onSurfaceVariant }}> · {e.form}</span></p>
+        <p style={{ margin:'3px 0 0', fontSize:13, lineHeight:1.3, color:t.onSurfaceVariant,
+          whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{e.label} · {e.when}</p>
+      </div>
+      <SourcePill t={t}>{e.source}</SourcePill>
+      <Icon name="chevron-right" size={18} color={t.outline} />
+    </div>
+  );
+}
+function FeedColumn({ t, banner }) {
+  return (
+    <div>
+      {banner && (
+        <button className="atlas-row" style={{ width:'100%', minHeight:44, display:'flex',
+          alignItems:'center', justifyContent:'center', gap:8, borderRadius:11, border:'none', cursor:'pointer',
+          background:t.primaryContainer, color:t.onPrimaryContainer, fontFamily:WSANS, fontSize:13.5, fontWeight:700 }}>
+          <Glyph name="arrow-up" size={16} color={t.onPrimaryContainer} />
+          <span>3 nouveaux mouvements · afficher</span>
+        </button>
+      )}
+      {FEED_GROUPS.map(g => (
+        <div key={g}>
+          <DateHeadW t={t} label={g} />
+          {FEED_EVENTS.filter(e => e.group === g).map(e => <FeedEventCard key={e.id} t={t} e={e} />)}
+        </div>
+      ))}
+      <UpToDateW t={t} />
+    </div>
+  );
+}
+function AccueilHeader({ t }) {
+  return (
+    <div style={{ marginBottom:6 }}>
+      <h1 style={{ margin:0, fontFamily:WSERIF, fontWeight:600, fontSize:28, lineHeight:1.05,
+        color:t.onSurface, letterSpacing:'-0.01em' }}>Accueil</h1>
+      <p style={{ margin:'6px 0 0', fontSize:14, color:t.onSurfaceVariant }}>
+        Les mouvements de vos entités suivies, du plus récent au plus ancien · 12 suivies</p>
+      <div style={{ display:'flex', alignItems:'center', gap:6, marginTop:11, fontSize:12.5, color:t.outline }}>
+        <Icon name="shield-check" size={14} color={t.outline} />
+        <span>Trié par date · récents d'abord</span>
+      </div>
+    </div>
+  );
+}
+function AccueilWeb({ dark = false, layout = 'desktop' }) {
+  const t = TW(dark);
+  const narrow = layout === 'narrow';
+  const wrap = { height:'100%', display:'flex', background:t.background, color:t.onSurface,
+    fontFamily:WSANS, WebkitFontSmoothing:'antialiased', overflow:'hidden' };
+  // Le feed est du contenu de LECTURE → colonne à largeur plafonnée (doc 14 §3, patron « document centré »).
+  const column = (
+    <div style={{ flex:1, overflow:'auto' }}>
+      <div style={{ maxWidth:680, margin:'0 auto', padding: narrow ? '20px 16px 16px' : '30px 32px 28px' }}>
+        <AccueilHeader t={t} />
+        <FeedColumn t={t} banner />
+      </div>
+    </div>
+  );
+  if (!narrow) {
+    return <div style={wrap}><RailNav t={t} active="accueil" />{column}</div>;
+  }
+  return (
+    <div style={{ ...wrap, flexDirection:'column' }}>
+      {column}
+      <BottomTabBar t={t} active="accueil" />
+    </div>
+  );
+}
+
+// ── Veille (list-detail éditorial) ──────────────────────────────────────────────
+function VeilleRow({ t, a, selected, onSelect }) {
+  return (
+    <div role="option" aria-selected={selected} tabIndex={0} onClick={onSelect}
+      className="atlas-row" style={{
+        padding:'12px 14px', cursor:'pointer', borderRadius:12, marginBottom:2,
+        opacity: a.read ? 0.6 : 1,
+        background: selected ? t.primaryContainer : 'transparent',
+        boxShadow: selected ? `inset 3px 0 0 ${t.primary}` : 'none' }}>
+      <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:4 }}>
+        {a.unread && <span style={{ width:7, height:7, borderRadius:'50%', background:t.info, flexShrink:0 }} />}
+        <span style={{ fontSize:11.5, color:t.outline }}>{a.source} · {a.date}</span>
+        {a.dedup > 0 && <DedupPill t={t} n={a.dedup} />}
+      </div>
+      <p style={{ margin:0, fontSize:14.5, lineHeight:1.32, fontWeight: a.unread ? 700 : 500,
+        color: selected ? t.onPrimaryContainer : t.onSurface }}>{a.title}</p>
+    </div>
+  );
+}
+function VeilleList({ t, arts, selectedId, onSelect, showTitle }) {
+  return (
+    <div style={{ display:'flex', flexDirection:'column', height:'100%', background:t.background, minWidth:0 }}>
+      <div style={{ flexShrink:0, padding:'22px 18px 12px', borderBottom:`1px solid ${t.hairline}` }}>
+        {showTitle && <h1 style={{ margin:'0 0 12px', fontFamily:WSERIF, fontWeight:600, fontSize:26,
+          lineHeight:1.05, color:t.onSurface, letterSpacing:'-0.01em' }}>Veille</h1>}
+        <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', gap:10 }}>
+          <span style={{ display:'inline-flex', alignItems:'center', gap:7, minHeight:38, padding:'0 12px',
+            borderRadius:999, background:t.infoContainer, color:t.info, fontSize:13, fontWeight:600 }}>
+            <Glyph name="filter" size={14} color={t.info} /><span>Pack Compta · 23</span></span>
+          <button aria-label="Filtres" className="atlas-row" style={{ width:40, height:40, flexShrink:0,
+            borderRadius:11, cursor:'pointer', background:t.surface, border:`1px solid ${t.hairline}`,
+            display:'flex', alignItems:'center', justifyContent:'center', boxShadow:t.shadow }}>
+            <Glyph name="adjustments" size={19} color={t.onSurfaceVariant} /></button>
+        </div>
+      </div>
+      <div role="listbox" aria-label="Articles" style={{ flex:1, overflow:'auto', padding:'8px 8px 16px' }}>
+        {arts.map(a => <VeilleRow key={a.id} t={t} a={a} selected={a.id === selectedId} onSelect={() => onSelect(a.id)} />)}
+      </div>
+    </div>
+  );
+}
+function VeilleReading({ t, a, narrow, onBack }) {
+  return (
+    <div style={{ height:'100%', overflow:'auto', background:t.background }}>
+      <div style={{ maxWidth:680, marginLeft: narrow ? 'auto' : 0, marginRight:'auto',
+        padding: narrow ? '18px 20px 28px' : '30px 40px 44px' }}>
+        {narrow && (
+          <button onClick={onBack} className="atlas-row" style={{ display:'inline-flex', alignItems:'center', gap:5,
+            minHeight:44, padding:'0 8px 0 0', background:'transparent', border:'none', cursor:'pointer',
+            color:t.onSurfaceVariant, fontFamily:WSANS, fontSize:14, fontWeight:600, marginBottom:6 }}>
+            <Icon name="chevron-left" size={19} color={t.onSurfaceVariant} /><span>Veille</span></button>
+        )}
+        <div style={{ display:'flex', alignItems:'center', gap:8, fontSize:12.5, color:t.outline }}>
+          <span>{a.source} · {a.date}</span>{a.dedup > 0 && <DedupPill t={t} n={a.dedup} />}</div>
+        <h2 style={{ margin:'10px 0 0', fontFamily:WSERIF, fontWeight:600, fontSize:25, lineHeight:1.2,
+          color:t.onSurface, letterSpacing:'-0.01em' }}>{a.title}</h2>
+        <div style={{ marginTop:16, fontSize:15, lineHeight:1.62, color:t.onSurface }}>
+          <p style={{ margin:'0 0 12px' }}>{a.summary}</p>
+          <p style={{ margin:0, color:t.onSurfaceVariant }}>
+            Le calendrier confirme une entrée en vigueur progressive. Les modalités techniques de
+            transmission via les plateformes agréées sont précisées ; les organisations professionnelles
+            demandent un accompagnement renforcé pour les plus petites structures.</p>
+        </div>
+        <p style={{ margin:'20px 0 0' }}>
+          <a href="#" onClick={e => e.preventDefault()} style={{ display:'inline-flex', alignItems:'center', gap:7,
+            color:t.primary, fontWeight:700, fontSize:14.5, textDecoration:'none' }}>
+            <span>Lire sur {a.source}</span><Glyph name="external-link" size={16} color={t.primary} /></a>
+          <span style={{ marginLeft:9, fontSize:12, color:t.outline }}>(vous quittez Atlas)</span></p>
+        {a.mentions && (
+          <div style={{ marginTop:22, background:t.surface, border:`1px solid ${t.hairline}`, borderRadius:14, padding:'14px 15px' }}>
+            <p style={{ margin:0, fontSize:10.5, fontWeight:700, letterSpacing:'0.06em', textTransform:'uppercase', color:t.outline }}>
+              Mention détectée · à vérifier</p>
+            <div style={{ display:'flex', alignItems:'flex-start', gap:11, marginTop:9 }}>
+              <span style={{ width:36, height:36, flexShrink:0, borderRadius:9, background:t.infoContainer,
+                display:'flex', alignItems:'center', justifyContent:'center' }}><Icon name="building" size={18} color={t.info} /></span>
+              <div style={{ flex:1, minWidth:0 }}>
+                <p style={{ margin:0, fontSize:13.5, lineHeight:1.45, color:t.onSurface }}>
+                  Cet article <strong style={{ fontWeight:600 }}>semble mentionner</strong> {a.mentions}. Atlas n'a pas confirmé le rapprochement.</p>
+                <button className="atlas-row" style={{ marginTop:9, minHeight:40, display:'inline-flex', alignItems:'center', gap:6,
+                  background:'transparent', border:'none', padding:0, cursor:'pointer', color:t.primary, fontFamily:WSANS, fontSize:13.5, fontWeight:700 }}>
+                  Voir la fiche {a.mentions}<Icon name="arrow-right" size={16} color={t.primary} /></button>
+              </div>
+            </div>
+          </div>
+        )}
+        <div style={{ display:'flex', gap:10, marginTop:22, paddingTop:14, borderTop:`1px solid ${t.hairline}` }}>
+          <button className="atlas-row" style={{ minHeight:40, padding:'0 12px', borderRadius:9, cursor:'pointer',
+            display:'inline-flex', alignItems:'center', gap:6, background:t.surface, border:`1px solid ${t.outline}`,
+            color:t.onSurface, fontFamily:WSANS, fontSize:13, fontWeight:600 }}>
+            <Icon name="circle-check" size={15} color={t.onSurfaceVariant} />Marquer comme lu</button>
+          <button className="atlas-row" style={{ minHeight:40, padding:'0 12px', borderRadius:9, cursor:'pointer',
+            display:'inline-flex', alignItems:'center', gap:6, background:t.surface, border:`1px solid ${t.outline}`,
+            color:t.onSurface, fontFamily:WSANS, fontSize:13, fontWeight:600 }}>
+            <Icon name="star" size={15} color={t.outline} />Favori</button>
+          <button className="atlas-row" style={{ minHeight:40, padding:'0 12px', borderRadius:9, cursor:'pointer',
+            display:'inline-flex', alignItems:'center', gap:6, background:t.surface, border:`1px solid ${t.outline}`,
+            color:t.onSurface, fontFamily:WSANS, fontSize:13, fontWeight:600 }}>
+            <Glyph name="archive" size={15} color={t.outline} />Archiver</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+function VeilleWeb({ dark = false, layout = 'desktop', initialSelected = 1, initialView = 'list' }) {
+  const t = TW(dark);
+  const narrow = layout === 'narrow';
+  const [selectedId, setSelectedId] = useState(initialSelected);
+  const [view, setView] = useState(initialView);
+  const cur = VEILLE_ARTICLES.find(a => a.id === selectedId) || VEILLE_ARTICLES[0];
+  const wrap = { height:'100%', display:'flex', background:t.background, color:t.onSurface,
+    fontFamily:WSANS, WebkitFontSmoothing:'antialiased', overflow:'hidden' };
+  if (!narrow) {
+    return (
+      <div style={wrap}>
+        <RailNav t={t} active="veille" />
+        <div style={{ flex:'0 0 40%', maxWidth:460, minWidth:320, borderRight:`1px solid ${t.hairlineStrong}`,
+          display:'flex', flexDirection:'column', minHeight:0 }}>
+          <VeilleList t={t} arts={VEILLE_ARTICLES} selectedId={selectedId} onSelect={setSelectedId} showTitle />
+        </div>
+        <div style={{ flex:1, minWidth:0 }}><VeilleReading t={t} a={cur} narrow={false} /></div>
+      </div>
+    );
+  }
+  return (
+    <div style={{ ...wrap, flexDirection:'column' }}>
+      <div style={{ flex:1, minHeight:0 }}>
+        {view === 'list'
+          ? <VeilleList t={t} arts={VEILLE_ARTICLES} selectedId={selectedId}
+              onSelect={(id) => { setSelectedId(id); setView('reading'); }} showTitle />
+          : <VeilleReading t={t} a={cur} narrow onBack={() => setView('list')} />}
+      </div>
+      <BottomTabBar t={t} active="veille" />
+    </div>
+  );
+}
+
+Object.assign(window, { RechercheWeb, AccueilWeb, VeilleWeb });
