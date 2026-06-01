@@ -6,29 +6,34 @@
 
   <!-- List-detail à deux panneaux (doc 14 §3), la signature desktop. Format large (≥ 880 px) :
        liste à gauche (352 px) + détail à droite. Sous le point de rupture : empilement temporel —
-       liste OU détail (si sélection) avec un retour « ← ». Le seuil 880 px fait foi (doc 14 §3). -->
+       liste OU détail (si sélection) avec un retour « ← ». Chaque panneau défile indépendamment. -->
   <Grid x:Name="Root" ColumnSpacing="24" SizeChanged="OnRootSizeChanged">
     <Grid.ColumnDefinitions>
       <ColumnDefinition x:Name="ListColumn" Width="*" />
       <ColumnDefinition x:Name="DetailColumn" Width="0" />
     </Grid.ColumnDefinitions>
 
-    <ContentPresenter x:Name="ListHost"
-                      Grid.Column="0"
-                      VerticalAlignment="Top"
-                      Content="{x:Bind ListContent, Mode=OneWay}" />
+    <ScrollViewer x:Name="ListPane"
+                  Grid.Column="0"
+                  VerticalScrollBarVisibility="Auto"
+                  HorizontalScrollBarVisibility="Disabled">
+      <ContentPresenter Content="{x:Bind ListContent, Mode=OneWay}" />
+    </ScrollViewer>
 
-    <StackPanel x:Name="DetailHost"
-                Grid.Column="1"
-                Visibility="Collapsed"
-                Spacing="8">
-      <HyperlinkButton x:Name="BackButton"
-                       Visibility="Collapsed"
-                       Click="OnBack"
-                       Content="{x:Bind BackLabel, Mode=OneWay}"
-                       Foreground="{ThemeResource AtlasOnSurfaceVariantBrush}" />
-      <ContentPresenter Content="{x:Bind DetailContent, Mode=OneWay}" />
-    </StackPanel>
+    <ScrollViewer x:Name="DetailPane"
+                  Grid.Column="1"
+                  Visibility="Collapsed"
+                  VerticalScrollBarVisibility="Auto"
+                  HorizontalScrollBarVisibility="Disabled">
+      <StackPanel Spacing="8">
+        <HyperlinkButton x:Name="BackButton"
+                         Visibility="Collapsed"
+                         Click="OnBack"
+                         Content="{x:Bind BackLabel, Mode=OneWay}"
+                         Foreground="{ThemeResource AtlasOnSurfaceVariantBrush}" />
+        <ContentPresenter Content="{x:Bind DetailContent, Mode=OneWay}" />
+      </StackPanel>
+    </ScrollViewer>
   </Grid>
 
 </UserControl>
