@@ -23,6 +23,9 @@ public sealed partial class CompanyDetail : UserControl
     private readonly AtlasApiClient _api = AppServices.Get<AtlasApiClient>();
     private ActionMode _actionMode = ActionMode.None;
     private string _loadedSiren = string.Empty;
+    private CompanyResponse? _company;
+    private bool _isFavorite;
+    private bool _followBusy;
 
     public CompanyDetail()
     {
@@ -31,6 +34,9 @@ public sealed partial class CompanyDetail : UserControl
 
     /// <summary>Demande au host de naviguer vers le Profil (pour connecter INPI).</summary>
     public event EventHandler? ProfilRequested;
+
+    /// <summary>Levé après un ajout/retrait de favori (pour rafraîchir une liste hôte).</summary>
+    public event EventHandler? FavoriteChanged;
 
     public static readonly DependencyProperty SirenProperty =
         DependencyProperty.Register(nameof(Siren), typeof(string), typeof(CompanyDetail),
@@ -92,6 +98,7 @@ public sealed partial class CompanyDetail : UserControl
         if (result.IsSuccess)
         {
             ShowLoaded(result.Value);
+            await RefreshFavoriteAsync();
             return;
         }
 
@@ -112,6 +119,9 @@ public sealed partial class CompanyDetail : UserControl
     private void ShowLoaded(CompanyResponse company)
     {
         ShowOnly(LoadedPanel);
+        _company = company;
+        _isFavorite = false;
+        UpdateFollowButton();
 
         NameText.Text = company.Denomination;
 
@@ -152,6 +162,49 @@ public sealed partial class CompanyDetail : UserControl
         DirigeantsSection.State = hasDirigeants ? SectionState.Loaded : SectionState.CoverageEmpty;
         DirigeantsSection.SectionContent = hasDirigeants ? BuildDirigeants(company.Dirigeants) : null;
     }
+
+    private async Task RefreshFavoriteAsync()
+    {
+        if (_company is null)
+        {
+            return;
+        }
+
+        // Les favoris sont en base locale (pas d'INPI) ; un échec ne casse pas la fiche.
+        Result<IReadOnlyList<CompanyFavoriteResponse>> favs = await _api.GetFavoriteCompaniesAsync();
+        if (favs.IsSuccess)
+        {
+            _isFavorite = favs.Value.Any(f => f.Siren == _company.Siren);
+            UpdateFollowButton();
+        }
+    }
+
+    private async void OnToggleFollow(object sender, RoutedEventArgs e)
+    {
+        if (_company is null || _followBusy)
+        {
+            return;
+        }
+
+        _followBusy = true;
+        FollowButton.IsEnabled = false;
+
+        Result result = _isFavorite
+            ? await _api.RemoveFavoriteCompanyAsync(_company.Siren)
+            : await _api.AddFavoriteCompanyAsync(_company.Siren, _company.Denomination);
+
+        if (result.IsSuccess)
+        {
+            _isFavorite = !_isFavorite;
+            UpdateFollowButton();
+            FavoriteChanged?.Invoke(this, EventArgs.Empty);
+        }
+
+        _followBusy = false;
+        FollowButton.IsEnabled = true;
+    }
+
+    private void UpdateFollowButton() => FollowButton.Content = _isFavorite ? "★ Suivi" : "☆ Suivre";
 
     private static StackPanel BuildDirigeants(IReadOnlyList<DirigeantResponse> dirigeants)
     {

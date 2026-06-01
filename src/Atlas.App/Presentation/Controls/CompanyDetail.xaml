@@ -31,8 +31,23 @@
     <!-- Fiche chargée -->
     <StackPanel x:Name="LoadedPanel" Spacing="14" Visibility="Collapsed">
       <StackPanel Spacing="8">
-        <TextBlock x:Name="NameText" FontFamily="{ThemeResource AtlasFontHeading}" FontSize="22"
-                   TextWrapping="Wrap" Foreground="{ThemeResource AtlasOnSurfaceBrush}" />
+        <Grid ColumnSpacing="12">
+          <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="Auto" />
+          </Grid.ColumnDefinitions>
+          <TextBlock x:Name="NameText" Grid.Column="0"
+                     FontFamily="{ThemeResource AtlasFontHeading}" FontSize="22"
+                     TextWrapping="Wrap" VerticalAlignment="Center"
+                     Foreground="{ThemeResource AtlasOnSurfaceBrush}" />
+          <Button x:Name="FollowButton" Grid.Column="1"
+                  VerticalAlignment="Top"
+                  Click="OnToggleFollow"
+                  Background="Transparent"
+                  BorderBrush="{ThemeResource AtlasOutlineBrush}"
+                  BorderThickness="1"
+                  Foreground="{ThemeResource AtlasOnSurfaceBrush}" />
+        </Grid>
         <StackPanel x:Name="MetaPanel" Orientation="Horizontal" Spacing="8" />
         <StackPanel x:Name="FactsPanel" Spacing="8" />
         <c:Provenance Source="Registre National des Entreprises (INPI)" Separated="True" />
