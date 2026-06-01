@@ -24,7 +24,11 @@
     padding: 0.5rem 0.75rem 1rem;
 }
 
-.rail-link {
+/*
+ * NavLink est un composant enfant : son <a> ne porte pas l'attribut de scope de ce layout. On cible
+ * donc le lien via ::deep depuis l'ancêtre scoped .rail (sinon ces règles ne s'appliquent jamais).
+ */
+.rail ::deep .rail-link {
     display: block;
     padding: 0.6rem 0.75rem;
     border-radius: var(--radius-sm);
@@ -33,17 +37,22 @@
     text-decoration: none;
 }
 
-.rail-link:hover {
+/* L'icône ne sert qu'à la barre d'onglets mobile ; le rail desktop reste en texte. */
+.rail ::deep .rail-icon {
+    display: none;
+}
+
+.rail ::deep .rail-link:hover {
     background: var(--surface-variant);
 }
 
-.rail-link:focus-visible {
+.rail ::deep .rail-link:focus-visible {
     outline: 2px solid var(--focus);
     outline-offset: 2px;
 }
 
 /* État actif : non porté par la seule couleur (bordure + graisse), cf. doc 06. */
-.rail-link.active {
+.rail ::deep .rail-link.active {
     background: var(--primary-container);
     border-left-color: var(--primary);
     color: var(--on-primary-container);
@@ -87,20 +96,45 @@
         display: none;
     }
 
-    .rail-link {
+    .rail ::deep .rail-link {
         flex: 1;
+        min-width: 0;
+        /* Icône au-dessus du libellé : l'icône porte l'affordance, le libellé peut donc rester
+           court et lisible sans que les 5 entrées se touchent (cf. maquette BottomTabBar). */
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 0.15rem;
         text-align: center;
-        padding: 0.6rem 0.25rem;
+        padding: 0.35rem 0.15rem;
         border-left: 0;
         border-bottom: 3px solid transparent;
-        font-size: 0.85rem;
         /* Cible tactile ≥ 44 px (doc 12 §8). */
-        min-height: 44px;
+        min-height: 48px;
     }
 
-    .rail-link.active {
+    .rail ::deep .rail-icon {
+        display: block;
+        font-size: 1.3rem;
+        line-height: 1;
+    }
+
+    .rail ::deep .rail-label {
+        font-size: 0.68rem;
+        line-height: 1.05;
+        white-space: nowrap;
+    }
+
+    .rail ::deep .rail-link.active {
+        background: transparent;
         border-left-color: transparent;
         border-bottom-color: var(--primary);
+    }
+
+    /* En onglets, l'état actif se renforce aussi par la graisse du libellé (doc 06). */
+    .rail ::deep .rail-link.active .rail-label {
+        font-weight: 600;
     }
 
     .app-main {
