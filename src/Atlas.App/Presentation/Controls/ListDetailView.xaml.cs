@@ -81,8 +81,8 @@ public sealed partial class ListDetailView : UserControl
             Root.ColumnSpacing = 24;
             ListColumn.Width = new GridLength(ListPaneWidth);
             DetailColumn.Width = new GridLength(1, GridUnitType.Star);
-            ListHost.Visibility = Visibility.Visible;
-            DetailHost.Visibility = Visibility.Visible;
+            ListPane.Visibility = Visibility.Visible;
+            DetailPane.Visibility = Visibility.Visible;
             BackButton.Visibility = Visibility.Collapsed;
             return;
         }
@@ -93,16 +93,16 @@ public sealed partial class ListDetailView : UserControl
         {
             ListColumn.Width = new GridLength(0);
             DetailColumn.Width = new GridLength(1, GridUnitType.Star);
-            ListHost.Visibility = Visibility.Collapsed;
-            DetailHost.Visibility = Visibility.Visible;
+            ListPane.Visibility = Visibility.Collapsed;
+            DetailPane.Visibility = Visibility.Visible;
             BackButton.Visibility = Visibility.Visible;
         }
         else
         {
             ListColumn.Width = new GridLength(1, GridUnitType.Star);
             DetailColumn.Width = new GridLength(0);
-            ListHost.Visibility = Visibility.Visible;
-            DetailHost.Visibility = Visibility.Collapsed;
+            ListPane.Visibility = Visibility.Visible;
+            DetailPane.Visibility = Visibility.Collapsed;
             BackButton.Visibility = Visibility.Collapsed;
         }
     }
