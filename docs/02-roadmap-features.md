@@ -5,7 +5,7 @@
 > L'implémentation du **client web** suit sa propre feuille de route, à part : [`docs/15-roadmap-client-web.md`](15-roadmap-client-web.md).
 
 **Version** : 2.0
-**Date de dernière mise à jour** : 31 mai 2026
+**Date de dernière mise à jour** : 1ᵉʳ juin 2026
 
 ---
 
@@ -180,6 +180,15 @@ Pour chaque feature, on documente :
 
 ---
 
+## Exploitation & amélioration produit (transverse — Should have)
+
+> Deux features **transverses** (hors cœur fonctionnel et hors grappes V2), cadrées le 30 mai 2026. L'**observabilité** (santé infra) s'instrumente dès la V1 (quasi gratuite) ; la **télémétrie produit** (usage, opt-in) s'active V1–V2. **À ne pas confondre** : l'une observe les *machines* (aucun RGPD), l'autre mesure l'*usage* (opt-in, anonyme, RGPD).
+
+- [**F-076 — Télémétrie produit (opt-in, anonyme, auto-hébergée)**](features/F-076-telemetrie-produit.md) — Spécifiée le 30 mai 2026. Métriques **anonymes/agrégées**, **OFF par défaut** (opt-in), **auto-hébergées** (rien chez un tiers) ; le contenu des recherches/fiches n'est **jamais** collecté ; deux flux (stabilité / usage). **Avenant RGPD** (`docs/04-securite-rgpd.md`) requis avant activation en prod. UX : doc 12 §9.
+- [**F-077 — Observabilité du backend (instrumentation & santé)**](features/F-077-observabilite-backend.md) — Spécifiée le 30 mai 2026, met en œuvre **ADR-028**. Instrumentation **OpenTelemetry** (logs/métriques/traces) + **`/health`** agrégé + **uptime check externe** + notification d'échec de jobs Hangfire ; léger en préprod (ADR-019), stack lourde différée en prod sur machine dédiée. **Santé infra, aucune donnée utilisateur** (≠ F-076).
+
+---
+
 ## Reste à faire pour clore MVP 2
 
 > **Synthèse au 29 mai 2026** — extraite des blocs « Statut » des fiches ci-dessus. Tient lieu de punch-list MVP 2.
@@ -256,7 +265,7 @@ compte INPI habilité — couvert par la punch-list « Validation contre l'API I
 4. **Outillage PI avancé** — killer feature pour les cabinets PI : portefeuille IP et antériorité avec matching intelligent.
 5. **Exposition tiers** — Atlas devient une plateforme : API publique pour les intégrateurs, serveur MCP pour les agents IA.
 
-**Récap V2** (15 features) :
+**Récap V2** (16 features) :
 
 | Grappe | # | Feature | Complexité |
 |---|---|---|---|
@@ -266,7 +275,8 @@ compte INPI habilité — couvert par la punch-list « Validation contre l'API I
 | 1 — Fiche | F-054 | Indicateurs financiers descriptifs | ★★★ à ★★★★ |
 | 2 — Orga | F-053 | Watchlists (listes d'entreprises) | ★★★ |
 | 2 — Orga | F-030 | Annotations et tags utilisateur | ★★ |
-| 2 — Orga | F-029 | Mode offline mobile avec sync | ★★★★ |
+| 2 — Orga | F-029 | Mode offline mobile (cache de lecture) | ★★★ |
+| 2 — Orga | F-075 | Moteur de fraîcheur & sync du cache offline | ★★★★ |
 | 3 — Veille | F-027 | Veille PI automatisée (règles utilisateur) | ★★★★ |
 | 3 — Veille | F-055 | Signaux de risque (descriptif) | ★★★ |
 | 3 — Veille | F-063 | Source de veille réglementaire EUR-Lex | ★★★★ |
@@ -290,7 +300,8 @@ compte INPI habilité — couvert par la punch-list « Validation contre l'API I
 - [**F-054 — Indicateurs financiers descriptifs**](features/F-054-indicateurs-financiers-descriptifs.md) — 
 - [**F-053 — Watchlists (listes d'entreprises)**](features/F-053-watchlists-listes-d-entreprises.md) — 
 - [**F-030 — Annotations et tags utilisateur**](features/F-030-annotations-et-tags-utilisateur.md) — 
-- [**F-029 — Mode offline mobile avec sync**](features/F-029-mode-offline-mobile-avec-sync.md) — 
+- [**F-029 — Mode offline mobile (cache de lecture)**](features/F-029-mode-offline-mobile-cache-lecture.md) — Réécrite le 31 mai 2026, **promue de stub à spec** et **scindée** : F-029 = le **cache de lecture** (rendu honnête) ; **F-075** = le moteur de fraîcheur/sync. Cadrée par **ADR-027**, **lecture seule** v1.
+- [**F-075 — Moteur de fraîcheur & synchronisation du cache offline**](features/F-075-moteur-fraicheur-sync-offline.md) — Spécifiée le 31 mai 2026 : détection réseau, rafraîchissement au retour réseau, éviction par l'espace (favoris gardés) ; alimente le cache de F-029. Cadrée par **ADR-027**, descendant seul (pas d'écriture hors-ligne v1).
 - [**F-027 — Veille PI automatisée (règles utilisateur)**](features/F-027-veille-pi-automatisee-regles-utilisateu.md) — Reformulée 29 mai 2026 — précision du périmètre pour la distinguer de F-046 (cluster veille MVP 2).
 - [**F-055 — Signaux de risque (descriptif)**](features/F-055-signaux-de-risque-descriptif.md) — 
 - [**F-063 — Source de veille réglementaire EUR-Lex**](features/F-063-source-veille-reglementaire-eur-lex.md) — Spécifiée le 31 mai 2026, cadrée par ADR-020. Pendant *réglementaire* de F-041 ; livre la classification native EUR-Lex (EuroVoc + directory code), sans NAF. Fondation de F-064.
