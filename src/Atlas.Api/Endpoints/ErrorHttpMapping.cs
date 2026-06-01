@@ -58,6 +58,7 @@ internal static class ErrorHttpMapping
         "inpi.api_access_not_allowed" => StatusCodes.Status403Forbidden,
         "inpi.unavailable" => StatusCodes.Status502BadGateway,
         "inpi.not_connected" => StatusCodes.Status409Conflict,
+        "inpi.credentials_unreadable" => StatusCodes.Status409Conflict,
         "companies.invalid_siren" => StatusCodes.Status400BadRequest,
         "companies.not_found" => StatusCodes.Status404NotFound,
         "companies.attachment_not_found" => StatusCodes.Status404NotFound,

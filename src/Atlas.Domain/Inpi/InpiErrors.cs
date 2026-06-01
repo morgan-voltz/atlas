@@ -12,6 +12,8 @@ public static class InpiErrors
 
     public static readonly DomainError NotConnected = new InpiNotConnectedError();
 
+    public static readonly DomainError CredentialsUnreadable = new InpiCredentialsUnreadableError();
+
     private sealed record InvalidInpiCredentialsError()
         : DomainError("inpi.invalid_credentials", "Les identifiants INPI fournis sont invalides.");
 
@@ -26,4 +28,9 @@ public static class InpiErrors
 
     private sealed record InpiNotConnectedError()
         : DomainError("inpi.not_connected", "Aucun compte INPI connecté.");
+
+    private sealed record InpiCredentialsUnreadableError()
+        : DomainError(
+            "inpi.credentials_unreadable",
+            "Vos identifiants INPI enregistrés n'ont pas pu être déchiffrés. Reconnectez votre compte INPI.");
 }
