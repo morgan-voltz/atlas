@@ -1,3 +1,5 @@
+using System;
+using Atlas.App.Models;
 using Atlas.Domain.Companies;
 using Atlas.Shared.Result;
 
@@ -11,21 +13,25 @@ public sealed partial class MainPage : Page
     public MainPage()
     {
         this.InitializeComponent();
-        ShowSirenValidation();
+        this.Loaded += (_, _) => PopulateShowcase();
     }
 
     /// <summary>
-    /// Preuve ADR-002 / ADR-029 : la tête Uno consomme directement un value object
-    /// d'<c>Atlas.Domain</c> (validation Luhn incluse), sans aucune dépendance
-    /// vers <c>Atlas.Infrastructure.*</c>. Toute donnée réelle passerait par
-    /// <see cref="Services.AtlasApiClient"/> (HTTP uniquement).
+    /// Alimente la vitrine du kit. Conserve la preuve ADR-002 / ADR-029 (U2) : la tête Uno
+    /// consomme directement le value object <c>Atlas.Domain.Siren</c> (validation Luhn), sans
+    /// dépendance vers <c>Atlas.Infrastructure.*</c>. Les données affichées sont des échantillons.
     /// </summary>
-    private void ShowSirenValidation()
+    private void PopulateShowcase()
     {
-        Result<Siren> result = Siren.Create(SampleSiren);
+        Result<Siren> siren = Siren.Create(SampleSiren);
+        SirenField.FieldContent = siren.IsSuccess
+            ? $"{siren.Value} ✓ (Luhn vérifié côté domaine)"
+            : siren.Error?.Message;
 
-        SirenResult.Text = result.IsSuccess
-            ? $"✓ {result.Value} valide (clé de contrôle Luhn vérifiée côté domaine)."
-            : $"✗ {result.Error?.Message}";
+        Card1.Company = new CompanySummaryResponse("552032534", "Danone", "Paris 9e", "70.10Z");
+        Card2.Company = new CompanySummaryResponse("562113530", "L'Oréal", "Clichy", "70.10Z");
+        Card3.Company = new CompanySummaryResponse("572025526", "Michelin", "Clermont-Ferrand", "22.11Z");
+
+        Prov.Date = new DateTimeOffset(2026, 6, 1, 0, 0, 0, TimeSpan.Zero);
     }
 }

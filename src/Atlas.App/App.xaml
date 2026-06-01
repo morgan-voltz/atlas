@@ -7,6 +7,8 @@
       <ResourceDictionary.MergedDictionaries>
         <!-- Load WinUI resources -->
         <XamlControlsResources xmlns="using:Microsoft.UI.Xaml.Controls" />
+        <!-- Fondation de thème Atlas (tokens clair/sombre, polices) -->
+        <ResourceDictionary Source="ms-appx:///Styles/Theme.xaml" />
       </ResourceDictionary.MergedDictionaries>
 
       <!-- Add resources here -->

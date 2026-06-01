@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<UserControl
+    x:Class="Atlas.App.Presentation.Controls.LabeledField"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+  <!-- Atome champ étiqueté (doc 12 §11) : couple terme/valeur. Terme à largeur fixe + valeur fluide. -->
+  <Grid ColumnSpacing="10">
+    <Grid.ColumnDefinitions>
+      <ColumnDefinition Width="128" />
+      <ColumnDefinition Width="*" />
+    </Grid.ColumnDefinitions>
+
+    <TextBlock Grid.Column="0"
+               Text="{x:Bind Label, Mode=OneWay}"
+               FontSize="13"
+               FontWeight="SemiBold"
+               TextWrapping="Wrap"
+               Foreground="{ThemeResource AtlasOnSurfaceVariantBrush}" />
+
+    <ContentPresenter Grid.Column="1"
+                      Content="{x:Bind FieldContent, Mode=OneWay}"
+                      TextWrapping="Wrap"
+                      Foreground="{ThemeResource AtlasOnSurfaceBrush}" />
+  </Grid>
+
+</UserControl>

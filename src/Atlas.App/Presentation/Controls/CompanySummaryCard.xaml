@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<UserControl
+    x:Class="Atlas.App.Presentation.Controls.CompanySummaryCard"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+  <!-- Carte-aperçu d'un résultat entreprise (doc 12 §7/§12). État « sélectionné » mis en avant par
+       fond + barre d'accent (jamais par la couleur seule, doc 06). La navigation/sélection est câblée
+       par l'hôte (U4, list-detail) ; ici = présentation + états. -->
+  <Border x:Name="Root"
+          Padding="6,12"
+          BorderThickness="0,0,0,1"
+          BorderBrush="{ThemeResource AtlasSurfaceVariantBrush}">
+    <Grid ColumnSpacing="12">
+      <Grid.ColumnDefinitions>
+        <ColumnDefinition Width="3" />
+        <ColumnDefinition Width="*" />
+        <ColumnDefinition Width="Auto" />
+      </Grid.ColumnDefinitions>
+
+      <!-- Barre d'accent (sélection) -->
+      <Rectangle x:Name="Accent"
+                 Grid.Column="0"
+                 Width="3"
+                 RadiusX="2" RadiusY="2"
+                 Fill="{ThemeResource AtlasPrimaryBrush}"
+                 Visibility="Collapsed" />
+
+      <StackPanel Grid.Column="1" Spacing="2">
+        <TextBlock x:Name="NameText"
+                   FontSize="15"
+                   FontWeight="SemiBold"
+                   TextTrimming="CharacterEllipsis"
+                   Foreground="{ThemeResource AtlasOnSurfaceBrush}" />
+        <!-- Sous-ligne : SIREN (mono) · ville · NAF. Foreground posé ici (résolu par thème),
+             les Run héritent ; seul le Run SIREN reçoit la police mono en code-behind. -->
+        <TextBlock x:Name="SubText"
+                   FontSize="13"
+                   TextTrimming="CharacterEllipsis"
+                   Foreground="{ThemeResource AtlasOnSurfaceVariantBrush}" />
+      </StackPanel>
+
+      <TextBlock Grid.Column="2"
+                 Text="›"
+                 FontSize="19"
+                 VerticalAlignment="Center"
+                 Foreground="{ThemeResource AtlasOutlineBrush}" />
+    </Grid>
+
+    <VisualStateManager.VisualStateGroups>
+      <VisualStateGroup x:Name="SelectionStates">
+        <VisualState x:Name="RowDefault" />
+        <VisualState x:Name="RowSelected">
+          <VisualState.Setters>
+            <Setter Target="Root.Background" Value="{ThemeResource AtlasSurfaceVariantBrush}" />
+            <Setter Target="Root.CornerRadius" Value="{StaticResource AtlasRadiusSm}" />
+            <Setter Target="Accent.Visibility" Value="Visible" />
+          </VisualState.Setters>
+        </VisualState>
+      </VisualStateGroup>
+    </VisualStateManager.VisualStateGroups>
+  </Border>
+
+</UserControl>
