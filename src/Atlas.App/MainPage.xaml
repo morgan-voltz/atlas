@@ -1,36 +1,68 @@
 <Page x:Class="Atlas.App.MainPage"
       xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-      xmlns:local="using:Atlas.App"
-      Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
+      xmlns:c="using:Atlas.App.Presentation.Controls"
+      Background="{ThemeResource AtlasBgBrush}">
   <ScrollViewer IsTabStop="True">
-    <Grid Padding="24">
-      <StackPanel HorizontalAlignment="Center"
-                  VerticalAlignment="Center"
-                  Spacing="8"
-                  MaxWidth="520">
-        <TextBlock Text="Atlas — client Uno"
-                   FontSize="22"
-                   FontWeight="SemiBold"
-                   HorizontalAlignment="Center" />
-        <TextBlock Text="Spike d'intégration (ADR-029, U1/U2). Cette tête consomme un value object du domaine (Atlas.Domain) — preuve qu'un client pur Domain + Shared compile et tourne."
+    <StackPanel Padding="24"
+                Spacing="20"
+                MaxWidth="640"
+                HorizontalAlignment="Center">
+
+      <StackPanel Spacing="4">
+        <TextBlock Text="Atlas — kit de composants (Uno)"
+                   FontFamily="{ThemeResource AtlasFontHeading}"
+                   FontSize="24"
+                   Foreground="{ThemeResource AtlasOnSurfaceBrush}" />
+        <TextBlock Text="Portage XAML WinUI du kit (U3, ADR-029) : thème clair/sombre, atomes et carte-aperçu. La sélection/navigation est câblée à U4."
                    TextWrapping="Wrap"
-                   HorizontalAlignment="Center"
-                   TextAlignment="Center"
-                   Opacity="0.8" />
-        <Border Margin="0,12,0,0"
-                Padding="16"
-                CornerRadius="8"
-                Background="{ThemeResource SystemControlBackgroundListLowBrush}">
-          <StackPanel Spacing="4">
-            <TextBlock Text="Validation SIREN (Domain.Siren)"
-                       FontWeight="SemiBold" />
-            <TextBlock x:Name="SirenResult"
-                       AutomationProperties.AutomationId="SirenResultTextBlock"
-                       TextWrapping="Wrap" />
-          </StackPanel>
-        </Border>
+                   FontSize="13"
+                   Foreground="{ThemeResource AtlasOnSurfaceVariantBrush}" />
       </StackPanel>
-    </Grid>
+
+      <!-- Atomes : Chip (4 tons) -->
+      <Border Padding="16"
+              Background="{ThemeResource AtlasSurfaceBrush}"
+              CornerRadius="{ThemeResource AtlasRadiusMd}">
+        <StackPanel Spacing="10">
+          <TextBlock Text="Chips (tons)" FontWeight="SemiBold"
+                     Foreground="{ThemeResource AtlasOnSurfaceBrush}" />
+          <StackPanel Orientation="Horizontal" Spacing="8">
+            <c:Chip Text="Diffusion restreinte" Tone="Neutral" />
+            <c:Chip Text="SA" Tone="Info" />
+            <c:Chip Text="Connecté" Tone="Ok" />
+            <c:Chip Text="À reconnecter" Tone="Warn" />
+          </StackPanel>
+        </StackPanel>
+      </Border>
+
+      <!-- Atomes : LabeledField -->
+      <Border Padding="16"
+              Background="{ThemeResource AtlasSurfaceBrush}"
+              CornerRadius="{ThemeResource AtlasRadiusMd}">
+        <StackPanel Spacing="10">
+          <TextBlock Text="Champs étiquetés" FontWeight="SemiBold"
+                     Foreground="{ThemeResource AtlasOnSurfaceBrush}" />
+          <c:LabeledField Label="Dénomination">Danone</c:LabeledField>
+          <c:LabeledField Label="Forme juridique">Société anonyme</c:LabeledField>
+          <c:LabeledField Label="SIREN" x:Name="SirenField" />
+        </StackPanel>
+      </Border>
+
+      <!-- Carte-aperçu (liste de résultats) -->
+      <Border Padding="16"
+              Background="{ThemeResource AtlasSurfaceBrush}"
+              CornerRadius="{ThemeResource AtlasRadiusMd}">
+        <StackPanel Spacing="2">
+          <TextBlock Text="Cartes-aperçu (résultats)" FontWeight="SemiBold" Margin="0,0,0,6"
+                     Foreground="{ThemeResource AtlasOnSurfaceBrush}" />
+          <c:CompanySummaryCard x:Name="Card1" />
+          <c:CompanySummaryCard x:Name="Card2" Selected="True" />
+          <c:CompanySummaryCard x:Name="Card3" />
+          <c:Provenance x:Name="Prov" Source="RNE (INPI)" Separated="True" />
+        </StackPanel>
+      </Border>
+
+    </StackPanel>
   </ScrollViewer>
 </Page>

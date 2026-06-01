@@ -14,8 +14,9 @@
     <EnforceCodeStyleInBuild>false</EnforceCodeStyleInBuild>
     <!-- NU1507 : multiples sources NuGet sous CPM sans source mapping
          NETSDK1201 : RID sans self-contained
-         PRI257 : langue par défaut (en) hors ressources incluses -->
-    <NoWarn>$(NoWarn);NU1507;NETSDK1201;PRI257</NoWarn>
+         PRI257 : langue par défaut (en) hors ressources incluses
+         CA1010/CA1852 : faux positifs sur le code généré par Uno (UserControls partiels, Program) -->
+    <NoWarn>$(NoWarn);NU1507;NETSDK1201;PRI257;CA1010;CA1852</NoWarn>
   </PropertyGroup>
 
 </Project>

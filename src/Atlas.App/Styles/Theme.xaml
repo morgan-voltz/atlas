@@ -1,0 +1,67 @@
+<!--
+  Atlas — fondation de thème du client Uno (port XAML de src/Atlas.Web/wwwroot/css/atlas-theme.css).
+
+  Source de vérité des couleurs : docs/atlas-themes-kit/atlas-themes/source/themes.json (Atlas clair + sombre).
+  Source de vérité des polices : docs/16-polices-et-lisibilite.md.
+
+  Le clair/sombre est géré nativement par ThemeDictionaries (WinUI) : la tête suit le thème système ;
+  le sélecteur persisté (F-062) surchargera RequestedTheme au jalon Profil.
+
+  À FAIRE (U3 suite) : bundler les TTF (Atkinson Hyperlegible / IBM Plex Serif / IBM Plex Mono) dans
+  Assets/Fonts et pointer les FontFamily dessus (ms-appx). Pour l'instant : familles nommées + repli système.
+-->
+<ResourceDictionary
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+  <ResourceDictionary.ThemeDictionaries>
+
+    <!-- ===== Clair (Atlas → light) ===== -->
+    <ResourceDictionary x:Key="Light">
+      <SolidColorBrush x:Key="AtlasBgBrush" Color="#F6F9FC" />
+      <SolidColorBrush x:Key="AtlasSurfaceBrush" Color="#FFFFFF" />
+      <SolidColorBrush x:Key="AtlasSurfaceVariantBrush" Color="#E7EFF8" />
+      <SolidColorBrush x:Key="AtlasOnSurfaceBrush" Color="#13202E" />
+      <SolidColorBrush x:Key="AtlasOnSurfaceVariantBrush" Color="#42596F" />
+      <SolidColorBrush x:Key="AtlasOutlineBrush" Color="#7E97AE" />
+      <SolidColorBrush x:Key="AtlasPrimaryBrush" Color="#1B4F7E" />
+      <SolidColorBrush x:Key="AtlasOnPrimaryBrush" Color="#FFFFFF" />
+      <SolidColorBrush x:Key="AtlasPrimaryContainerBrush" Color="#D4E4F4" />
+      <SolidColorBrush x:Key="AtlasOnPrimaryContainerBrush" Color="#0B2236" />
+      <SolidColorBrush x:Key="AtlasFocusBrush" Color="#1565C0" />
+      <SolidColorBrush x:Key="AtlasErrorContainerBrush" Color="#FCECE9" />
+      <SolidColorBrush x:Key="AtlasOnErrorContainerBrush" Color="#7A271A" />
+      <SolidColorBrush x:Key="AtlasErrorOutlineBrush" Color="#F2C9C6" />
+    </ResourceDictionary>
+
+    <!-- ===== Sombre (Atlas → dark) ===== -->
+    <ResourceDictionary x:Key="Dark">
+      <SolidColorBrush x:Key="AtlasBgBrush" Color="#0D1722" />
+      <SolidColorBrush x:Key="AtlasSurfaceBrush" Color="#16222F" />
+      <SolidColorBrush x:Key="AtlasSurfaceVariantBrush" Color="#21303F" />
+      <SolidColorBrush x:Key="AtlasOnSurfaceBrush" Color="#E8EEF4" />
+      <SolidColorBrush x:Key="AtlasOnSurfaceVariantBrush" Color="#AABBCC" />
+      <SolidColorBrush x:Key="AtlasOutlineBrush" Color="#5A7490" />
+      <SolidColorBrush x:Key="AtlasPrimaryBrush" Color="#7FB2E0" />
+      <SolidColorBrush x:Key="AtlasOnPrimaryBrush" Color="#08121C" />
+      <SolidColorBrush x:Key="AtlasPrimaryContainerBrush" Color="#1E4060" />
+      <SolidColorBrush x:Key="AtlasOnPrimaryContainerBrush" Color="#D4E4F4" />
+      <SolidColorBrush x:Key="AtlasFocusBrush" Color="#8FC4F5" />
+      <SolidColorBrush x:Key="AtlasErrorContainerBrush" Color="#3A1714" />
+      <SolidColorBrush x:Key="AtlasOnErrorContainerBrush" Color="#F5B5AF" />
+      <SolidColorBrush x:Key="AtlasErrorOutlineBrush" Color="#5E2620" />
+    </ResourceDictionary>
+
+  </ResourceDictionary.ThemeDictionaries>
+
+  <!-- ===== Tokens non thématiques (rayons, polices) ===== -->
+  <CornerRadius x:Key="AtlasRadiusSm">6</CornerRadius>
+  <CornerRadius x:Key="AtlasRadiusMd">10</CornerRadius>
+  <CornerRadius x:Key="AtlasRadiusLg">14</CornerRadius>
+
+  <!-- Rôles de police (doc 16 §1). Familles nommées + repli système (bundling TTF différé). -->
+  <FontFamily x:Key="AtlasFontBody">Atkinson Hyperlegible, Segoe UI, sans-serif</FontFamily>
+  <FontFamily x:Key="AtlasFontHeading">IBM Plex Serif, Georgia, serif</FontFamily>
+  <FontFamily x:Key="AtlasFontMono">IBM Plex Mono, Consolas, monospace</FontFamily>
+
+</ResourceDictionary>
