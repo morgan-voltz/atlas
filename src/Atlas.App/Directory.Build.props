@@ -18,7 +18,7 @@
          CA1010/CA1852 : faux positifs sur le code généré par Uno (UserControls partiels, Program)
          CA1001 : Page avec un CancellationTokenSource (search-as-you-type) — disposer un CTS lié à
                   une requête en vol est risqué ; cycle de vie géré par la navigation. -->
-    <NoWarn>$(NoWarn);NU1507;NETSDK1201;PRI257;CA1010;CA1852;CA1001</NoWarn>
+    <NoWarn>$(NoWarn);NU1507;NETSDK1201;PRI257;CA1010;CA1852;CA1001;CA1805</NoWarn>
   </PropertyGroup>
 
 </Project>

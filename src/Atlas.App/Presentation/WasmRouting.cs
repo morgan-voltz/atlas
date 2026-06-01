@@ -7,6 +7,14 @@ namespace Atlas.App.Presentation;
 /// </summary>
 internal static class WasmRouting
 {
+    /// <summary>Vrai sur la tête WebAssembly (active la synchro d'URL). <c>static readonly</c> (pas
+    /// <c>const</c>) pour éviter un CS0162 « code mort » côté natif sur les branches gardées.</summary>
+#if __WASM__
+    public static readonly bool IsBrowser = true;
+#else
+    public static readonly bool IsBrowser = false;
+#endif
+
 #if __WASM__
     /// <summary>Lit le tag de destination depuis <c>window.location.hash</c> (« #/recherche » → « recherche »).</summary>
     public static string? GetTag()
