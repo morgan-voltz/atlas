@@ -18,13 +18,31 @@
 
     <TextBox x:Name="Query"
              Grid.Row="1"
-             PlaceholderText="Nom d'entreprise ou SIREN…"
+             PlaceholderText="Nom d'entreprise…"
              TextChanged="OnQueryChanged"
              MaxWidth="520"
              HorizontalAlignment="Left" />
 
     <c:ListDetailView x:Name="ListDetail" Grid.Row="2" BackLabel="← Résultats">
-      <StackPanel x:Name="Results" Spacing="2" />
+      <StackPanel x:Name="ListRoot" Spacing="2">
+        <!-- Zone d'état (chargement / vide / erreur) -->
+        <StackPanel x:Name="StatusPanel" Spacing="8" Margin="0,4">
+          <TextBlock x:Name="StatusText"
+                     Visibility="Collapsed"
+                     TextWrapping="Wrap"
+                     FontSize="14"
+                     Foreground="{ThemeResource AtlasOnSurfaceVariantBrush}" />
+          <Button x:Name="RetryButton"
+                  Visibility="Collapsed"
+                  Content="Réessayer"
+                  Click="OnRetry"
+                  HorizontalAlignment="Left"
+                  Foreground="{ThemeResource AtlasOnPrimaryBrush}"
+                  Background="{ThemeResource AtlasPrimaryBrush}" />
+        </StackPanel>
+        <!-- Résultats / squelettes -->
+        <StackPanel x:Name="Results" Spacing="2" />
+      </StackPanel>
       <c:ListDetailView.DetailContent>
         <c:SectionCard x:Name="Detail" Title="Sélectionnez un résultat" Source="RNE (INPI)">
           <c:LabeledField Label="Localisation" x:Name="DetailField" />

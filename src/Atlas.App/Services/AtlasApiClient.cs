@@ -1,3 +1,5 @@
+using System;
+using System.Collections.Generic;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Json;
@@ -79,6 +81,49 @@ public sealed class AtlasApiClient(HttpClient httpClient, ITokenStore tokenStore
 
     /// <summary>Termine la session locale (l'access token en mémoire). Le serveur révoque le refresh via /auth/logout.</summary>
     public void ClearSession() => tokenStore.Clear();
+
+    /// <summary>
+    /// Recherche d'entreprises par dénomination (<c>GET /companies?name=</c>, requiert l'auth — le Bearer
+    /// est posé par <see cref="AuthHeaderHandler"/>). Retourne la page d'items (pagination affinée plus tard).
+    /// </summary>
+    public async Task<Result<IReadOnlyList<CompanySummaryResponse>>> SearchCompaniesAsync(
+        string name, CancellationToken ct = default)
+    {
+        string url = $"companies?name={Uri.EscapeDataString(name)}&page=1&pageSize=20";
+
+        HttpResponseMessage response;
+        try
+        {
+            response = await httpClient.GetAsync(url, ct).ConfigureAwait(false);
+        }
+        catch (HttpRequestException)
+        {
+            return Result<IReadOnlyList<CompanySummaryResponse>>.Fail(ApiErrors.Unreachable());
+        }
+
+        if (response.StatusCode == HttpStatusCode.Unauthorized)
+        {
+            return Result<IReadOnlyList<CompanySummaryResponse>>.Fail(ApiErrors.SessionExpired());
+        }
+
+        if (!response.IsSuccessStatusCode)
+        {
+            // L'API renvoie un ProblemDetails avec un `code` métier ; on surface l'état dégradé
+            // honnête « connectez INPI » (doc 12 §10) plutôt qu'un « HTTP 409 » opaque.
+            string problem = await response.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
+            ApiError error = problem.Contains("inpi.not_connected", StringComparison.Ordinal)
+                ? ApiErrors.InpiNotConnected()
+                : ApiErrors.RequestFailed((int)response.StatusCode);
+            return Result<IReadOnlyList<CompanySummaryResponse>>.Fail(error);
+        }
+
+        PagedResult<CompanySummaryResponse>? paged = await response.Content
+            .ReadFromJsonAsync(AtlasJsonContext.Default.PagedResultCompanySummaryResponse, ct)
+            .ConfigureAwait(false);
+
+        return Result<IReadOnlyList<CompanySummaryResponse>>.Ok(
+            paged?.Items ?? System.Array.Empty<CompanySummaryResponse>());
+    }
 
     /// <summary>
     /// Récupère la fiche brute d'une entreprise par SIREN (value object validé côté domaine).

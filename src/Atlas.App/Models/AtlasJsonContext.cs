@@ -1,4 +1,5 @@
 using System.Text.Json.Serialization;
+using Atlas.Shared.Result;
 
 namespace Atlas.App.Models;
 
@@ -11,6 +12,7 @@ namespace Atlas.App.Models;
 [JsonSerializable(typeof(LoginRequest))]
 [JsonSerializable(typeof(AccessTokenResponse))]
 [JsonSerializable(typeof(CompanySummaryResponse))]
+[JsonSerializable(typeof(PagedResult<CompanySummaryResponse>))]
 [JsonSerializable(typeof(TimelineItemResponse))]
 [JsonSerializable(typeof(FavoriteMentionResponse))]
 internal sealed partial class AtlasJsonContext : JsonSerializerContext;

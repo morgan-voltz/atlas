@@ -15,4 +15,11 @@ public static class ApiErrors
 
     public static ApiError InvalidCredentials() =>
         new("api.invalid_credentials", "Adresse e-mail ou mot de passe incorrect.");
+
+    public static ApiError SessionExpired() =>
+        new("api.session_expired", "Votre session a expiré. Reconnectez-vous.");
+
+    /// <summary>État dégradé honnête (doc 12 §10) : la donnée RNE exige une connexion INPI.</summary>
+    public static ApiError InpiNotConnected() =>
+        new("inpi.not_connected", "Connectez votre compte INPI (Profil) pour rechercher des entreprises.");
 }
