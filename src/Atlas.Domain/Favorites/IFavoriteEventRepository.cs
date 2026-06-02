@@ -1,4 +1,5 @@
 using Atlas.Domain.Users;
+using Atlas.Domain.Veille;
 
 namespace Atlas.Domain.Favorites;
 
@@ -15,6 +16,7 @@ public interface IFavoriteEventRepository
         UserId userId,
         DateTimeOffset? after,
         DateTimeOffset? before,
+        TimelineCursor? cursor,
         int limit,
         CancellationToken ct = default);
 

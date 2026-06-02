@@ -163,20 +163,21 @@ public sealed class AtlasApiClient(HttpClient httpClient, ITokenStore tokenStore
 
     /// <summary>Fil Accueil : mouvements des entités suivies (<c>GET /feed/timeline?mentionsFavoritesOnly=true</c>, F-044).</summary>
     public Task<Result<IReadOnlyList<TimelineItemResponse>>> GetAccueilFeedAsync(CancellationToken ct = default) =>
-        GetTimelineAsync("feed/timeline?mentionsFavoritesOnly=true&page=1&pageSize=30", ct);
+        GetTimelineAsync("feed/timeline?mentionsFavoritesOnly=true&pageSize=30", ct);
 
     /// <summary>Fil Veille : flux éditorial des sources (<c>GET /feed/timeline?editorialOnly=true</c>, F-047).</summary>
     public Task<Result<IReadOnlyList<TimelineItemResponse>>> GetVeilleFeedAsync(CancellationToken ct = default) =>
-        GetTimelineAsync("feed/timeline?editorialOnly=true&page=1&pageSize=30", ct);
+        GetTimelineAsync("feed/timeline?editorialOnly=true&pageSize=30", ct);
 
+    // Pagination keyset côté serveur : ici on ne consomme que la première page (pas de curseur).
     private async Task<Result<IReadOnlyList<TimelineItemResponse>>> GetTimelineAsync(string url, CancellationToken ct)
     {
         try
         {
-            PagedResult<TimelineItemResponse>? paged = await httpClient
-                .GetFromJsonAsync(url, AtlasJsonContext.Default.PagedResultTimelineItemResponse, ct)
+            CursorPage<TimelineItemResponse>? page = await httpClient
+                .GetFromJsonAsync(url, AtlasJsonContext.Default.CursorPageTimelineItemResponse, ct)
                 .ConfigureAwait(false);
-            return Result<IReadOnlyList<TimelineItemResponse>>.Ok(paged?.Items ?? Array.Empty<TimelineItemResponse>());
+            return Result<IReadOnlyList<TimelineItemResponse>>.Ok(page?.Items ?? Array.Empty<TimelineItemResponse>());
         }
         catch (HttpRequestException)
         {

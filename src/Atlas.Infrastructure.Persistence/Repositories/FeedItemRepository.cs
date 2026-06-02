@@ -1,6 +1,5 @@
 using Atlas.Domain.Users;
 using Atlas.Domain.Veille;
-using Atlas.Shared.Result;
 using Microsoft.EntityFrameworkCore;
 
 namespace Atlas.Infrastructure.Persistence.Repositories;
@@ -51,11 +50,15 @@ internal sealed class FeedItemRepository(AtlasDbContext dbContext) : IFeedItemRe
             .Take(max)
             .ToListAsync(ct);
 
-    public async Task<PagedResult<TimelineEntry>> GetTimelineAsync(
+    // Comparateur de Guid aligné sur l'ordre des uuid PostgreSQL (big-endian), pour que le départage
+    // keyset en mémoire coïncide avec le ORDER BY id côté base.
+    private static readonly IComparer<Guid> GuidComparer = Comparer<Guid>.Create(TimelineKeyset.CompareGuid);
+
+    public async Task<IReadOnlyList<TimelineEntry>> GetTimelineAsync(
         UserId userId,
         TimelineFilter filter,
-        int page,
-        int pageSize,
+        TimelineCursor? cursor,
+        int limit,
         CancellationToken ct = default)
     {
         // Items des sources abonnées par l'utilisateur, LEFT JOIN sur son état (lu/favori/archivé).
@@ -124,15 +127,43 @@ internal sealed class FeedItemRepository(AtlasDbContext dbContext) : IFeedItemRe
                 && (sib.PublishedAt > row.item.PublishedAt
                     || (sib.PublishedAt == row.item.PublishedAt && sib.FetchedAt > row.item.FetchedAt))));
 
-        long total = await query.LongCountAsync(ct);
+        // Pagination keyset sur (PublishedAt DESC, Id DESC). Le ORDER BY id (uuid) côté SQL et le départage
+        // en mémoire (GuidComparer big-endian) utilisent le même ordre, condition d'un keyset sans saut.
+        List<TimelineRow> rows;
+        if (cursor is null)
+        {
+            rows = await query
+                .OrderByDescending(row => row.item.PublishedAt)
+                .ThenByDescending(row => row.item.Id)
+                .Take(limit)
+                .Select(row => new TimelineRow(row.item, row.state))
+                .ToListAsync(ct);
+        }
+        else
+        {
+            // Items strictement plus anciens que le curseur : keyset pur, sans départage d'Id nécessaire.
+            List<TimelineRow> older = await query
+                .Where(row => row.item.PublishedAt < cursor.OccurredAt)
+                .OrderByDescending(row => row.item.PublishedAt)
+                .ThenByDescending(row => row.item.Id)
+                .Take(limit)
+                .Select(row => new TimelineRow(row.item, row.state))
+                .ToListAsync(ct);
 
-        var rows = await query
-            .OrderByDescending(row => row.item.PublishedAt)
-            .ThenByDescending(row => row.item.FetchedAt)
-            .Skip((page - 1) * pageSize)
-            .Take(pageSize)
-            .Select(row => new { row.item, row.state })
-            .ToListAsync(ct);
+            // Items au même horodatage exact que le curseur (borné par un lot de flux) : départage par Id
+            // en mémoire pour ne garder que ceux situés après le curseur, sans dépendre d'une comparaison
+            // de Guid côté SQL (que EF ne traduit pas).
+            List<TimelineRow> equalTime = await query
+                .Where(row => row.item.PublishedAt == cursor.OccurredAt)
+                .Select(row => new TimelineRow(row.item, row.state))
+                .ToListAsync(ct);
+
+            IEnumerable<TimelineRow> equalAfterCursor = equalTime
+                .Where(row => TimelineKeyset.CompareGuid(row.Item.Id.Value, cursor.Id) < 0)
+                .OrderByDescending(row => row.Item.Id.Value, GuidComparer);
+
+            rows = equalAfterCursor.Concat(older).Take(limit).ToList();
+        }
 
         // SourceCount (badge « N sources rapportent ») calculé séparément pour les seuls items affichés
         // (audit E5b). Dans la projection paginée, la sous-requête corrélée était évaluée par PostgreSQL pour
@@ -141,8 +172,8 @@ internal sealed class FeedItemRepository(AtlasDbContext dbContext) : IFeedItemRe
         // On réutilise les seules constructions que EF traduit ici : Contains sur FeedItemId (non-nullable, cf.
         // les mentions) et l'égalité ClusterId == ClusterId (nullable, comme la requête d'origine).
         var clusteredDisplayedIds = rows
-            .Where(row => row.item.ClusterId is not null)
-            .Select(row => row.item.Id)
+            .Where(row => row.Item.ClusterId is not null)
+            .Select(row => row.Item.Id)
             .ToList();
 
         Dictionary<FeedItemId, int> sourceCountByItem = clusteredDisplayedIds.Count == 0
@@ -161,7 +192,7 @@ internal sealed class FeedItemRepository(AtlasDbContext dbContext) : IFeedItemRe
                 .ToDictionaryAsync(row => row.Id, row => row.Count, ct);
 
         // F-047 : charge en une requête les mentions de favoris pour les items affichés.
-        var displayedIds = rows.Select(r => r.item.Id).ToList();
+        var displayedIds = rows.Select(r => r.Item.Id).ToList();
         var mentionRows = await dbContext.FeedItemFavoriteMatches
             .Where(m => m.UserId == userId && displayedIds.Contains(m.FeedItemId))
             .Select(m => new { ItemId = m.FeedItemId.Value, m.Siren, m.MatchedName })
@@ -174,20 +205,22 @@ internal sealed class FeedItemRepository(AtlasDbContext dbContext) : IFeedItemRe
                 g => g.Key,
                 g => g.Select(x => new FavoriteMention(x.Siren.Value, x.MatchedName)).ToList());
 
-        IReadOnlyList<TimelineEntry> entries = rows
+        return rows
             .Select(row => new TimelineEntry(
-                row.item,
-                row.state != null && row.state.IsRead,
-                row.state != null && row.state.IsFavorite,
-                row.state != null && row.state.IsArchived,
-                row.item.ClusterId is null
+                row.Item,
+                row.State != null && row.State.IsRead,
+                row.State != null && row.State.IsFavorite,
+                row.State != null && row.State.IsArchived,
+                row.Item.ClusterId is null
                     ? 1
-                    : sourceCountByItem.GetValueOrDefault(row.item.Id, 1),
-                mentionsByItem.TryGetValue(row.item.Id.Value, out List<FavoriteMention>? mentions)
+                    : sourceCountByItem.GetValueOrDefault(row.Item.Id, 1),
+                mentionsByItem.TryGetValue(row.Item.Id.Value, out List<FavoriteMention>? mentions)
                     ? mentions
                     : []))
             .ToList();
-
-        return new PagedResult<TimelineEntry>(entries, page, pageSize, total);
     }
+
+    // Ligne de timeline matérialisée (item + état utilisateur). Type nommé — et non anonyme — pour pouvoir
+    // concaténer les sous-requêtes keyset (older / equal-time) dans une même liste.
+    private sealed record TimelineRow(FeedItem Item, FeedItemUserState? State);
 }

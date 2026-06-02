@@ -18,6 +18,21 @@ public sealed class GetTimelineHandlerTests
 
     private GetTimelineHandler CreateHandler() => new(_itemRepo, _eventRepo);
 
+    private void StubItems(params TimelineEntry[] entries) =>
+        _itemRepo.GetTimelineAsync(Arg.Any<UserId>(), Arg.Any<TimelineFilter>(),
+                Arg.Any<TimelineCursor?>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
+            .Returns((IReadOnlyList<TimelineEntry>)entries);
+
+    private void StubEvents(params FavoriteEvent[] events) =>
+        _eventRepo.GetForUserAsync(Arg.Any<UserId>(), Arg.Any<DateTimeOffset?>(), Arg.Any<DateTimeOffset?>(),
+                Arg.Any<TimelineCursor?>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
+            .Returns((IReadOnlyList<FavoriteEvent>)events);
+
+    private static TimelineEntry RssEntry(DateTimeOffset publishedAt, int sourceCount = 1) =>
+        new(
+            FeedItem.Create(new FeedSourceId(Guid.NewGuid()), "Titre", $"https://x.test/{Guid.NewGuid()}", null, publishedAt, null, Now),
+            IsRead: false, IsFavorite: false, IsArchived: false, sourceCount, MentionedFavorites: []);
+
     [Fact]
     public async Task Handle_passes_filter_and_maps_rss_entries()
     {
@@ -30,15 +45,13 @@ public sealed class GetTimelineHandlerTests
 
         TimelineFilter? captured = null;
         _itemRepo.GetTimelineAsync(Arg.Any<UserId>(), Arg.Do<TimelineFilter>(f => captured = f),
-                Arg.Any<int>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
-            .Returns(new PagedResult<TimelineEntry>([entry], 1, 500, 1));
-        _eventRepo.GetForUserAsync(Arg.Any<UserId>(), Arg.Any<DateTimeOffset?>(), Arg.Any<DateTimeOffset?>(),
-                Arg.Any<int>(), Arg.Any<CancellationToken>())
-            .Returns(new List<FavoriteEvent>());
+                Arg.Any<TimelineCursor?>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
+            .Returns((IReadOnlyList<TimelineEntry>)[entry]);
+        StubEvents();
 
         // SourceId positionné → events exclus (filtre RSS-only).
-        var query = new GetTimelineQuery(userId, 1, 20, sourceId, null, null, "veille", true, false, false, false);
-        Result<PagedResult<TimelineItemDto>> result = await CreateHandler().Handle(query, CancellationToken.None);
+        var query = new GetTimelineQuery(userId, null, 20, sourceId, null, null, "veille", true, false, false, false);
+        Result<CursorPage<TimelineItemDto>> result = await CreateHandler().Handle(query, CancellationToken.None);
 
         result.IsSuccess.Should().BeTrue();
         TimelineItemDto dto = result.Value!.Items.Should().ContainSingle().Subject;
@@ -61,23 +74,16 @@ public sealed class GetTimelineHandlerTests
     {
         UserId userId = UserId.New();
         Siren siren = Siren.Create("552032534").Value;
-        FeedItem rssItem = FeedItem.Create(
-            new FeedSourceId(Guid.NewGuid()), "Article RSS", "https://x.test/a", null,
-            Now.AddHours(-2), null, Now);
-        var rssEntry = new TimelineEntry(rssItem, false, false, false, 1, []);
+        var rssEntry = RssEntry(Now.AddHours(-2));
 
         FavoriteEvent evt = FavoriteEvent.Record(
             userId, siren, FavoriteEventType.RneChanged, "Mise à jour de Renault", "Dénomination modifiée.", Now);
 
-        _itemRepo.GetTimelineAsync(Arg.Any<UserId>(), Arg.Any<TimelineFilter>(),
-                Arg.Any<int>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
-            .Returns(new PagedResult<TimelineEntry>([rssEntry], 1, 500, 1));
-        _eventRepo.GetForUserAsync(Arg.Any<UserId>(), Arg.Any<DateTimeOffset?>(), Arg.Any<DateTimeOffset?>(),
-                Arg.Any<int>(), Arg.Any<CancellationToken>())
-            .Returns(new List<FavoriteEvent> { evt });
+        StubItems(rssEntry);
+        StubEvents(evt);
 
-        var query = new GetTimelineQuery(userId.Value, 1, 20, null, null, null, null, false, false, false, false);
-        Result<PagedResult<TimelineItemDto>> result = await CreateHandler().Handle(query, CancellationToken.None);
+        var query = new GetTimelineQuery(userId.Value, null, 20, null, null, null, null, false, false, false, false);
+        Result<CursorPage<TimelineItemDto>> result = await CreateHandler().Handle(query, CancellationToken.None);
 
         result.IsSuccess.Should().BeTrue();
         result.Value!.Items.Should().HaveCount(2);
@@ -92,56 +98,64 @@ public sealed class GetTimelineHandlerTests
     public async Task Handle_excludes_events_when_unread_only_filter_active()
     {
         // UnreadOnly est RSS-only (les events n'ont pas d'état lu) → events ignorés.
-        _itemRepo.GetTimelineAsync(Arg.Any<UserId>(), Arg.Any<TimelineFilter>(),
-                Arg.Any<int>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
-            .Returns(new PagedResult<TimelineEntry>([], 1, 500, 0));
+        StubItems();
 
-        var query = new GetTimelineQuery(Guid.NewGuid(), 1, 20, null, null, null, null,
+        var query = new GetTimelineQuery(Guid.NewGuid(), null, 20, null, null, null, null,
             UnreadOnly: true, FavoritesOnly: false, IncludeArchived: false, MentionsFavoritesOnly: false);
 
         await CreateHandler().Handle(query, CancellationToken.None);
 
         await _eventRepo.DidNotReceive().GetForUserAsync(
             Arg.Any<UserId>(), Arg.Any<DateTimeOffset?>(), Arg.Any<DateTimeOffset?>(),
-            Arg.Any<int>(), Arg.Any<CancellationToken>());
+            Arg.Any<TimelineCursor?>(), Arg.Any<int>(), Arg.Any<CancellationToken>());
     }
 
     [Fact]
     public async Task Handle_excludes_events_when_editorial_only_even_without_rss_filter()
     {
-        // Veille (doc 12 §6) : editorialOnly=true exclut les FavoriteEvent même si AUCUN filtre RSS
-        // n'est actif (cas où ShouldIncludeEvents les inclurait normalement).
-        _itemRepo.GetTimelineAsync(Arg.Any<UserId>(), Arg.Any<TimelineFilter>(),
-                Arg.Any<int>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
-            .Returns(new PagedResult<TimelineEntry>([], 1, 500, 0));
+        // Veille (doc 12 §6) : editorialOnly=true exclut les FavoriteEvent même si AUCUN filtre RSS n'est actif.
+        StubItems();
 
-        var query = new GetTimelineQuery(Guid.NewGuid(), 1, 20, null, null, null, null,
+        var query = new GetTimelineQuery(Guid.NewGuid(), null, 20, null, null, null, null,
             UnreadOnly: false, FavoritesOnly: false, IncludeArchived: false, MentionsFavoritesOnly: false,
             EditorialOnly: true);
 
-        Result<PagedResult<TimelineItemDto>> result = await CreateHandler().Handle(query, CancellationToken.None);
+        Result<CursorPage<TimelineItemDto>> result = await CreateHandler().Handle(query, CancellationToken.None);
 
         result.IsSuccess.Should().BeTrue();
         await _eventRepo.DidNotReceive().GetForUserAsync(
             Arg.Any<UserId>(), Arg.Any<DateTimeOffset?>(), Arg.Any<DateTimeOffset?>(),
-            Arg.Any<int>(), Arg.Any<CancellationToken>());
+            Arg.Any<TimelineCursor?>(), Arg.Any<int>(), Arg.Any<CancellationToken>());
     }
 
     [Fact]
-    public async Task Handle_propagates_pagination()
+    public async Task Handle_returns_next_cursor_when_more_than_page_size()
     {
-        _itemRepo.GetTimelineAsync(Arg.Any<UserId>(), Arg.Any<TimelineFilter>(), Arg.Any<int>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
-            .Returns(new PagedResult<TimelineEntry>([], 1, 500, 42));
-        _eventRepo.GetForUserAsync(Arg.Any<UserId>(), Arg.Any<DateTimeOffset?>(), Arg.Any<DateTimeOffset?>(),
-                Arg.Any<int>(), Arg.Any<CancellationToken>())
-            .Returns(new List<FavoriteEvent>());
+        // Le repo renvoie pageSize+1 entrées → il reste une page : on tronque à pageSize et on émet un curseur.
+        StubItems(RssEntry(Now), RssEntry(Now.AddMinutes(-1)), RssEntry(Now.AddMinutes(-2)));
+        StubEvents();
 
-        var query = new GetTimelineQuery(Guid.NewGuid(), 2, 10, null, null, null, null, false, false, false, false);
-        Result<PagedResult<TimelineItemDto>> result = await CreateHandler().Handle(query, CancellationToken.None);
+        var query = new GetTimelineQuery(Guid.NewGuid(), null, 2, null, null, null, null, false, false, false, false);
+        Result<CursorPage<TimelineItemDto>> result = await CreateHandler().Handle(query, CancellationToken.None);
 
         result.IsSuccess.Should().BeTrue();
-        result.Value!.Page.Should().Be(2);
-        result.Value!.PageSize.Should().Be(10);
-        result.Value!.TotalCount.Should().Be(42);
+        result.Value!.Items.Should().HaveCount(2);
+        result.Value!.HasMore.Should().BeTrue();
+        result.Value!.NextCursor.Should().NotBeNullOrEmpty();
+    }
+
+    [Fact]
+    public async Task Handle_has_no_next_cursor_when_exhausted()
+    {
+        StubItems(RssEntry(Now));
+        StubEvents();
+
+        var query = new GetTimelineQuery(Guid.NewGuid(), null, 20, null, null, null, null, false, false, false, false);
+        Result<CursorPage<TimelineItemDto>> result = await CreateHandler().Handle(query, CancellationToken.None);
+
+        result.IsSuccess.Should().BeTrue();
+        result.Value!.Items.Should().ContainSingle();
+        result.Value!.HasMore.Should().BeFalse();
+        result.Value!.NextCursor.Should().BeNull();
     }
 }

@@ -222,10 +222,10 @@ internal sealed class AtlasApiClient(HttpClient httpClient, ITokenStore tokenSto
     public Task<ApiResult> DeleteMyAccountAsync(CancellationToken ct = default) =>
         SendNoContentAsync(() => new HttpRequestMessage(HttpMethod.Delete, "account"), ct);
 
-    public Task<ApiResult<PagedResult<TimelineItemResponse>>> GetAccueilFeedAsync(
-        int page, int pageSize, CancellationToken ct = default) =>
-        GetAsync<PagedResult<TimelineItemResponse>>(
-            $"feed/timeline?mentionsFavoritesOnly=true&page={page}&pageSize={pageSize}", ct);
+    public Task<ApiResult<CursorPage<TimelineItemResponse>>> GetAccueilFeedAsync(
+        string? cursor, int pageSize, CancellationToken ct = default) =>
+        GetAsync<CursorPage<TimelineItemResponse>>(
+            $"feed/timeline?mentionsFavoritesOnly=true&pageSize={pageSize}{CursorParam(cursor)}", ct);
 
     public Task<ApiResult> MarkFeedItemReadAsync(Guid id, CancellationToken ct = default) =>
         SendNoContentAsync(
@@ -235,10 +235,14 @@ internal sealed class AtlasApiClient(HttpClient httpClient, ITokenStore tokenSto
             },
             ct);
 
-    public Task<ApiResult<PagedResult<TimelineItemResponse>>> GetVeilleFeedAsync(
-        int page, int pageSize, CancellationToken ct = default) =>
-        GetAsync<PagedResult<TimelineItemResponse>>(
-            $"feed/timeline?editorialOnly=true&page={page}&pageSize={pageSize}", ct);
+    public Task<ApiResult<CursorPage<TimelineItemResponse>>> GetVeilleFeedAsync(
+        string? cursor, int pageSize, CancellationToken ct = default) =>
+        GetAsync<CursorPage<TimelineItemResponse>>(
+            $"feed/timeline?editorialOnly=true&pageSize={pageSize}{CursorParam(cursor)}", ct);
+
+    // Curseur keyset : ajouté à l'URL seulement s'il est présent (URL-encodé), absent pour la 1ʳᵉ page.
+    private static string CursorParam(string? cursor) =>
+        string.IsNullOrEmpty(cursor) ? string.Empty : $"&cursor={Uri.EscapeDataString(cursor)}";
 
     public Task<ApiResult> SetFeedItemStateAsync(
         Guid id, bool? isRead = null, bool? isFavorite = null, bool? isArchived = null,

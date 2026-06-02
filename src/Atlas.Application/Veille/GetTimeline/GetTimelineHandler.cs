@@ -9,18 +9,19 @@ namespace Atlas.Application.Veille.GetTimeline;
 /// <summary>
 /// Timeline unifiée (F-044 + F-047 volet 2) : items RSS des sources abonnées du user + événements
 /// (changements RNE) sur ses favoris, fusionnés et triés chronologiquement.
-/// Pour MVP, la fusion est bornée à <see cref="FusionBuffer"/> entrées de chaque source ; au-delà,
-/// les très anciens items peuvent être tronqués. Une vue matérialisée SQL pourra remplacer cette
-/// approche si le volume l'exige.
+/// Pagination keyset (curseur opaque) : chaque flux ne renvoie que <c>pageSize+1</c> entrées situées
+/// après le curseur, supprimant l'ancien plafond de fusion et le sur-fetch. L'ordre total est
+/// <c>(OccurredAt DESC, Id DESC)</c>, le départage par Id garantissant l'absence de saut entre pages.
 /// </summary>
 internal sealed class GetTimelineHandler(
     IFeedItemRepository itemRepository,
     IFavoriteEventRepository eventRepository)
-    : IRequestHandler<GetTimelineQuery, Result<PagedResult<TimelineItemDto>>>
+    : IRequestHandler<GetTimelineQuery, Result<CursorPage<TimelineItemDto>>>
 {
-    private const int FusionBuffer = 500;
+    // Départage des ex-aequo d'horodatage, aligné sur l'ordre uuid PostgreSQL utilisé par les repositories.
+    private static readonly IComparer<Guid> GuidComparer = Comparer<Guid>.Create(TimelineKeyset.CompareGuid);
 
-    public async Task<Result<PagedResult<TimelineItemDto>>> Handle(
+    public async Task<Result<CursorPage<TimelineItemDto>>> Handle(
         GetTimelineQuery request,
         CancellationToken cancellationToken)
     {
@@ -35,17 +36,21 @@ internal sealed class GetTimelineHandler(
             request.MentionsFavoritesOnly);
 
         var userId = new UserId(request.UserId);
+        TimelineCursor? cursor = TimelineCursorCodec.Decode(request.Cursor);
 
-        // RSS items (buffer largement supérieur à pageSize pour permettre la fusion correcte).
-        PagedResult<TimelineEntry> rssPage = await itemRepository.GetTimelineAsync(
-            userId, filter, page: 1, pageSize: FusionBuffer, cancellationToken);
+        // Keyset : on demande pageSize+1 de CHAQUE flux. Le top (pageSize+1) de l'union est forcément
+        // inclus dans l'union des deux top-(pageSize+1), donc la fusion est exacte. Le +1 sert à détecter
+        // s'il reste une page suivante.
+        int take = request.PageSize + 1;
 
-        // Événements RNE : exclus si l'un des filtres RSS-spécifiques est actif (les events n'ont
-        // pas de source RSS ni d'état utilisateur — sinon ils apparaîtraient toujours, surprise) ou
-        // si l'appelant demande explicitement le contenu éditorial seul (Veille, doc 12 §6).
+        IReadOnlyList<TimelineEntry> rss = await itemRepository.GetTimelineAsync(
+            userId, filter, cursor, take, cancellationToken);
+
+        // Événements RNE : exclus si l'un des filtres RSS-spécifiques est actif (les events n'ont pas de
+        // source RSS ni d'état utilisateur) ou si l'appelant demande le contenu éditorial seul (doc 12 §6).
         IReadOnlyList<FavoriteEvent> events = !request.EditorialOnly && ShouldIncludeEvents(filter)
             ? await eventRepository.GetForUserAsync(
-                userId, request.After, request.Before, FusionBuffer, cancellationToken)
+                userId, request.After, request.Before, cursor, take, cancellationToken)
             : [];
 
         if (!string.IsNullOrWhiteSpace(filter.Keyword))
@@ -58,24 +63,22 @@ internal sealed class GetTimelineHandler(
                 .ToList();
         }
 
-        IEnumerable<TimelineItemDto> rssDtos = rssPage.Items.Select(MapRss);
-        IEnumerable<TimelineItemDto> eventDtos = events.Select(MapEvent);
-
-        var merged = rssDtos
-            .Concat(eventDtos)
+        // Fusion des deux flux selon le même ordre total que les repositories : (OccurredAt DESC, Id DESC).
+        var merged = rss.Select(MapRss)
+            .Concat(events.Select(MapEvent))
             .OrderByDescending(item => item.OccurredAt)
+            .ThenByDescending(item => item.Id, GuidComparer)
+            .Take(take)
             .ToList();
 
-        // TotalCount approximé : somme du total RSS + nombre d'events chargés.
-        long total = rssPage.TotalCount + events.Count;
+        bool hasMore = merged.Count > request.PageSize;
+        List<TimelineItemDto> page = hasMore ? merged.GetRange(0, request.PageSize) : merged;
 
-        var paged = merged
-            .Skip((request.Page - 1) * request.PageSize)
-            .Take(request.PageSize)
-            .ToList();
+        string? nextCursor = hasMore
+            ? TimelineCursorCodec.Encode(new TimelineCursor(page[^1].OccurredAt, page[^1].Id))
+            : null;
 
-        return Result<PagedResult<TimelineItemDto>>.Ok(
-            new PagedResult<TimelineItemDto>(paged, request.Page, request.PageSize, total));
+        return Result<CursorPage<TimelineItemDto>>.Ok(new CursorPage<TimelineItemDto>(page, nextCursor));
     }
 
     /// <summary>

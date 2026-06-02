@@ -7,7 +7,8 @@ namespace Atlas.Application.Veille.GetTimeline;
 /// de ses entreprises favorites (F-044 + F-047), filtrés et paginés, triés chronologiquement.</summary>
 public sealed record GetTimelineQuery(
     Guid UserId,
-    int Page,
+    /// <summary>Curseur keyset opaque renvoyé par la page précédente ; <c>null</c> pour la première page.</summary>
+    string? Cursor,
     int PageSize,
     Guid? SourceId,
     DateTimeOffset? After,
@@ -22,7 +23,7 @@ public sealed record GetTimelineQuery(
     /// Veille (doc 12 §6) : ne renvoyer que le contenu éditorial (items RSS), en excluant les
     /// <c>FavoriteEvent</c> (qui appartiennent à l'Accueil). N'affecte pas le filtrage des items RSS.
     /// </summary>
-    bool EditorialOnly = false) : IRequest<Result<PagedResult<TimelineItemDto>>>;
+    bool EditorialOnly = false) : IRequest<Result<CursorPage<TimelineItemDto>>>;
 
 /// <summary>F-047 : référence à une entreprise favorite du user mentionnée dans un item.</summary>
 public sealed record FavoriteMentionDto(string Siren, string Name);
