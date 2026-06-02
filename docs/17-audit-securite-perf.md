@@ -86,6 +86,7 @@ Concernant les credentials INPI : déchiffrement transitoire correct, jamais log
 | **E4b** | Élevée | **N+1** dans `RefreshFavoritesHandler` : un `GetCurrentAsync` de snapshot par favori. | Préchargement de tous les snapshots du user en une requête (`ICompanyFavoriteSnapshotRepository.GetByUserAsync`) + lookup mémoire. | ✅ #144 |
 | **E4c** | Moyenne | **N+1** dans le polling BODACC : un `GetKnownExternalIdsAsync` par favori. | Requête batch par SIREN (`GetKnownExternalIdsForUsersAsync`) puis regroupement en mémoire. | ✅ #145 |
 | **E5a** | Moyenne | `GetTimelineAsync` utilisait un `ContinueWith` bloquant sur `.Result` (avalait les exceptions). | Remplacé par `await` + regroupement synchrone. | ✅ #144 |
+| **E5b** | Moyenne | `GetTimelineAsync` lent en pagination profonde (page 50 ≈ 1,9 s). **Profilé** : la sous-requête `SourceCount` placée dans la projection paginée était évaluée par PostgreSQL pour toutes les lignes ordonnées **avant** l'OFFSET (~1000), pas seulement les 20 retournées. | `SourceCount` calculé dans une requête séparée restreinte aux items affichés (≤ pageSize). Mesuré : page 50 1,9 s → ~210 ms (9×). | ✅ #149 |
 | **M4** | Moyenne | Archive ZIP du bulk download entièrement en `MemoryStream` (risque d'OOM sur gros volumes). | Construction sur **fichier temporaire** (`FileOptions.DeleteOnClose`), mémoire bornée. | ✅ #145 |
 | **M5** | Moyenne | Appels INPI **séquentiels** dans `RefreshFavoritesHandler`. | Séparation **phase HTTP** (fetch parallèle borné, `MaxDegreeOfParallelism=4`) / **phase DB** (traitement séquentiel), pour respecter la non-thread-safety du `DbContext`. | ✅ #145 |
 | **M7** | Moyenne | Compteur de likes `VeillePack` en read-modify-write → *lost update* entre likes concurrents. | Incrément/décrément **atomiques** en base (`ExecuteUpdate` ; décrément borné à 0 via `GREATEST`) pour Like **et** Unlike. | ✅ #144 |
@@ -113,7 +114,9 @@ Concernant les credentials INPI : déchiffrement transitoire correct, jamais log
 
 | Réf. | Décision | Justification |
 |---|---|---|
-| **E5b** | ⏸️ Différé | Dénormalisation des sous-requêtes corrélées de `GetTimelineAsync` (`SourceCount` par ligne + collapse de cluster). C'est une **évolution de feature** (colonne dénormalisée + maintien dans la logique de clustering + migration) à **profiler sous volume réel** avant engagement. Coût actuel borné (sous-requête sur ≤ `pageSize` lignes par page). |
+| **E5b — dénormalisation `SourceCount`** | ⏸️ Écarté (profilé) | La proposition initiale (colonne dénormalisée) est **inutile** : mesurée à ~0,2 ms, la sous-requête n'était pas le problème (cf. E5b §4.3, corrigé autrement en #149). |
+| **E5b — index composite** `(cluster_id, published_at, fetched_at)` | ⏸️ Écarté (profilé) | **Aucun gain** mesuré vs l'index simple `cluster_id` existant (137/199 ms ≈ 142/210 ms). L'index simple actuel reste néanmoins essentiel (sans index cluster : 2,6–4,4 s). |
+| **E5b — pagination keyset** | ⏸️ Différé | Rendrait les pages profondes O(pageSize). **Changement de contrat d'API** (curseur au lieu de numéro de page) touchant le client → à traiter comme feature si la pagination profonde devient un usage réel. |
 | **M6** | ⏸️ Écarté | `SaveChanges` par utilisateur dans les jobs de fond : **choix de conception assumé** (progression incrémentale — un job interrompu ne reperd pas les users déjà traités), pas un bug. |
 | **F5** | ⏸️ Écarté | AAD AES-GCM liant le ciphertext au `userId` (défense en profondeur, sévérité Faible). **Invasif** (changement de signature `ICryptoService` + threading du userId) et **casserait les `InpiCredentials` / secrets TOTP déjà chiffrés** : nécessiterait un format de chiffrement versionné + une migration de ré-chiffrement. À traiter dans une évolution dédiée si le besoin se confirme. |
 
@@ -135,6 +138,7 @@ Une exploration avait classé comme **« Critique »** un *fallback silencieux* 
 | [#145](https://github.com/Morgan-Voltz/atlas/pull/145) | 3b | Performance jobs — batch BODACC (E4c), ZIP temp (M4), parallélisme INPI (M5) |
 | [#146](https://github.com/Morgan-Voltz/atlas/pull/146) | 4a | Durcissement — rate limiting (M3), injection CSV (F2), validation device (F1), timeout SQL (F6) |
 | [#147](https://github.com/Morgan-Voltz/atlas/pull/147) | 4b | Maintenabilité — binder `CurrentUser` (F3), factorisation exports (F4) |
+| [#149](https://github.com/Morgan-Voltz/atlas/pull/149) | E5b | Timeline — `SourceCount` hors projection paginée (profilé : page 50 9× plus rapide) |
 
 Chaque lot a été livré sur une branche dédiée, mergé en *squash* après CI verte (build Release + tests unitaires + tests d'architecture + tests d'intégration Docker), conformément à la Definition of Done (`CLAUDE.md`).
 
@@ -145,6 +149,6 @@ Chaque lot a été livré sur une branche dédiée, mergé en *squash* après CI
 À l'issue de l'audit, **tout le périmètre sécurité / résilience / performance / durcissement / maintenabilité est traité**. Recommandations de suivi :
 
 1. **Avant ouverture publique (F-028)** : les prérequis sécurité (SSRF, XXE, anti-timing, theft detection) sont en place. Réévaluer alors le rate limiting des recherches INPI si le quota devient un point sensible.
-2. **E5b** : instrumenter la timeline (durée de `GetTimelineAsync`, plan PostgreSQL) sous charge représentative avant de décider de la dénormalisation.
+2. **Timeline (suite d'E5b)** : si la pagination profonde de la timeline devient un usage réel, passer en **pagination keyset** (curseur) — c'est le seul levier restant pour rendre les pages profondes O(pageSize), au prix d'un changement de contrat d'API. Le correctif #149 a déjà ramené la page 50 de ~1,9 s à ~210 ms.
 3. **F5** : si un modèle de menace « accès en écriture à la base » devient pertinent, introduire un format de chiffrement versionné permettant d'ajouter l'AAD sans casser les données existantes.
 4. **Régression** : les comportements ajoutés sont couverts par des tests (unitaires + intégration Docker pour les requêtes EF et la résilience). Conserver cette couverture lors des évolutions des composants cités.
