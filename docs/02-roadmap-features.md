@@ -4,8 +4,8 @@
 > Chaque feature a sa **fiche détaillée** dans [`docs/features/`](features/) (valeur user, complexité, APIs, dépendances, doctrine). Ce document en donne les **tables d'avancement + une synthèse + un lien**.
 > L'implémentation du **client web** suit sa propre feuille de route, à part : [`docs/15-roadmap-client-web.md`](15-roadmap-client-web.md).
 
-**Version** : 2.0
-**Date de dernière mise à jour** : 1ᵉʳ juin 2026
+**Version** : 2.1
+**Date de dernière mise à jour** : 2 juin 2026
 
 ---
 
@@ -206,7 +206,7 @@ Pour chaque feature, on documente :
 - ~~**Adapter email Brevo (F-019)**~~ ✅ **Livré 29 mai 2026** : `BrevoEmailSender` envoie les emails de F-001 / F-019 / F-046 via l'API Brevo (`POST /v3/smtp/email`), switch DI sur `Email:Brevo:ApiKey`. Sans clé renseignée, fallback `LoggingEmailSender` (mode dev). 6 tests unitaires (payload + erreurs).
 - **Trame UI MAUI cross-cutting** : F-017 (onglet « Mes favoris »), F-020 (récupération du token push natif + `POST /devices`), F-044 (vue timeline veille). Backend livré pour les 3 ; côté MAUI c'est le gros chantier client restant (suivi en parallèle dans F-009/F-010 du MVP 1, encore 🟡).
 - **Validation contre l'API INPI réelle** : F-013 (auth Bearer + structure JSON attachments), F-015 (structure JSON détail brevet), F-016 (syntaxe SolR + réponse paginée). Tous documentés mais non confirmés en prod. Idéalement levés via un compte INPI réel et une session Bruno.
-- **F-014 — Lot ultérieur** : notification fin de job (push/email), job récurrent de purge des archives expirées + entité `BulkDownloadJob`, adapter `S3FileStorage` (MinIO/Wasabi/AWS), rate limiting INPI dédié aux téléchargements.
+- **F-014 — Lot ultérieur** : notification fin de job (push/email), job récurrent de purge des archives expirées + entité `BulkDownloadJob`, adapter `S3FileStorage` (MinIO/Wasabi/AWS). ~~rate limiting INPI dédié aux téléchargements~~ ✅ **livré** (audit Lot 4a, politique `expensive`) ; archive ZIP désormais construite sur fichier temporaire (mémoire bornée, audit Lot 3b). Cf. `docs/17`.
 - **F-021 — Étendue d'export** : ClosedXML pour XLSX, export des résultats de recherche RNE/PI (paginé), export de la veille (timeline).
 - **F-022 — Enrichissement PDF** : logo, historique des modifications via snapshots F-019, bilans intégrés via F-013 download.
 - **F-048 — Configuration fine user** : aujourd'hui toutes les annonces BODACC sont remontées. Filtres par mots-clés / secteurs / types d'annonces à ajouter ; et validation contre l'API Opendatasoft réelle.
@@ -252,6 +252,24 @@ endpoints INPI (cf. « Validation contre l'API INPI réelle »).
 **Reste à valider** : les dossiers INPI (`16-Company-Attachments`, `17-Patents`,
 `20-Company-Report`, `90-INPI-E2E-CI`) renvoient `409 inpi.not_connected` faute de
 compte INPI habilité — couvert par la punch-list « Validation contre l'API INPI réelle ».
+
+---
+
+## Durcissement (audit) & perf timeline — 1ᵉʳ–2 juin 2026
+
+> Audit de fond de l'API (sécurité, résilience, performance, maintenabilité) puis suite perf de
+> la timeline. **Aucune feature nouvelle** : ce passage **durcit l'existant** et lève des items de
+> la punch-list. Rapport détaillé (constats, correctifs, items écartés) : [`docs/17-audit-securite-perf.md`](17-audit-securite-perf.md).
+
+**Améliorations transverses livrées** (rattachées aux features concernées) :
+
+- **Sécurité** — SSRF des flux RSS fournis par l'utilisateur (**F-043** : validation de l'IP réellement résolue, anti rebinding DNS / redirection) ; durcissement XXE du parsing RSS (**F-041/F-043**) ; anti-énumération par timing au login + détection de réutilisation de refresh token (**F-002**) ; anti-injection de formule CSV des exports (**F-021/F-018**) ; rate limiting dédié sur les endpoints coûteux (**F-014** bulk, **F-022** PDF).
+- **Résilience** — retry exponentiel + circuit breaker (Polly) sur tous les appels externes INPI / BODACC / RSS (**F-003/F-013/F-015/F-016/F-041/F-048**), conformément à l'ADR-007.
+- **Performance** — N+1 des jobs favoris (**F-019/F-048**), index `feed_item.fetched_at` (**F-046**), compteur de likes `VeillePack` atomique (**F-049**), archive ZIP du bulk download en mémoire bornée (**F-014**), parallélisme borné des appels INPI du refresh favoris (**F-019**).
+- **Timeline (F-044)** — `SourceCount` sorti de la projection paginée (page profonde 9× plus rapide), puis **pagination keyset à curseur** : suppression du plafond de fusion (500) et du sur-fetch ; contrat `GET /feed/timeline` passé de `page` à `cursor` (clients Blazor + Uno mis à jour). L'unification `UNION ALL` côté SQL a été étudiée puis écartée (non traduisible proprement par EF Core sans SQL brut ; gain marginal vs keyset). Détail dans `docs/17` §5/§8.
+- **Maintenabilité** — binder `CurrentUser` remplaçant ~58 répétitions de l'extraction du `userId` dans les endpoints ; factorisation des exports CSV.
+
+**PRs** : #142–#147 (audit, 6 lots) ; #149 + #151 (timeline). **Item de punch-list MVP 2 levé** : rate limiting dédié aux téléchargements (F-014).
 
 ---
 
