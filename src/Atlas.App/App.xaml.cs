@@ -19,9 +19,16 @@ public partial class App : Application
 
     protected Window? MainWindow { get; private set; }
 
+    /// <summary>Fenêtre applicative (exposée pour l'init des sélecteurs de fichiers natifs — RGPD export).</summary>
+    internal static Window? WindowInstance { get; private set; }
+
+    /// <summary>Frame racine (héberge LoginPage puis MainPage). Sert à revenir au login après déconnexion/suppression.</summary>
+    internal static Frame? RootFrame { get; private set; }
+
     protected override void OnLaunched(LaunchActivatedEventArgs args)
     {
         MainWindow = new Window();
+        WindowInstance = MainWindow;
 #if DEBUG
         MainWindow.UseStudio();
 #endif
@@ -39,6 +46,8 @@ public partial class App : Application
 
             rootFrame.NavigationFailed += OnNavigationFailed;
         }
+
+        RootFrame = rootFrame;
 
         if (rootFrame.Content == null)
         {

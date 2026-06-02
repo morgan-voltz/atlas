@@ -21,6 +21,7 @@ public sealed partial class ProfilPage : Page
     private static readonly CultureInfo Culture = new("fr-FR");
 
     private readonly AtlasApiClient _api = AppServices.Get<AtlasApiClient>();
+    private string? _userEmail;
 
     public ProfilPage()
     {
@@ -32,8 +33,94 @@ public sealed partial class ProfilPage : Page
                 ? $"{siren.Value} ✓ (Luhn vérifié côté domaine)"
                 : siren.Error?.Message;
 
+            _userEmail = _api.GetCurrentUserEmail();
+            ConfirmPrompt.Text = _userEmail is { Length: > 0 }
+                ? $"Pour confirmer, ressaisissez votre e-mail ({_userEmail})."
+                : "Pour confirmer, ressaisissez votre e-mail.";
+
             await RefreshStatusAsync();
         };
+    }
+
+    private async void OnLogout(object sender, RoutedEventArgs e)
+    {
+        LogoutButton.IsEnabled = false;
+        await _api.LogoutAsync();
+        App.RootFrame?.Navigate(typeof(LoginPage));
+    }
+
+    private async void OnExport(object sender, RoutedEventArgs e)
+    {
+        ExportButton.IsEnabled = false;
+        ExportMessage.Visibility = Visibility.Collapsed;
+        ExportBusy.IsActive = true;
+        ExportBusy.Visibility = Visibility.Visible;
+
+        Result<string> result = await _api.ExportMyDataAsync();
+
+        ExportBusy.IsActive = false;
+        ExportBusy.Visibility = Visibility.Collapsed;
+        ExportButton.IsEnabled = true;
+
+        if (result.IsFailure)
+        {
+            ShowExportMessage(result.Error?.Message ?? "L'export a échoué. Réessayez.");
+            return;
+        }
+
+        bool saved = await DataExportSaver.SaveAsync(result.Value);
+        if (saved)
+        {
+            ShowExportMessage("Export prêt : l'archive a été enregistrée.");
+        }
+    }
+
+    private void OnRevealDelete(object sender, RoutedEventArgs e)
+    {
+        DeleteRevealButton.Visibility = Visibility.Collapsed;
+        DeleteConfirmPanel.Visibility = Visibility.Visible;
+    }
+
+    private void OnCancelDelete(object sender, RoutedEventArgs e)
+    {
+        ConfirmEmailBox.Text = string.Empty;
+        DeleteError.Visibility = Visibility.Collapsed;
+        DeleteConfirmPanel.Visibility = Visibility.Collapsed;
+        DeleteRevealButton.Visibility = Visibility.Visible;
+    }
+
+    private void OnConfirmEmailChanged(object sender, TextChangedEventArgs e) => DeleteButton.IsEnabled = CanDelete();
+
+    private bool CanDelete() =>
+        _userEmail is { Length: > 0 }
+        && string.Equals(ConfirmEmailBox.Text.Trim(), _userEmail, StringComparison.OrdinalIgnoreCase);
+
+    private async void OnDelete(object sender, RoutedEventArgs e)
+    {
+        if (!CanDelete())
+        {
+            return;
+        }
+
+        DeleteButton.IsEnabled = false;
+        DeleteError.Visibility = Visibility.Collapsed;
+
+        Result result = await _api.DeleteMyAccountAsync();
+        if (result.IsSuccess)
+        {
+            App.RootFrame?.Navigate(typeof(LoginPage));
+            return;
+        }
+
+        DeleteError.Text = result.Error?.Message ?? "La suppression a échoué. Réessayez dans un moment.";
+        DeleteError.Visibility = Visibility.Visible;
+        DeleteButton.IsEnabled = true;
+    }
+
+    private void ShowExportMessage(string message)
+    {
+        ExportMessage.Text = message;
+        ExportMessage.Visibility = Visibility.Visible;
     }
 
     private async Task RefreshStatusAsync()

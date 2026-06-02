@@ -29,6 +29,8 @@
       <SolidColorBrush x:Key="AtlasPrimaryContainerBrush" Color="#D4E4F4" />
       <SolidColorBrush x:Key="AtlasOnPrimaryContainerBrush" Color="#0B2236" />
       <SolidColorBrush x:Key="AtlasFocusBrush" Color="#1565C0" />
+      <SolidColorBrush x:Key="AtlasErrorBrush" Color="#B5281F" />
+      <SolidColorBrush x:Key="AtlasOnErrorBrush" Color="#FFFFFF" />
       <SolidColorBrush x:Key="AtlasErrorContainerBrush" Color="#FCECE9" />
       <SolidColorBrush x:Key="AtlasOnErrorContainerBrush" Color="#7A271A" />
       <SolidColorBrush x:Key="AtlasErrorOutlineBrush" Color="#F2C9C6" />
@@ -47,6 +49,8 @@
       <SolidColorBrush x:Key="AtlasPrimaryContainerBrush" Color="#1E4060" />
       <SolidColorBrush x:Key="AtlasOnPrimaryContainerBrush" Color="#D4E4F4" />
       <SolidColorBrush x:Key="AtlasFocusBrush" Color="#8FC4F5" />
+      <SolidColorBrush x:Key="AtlasErrorBrush" Color="#F08A82" />
+      <SolidColorBrush x:Key="AtlasOnErrorBrush" Color="#08121C" />
       <SolidColorBrush x:Key="AtlasErrorContainerBrush" Color="#3A1714" />
       <SolidColorBrush x:Key="AtlasOnErrorContainerBrush" Color="#F5B5AF" />
       <SolidColorBrush x:Key="AtlasErrorOutlineBrush" Color="#5E2620" />
