@@ -1,0 +1,54 @@
+<Page x:Class="Atlas.App.Presentation.Pages.MotDePasseOubliePage"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      Background="{ThemeResource AtlasBgBrush}">
+  <Grid>
+    <Border MaxWidth="380"
+            Margin="24"
+            Padding="28"
+            HorizontalAlignment="Center"
+            VerticalAlignment="Center"
+            Background="{ThemeResource AtlasSurfaceBrush}"
+            BorderBrush="{ThemeResource AtlasSurfaceVariantBrush}"
+            BorderThickness="1"
+            CornerRadius="{ThemeResource AtlasRadiusLg}">
+      <StackPanel Spacing="14">
+
+        <!-- Formulaire -->
+        <StackPanel x:Name="FormPanel" Spacing="14">
+          <TextBlock Text="Mot de passe oublié"
+                     FontFamily="{ThemeResource AtlasFontHeading}" FontSize="24" FontWeight="Bold"
+                     HorizontalAlignment="Center" Foreground="{ThemeResource AtlasOnSurfaceBrush}" />
+          <TextBlock Text="Saisissez votre adresse : nous vous enverrons un lien pour définir un nouveau mot de passe."
+                     FontSize="13" TextWrapping="Wrap" HorizontalAlignment="Center" TextAlignment="Center"
+                     Foreground="{ThemeResource AtlasOnSurfaceVariantBrush}" />
+          <TextBox x:Name="EmailBox" Header="Adresse e-mail" InputScope="EmailNameOrAddress" PlaceholderText="vous@cabinet.fr" />
+          <TextBlock x:Name="ErrorText" Visibility="Collapsed" TextWrapping="Wrap" FontSize="13"
+                     Foreground="{ThemeResource AtlasOnErrorContainerBrush}" />
+          <Button x:Name="SubmitButton" Content="Envoyer le lien" Click="OnSubmitClick"
+                  HorizontalAlignment="Stretch"
+                  Foreground="{ThemeResource AtlasOnPrimaryBrush}" Background="{ThemeResource AtlasPrimaryBrush}" />
+          <ProgressRing x:Name="Busy" IsActive="False" Visibility="Collapsed" HorizontalAlignment="Center" />
+          <HyperlinkButton Content="Retour à la connexion" Click="OnGoToLogin" HorizontalAlignment="Center"
+                           Foreground="{ThemeResource AtlasPrimaryBrush}" />
+        </StackPanel>
+
+        <!-- Confirmation (réponse uniforme, anti-énumération) -->
+        <StackPanel x:Name="SubmittedPanel" Spacing="14" Visibility="Collapsed">
+          <TextBlock Text="Vérifiez votre e-mail"
+                     FontFamily="{ThemeResource AtlasFontHeading}" FontSize="24" FontWeight="Bold"
+                     HorizontalAlignment="Center" Foreground="{ThemeResource AtlasOnSurfaceBrush}" />
+          <TextBlock x:Name="SubmittedDetail"
+                     FontSize="13" TextWrapping="Wrap" HorizontalAlignment="Center" TextAlignment="Center"
+                     Foreground="{ThemeResource AtlasOnSurfaceVariantBrush}" />
+          <TextBlock Text="Pensez à vérifier votre dossier spam."
+                     FontSize="12" HorizontalAlignment="Center" TextAlignment="Center"
+                     Foreground="{ThemeResource AtlasOnSurfaceVariantBrush}" />
+          <HyperlinkButton Content="Retour à la connexion" Click="OnGoToLogin" HorizontalAlignment="Center"
+                           Foreground="{ThemeResource AtlasPrimaryBrush}" />
+        </StackPanel>
+
+      </StackPanel>
+    </Border>
+  </Grid>
+</Page>

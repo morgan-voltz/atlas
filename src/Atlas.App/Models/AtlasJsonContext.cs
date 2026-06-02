@@ -10,6 +10,10 @@ namespace Atlas.App.Models;
 /// </summary>
 [JsonSourceGenerationOptions(PropertyNamingPolicy = JsonKnownNamingPolicy.CamelCase)]
 [JsonSerializable(typeof(LoginRequest))]
+[JsonSerializable(typeof(RegisterRequest))]
+[JsonSerializable(typeof(ResendVerificationRequest))]
+[JsonSerializable(typeof(ForgotPasswordRequest))]
+[JsonSerializable(typeof(ResetPasswordRequest))]
 [JsonSerializable(typeof(AccessTokenResponse))]
 [JsonSerializable(typeof(VerifyTwoFactorRequest))]
 [JsonSerializable(typeof(CompanySummaryResponse))]

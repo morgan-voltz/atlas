@@ -7,6 +7,19 @@ namespace Atlas.App.Models;
 /// <summary>Corps de la requête de connexion (<c>POST /auth/login</c>).</summary>
 public sealed record LoginRequest(string Email, string Password);
 
+/// <summary>Corps de <c>POST /auth/register</c> (création de compte — M7).</summary>
+public sealed record RegisterRequest(string Email, string Password);
+
+/// <summary>Corps de <c>POST /auth/resend-verification</c> (renvoi du lien de vérification, réponse uniforme).</summary>
+public sealed record ResendVerificationRequest(string Email);
+
+/// <summary>Corps de <c>POST /auth/forgot-password</c> (demande de lien de réinitialisation, réponse uniforme).</summary>
+public sealed record ForgotPasswordRequest(string Email);
+
+/// <summary>Corps de <c>POST /auth/reset-password</c>. <c>UserId</c> et <c>Token</c> viennent du lien d'email
+/// (l'API désérialise <c>UserId</c> en <c>Guid</c> depuis la chaîne).</summary>
+public sealed record ResetPasswordRequest(string UserId, string Token, string NewPassword);
+
 /// <summary>Réponse d'un access token (login réussi, refresh) — calé sur le contrat de l'API
 /// (<c>Atlas.Api.Endpoints.AccessTokenResponse</c> : propriété <c>ExpiresAt</c>).</summary>
 public sealed record AccessTokenResponse(string AccessToken, System.DateTimeOffset ExpiresAt);

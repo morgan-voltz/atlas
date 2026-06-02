@@ -90,6 +90,10 @@ public sealed partial class LoginPage : Page
         }
     }
 
+    private void OnGoToRegister(object sender, RoutedEventArgs e) => this.Frame.Navigate(typeof(InscriptionPage));
+
+    private void OnForgotPassword(object sender, RoutedEventArgs e) => this.Frame.Navigate(typeof(MotDePasseOubliePage));
+
     private void OnBackToCredentials(object sender, RoutedEventArgs e)
     {
         _challengeToken = null;

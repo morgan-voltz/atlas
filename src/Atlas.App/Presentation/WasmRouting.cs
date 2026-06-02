@@ -16,12 +16,40 @@ internal static class WasmRouting
 #endif
 
 #if __WASM__
-    /// <summary>Lit le tag de destination depuis <c>window.location.hash</c> (« #/recherche » → « recherche »).</summary>
+    /// <summary>Lit le tag de destination depuis <c>window.location.hash</c> (« #/recherche » →
+    /// « recherche » ; « #/verifier-email?token=… » → « verifier-email », la query est ignorée).</summary>
     public static string? GetTag()
     {
-        string hash = Uno.Foundation.WebAssemblyRuntime.InvokeJS("window.location.hash") ?? string.Empty;
-        string tag = hash.TrimStart('#').TrimStart('/').Trim();
+        string hash = RawHash();
+        // Le segment de chemin s'arrête au début de la query (« ? »).
+        int query = hash.IndexOf('?');
+        string path = query >= 0 ? hash[..query] : hash;
+        string tag = path.TrimStart('#').TrimStart('/').Trim();
         return string.IsNullOrEmpty(tag) ? null : tag;
+    }
+
+    /// <summary>Lit un paramètre de la query du hash (« #/verifier-email?userId=x&amp;token=y »). Null si absent.</summary>
+    public static string? GetQueryValue(string key)
+    {
+        string hash = RawHash();
+        int start = hash.IndexOf('?');
+        if (start < 0)
+        {
+            return null;
+        }
+
+        foreach (string pair in hash[(start + 1)..].Split('&', System.StringSplitOptions.RemoveEmptyEntries))
+        {
+            int eq = pair.IndexOf('=');
+            string name = eq >= 0 ? pair[..eq] : pair;
+            if (string.Equals(name, key, System.StringComparison.Ordinal))
+            {
+                string value = eq >= 0 ? pair[(eq + 1)..] : string.Empty;
+                return System.Uri.UnescapeDataString(value);
+            }
+        }
+
+        return null;
     }
 
     /// <summary>Reflète la destination dans l'URL (sans recharger ; idempotent).</summary>
@@ -29,10 +57,19 @@ internal static class WasmRouting
     {
         // tag ∈ {accueil, recherche, …} (alphanumérique) — pas d'injection.
         Uno.Foundation.WebAssemblyRuntime.InvokeJS(
-            $"if(window.location.hash!=='#/{tag}'){{window.location.hash='#/{tag}';}}");
+            $"if(window.location.hash.split('?')[0]!=='#/{tag}'){{window.location.hash='#/{tag}';}}");
     }
+
+    private static string RawHash() =>
+        Uno.Foundation.WebAssemblyRuntime.InvokeJS("window.location.hash") ?? string.Empty;
 #else
     public static string? GetTag() => null;
+
+    public static string? GetQueryValue(string key)
+    {
+        _ = key;
+        return null;
+    }
 
     public static void SetTag(string tag)
     {
