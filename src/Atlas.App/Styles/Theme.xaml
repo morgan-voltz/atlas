@@ -7,8 +7,8 @@
   Le clair/sombre est géré nativement par ThemeDictionaries (WinUI) : la tête suit le thème système ;
   le sélecteur persisté (F-062) surchargera RequestedTheme au jalon Profil.
 
-  À FAIRE (U3 suite) : bundler les TTF (Atkinson Hyperlegible / IBM Plex Serif / IBM Plex Mono) dans
-  Assets/Fonts et pointer les FontFamily dessus (ms-appx). Pour l'instant : familles nommées + repli système.
+  Polices bundlées : les TTF (Atkinson Hyperlegible / IBM Plex Serif / IBM Plex Mono, graisse Regular)
+  vivent dans Assets/Fonts ; les FontFamily ci-dessous pointent dessus via ms-appx (toutes têtes).
 -->
 <ResourceDictionary
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
@@ -63,9 +63,10 @@
   <CornerRadius x:Key="AtlasRadiusMd">10</CornerRadius>
   <CornerRadius x:Key="AtlasRadiusLg">14</CornerRadius>
 
-  <!-- Rôles de police (doc 16 §1). Familles nommées + repli système (bundling TTF différé). -->
-  <FontFamily x:Key="AtlasFontBody">Atkinson Hyperlegible, Segoe UI, sans-serif</FontFamily>
-  <FontFamily x:Key="AtlasFontHeading">IBM Plex Serif, Georgia, serif</FontFamily>
-  <FontFamily x:Key="AtlasFontMono">IBM Plex Mono, Consolas, monospace</FontFamily>
+  <!-- Rôles de police (doc 16 §1). TTF bundlés (Regular) sous Assets/Fonts via ms-appx ; les graisses
+       Bold/SemiBold utilisées en titres sont synthétisées par le moteur de rendu. -->
+  <FontFamily x:Key="AtlasFontBody">ms-appx:///Assets/Fonts/AtkinsonHyperlegible-Regular.ttf#Atkinson Hyperlegible</FontFamily>
+  <FontFamily x:Key="AtlasFontHeading">ms-appx:///Assets/Fonts/IBMPlexSerif-Regular.ttf#IBM Plex Serif</FontFamily>
+  <FontFamily x:Key="AtlasFontMono">ms-appx:///Assets/Fonts/IBMPlexMono-Regular.ttf#IBM Plex Mono</FontFamily>
 
 </ResourceDictionary>
