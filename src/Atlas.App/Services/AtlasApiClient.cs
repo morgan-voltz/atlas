@@ -118,6 +118,94 @@ public sealed class AtlasApiClient(HttpClient httpClient, ITokenStore tokenStore
     /// <summary>Termine la session locale (l'access token en mémoire). Le serveur révoque le refresh via /auth/logout.</summary>
     public void ClearSession() => tokenStore.Clear();
 
+    /// <summary>E-mail de l'utilisateur courant, lu (sans validation) dans le claim JWT — affichage uniquement.</summary>
+    public string? GetCurrentUserEmail() => JwtReader.ReadEmail(tokenStore.GetAccessToken());
+
+    /// <summary>
+    /// Déconnexion (<c>POST /auth/logout</c>) : révoque le refresh côté serveur (via le cookie HttpOnly),
+    /// puis efface l'access token en mémoire. La session locale est nettoyée même si l'appel réseau échoue.
+    /// </summary>
+    public async Task LogoutAsync(CancellationToken ct = default)
+    {
+        try
+        {
+            using HttpResponseMessage response = await httpClient
+                .PostAsync("auth/logout", content: null, ct)
+                .ConfigureAwait(false);
+        }
+        catch (HttpRequestException)
+        {
+            // Déconnexion locale même si l'appel réseau échoue.
+        }
+        finally
+        {
+            tokenStore.Clear();
+        }
+    }
+
+    /// <summary>
+    /// Export RGPD (<c>GET /account/export</c>, art. 20) : renvoie l'archive JSON brute (compte, statut
+    /// INPI, historique de recherches). Le contenu ne quitte pas le client (téléchargement local).
+    /// </summary>
+    public async Task<Result<string>> ExportMyDataAsync(CancellationToken ct = default)
+    {
+        HttpResponseMessage response;
+        try
+        {
+            response = await httpClient.GetAsync("account/export", ct).ConfigureAwait(false);
+        }
+        catch (HttpRequestException)
+        {
+            return Result<string>.Fail(ApiErrors.Unreachable());
+        }
+
+        using (response)
+        {
+            if (response.StatusCode == HttpStatusCode.Unauthorized)
+            {
+                return Result<string>.Fail(ApiErrors.SessionExpired());
+            }
+
+            if (!response.IsSuccessStatusCode)
+            {
+                return Result<string>.Fail(ApiErrors.RequestFailed((int)response.StatusCode));
+            }
+
+            string json = await response.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
+            return Result<string>.Ok(json);
+        }
+    }
+
+    /// <summary>
+    /// Suppression de compte (<c>DELETE /account</c>, RGPD art. 17). Succès → efface la session locale ;
+    /// l'appelant redirige vers la connexion.
+    /// </summary>
+    public async Task<Result> DeleteMyAccountAsync(CancellationToken ct = default)
+    {
+        HttpResponseMessage response;
+        try
+        {
+            response = await httpClient.DeleteAsync("account", ct).ConfigureAwait(false);
+        }
+        catch (HttpRequestException)
+        {
+            return Result.Fail(ApiErrors.Unreachable());
+        }
+
+        using (response)
+        {
+            if (response.IsSuccessStatusCode)
+            {
+                tokenStore.Clear();
+                return Result.Ok();
+            }
+
+            return response.StatusCode == HttpStatusCode.Unauthorized
+                ? Result.Fail(ApiErrors.SessionExpired())
+                : Result.Fail(ApiErrors.RequestFailed((int)response.StatusCode));
+        }
+    }
+
     /// <summary>
     /// Crée un compte (<c>POST /auth/register</c>, M7). Aucun token posé : un email de vérification est
     /// envoyé, l'utilisateur active ensuite via le lien (<see cref="VerifyEmailAsync"/>).

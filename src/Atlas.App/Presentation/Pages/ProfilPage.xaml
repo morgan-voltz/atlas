@@ -61,7 +61,95 @@
 
       <!-- Compte (preuve Domain.Siren conservée) -->
       <c:SectionCard Title="Compte" Source="Atlas">
-        <c:LabeledField Label="SIREN test" x:Name="SirenField" />
+        <StackPanel Spacing="12">
+          <c:LabeledField Label="SIREN test" x:Name="SirenField" />
+          <Button x:Name="LogoutButton"
+                  Content="Se déconnecter"
+                  Click="OnLogout"
+                  HorizontalAlignment="Left"
+                  Background="Transparent"
+                  BorderBrush="{ThemeResource AtlasOutlineBrush}"
+                  BorderThickness="1"
+                  Foreground="{ThemeResource AtlasOnSurfaceVariantBrush}" />
+        </StackPanel>
+      </c:SectionCard>
+
+      <!-- Données & confidentialité (doc 12 §9) — export RGPD (art. 20) puis zone sensible (art. 17). -->
+      <c:SectionCard Title="Données &amp; confidentialité" Source="RGPD">
+        <StackPanel Spacing="16">
+
+          <StackPanel Spacing="8">
+            <TextBlock Text="Exporter mes données"
+                       FontWeight="SemiBold"
+                       Foreground="{ThemeResource AtlasOnSurfaceBrush}" />
+            <TextBlock Text="Archive JSON : compte, connexion INPI (statut), historique de recherches (RGPD art. 20)."
+                       FontSize="13" TextWrapping="Wrap"
+                       Foreground="{ThemeResource AtlasOnSurfaceVariantBrush}" />
+            <StackPanel Orientation="Horizontal" Spacing="10">
+              <Button x:Name="ExportButton"
+                      Content="Exporter mes données"
+                      Click="OnExport"
+                      HorizontalAlignment="Left"
+                      Background="Transparent"
+                      BorderBrush="{ThemeResource AtlasOutlineBrush}"
+                      BorderThickness="1"
+                      Foreground="{ThemeResource AtlasOnSurfaceBrush}" />
+              <ProgressRing x:Name="ExportBusy" IsActive="False" Visibility="Collapsed" VerticalAlignment="Center" />
+            </StackPanel>
+            <TextBlock x:Name="ExportMessage" Visibility="Collapsed"
+                       FontSize="13" TextWrapping="Wrap"
+                       Foreground="{ThemeResource AtlasOnSurfaceVariantBrush}" />
+          </StackPanel>
+
+          <!-- Zone sensible : suppression de compte (art. 17), confirmation forte. -->
+          <Border Background="{ThemeResource AtlasErrorContainerBrush}"
+                  CornerRadius="{ThemeResource AtlasRadiusLg}"
+                  Padding="16">
+            <StackPanel Spacing="10">
+              <TextBlock Text="⚠ Supprimer mon compte"
+                         FontWeight="SemiBold"
+                         Foreground="{ThemeResource AtlasOnErrorContainerBrush}" />
+              <TextBlock Text="Effacement sous 30 jours. Vos données personnelles et vos identifiants INPI sont supprimés ; certaines données de facturation sont conservées et anonymisées (obligation légale). Cette action est irréversible."
+                         FontSize="13" TextWrapping="Wrap"
+                         Foreground="{ThemeResource AtlasOnErrorContainerBrush}" />
+
+              <Button x:Name="DeleteRevealButton"
+                      Content="Supprimer définitivement…"
+                      Click="OnRevealDelete"
+                      HorizontalAlignment="Left"
+                      Background="Transparent"
+                      BorderBrush="{ThemeResource AtlasErrorBrush}"
+                      BorderThickness="1"
+                      Foreground="{ThemeResource AtlasErrorBrush}" />
+
+              <StackPanel x:Name="DeleteConfirmPanel" Spacing="10" Visibility="Collapsed">
+                <TextBlock x:Name="ConfirmPrompt"
+                           FontSize="13" TextWrapping="Wrap"
+                           Foreground="{ThemeResource AtlasOnErrorContainerBrush}" />
+                <TextBox x:Name="ConfirmEmailBox" TextChanged="OnConfirmEmailChanged"
+                         InputScope="EmailNameOrAddress" />
+                <TextBlock x:Name="DeleteError" Visibility="Collapsed"
+                           FontSize="13" TextWrapping="Wrap"
+                           Foreground="{ThemeResource AtlasOnErrorContainerBrush}" />
+                <StackPanel Orientation="Horizontal" Spacing="10">
+                  <Button x:Name="DeleteButton"
+                          Content="Supprimer mon compte"
+                          Click="OnDelete"
+                          IsEnabled="False"
+                          Foreground="{ThemeResource AtlasOnErrorBrush}"
+                          Background="{ThemeResource AtlasErrorBrush}" />
+                  <Button Content="Annuler"
+                          Click="OnCancelDelete"
+                          Background="Transparent"
+                          BorderBrush="{ThemeResource AtlasOutlineBrush}"
+                          BorderThickness="1"
+                          Foreground="{ThemeResource AtlasOnSurfaceVariantBrush}" />
+                </StackPanel>
+              </StackPanel>
+            </StackPanel>
+          </Border>
+
+        </StackPanel>
       </c:SectionCard>
 
     </StackPanel>
