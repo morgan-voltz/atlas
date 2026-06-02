@@ -119,6 +119,118 @@ public sealed class AtlasApiClient(HttpClient httpClient, ITokenStore tokenStore
     public void ClearSession() => tokenStore.Clear();
 
     /// <summary>
+    /// Crée un compte (<c>POST /auth/register</c>, M7). Aucun token posé : un email de vérification est
+    /// envoyé, l'utilisateur active ensuite via le lien (<see cref="VerifyEmailAsync"/>).
+    /// </summary>
+    public async Task<Result> RegisterAsync(string email, string password, CancellationToken ct = default)
+    {
+        HttpResponseMessage response;
+        try
+        {
+            response = await httpClient
+                .PostAsJsonAsync("auth/register", new RegisterRequest(email, password), AtlasJsonContext.Default.RegisterRequest, ct)
+                .ConfigureAwait(false);
+        }
+        catch (HttpRequestException)
+        {
+            return Result.Fail(ApiErrors.Unreachable());
+        }
+
+        if (response.IsSuccessStatusCode)
+        {
+            return Result.Ok();
+        }
+
+        string problem = await response.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
+        ApiError error =
+            problem.Contains("users.email_already_in_use", StringComparison.Ordinal) ? ApiErrors.EmailAlreadyInUse() :
+            problem.Contains("users.invalid_email", StringComparison.Ordinal) ? ApiErrors.InvalidEmail() :
+            ApiErrors.RegistrationFailed();
+        return Result.Fail(error);
+    }
+
+    /// <summary>
+    /// Active un compte via le lien d'email (<c>GET /auth/verify-email?userId=&amp;token=</c>, M7).
+    /// Les paramètres proviennent du lien (deep-link) ; un lien tronqué donne un échec, pas une exception.
+    /// </summary>
+    public async Task<Result> VerifyEmailAsync(string userId, string token, CancellationToken ct = default)
+    {
+        string url = $"auth/verify-email?userId={Uri.EscapeDataString(userId)}&token={Uri.EscapeDataString(token)}";
+        try
+        {
+            using HttpResponseMessage response = await httpClient.GetAsync(url, ct).ConfigureAwait(false);
+            return response.IsSuccessStatusCode ? Result.Ok() : Result.Fail(ApiErrors.InvalidVerificationLink());
+        }
+        catch (HttpRequestException)
+        {
+            return Result.Fail(ApiErrors.Unreachable());
+        }
+    }
+
+    /// <summary>Renvoie le lien de vérification (<c>POST /auth/resend-verification</c>). Réponse uniforme (anti-énumération).</summary>
+    public async Task<Result> ResendVerificationAsync(string email, CancellationToken ct = default)
+    {
+        try
+        {
+            using HttpResponseMessage response = await httpClient
+                .PostAsJsonAsync("auth/resend-verification", new ResendVerificationRequest(email), AtlasJsonContext.Default.ResendVerificationRequest, ct)
+                .ConfigureAwait(false);
+            return response.IsSuccessStatusCode ? Result.Ok() : Result.Fail(ApiErrors.RequestFailed((int)response.StatusCode));
+        }
+        catch (HttpRequestException)
+        {
+            return Result.Fail(ApiErrors.Unreachable());
+        }
+    }
+
+    /// <summary>Demande un lien de réinitialisation (<c>POST /auth/forgot-password</c>). Réponse uniforme (anti-énumération).</summary>
+    public async Task<Result> RequestPasswordResetAsync(string email, CancellationToken ct = default)
+    {
+        try
+        {
+            using HttpResponseMessage response = await httpClient
+                .PostAsJsonAsync("auth/forgot-password", new ForgotPasswordRequest(email), AtlasJsonContext.Default.ForgotPasswordRequest, ct)
+                .ConfigureAwait(false);
+            return response.IsSuccessStatusCode ? Result.Ok() : Result.Fail(ApiErrors.RequestFailed((int)response.StatusCode));
+        }
+        catch (HttpRequestException)
+        {
+            return Result.Fail(ApiErrors.Unreachable());
+        }
+    }
+
+    /// <summary>
+    /// Définit un nouveau mot de passe via le lien d'email (<c>POST /auth/reset-password</c>, M7). Succès →
+    /// les autres sessions sont révoquées côté serveur. <paramref name="userId"/>/<paramref name="token"/>
+    /// proviennent du lien.
+    /// </summary>
+    public async Task<Result> ResetPasswordAsync(string userId, string token, string newPassword, CancellationToken ct = default)
+    {
+        HttpResponseMessage response;
+        try
+        {
+            response = await httpClient
+                .PostAsJsonAsync("auth/reset-password", new ResetPasswordRequest(userId, token, newPassword), AtlasJsonContext.Default.ResetPasswordRequest, ct)
+                .ConfigureAwait(false);
+        }
+        catch (HttpRequestException)
+        {
+            return Result.Fail(ApiErrors.Unreachable());
+        }
+
+        if (response.IsSuccessStatusCode)
+        {
+            return Result.Ok();
+        }
+
+        string problem = await response.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
+        ApiError error = problem.Contains("users.invalid_password_reset_token", StringComparison.Ordinal)
+            ? ApiErrors.InvalidPasswordResetToken()
+            : ApiErrors.PasswordResetFailed();
+        return Result.Fail(error);
+    }
+
+    /// <summary>
     /// Recherche d'entreprises par dénomination (<c>GET /companies?name=</c>, requiert l'auth — le Bearer
     /// est posé par <see cref="AuthHeaderHandler"/>). Retourne la page d'items (pagination affinée plus tard).
     /// </summary>

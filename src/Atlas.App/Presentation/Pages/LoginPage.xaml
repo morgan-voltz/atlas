@@ -32,6 +32,14 @@
           <Button x:Name="LoginButton" Content="Se connecter" Click="OnLoginClick"
                   HorizontalAlignment="Stretch"
                   Foreground="{ThemeResource AtlasOnPrimaryBrush}" Background="{ThemeResource AtlasPrimaryBrush}" />
+          <HyperlinkButton Content="Mot de passe oublié ?" Click="OnForgotPassword" HorizontalAlignment="Center"
+                           Foreground="{ThemeResource AtlasOnSurfaceVariantBrush}" />
+          <StackPanel Orientation="Horizontal" Spacing="6" HorizontalAlignment="Center">
+            <TextBlock Text="Pas encore de compte ?" FontSize="13" VerticalAlignment="Center"
+                       Foreground="{ThemeResource AtlasOnSurfaceVariantBrush}" />
+            <HyperlinkButton Content="Créer un compte" Click="OnGoToRegister" Padding="2,0"
+                             Foreground="{ThemeResource AtlasPrimaryBrush}" />
+          </StackPanel>
         </StackPanel>
 
         <!-- Validation en deux étapes (TOTP) -->

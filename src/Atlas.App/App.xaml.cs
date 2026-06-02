@@ -42,16 +42,48 @@ public partial class App : Application
 
         if (rootFrame.Content == null)
         {
-            // When the navigation stack isn't restored navigate to the first page,
-            // configuring the new page by passing required information as a navigation
-            // parameter
             // Démarrage sur la connexion ; après login, la page bascule sur la coque (MainPage).
-            rootFrame.Navigate(typeof(Atlas.App.Presentation.Pages.LoginPage), args.Arguments);
+            // Sur la tête WebAssembly, un lien profond pré-auth (activation d'e-mail, réinitialisation
+            // de mot de passe) route directement vers l'écran d'onboarding adéquat (doc 14 §4).
+            (Type page, object? parameter) = ResolveLaunchNavigation(args.Arguments);
+            rootFrame.Navigate(page, parameter);
         }
 
         MainWindow.SetWindowIcon();
         // Ensure the current window is active
         MainWindow.Activate();
+    }
+
+    // Résout la page de démarrage (et son paramètre) depuis l'URL pré-auth sur WebAssembly. Les liens
+    // d'email (activation, réinitialisation) sont des liens profonds : ils doivent ouvrir l'écran cible
+    // sans détour par la connexion. Les destinations du rail (accueil, recherche…) exigent l'auth : on
+    // démarre alors sur la connexion et MainPage relit le hash après login. No-op hors WASM.
+    private static (Type Page, object? Parameter) ResolveLaunchNavigation(object? defaultArguments)
+    {
+        var login = (typeof(Atlas.App.Presentation.Pages.LoginPage), defaultArguments);
+
+        if (Atlas.App.Presentation.WasmRouting.GetTag() is not { } tag)
+        {
+            return login;
+        }
+
+        return tag switch
+        {
+            "inscription" => (typeof(Atlas.App.Presentation.Pages.InscriptionPage), null),
+            "mot-de-passe-oublie" => (typeof(Atlas.App.Presentation.Pages.MotDePasseOubliePage), null),
+            "verifier-email" => (
+                typeof(Atlas.App.Presentation.Pages.VerifierEmailPage),
+                new Atlas.App.Presentation.Pages.VerifyEmailArgs(
+                    Atlas.App.Presentation.WasmRouting.GetQueryValue("email"),
+                    Atlas.App.Presentation.WasmRouting.GetQueryValue("userId"),
+                    Atlas.App.Presentation.WasmRouting.GetQueryValue("token"))),
+            "reinitialiser-mot-de-passe" => (
+                typeof(Atlas.App.Presentation.Pages.ReinitialiserMotDePassePage),
+                new Atlas.App.Presentation.Pages.ResetPasswordArgs(
+                    Atlas.App.Presentation.WasmRouting.GetQueryValue("userId"),
+                    Atlas.App.Presentation.WasmRouting.GetQueryValue("token"))),
+            _ => login,
+        };
     }
 
     /// <summary>

@@ -1,0 +1,82 @@
+<Page x:Class="Atlas.App.Presentation.Pages.VerifierEmailPage"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      Background="{ThemeResource AtlasBgBrush}">
+  <Grid>
+    <Border MaxWidth="400"
+            Margin="24"
+            Padding="28"
+            HorizontalAlignment="Center"
+            VerticalAlignment="Center"
+            Background="{ThemeResource AtlasSurfaceBrush}"
+            BorderBrush="{ThemeResource AtlasSurfaceVariantBrush}"
+            BorderThickness="1"
+            CornerRadius="{ThemeResource AtlasRadiusLg}">
+      <StackPanel Spacing="14">
+
+        <!-- État : vérification en cours (lien d'activation) -->
+        <StackPanel x:Name="VerifyingPanel" Spacing="14" Visibility="Collapsed">
+          <TextBlock Text="Vérification…"
+                     FontFamily="{ThemeResource AtlasFontHeading}" FontSize="22" FontWeight="Bold"
+                     HorizontalAlignment="Center" Foreground="{ThemeResource AtlasOnSurfaceBrush}" />
+          <TextBlock Text="Activation de votre compte en cours…"
+                     FontSize="13" HorizontalAlignment="Center" TextAlignment="Center"
+                     Foreground="{ThemeResource AtlasOnSurfaceVariantBrush}" />
+          <ProgressRing IsActive="True" HorizontalAlignment="Center" />
+        </StackPanel>
+
+        <!-- État : compte activé -->
+        <StackPanel x:Name="VerifiedPanel" Spacing="14" Visibility="Collapsed">
+          <TextBlock Text="Compte activé ✓"
+                     FontFamily="{ThemeResource AtlasFontHeading}" FontSize="22" FontWeight="Bold"
+                     HorizontalAlignment="Center" Foreground="{ThemeResource AtlasOnSurfaceBrush}" />
+          <TextBlock Text="Votre adresse est vérifiée. Connectez-vous pour accéder à Atlas. Vous pourrez ensuite connecter votre compte INPI pour débloquer les données — ou le faire plus tard depuis votre profil."
+                     FontSize="13" TextWrapping="Wrap" HorizontalAlignment="Center" TextAlignment="Center"
+                     Foreground="{ThemeResource AtlasOnSurfaceVariantBrush}" />
+          <Button Content="Se connecter" Click="OnGoToLogin" HorizontalAlignment="Stretch"
+                  Foreground="{ThemeResource AtlasOnPrimaryBrush}" Background="{ThemeResource AtlasPrimaryBrush}" />
+        </StackPanel>
+
+        <!-- État : lien invalide -->
+        <StackPanel x:Name="ErrorPanel" Spacing="14" Visibility="Collapsed">
+          <TextBlock Text="Lien invalide"
+                     FontFamily="{ThemeResource AtlasFontHeading}" FontSize="22" FontWeight="Bold"
+                     HorizontalAlignment="Center" Foreground="{ThemeResource AtlasOnSurfaceBrush}" />
+          <TextBlock x:Name="ErrorText" TextWrapping="Wrap" FontSize="13" HorizontalAlignment="Center" TextAlignment="Center"
+                     Foreground="{ThemeResource AtlasOnErrorContainerBrush}" />
+          <Button Content="Aller à la connexion" Click="OnGoToLogin" HorizontalAlignment="Stretch"
+                  Foreground="{ThemeResource AtlasOnPrimaryBrush}" Background="{ThemeResource AtlasPrimaryBrush}" />
+        </StackPanel>
+
+        <!-- État : attente (après inscription) -->
+        <StackPanel x:Name="PendingPanel" Spacing="14" Visibility="Collapsed">
+          <TextBlock Text="Vérifiez votre e-mail"
+                     FontFamily="{ThemeResource AtlasFontHeading}" FontSize="22" FontWeight="Bold"
+                     HorizontalAlignment="Center" Foreground="{ThemeResource AtlasOnSurfaceBrush}" />
+          <TextBlock x:Name="PendingDetail"
+                     FontSize="13" TextWrapping="Wrap" HorizontalAlignment="Center" TextAlignment="Center"
+                     Foreground="{ThemeResource AtlasOnSurfaceVariantBrush}" />
+          <TextBlock Text="Pensez à vérifier votre dossier spam."
+                     FontSize="12" HorizontalAlignment="Center" TextAlignment="Center"
+                     Foreground="{ThemeResource AtlasOnSurfaceVariantBrush}" />
+
+          <TextBlock x:Name="ResendMessage" Visibility="Collapsed"
+                     FontSize="13" TextWrapping="Wrap" HorizontalAlignment="Center" TextAlignment="Center"
+                     Foreground="{ThemeResource AtlasOnSurfaceVariantBrush}" />
+
+          <HyperlinkButton x:Name="ResendButton" Content="Renvoyer le lien" Click="OnResendClick"
+                           HorizontalAlignment="Center" Visibility="Collapsed"
+                           Foreground="{ThemeResource AtlasPrimaryBrush}" />
+
+          <StackPanel Orientation="Horizontal" Spacing="10" HorizontalAlignment="Center">
+            <HyperlinkButton Content="Modifier l'adresse" Click="OnGoToInscription" Padding="2,0"
+                             Foreground="{ThemeResource AtlasOnSurfaceVariantBrush}" />
+            <HyperlinkButton Content="Se connecter" Click="OnGoToLogin" Padding="2,0"
+                             Foreground="{ThemeResource AtlasPrimaryBrush}" />
+          </StackPanel>
+        </StackPanel>
+
+      </StackPanel>
+    </Border>
+  </Grid>
+</Page>
