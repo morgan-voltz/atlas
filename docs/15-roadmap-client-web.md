@@ -6,7 +6,7 @@
 > Document **distinct** du backlog produit (`docs/02-roadmap-features.md`, `F-NNN`) et de la doctrine
 > UX (`docs/12` tronc commun + `docs/14` déclinaison multi-surface). Ici : **comment on bâtit le client**.
 
-**Version** : 2.0 — **Date** : 1ᵉʳ juin 2026 — **Portée** : historique `Atlas.Web.Client` (transitoire) + cible `Atlas.App` (Uno).
+**Version** : 2.1 — **Date** : 2 juin 2026 — **Portée** : historique `Atlas.Web.Client` (transitoire) + cible `Atlas.App` (Uno).
 **Cadre** : **ADR-029** (UI unifiée Uno, WASM pur pour la tête web ; remplace ADR-017/ADR-026), **ADR-002** (client pur de l'API), **ADR-008 / doc 06** (accessibilité, bloquante).
 
 Légende : ✅ fait & vérifié · 🟡 partiel · ⬜ à faire.
@@ -122,7 +122,7 @@ Pas des phases : vérifiées **sur chaque écran** (intégrées à la DoD §3).
 
 ## 7. Bascule vers Uno (`Atlas.App`)
 
-> Chantier d'intégration **bien avancé** (1ᵉʳ juin 2026) : U1→U3 livrés, **U4 quasi complet** (parcours auth→INPI→recherche→fiche→favoris→veille en données réelles, validé E2E ; routing URL WASM). Reste surtout **U5** (retrait du client Blazor) après un spike multi-cible (Linux/mobile) concluant.
+> Chantier d'intégration **bien avancé** (2 juin 2026) : U1→U4 livrés (parcours auth→INPI→recherche→fiche→favoris→veille en données réelles, validé E2E ; routing URL WASM ; **onboarding** inscription/vérif e-mail/reset mot de passe ; **Profil → Données/RGPD** export+suppression+déconnexion). Reste un **polish différé de U3** (bundling des polices TTF, animation shimmer du skeleton) et surtout **U5** (retrait du client Blazor) après un spike multi-cible (Linux/mobile) concluant.
 
 L'**acquis Blazor (§1–§5) est directement réutilisable** : contrats `AtlasApiClient`, parcours écran par écran, états, vérifications E2E, kit de composants (à porter en XAML WinUI), breakpoints 640/880 px. La doctrine UX (`docs/12`) et la déclinaison multi-surface (`docs/14`, refondu Uno) ne changent pas.
 
@@ -133,8 +133,8 @@ L'**acquis Blazor (§1–§5) est directement réutilisable** : contrats `AtlasA
 | **U0 — Spike** | écran carte-aperçu + liste sur WASM + desktop ; valider XAML WinUI, rendu Linux, poids WASM | 🟡 partiel (1ᵉʳ juin 2026 : WASM/desktop OK, ~9,5 Mo Release ; Linux/mobile au runtime à valider) |
 | **U1 — Intégration repo** | `Atlas.App` (Uno single project) dans `Atlas.slnx` : `Uno.Sdk` 6.5.36 pin dans `global.json`, **CPM isolé** (`Directory.Packages.props`/`Directory.Build.props` locaux), **job CI `uno-build`** (têtes desktop Skia + WebAssembly) | ✅ (PR #120) |
 | **U2 — Preuve ADR-002** | `Atlas.App` → **Domain + Shared uniquement** (verrouillé par `CsprojDependencyTests`) ; `MainPage` consomme `Domain.Siren` ; `AtlasApiClient` = stub du point d'entrée HTTP unique. *Reste : auth (token mémoire + refresh cookie/secure storage) à câbler avec les vrais écrans (U4)* | ✅ (PR #120) |
-| **U3 — Portage du kit** | thème clair/sombre (`ThemeDictionaries`) ; atomes `Chip`/`Provenance`/`LabeledField` ; cartes `CompanySummaryCard`/`SectionCard` (4 états)/`FeedEventCard` ; `CardSkeleton` ; coque `RailShell` (`NavigationView`) ; `ListDetailView` (2 panneaux, doc 14 §3) — en UserControls XAML WinUI. *Reste : bundling des polices (TTF), différé* | ✅ (PR #123/#124/#125) |
-| **U4 — Re-livraison écran par écran** | DI léger (MS HttpClientFactory) ; **Connexion + 2FA + refresh silencieux** (PR #128/#136/#137) ; **Profil → connexion INPI** (#130) ; **Recherche** réelle + debounce (#129/#133) ; **Fiche entreprise** (#132) ; **Suivre + Favoris** (#134) ; **Accueil/Veille** timeline réelle (#135) ; **routing URL WASM** + deep-link + back/forward (#138/#139). Parcours auth→INPI→recherche→fiche→favoris **validé E2E en réel** (desktop, harness docs/13). | 🟡 quasi complet (1ᵉʳ juin 2026) |
+| **U3 — Portage du kit** | thème clair/sombre (`ThemeDictionaries`) ; atomes `Chip`/`Provenance`/`LabeledField` ; cartes `CompanySummaryCard`/`SectionCard` (4 états)/`FeedEventCard` ; `CardSkeleton` ; coque `RailShell` (`NavigationView`) ; `ListDetailView` (2 panneaux, doc 14 §3) — en UserControls XAML WinUI. *Reste (polish différé) : bundling des polices (TTF, dispo dans `docs/design/fonts/`) + animation shimmer du `CardSkeleton`* | ✅ (PR #123/#124/#125) |
+| **U4 — Re-livraison écran par écran** | DI léger (MS HttpClientFactory) ; **Connexion + 2FA + refresh silencieux** (PR #128/#136/#137) ; **Profil → connexion INPI** (#130) ; **Recherche** réelle + debounce (#129/#133) ; **Fiche entreprise** (#132) ; **Suivre + Favoris** (#134) ; **Accueil/Veille** timeline réelle (#135) ; **routing URL WASM** + deep-link + back/forward (#138/#139) ; **onboarding** (inscription / vérif e-mail / mot de passe oublié, deep-link pré-auth WASM — #154) ; **Profil → Données/RGPD** (export art. 20 + suppression art. 17 + déconnexion — #155). Parcours auth→INPI→recherche→fiche→favoris **validé E2E en réel** (desktop, harness docs/13) ; onboarding + RGPD vérifiés au build (2 têtes). | ✅ écrans livrés (2 juin 2026 ; reste le polish différé de U3) |
 | **U5 — Retrait du Blazor** | supprimer `Atlas.Web`/`Atlas.Web.Client` (+`Atlas.Maui`) une fois U0–U4 validés multi-cible (spike Linux/mobile) | ⬜ |
 
 ## Renvois
