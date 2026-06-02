@@ -64,7 +64,7 @@ internal sealed class GetTimelineHandler(
         }
 
         // Fusion des deux flux selon le même ordre total que les repositories : (OccurredAt DESC, Id DESC).
-        List<TimelineItemDto> merged = rss.Select(MapRss)
+        var merged = rss.Select(MapRss)
             .Concat(events.Select(MapEvent))
             .OrderByDescending(item => item.OccurredAt)
             .ThenByDescending(item => item.Id, GuidComparer)
