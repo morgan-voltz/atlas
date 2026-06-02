@@ -50,14 +50,19 @@ public sealed class AtlasApiClient(HttpClient httpClient, ITokenStore tokenStore
             return Result<LoginResult>.Fail(ApiErrors.Unreachable());
         }
 
-        if (response.StatusCode is HttpStatusCode.Unauthorized or HttpStatusCode.BadRequest)
-        {
-            return Result<LoginResult>.Fail(ApiErrors.InvalidCredentials());
-        }
-
         if (!response.IsSuccessStatusCode)
         {
-            return Result<LoginResult>.Fail(ApiErrors.RequestFailed((int)response.StatusCode));
+            // Surface un état honnête selon le code métier du ProblemDetails (doc 12 §10) : un compte
+            // verrouillé (403) ou un e-mail non vérifié ne doivent pas s'afficher en « HTTP 403 » opaque.
+            string problem = await response.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
+            ApiError error =
+                problem.Contains("users.account_locked", StringComparison.Ordinal) ? ApiErrors.AccountLocked() :
+                problem.Contains("users.email_not_verified", StringComparison.Ordinal) ? ApiErrors.EmailNotVerified() :
+                problem.Contains("users.invalid_credentials", StringComparison.Ordinal)
+                    || response.StatusCode is HttpStatusCode.Unauthorized or HttpStatusCode.BadRequest
+                        ? ApiErrors.InvalidCredentials()
+                        : ApiErrors.RequestFailed((int)response.StatusCode);
+            return Result<LoginResult>.Fail(error);
         }
 
         using JsonDocument doc = JsonDocument.Parse(

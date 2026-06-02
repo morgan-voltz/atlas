@@ -16,6 +16,14 @@ public static class ApiErrors
     public static ApiError InvalidCredentials() =>
         new("api.invalid_credentials", "Adresse e-mail ou mot de passe incorrect.");
 
+    /// <summary>Verrouillage temporaire après trop de tentatives (HTTP 403 `users.account_locked`).</summary>
+    public static ApiError AccountLocked() =>
+        new("users.account_locked", "Compte temporairement verrouillé après plusieurs tentatives. Réessayez plus tard.");
+
+    /// <summary>Connexion refusée tant que l'e-mail n'est pas vérifié (`users.email_not_verified`).</summary>
+    public static ApiError EmailNotVerified() =>
+        new("users.email_not_verified", "Vérifiez votre e-mail avant de vous connecter (lien envoyé à l'inscription).");
+
     public static ApiError InvalidTwoFactorCode() =>
         new("api.invalid_2fa_code", "Code de validation incorrect. Réessayez avec un code à jour ou un code de secours.");
 
