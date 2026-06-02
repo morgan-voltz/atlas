@@ -119,7 +119,7 @@ internal static class FeedEndpoints
         CurrentUser user,
         ISender sender,
         CancellationToken ct,
-        int? page = null,
+        string? cursor = null,
         int? pageSize = null,
         Guid? sourceId = null,
         DateTimeOffset? after = null,
@@ -131,9 +131,10 @@ internal static class FeedEndpoints
         bool mentionsFavoritesOnly = false,
         bool editorialOnly = false)
     {
-        Result<PagedResult<TimelineItemDto>> result = await sender.Send(
+        // Pagination keyset : le client renvoie le `cursor` opaque de la réponse précédente (null = 1ʳᵉ page).
+        Result<CursorPage<TimelineItemDto>> result = await sender.Send(
             new GetTimelineQuery(
-                user.Id, page ?? 1, pageSize ?? 20, sourceId, after, before, keyword,
+                user.Id, cursor, pageSize ?? 20, sourceId, after, before, keyword,
                 unread, favorites, includeArchived, mentionsFavoritesOnly, editorialOnly),
             ct);
 

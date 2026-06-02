@@ -1,5 +1,4 @@
 using Atlas.Domain.Users;
-using Atlas.Shared.Result;
 
 namespace Atlas.Domain.Veille;
 
@@ -30,13 +29,15 @@ public interface IFeedItemRepository
     Task<IReadOnlyList<FeedItem>> ListFetchedSinceAsync(DateTimeOffset since, int max, CancellationToken ct = default);
 
     /// <summary>
-    /// Timeline d'un utilisateur (F-044) : items des sources auxquelles il est abonné, filtrés et paginés,
-    /// avec l'état de lecture/favori/archivage de l'utilisateur.
+    /// Timeline d'un utilisateur (F-044), en pagination keyset : items des sources abonnées, filtrés, avec
+    /// l'état de lecture/favori/archivage. Renvoie au plus <paramref name="limit"/> entrées ordonnées
+    /// <c>(PublishedAt DESC, Id DESC)</c> et situées strictement après <paramref name="cursor"/>
+    /// (<c>null</c> = première page).
     /// </summary>
-    Task<PagedResult<TimelineEntry>> GetTimelineAsync(
+    Task<IReadOnlyList<TimelineEntry>> GetTimelineAsync(
         UserId userId,
         TimelineFilter filter,
-        int page,
-        int pageSize,
+        TimelineCursor? cursor,
+        int limit,
         CancellationToken ct = default);
 }

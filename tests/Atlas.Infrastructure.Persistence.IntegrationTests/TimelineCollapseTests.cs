@@ -1,7 +1,6 @@
 using Atlas.Domain.Users;
 using Atlas.Domain.Veille;
 using Atlas.Infrastructure.Persistence.Repositories;
-using Atlas.Shared.Result;
 using FluentAssertions;
 
 namespace Atlas.Infrastructure.Persistence.IntegrationTests;
@@ -52,16 +51,16 @@ public sealed class TimelineCollapseTests(PostgresFixture fixture)
         await using (AtlasDbContext context = fixture.CreateContext())
         {
             var repo = new FeedItemRepository(context);
-            PagedResult<TimelineEntry> result =
-                await repo.GetTimelineAsync(userId, new TimelineFilter(), page: 1, pageSize: 20);
+            IReadOnlyList<TimelineEntry> result =
+                await repo.GetTimelineAsync(userId, new TimelineFilter(), cursor: null, limit: 20);
 
             // Le cluster est réduit à un seul représentant : itemB (le plus récent parmi A et B, les sources
             // abonnées) ; itemC est plus récent mais sa source n'est pas suivie. Le standalone reste.
-            result.TotalCount.Should().Be(2);
-            result.Items.Select(e => e.Item.Id).Should().Equal(itemB.Id, standalone.Id);
+            result.Should().HaveCount(2);
+            result.Select(e => e.Item.Id).Should().Equal(itemB.Id, standalone.Id);
 
-            result.Items.Single(e => e.Item.Id == itemB.Id).SourceCount.Should().Be(3);
-            result.Items.Single(e => e.Item.Id == standalone.Id).SourceCount.Should().Be(1);
+            result.Single(e => e.Item.Id == itemB.Id).SourceCount.Should().Be(3);
+            result.Single(e => e.Item.Id == standalone.Id).SourceCount.Should().Be(1);
         }
     }
 

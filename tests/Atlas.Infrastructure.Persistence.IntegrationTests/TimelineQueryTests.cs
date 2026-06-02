@@ -1,7 +1,6 @@
 using Atlas.Domain.Users;
 using Atlas.Domain.Veille;
 using Atlas.Infrastructure.Persistence.Repositories;
-using Atlas.Shared.Result;
 using FluentAssertions;
 
 namespace Atlas.Infrastructure.Persistence.IntegrationTests;
@@ -42,12 +41,12 @@ public sealed class TimelineQueryTests(PostgresFixture fixture)
         await using (AtlasDbContext context = fixture.CreateContext())
         {
             var repo = new FeedItemRepository(context);
-            PagedResult<TimelineEntry> result =
-                await repo.GetTimelineAsync(userId, new TimelineFilter(), page: 1, pageSize: 20);
+            IReadOnlyList<TimelineEntry> result =
+                await repo.GetTimelineAsync(userId, new TimelineFilter(), cursor: null, limit: 20);
 
             // a2 archivé exclu, b1 (source non abonnée) exclu ; tri par PublishedAt desc.
-            result.TotalCount.Should().Be(2);
-            result.Items.Select(e => e.Item.Id).Should().Equal(a1.Id, a3.Id);
+            result.Should().HaveCount(2);
+            result.Select(e => e.Item.Id).Should().Equal(a1.Id, a3.Id);
         }
     }
 
@@ -77,19 +76,19 @@ public sealed class TimelineQueryTests(PostgresFixture fixture)
         {
             var repo = new FeedItemRepository(context);
 
-            PagedResult<TimelineEntry> favorites =
-                await repo.GetTimelineAsync(userId, new TimelineFilter(FavoritesOnly: true), 1, 20);
-            favorites.Items.Should().ContainSingle().Which.Item.Id.Should().Be(read.Id);
-            favorites.Items[0].IsFavorite.Should().BeTrue();
-            favorites.Items[0].IsRead.Should().BeTrue();
+            IReadOnlyList<TimelineEntry> favorites =
+                await repo.GetTimelineAsync(userId, new TimelineFilter(FavoritesOnly: true), cursor: null, limit: 20);
+            favorites.Should().ContainSingle().Which.Item.Id.Should().Be(read.Id);
+            favorites[0].IsFavorite.Should().BeTrue();
+            favorites[0].IsRead.Should().BeTrue();
 
-            PagedResult<TimelineEntry> unreadOnly =
-                await repo.GetTimelineAsync(userId, new TimelineFilter(UnreadOnly: true), 1, 20);
-            unreadOnly.Items.Should().ContainSingle().Which.Item.Id.Should().Be(unread.Id);
+            IReadOnlyList<TimelineEntry> unreadOnly =
+                await repo.GetTimelineAsync(userId, new TimelineFilter(UnreadOnly: true), cursor: null, limit: 20);
+            unreadOnly.Should().ContainSingle().Which.Item.Id.Should().Be(unread.Id);
 
-            PagedResult<TimelineEntry> keyword =
-                await repo.GetTimelineAsync(userId, new TimelineFilter(Keyword: "foobar"), 1, 20);
-            keyword.Items.Should().ContainSingle().Which.Item.Id.Should().Be(read.Id);
+            IReadOnlyList<TimelineEntry> keyword =
+                await repo.GetTimelineAsync(userId, new TimelineFilter(Keyword: "foobar"), cursor: null, limit: 20);
+            keyword.Should().ContainSingle().Which.Item.Id.Should().Be(read.Id);
         }
     }
 

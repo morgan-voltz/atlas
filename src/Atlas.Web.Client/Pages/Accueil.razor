@@ -76,12 +76,11 @@
 
     private FeedState state = FeedState.Loading;
     private readonly List<TimelineItemResponse> items = [];
-    private int page = 1;
-    private long totalCount;
+    private string? cursor;
     private bool busy;
     private string? message;
 
-    private bool HasMore => items.Count < totalCount;
+    private bool HasMore { get; set; }
 
     protected override async Task OnInitializedAsync() => await LoadAsync(reset: true);
 
@@ -89,13 +88,13 @@
     {
         if (reset)
         {
-            page = 1;
+            cursor = null;
             items.Clear();
             state = FeedState.Loading;
         }
 
         message = null;
-        ApiResult<PagedResult<TimelineItemResponse>> result = await Api.GetAccueilFeedAsync(page, PageSize);
+        ApiResult<CursorPage<TimelineItemResponse>> result = await Api.GetAccueilFeedAsync(cursor, PageSize);
 
         if (!result.IsSuccess || result.Value is null)
         {
@@ -105,7 +104,8 @@
         }
 
         items.AddRange(result.Value.Items);
-        totalCount = result.Value.TotalCount;
+        cursor = result.Value.NextCursor;
+        HasMore = result.Value.HasMore;
         state = items.Count == 0 ? FeedState.Empty : FeedState.Loaded;
     }
 
@@ -117,7 +117,7 @@
         }
 
         busy = true;
-        page++;
+        // Curseur de la page suivante mémorisé au dernier chargement.
         await LoadAsync(reset: false);
         busy = false;
     }
