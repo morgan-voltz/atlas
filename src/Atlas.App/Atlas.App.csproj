@@ -46,4 +46,9 @@
     <PackageReference Include="Microsoft.Extensions.Http" />
   </ItemGroup>
 
+  <!-- Polices bundlées (doc 16) : référencées via ms-appx dans Styles/Theme.xaml, toutes têtes. -->
+  <ItemGroup>
+    <Content Include="Assets\Fonts\*.ttf" />
+  </ItemGroup>
+
 </Project>

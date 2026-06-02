@@ -7,11 +7,32 @@
 
   <!-- Squelette d'une carte-aperçu pendant le chargement d'une liste (doc 12 §11/§14) : occupe la
        forme du contenu à venir. Purement visuel ; l'annonce « Chargement… » reste portée par le
-       parent. (Animation shimmer différée — tranche U3 suivante ; statique = sûr reduced-motion.) -->
+       parent. Shimmer = pulsation d'opacité, démarrée seulement si les animations système sont
+       actives (respect de reduced-motion ; cf. code-behind). -->
+  <UserControl.Resources>
+    <Storyboard x:Key="ShimmerStoryboard" RepeatBehavior="Forever">
+      <!-- Pulse complet 1.0→0.45→1.0 en un seul cycle (Uno n'implémente pas AutoReverse). -->
+      <DoubleAnimationUsingKeyFrames Storyboard.TargetName="PulsePanel"
+                                     Storyboard.TargetProperty="Opacity">
+        <LinearDoubleKeyFrame KeyTime="0:0:0" Value="1.0" />
+        <EasingDoubleKeyFrame KeyTime="0:0:0.9" Value="0.45">
+          <EasingDoubleKeyFrame.EasingFunction>
+            <SineEase EasingMode="EaseInOut" />
+          </EasingDoubleKeyFrame.EasingFunction>
+        </EasingDoubleKeyFrame>
+        <EasingDoubleKeyFrame KeyTime="0:0:1.8" Value="1.0">
+          <EasingDoubleKeyFrame.EasingFunction>
+            <SineEase EasingMode="EaseInOut" />
+          </EasingDoubleKeyFrame.EasingFunction>
+        </EasingDoubleKeyFrame>
+      </DoubleAnimationUsingKeyFrames>
+    </Storyboard>
+  </UserControl.Resources>
+
   <Border Padding="14,13"
           BorderThickness="0,0,0,1"
           BorderBrush="{ThemeResource AtlasSurfaceVariantBrush}">
-    <StackPanel Spacing="8">
+    <StackPanel x:Name="PulsePanel" Spacing="8">
       <Border Height="14" Width="160" HorizontalAlignment="Left"
               CornerRadius="{ThemeResource AtlasRadiusSm}"
               Background="{ThemeResource AtlasSurfaceVariantBrush}" />
