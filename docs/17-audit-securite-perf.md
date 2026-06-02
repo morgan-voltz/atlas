@@ -116,7 +116,7 @@ Concernant les credentials INPI : déchiffrement transitoire correct, jamais log
 |---|---|---|
 | **E5b — dénormalisation `SourceCount`** | ⏸️ Écarté (profilé) | La proposition initiale (colonne dénormalisée) est **inutile** : mesurée à ~0,2 ms, la sous-requête n'était pas le problème (cf. E5b §4.3, corrigé autrement en #149). |
 | **E5b — index composite** `(cluster_id, published_at, fetched_at)` | ⏸️ Écarté (profilé) | **Aucun gain** mesuré vs l'index simple `cluster_id` existant (137/199 ms ≈ 142/210 ms). L'index simple actuel reste néanmoins essentiel (sans index cluster : 2,6–4,4 s). |
-| **E5b — pagination keyset** | ⏸️ Différé | Rendrait les pages profondes O(pageSize). **Changement de contrat d'API** (curseur au lieu de numéro de page) touchant le client → à traiter comme feature si la pagination profonde devient un usage réel. |
+| **E5b — pagination keyset** | ✅ Fait (#151) | Implémentée : curseur `(OccurredAt, Id)` sur le flux fusionné RSS + événements, supprimant le plafond de fusion (500) et le sur-fetch ; chaque flux ne lit que `pageSize+1` entrées après le curseur. Contrat changé (`PagedResult` → `CursorPage`), clients Blazor + Uno mis à jour. |
 | **M6** | ⏸️ Écarté | `SaveChanges` par utilisateur dans les jobs de fond : **choix de conception assumé** (progression incrémentale — un job interrompu ne reperd pas les users déjà traités), pas un bug. |
 | **F5** | ⏸️ Écarté | AAD AES-GCM liant le ciphertext au `userId` (défense en profondeur, sévérité Faible). **Invasif** (changement de signature `ICryptoService` + threading du userId) et **casserait les `InpiCredentials` / secrets TOTP déjà chiffrés** : nécessiterait un format de chiffrement versionné + une migration de ré-chiffrement. À traiter dans une évolution dédiée si le besoin se confirme. |
 
@@ -139,6 +139,7 @@ Une exploration avait classé comme **« Critique »** un *fallback silencieux* 
 | [#146](https://github.com/Morgan-Voltz/atlas/pull/146) | 4a | Durcissement — rate limiting (M3), injection CSV (F2), validation device (F1), timeout SQL (F6) |
 | [#147](https://github.com/Morgan-Voltz/atlas/pull/147) | 4b | Maintenabilité — binder `CurrentUser` (F3), factorisation exports (F4) |
 | [#149](https://github.com/Morgan-Voltz/atlas/pull/149) | E5b | Timeline — `SourceCount` hors projection paginée (profilé : page 50 9× plus rapide) |
+| [#151](https://github.com/Morgan-Voltz/atlas/pull/151) | E5b | Timeline — pagination keyset (curseur), supprime le plafond de fusion et le sur-fetch |
 
 Chaque lot a été livré sur une branche dédiée, mergé en *squash* après CI verte (build Release + tests unitaires + tests d'architecture + tests d'intégration Docker), conformément à la Definition of Done (`CLAUDE.md`).
 
@@ -149,6 +150,6 @@ Chaque lot a été livré sur une branche dédiée, mergé en *squash* après CI
 À l'issue de l'audit, **tout le périmètre sécurité / résilience / performance / durcissement / maintenabilité est traité**. Recommandations de suivi :
 
 1. **Avant ouverture publique (F-028)** : les prérequis sécurité (SSRF, XXE, anti-timing, theft detection) sont en place. Réévaluer alors le rate limiting des recherches INPI si le quota devient un point sensible.
-2. **Timeline (suite d'E5b)** : si la pagination profonde de la timeline devient un usage réel, passer en **pagination keyset** (curseur) — c'est le seul levier restant pour rendre les pages profondes O(pageSize), au prix d'un changement de contrat d'API. Le correctif #149 a déjà ramené la page 50 de ~1,9 s à ~210 ms.
+2. **Timeline (suite d'E5b)** : la **pagination keyset** est désormais en place (#151), supprimant le plafond de fusion (500) et le sur-fetch. Étape ultérieure éventuelle à très grande échelle : unifier les deux flux (RSS + événements) en une vue/`UNION ALL` paginée côté SQL plutôt qu'une fusion en mémoire de deux requêtes.
 3. **F5** : si un modèle de menace « accès en écriture à la base » devient pertinent, introduire un format de chiffrement versionné permettant d'ajouter l'AAD sans casser les données existantes.
 4. **Régression** : les comportements ajoutés sont couverts par des tests (unitaires + intégration Docker pour les requêtes EF et la résilience). Conserver cette couverture lors des évolutions des composants cités.
