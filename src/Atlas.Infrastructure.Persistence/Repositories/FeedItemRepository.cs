@@ -140,7 +140,7 @@ internal sealed class FeedItemRepository(AtlasDbContext dbContext) : IFeedItemRe
         // Ici l'ensemble externe est restreint aux items affichés et clusterisés → au plus pageSize sous-requêtes.
         // On réutilise les seules constructions que EF traduit ici : Contains sur FeedItemId (non-nullable, cf.
         // les mentions) et l'égalité ClusterId == ClusterId (nullable, comme la requête d'origine).
-        List<FeedItemId> clusteredDisplayedIds = rows
+        var clusteredDisplayedIds = rows
             .Where(row => row.item.ClusterId is not null)
             .Select(row => row.item.Id)
             .ToList();
