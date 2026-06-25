@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Atlas.DevEye — shim DevEye (outil de dev local, yeux+mains pour Claude).
+    Implemente le wire protocol HTTP DevEye (cf. DevEye/docs/wire-protocol.md)
+    via HttpListener (BCL pur : aucune dependance NuGet, aucune ref ASP.NET/Uno).
+
+    Cible net10.0 simple : consommable par Atlas.App (tetes net10.0-desktop /
+    net10.0-browserwasm, sur-ensembles de net10.0) ET par Atlas.Api (net10.0).
+
+    Dev-only : injecte uniquement en Debug (ProjectReference conditionnelle cote
+    hotes). En contexte navigateur (tete WASM), le serveur est un no-op runtime
+    (OperatingSystem.IsBrowser) — pas de TCP possible dans le navigateur.
+  -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+</Project>

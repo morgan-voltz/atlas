@@ -108,7 +108,7 @@ public partial class App : Application
     /// <summary>
     /// Configures global Uno Platform logging
     /// </summary>
-    public static void InitializeLogging()
+    public static void InitializeLogging(Action<Microsoft.Extensions.Logging.ILoggingBuilder>? configure = null)
     {
 #if DEBUG
         // Logging is disabled by default for release builds, as it incurs a significant
@@ -138,6 +138,10 @@ public partial class App : Application
             builder.AddFilter("Uno", LogLevel.Warning);
             builder.AddFilter("Windows", LogLevel.Warning);
             builder.AddFilter("Microsoft", LogLevel.Warning);
+
+            // DevEye (dev-only) : l'hote desktop injecte ici un provider qui
+            // draine les logs client vers le buffer DevEye. No-op si null.
+            configure?.Invoke(builder);
 
             // Generic Xaml events
             // builder.AddFilter("Microsoft.UI.Xaml", LogLevel.Debug );

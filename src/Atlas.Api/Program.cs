@@ -30,8 +30,17 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddSingleton(TimeProvider.System);
 
 // Logging structuré Serilog (Lot 2b audit) + masquage proactif des propriétés sensibles.
+#if DEBUG
+// DevEye (dev-only) : buffer alimenté par un sink Serilog, drainé par /devtools/logs/poll.
+var devEyeBuffer = new Atlas.DevEye.DevEyeLogBuffer();
+#endif
 builder.Host.UseSerilog((context, _, loggerConfiguration) =>
-    SerilogConfiguration.Configure(loggerConfiguration, context.Configuration));
+{
+    SerilogConfiguration.Configure(loggerConfiguration, context.Configuration);
+#if DEBUG
+    loggerConfiguration.WriteTo.Sink(new Atlas.Api.DevEye.DevEyeSerilogSink(devEyeBuffer));
+#endif
+});
 
 builder.Services.AddOpenApi();
 builder.Services.AddProblemDetails();
@@ -131,6 +140,17 @@ builder.Services
 builder.Services.AddAuthorization();
 
 var app = builder.Build();
+
+#if DEBUG
+// DevEye (dev-only) : sert logs Serilog + commandes du backend sur 127.0.0.1.
+// Port 31338 par défaut (31337 = tête client Atlas.App). Surchargeable via DEVEYE_PORT.
+var devEyeServer = new Atlas.DevEye.DevEyeServer(
+    new Atlas.DevEye.EmptyDevEyeStateProvider(),
+    devEyeBuffer,
+    new Atlas.DevEye.DevEyeCommandRegistry(),
+    Atlas.DevEye.DevEyeServer.PortFromEnv(31338));
+devEyeServer.Start();
+#endif
 
 // Derrière le reverse proxy : doit être le tout premier middleware (réécrit scheme/IP en amont).
 if (behindProxy)

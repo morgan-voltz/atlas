@@ -37,6 +37,16 @@
   </ItemGroup>
 
   <!--
+    DevEye : shim de dev local (yeux/mains pour Claude via MCP). Reference
+    UNIQUEMENT en Debug -> aucune ligne DevEye dans un binaire Release (ni
+    desktop ni WASM). Tolere par CsprojDependencyTests (outil debug transverse,
+    pas une couche hexagonale).
+  -->
+  <ItemGroup Condition="'$(Configuration)' == 'Debug'">
+    <ProjectReference Include="..\Atlas.DevEye\Atlas.DevEye.csproj" />
+  </ItemGroup>
+
+  <!--
     DI + HttpClientFactory standard .NET (choix U4.1) : versions explicites car le CPM est
     désactivé pour Atlas.App (cf. Directory.Packages.props local). On évite volontairement les
     UnoFeatures Hosting/Http (pile Uno.Extensions) pour rester léger et garder la navigation maison.
