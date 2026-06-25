@@ -35,4 +35,12 @@
     <ProjectReference Include="..\Atlas.Infrastructure.Storage\Atlas.Infrastructure.Storage.csproj" />
   </ItemGroup>
 
+  <!--
+    DevEye : shim de dev local (yeux backend pour Claude via MCP). Reference
+    UNIQUEMENT en Debug -> aucune ligne DevEye dans un binaire Release.
+  -->
+  <ItemGroup Condition="'$(Configuration)' == 'Debug'">
+    <ProjectReference Include="..\Atlas.DevEye\Atlas.DevEye.csproj" />
+  </ItemGroup>
+
 </Project>

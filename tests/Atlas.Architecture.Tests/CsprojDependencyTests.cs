@@ -74,8 +74,10 @@ public class CsprojDependencyTests
 
         IEnumerable<string> atlasReferences = references.Where(r => r.Contains("Atlas.", StringComparison.Ordinal));
         atlasReferences.Should().OnlyContain(
-            r => r.Contains("Atlas.Domain", StringComparison.Ordinal) || r.Contains("Atlas.Shared", StringComparison.Ordinal),
-            "Atlas.App ne doit référencer que Atlas.Domain et Atlas.Shared.");
+            r => r.Contains("Atlas.Domain", StringComparison.Ordinal)
+                || r.Contains("Atlas.Shared", StringComparison.Ordinal)
+                || r.Contains("Atlas.DevEye", StringComparison.Ordinal),
+            "Atlas.App ne doit référencer que Atlas.Domain et Atlas.Shared (+ Atlas.DevEye, shim de debug transverse référencé uniquement en Debug, exclu du Release).");
     }
 
     /// <summary>
