@@ -56,6 +56,13 @@
     <PackageReference Include="Microsoft.Extensions.Http" />
   </ItemGroup>
 
+  <!-- Tête WebAssembly uniquement : extensions fetch (credentials:include) pour joindre le cookie
+       HttpOnly de refresh en cross-origin. Le BCL ne fournit pas cette option hors Blazor ; Uno la
+       fournit via ce package (namespace Uno.WebAssembly.Net.Http). Cf. BrowserAuthCredentialsHandler. -->
+  <ItemGroup Condition="'$(TargetFramework)' == 'net10.0-browserwasm'">
+    <PackageReference Include="Uno.Wasm.HttpRequestMessageExtensions" />
+  </ItemGroup>
+
   <!-- Polices bundlées (doc 16) : référencées via ms-appx dans Styles/Theme.xaml, toutes têtes. -->
   <ItemGroup>
     <Content Include="Assets\Fonts\*.ttf" />

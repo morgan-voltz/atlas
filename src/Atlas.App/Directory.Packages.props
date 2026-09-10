@@ -22,6 +22,9 @@
          du client (DI + HttpClientFactory standard .NET, U4.1). -->
     <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="10.0.7" />
     <PackageVersion Include="Microsoft.Extensions.Http" Version="10.0.7" />
+    <!-- Extensions fetch WASM (credentials:include pour le cookie de refresh cross-origin). Version
+         alignée sur Uno.Wasm.Bootstrap (10.0.96) résolu par Uno.Sdk. Référencé sur la tête WASM seule. -->
+    <PackageVersion Include="Uno.Wasm.HttpRequestMessageExtensions" Version="10.0.96" />
   </ItemGroup>
 
 </Project>

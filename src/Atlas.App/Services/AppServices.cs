@@ -35,14 +35,18 @@ public static class AppServices
         services.AddSingleton<ITokenStore, InMemoryTokenStore>();
         services.AddTransient<AuthHeaderHandler>();
         services.AddTransient<SessionRefreshHandler>();
+        services.AddTransient<BrowserAuthCredentialsHandler>();
 
-        // Client dédié au refresh : partage le CookieContainer, SANS Bearer ni handler de refresh
-        // (évite toute récursion).
-        IHttpClientBuilder refresh = services.AddHttpClient("refresh", c => c.BaseAddress = new Uri(DevApiBaseAddress));
+        // Client dédié au refresh : partage le CookieContainer (natif), SANS Bearer ni handler de refresh
+        // (évite toute récursion). Sur WASM, le cookie de refresh n'est joint que via credentials:include.
+        IHttpClientBuilder refresh = services
+            .AddHttpClient("refresh", c => c.BaseAddress = new Uri(DevApiBaseAddress))
+            .AddHttpMessageHandler<BrowserAuthCredentialsHandler>();
 
-        // Client principal : refresh (outer) → Bearer (inner) → handler primaire.
+        // Client principal : credentials WASM (outer, pour /auth/*) → refresh → Bearer → handler primaire.
         IHttpClientBuilder main = services
             .AddHttpClient<AtlasApiClient>(c => c.BaseAddress = new Uri(DevApiBaseAddress))
+            .AddHttpMessageHandler<BrowserAuthCredentialsHandler>()
             .AddHttpMessageHandler<SessionRefreshHandler>()
             .AddHttpMessageHandler<AuthHeaderHandler>();
 
