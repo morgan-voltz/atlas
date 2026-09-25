@@ -37,7 +37,7 @@
   </ItemGroup>
 
   <ItemGroup Label="ASP.NET Core">
-    <PackageVersion Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.0" />
+    <PackageVersion Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.12" />
     <!-- 10.0.8 tirait Microsoft.OpenApi 2.0.0 (GHSA-v5pm-xwqc-g5wc, corrigé en 2.7.5) ; ≥ 10.0.11 tire ≥ 2.7.5, 10.0.12 tire ≥ 2.12. -->
     <PackageVersion Include="Microsoft.AspNetCore.OpenApi" Version="10.0.12" />
     <PackageVersion Include="Swashbuckle.AspNetCore" Version="7.0.0" />
@@ -65,9 +65,15 @@
     <PackageVersion Include="Otp.NET" Version="1.4.0" />
     <PackageVersion Include="Azure.Security.KeyVault.Keys" Version="4.7.0" />
     <PackageVersion Include="VaultSharp" Version="1.17.5" />
-    <!-- Alignées sur la version transitive tirée par Microsoft.AspNetCore.Authentication.JwtBearer 10.0.0 -->
-    <PackageVersion Include="Microsoft.IdentityModel.JsonWebTokens" Version="8.0.1" />
-    <PackageVersion Include="Microsoft.IdentityModel.Tokens" Version="8.0.1" />
+    <!-- Les deux paquets Microsoft.IdentityModel.* doivent TOUJOURS bouger ensemble (même famille 8.x :
+         dépareillés, JsonWebTokens casse au runtime — MissingMethodException Base64UrlEncoder.Decode, vécu
+         sur la PR Dependabot #170 qui ne montait que Tokens). Version ≥ celle tirée par JwtBearer. -->
+    <PackageVersion Include="Microsoft.IdentityModel.JsonWebTokens" Version="8.23.0" />
+    <PackageVersion Include="Microsoft.IdentityModel.Tokens" Version="8.23.0" />
+    <!-- Pins transitifs (tirés par JwtBearer) alignés sur la même version, pour que Dependabot monte la famille d'un bloc. -->
+    <PackageVersion Include="Microsoft.IdentityModel.Protocols" Version="8.23.0" />
+    <PackageVersion Include="Microsoft.IdentityModel.Protocols.OpenIdConnect" Version="8.23.0" />
+    <PackageVersion Include="System.IdentityModel.Tokens.Jwt" Version="8.23.0" />
   </ItemGroup>
 
   <ItemGroup Label="Résilience">
