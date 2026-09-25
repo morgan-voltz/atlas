@@ -141,6 +141,7 @@ Une exploration avait classé comme **« Critique »** un *fallback silencieux* 
 | [#147](https://github.com/Morgan-Voltz/atlas/pull/147) | 4b | Maintenabilité — binder `CurrentUser` (F3), factorisation exports (F4) |
 | [#149](https://github.com/Morgan-Voltz/atlas/pull/149) | E5b | Timeline — `SourceCount` hors projection paginée (profilé : page 50 9× plus rapide) |
 | [#151](https://github.com/Morgan-Voltz/atlas/pull/151) | E5b | Timeline — pagination keyset (curseur), supprime le plafond de fusion et le sur-fetch |
+| [#162](https://github.com/morgan-voltz/atlas/pull/162) | 9 | Dépendances — advisories NuGet Audit (4 paquets), Dependabot, run CI hebdomadaire, nightly INPI sur 5433 (addendum §9, 25 septembre 2026) |
 
 Chaque lot a été livré sur une branche dédiée, mergé en *squash* après CI verte (build Release + tests unitaires + tests d'architecture + tests d'intégration Docker), conformément à la Definition of Done (`CLAUDE.md`).
 
@@ -173,7 +174,7 @@ Chaque lot a été livré sur une branche dédiée, mergé en *squash* après CI
 
 Aucune suppression d'advisory (`NuGetAuditSuppress`) : tout est traité par montée de version. Exposition applicative : nulle pour SSH.NET / Scriban (outillage de test uniquement) et pour `Microsoft.OpenApi` (document OpenAPI servi en `Development` seulement, `Program.cs`), faible pour `Cryptography.Xml` (aucun usage direct de XML signé ou chiffré dans Atlas) — le vrai impact était le **blocage de la chaîne de build**.
 
-**Mesures de processus (même PR).**
+**Mesures de processus (même PR, [#162](https://github.com/morgan-voltz/atlas/pull/162)).**
 - `.github/dependabot.yml` : NuGet (CPM racine + `src/Atlas.App`) et GitHub Actions, hebdomadaire, groupé mineur/patch — le correctif arrive en PR au lieu d'une CI rouge à découvrir.
 - `ci.yml` : run **planifié hebdomadaire** (lundi 06:00 UTC) + `workflow_dispatch`, pour voir une advisory sans attendre le push suivant (groupe de concurrence distinct par événement : un push pendant le run planifié ne l'annule plus) ; ajout des projets `Atlas.Shared.UnitTests` et `Atlas.Infrastructure.Storage.UnitTests`, jusque-là non exécutés en CI.
 - `bruno-inpi-e2e.yml` : service Postgres exposé sur **5433** (comme le harness `docs/13` et la factory design-time), pour que l'étape de migration passe et que le nightly redevienne le juge de paix INPI.
