@@ -25,6 +25,10 @@
     <!-- Extensions fetch WASM (credentials:include pour le cookie de refresh cross-origin). Version
          alignée sur Uno.Wasm.Bootstrap (10.0.96) résolu par Uno.Sdk. Référencé sur la tête WASM seule. -->
     <PackageVersion Include="Uno.Wasm.HttpRequestMessageExtensions" Version="10.0.96" />
+    <!-- Tête WASM : Microsoft.Windows.Compatibility (implicite Uno.Sdk) tire System.Security.Cryptography.Xml
+         10.0.7, vulnérable (GHSA-23rf-6693-g89p et 4 autres, corrigé en 10.0.10). Pas de transitive pinning
+         ici : la version est forcée par une référence directe dans le csproj (tête browserwasm seule). -->
+    <PackageVersion Include="System.Security.Cryptography.Xml" Version="10.0.12" />
   </ItemGroup>
 
 </Project>

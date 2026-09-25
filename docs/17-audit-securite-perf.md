@@ -3,9 +3,9 @@
 > Rapport d'audit de fond de l'API Atlas (`Atlas.Api` et les couches qu'elle mobilise), couvrant la **sécurité**, la **résilience**, la **performance** et la **maintenabilité**. Ce document trace les constats, les correctifs livrés (avec leur PR), et les rares items volontairement écartés ou différés avec leur justification.
 > Il sert de **référence d'état** : avant de retoucher l'un des composants cités, vérifier ici si un correctif récent s'y applique.
 
-**Version** : 1.0
+**Version** : 1.1
 **Date de l'audit** : 1ᵉʳ juin 2026
-**Date de dernière mise à jour** : 2 juin 2026
+**Date de dernière mise à jour** : 25 septembre 2026 (addendum §9)
 
 ---
 
@@ -24,6 +24,7 @@
 - [6. Faux positif notable](#6-faux-positif-notable)
 - [7. Découpage en lots (PRs)](#7-découpage-en-lots-prs)
 - [8. État final & recommandations](#8-état-final--recommandations)
+- [9. Addendum du 25 septembre 2026 — dépendances vulnérables (NuGet Audit)](#9-addendum-du-25-septembre-2026--dépendances-vulnérables-nuget-audit)
 
 ---
 
@@ -153,3 +154,28 @@ Chaque lot a été livré sur une branche dédiée, mergé en *squash* après CI
 2. **Timeline (suite d'E5b)** : la **pagination keyset** est désormais en place (#151), supprimant le plafond de fusion (500) et le sur-fetch. Étape ultérieure éventuelle à très grande échelle : unifier les deux flux (RSS + événements) en une vue/`UNION ALL` paginée côté SQL plutôt qu'une fusion en mémoire de deux requêtes.
 3. **F5** : si un modèle de menace « accès en écriture à la base » devient pertinent, introduire un format de chiffrement versionné permettant d'ajouter l'AAD sans casser les données existantes.
 4. **Régression** : les comportements ajoutés sont couverts par des tests (unitaires + intégration Docker pour les requêtes EF et la résilience). Conserver cette couverture lors des évolutions des composants cités.
+
+---
+
+## 9. Addendum du 25 septembre 2026 — dépendances vulnérables (NuGet Audit)
+
+> Hors périmètre de l'audit initial (code applicatif), même registre : **A06 — Vulnerable Components** (`docs/04`, tableau OWASP).
+
+**Constat.** Le restore NuGet audite les dépendances directes et transitives contre la base d'advisories GitHub ; avec `TreatWarningsAsErrors` (`Directory.Build.props`), toute advisory devient une **erreur de restore**. Entre le dernier push sur `main` (25 juin, merge du shim DevEye `1011262`, CI verte) et le push suivant (10 septembre, #161), **dix advisories sur quatre paquets transitifs** ont été publiées (du 26 juin au 17 septembre — la dernière, GHSA-mggc-4xg6-vcxf, est même postérieure au push). Le run `ci.yml` du 10 septembre échoue au restore d'`Atlas.Api` sur `Microsoft.OpenApi` 2.0.0 et `System.Security.Cryptography.Xml` 10.0.8 ; les paquets de test (SSH.NET, Scriban) ne sont jamais atteints dans ce run mais auraient fait échouer l'étape suivante. **Aucune alerte ne remonte** : `ci.yml` n'a pas de run planifié, Dependabot n'est pas configuré, et le seul run planifié (`bruno-inpi-e2e`) est rouge chaque nuit **depuis sa création le 30 mai, sans jamais avoir été vert** — d'abord sur l'étape « Apply EF Core migrations » (la factory design-time `AtlasDbContextFactory` force `Port=5433`, celui du harness `docs/13`, alors que le service Postgres du workflow écoutait sur 5432), puis sur le restore à partir de juillet. Son échec quotidien s'est donc fondu dans un bruit déjà installé.
+
+| Paquet vulnérable | Tiré par | Advisories | Correctif |
+|---|---|---|---|
+| `System.Security.Cryptography.Xml` 10.0.8 (pin transitif) | `Microsoft.EntityFrameworkCore.Design` | GHSA-23rf-6693-g89p, GHSA-8q5v-6pqq-x66h, GHSA-cvvh-rhrc-wg4q, GHSA-g8r8-53c2-pm3f, GHSA-mmjf-rqrv-855v | pin → **10.0.12** |
+| `Microsoft.OpenApi` 2.0.0 | `Microsoft.AspNetCore.OpenApi` 10.0.8 | GHSA-v5pm-xwqc-g5wc | `Microsoft.AspNetCore.OpenApi` → **10.0.12** (tire ≥ 2.12) |
+| `SSH.NET` 2025.1.0 | `Testcontainers` 4.12.0 | GHSA-mggc-4xg6-vcxf, GHSA-q939-rpr3-3284 | `Testcontainers` + `Testcontainers.PostgreSql` → **4.15.0** (tire 2026.0.0) |
+| `Scriban.Signed` 7.2.0 | `WireMock.Net` 2.7.0 | GHSA-6q7j-xr26-3h2c, GHSA-q6rr-fm2g-g5x8 | `WireMock.Net` → **2.18.0** (tire 7.2.5) |
+| `System.Security.Cryptography.Xml` 10.0.7 (tête WASM d'`Atlas.App`) | `Microsoft.Windows.Compatibility` 10.0.7 (implicite Uno.Sdk) | idem ligne 1 | référence directe **10.0.12** sur `net10.0-browserwasm` (le CPM d'`Atlas.App` n'a pas de transitive pinning). NB : cette ligne n'a jamais cassé `uno.yml` — `Atlas.App` est en `TreatWarningsAsErrors=false` ; les codes `NU1901`–`NU1904` y sont désormais promus en erreurs (`WarningsAsErrors`) pour que l'audit y soit bloquant aussi. |
+
+Aucune suppression d'advisory (`NuGetAuditSuppress`) : tout est traité par montée de version. Exposition applicative : nulle pour SSH.NET / Scriban (outillage de test uniquement) et pour `Microsoft.OpenApi` (document OpenAPI servi en `Development` seulement, `Program.cs`), faible pour `Cryptography.Xml` (aucun usage direct de XML signé ou chiffré dans Atlas) — le vrai impact était le **blocage de la chaîne de build**.
+
+**Mesures de processus (même PR).**
+- `.github/dependabot.yml` : NuGet (CPM racine + `src/Atlas.App`) et GitHub Actions, hebdomadaire, groupé mineur/patch — le correctif arrive en PR au lieu d'une CI rouge à découvrir.
+- `ci.yml` : run **planifié hebdomadaire** (lundi 06:00 UTC) + `workflow_dispatch`, pour voir une advisory sans attendre le push suivant (groupe de concurrence distinct par événement : un push pendant le run planifié ne l'annule plus) ; ajout des projets `Atlas.Shared.UnitTests` et `Atlas.Infrastructure.Storage.UnitTests`, jusque-là non exécutés en CI.
+- `bruno-inpi-e2e.yml` : service Postgres exposé sur **5433** (comme le harness `docs/13` et la factory design-time), pour que l'étape de migration passe et que le nightly redevienne le juge de paix INPI.
+- **Hors PR (réglages du dépôt, à faire à la main)** : renseigner les secrets **`INPI_USERNAME` / `INPI_PASSWORD`** (le dépôt n'a **aucun** secret : même avec le port corrigé, le nightly s'arrêtera à l'étape Bruno tant qu'ils manquent) ; activer **Dependabot alerts + security updates** (Settings → Code security ; le fichier ci-dessus ne fait que des *version updates*) ; protection de `main` (PR + CI verte obligatoires — #161 a été mergée sur des checks datés du 2 juin) ; notification d'échec des runs planifiés.
+

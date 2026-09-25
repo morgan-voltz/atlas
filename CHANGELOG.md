@@ -941,7 +941,21 @@ appel authentifié réel (cf. roadmap, statuts 🟡).
 - Identifiants INPI chiffrés au repos en **AES-256-GCM** ; jamais loggés ni exposés.
 - JWT d'accès signés **RS256**, refresh tokens rotatifs et révocables.
 - Droits RGPD (export / effacement) implémentés.
-- Pin de sécurité `System.Security.Cryptography.Xml` 10.0.8 (CVE GHSA-37gx-xxp4-5rgx).
+- Pin de sécurité `System.Security.Cryptography.Xml` 10.0.8 (CVE GHSA-37gx-xxp4-5rgx) — porté à
+  10.0.12 en septembre, voir ci-dessous.
+- **Dépendances vulnérables (NuGet Audit, 25 septembre 2026)** : la CI était rouge depuis le
+  10 septembre sur des advisories publiées de fin juin à mi-septembre (`NU1902`/`NU1903` en
+  Warning-As-Error au restore). Montées de version, sans suppression d'advisory : pin
+  `System.Security.Cryptography.Xml` 10.0.8 → 10.0.12 ; `Microsoft.AspNetCore.OpenApi`
+  10.0.8 → 10.0.12 (tire `Microsoft.OpenApi` ≥ 2.12, GHSA-v5pm-xwqc-g5wc) ; `Testcontainers` +
+  `Testcontainers.PostgreSql` 4.12 → 4.15 (SSH.NET 2026.0.0) ; `WireMock.Net` 2.7 → 2.18
+  (Scriban.Signed 7.2.5) ; tête WASM d'`Atlas.App` : `System.Security.Cryptography.Xml` 10.0.12 en
+  référence directe (transitif 10.0.7 de `Microsoft.Windows.Compatibility`) et audit NuGet promu en
+  erreur (`WarningsAsErrors` NU1901–NU1904). Ajout de Dependabot (NuGet + Actions), d'un run CI
+  hebdomadaire + `workflow_dispatch` ; `ci.yml` exécute désormais `Atlas.Shared.UnitTests` et
+  `Atlas.Infrastructure.Storage.UnitTests` ; le nightly `bruno-inpi-e2e` expose Postgres sur 5433
+  (port de la factory design-time et du harness `docs/13` — il n'avait jamais passé l'étape de
+  migration). Détail : `docs/17` §9.
 - **Lot 2a — Durcissement crypto et anti-SSRF** :
   - **Garde-fous au démarrage sur les clés** : `Jwt:PrivateKeyPem` et `Crypto:KeyBase64`
     deviennent obligatoires hors `Development` (validation `ValidateOnStart`). Plus de
