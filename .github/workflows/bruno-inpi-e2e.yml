@@ -38,7 +38,10 @@ jobs:
           POSTGRES_PASSWORD: atlas
           POSTGRES_DB: atlas
         ports:
-          - 5432:5432
+          # 5433 côté hôte : port du harness local (docs/13) ET de la factory design-time
+          # AtlasDbContextFactory (utilisée par `dotnet ef database update`, qui ignore
+          # ConnectionStrings__Atlas). Sur 5432, l'étape de migration échouait à chaque run.
+          - 5433:5432
         options: >-
           --health-cmd "pg_isready -U atlas -d atlas"
           --health-interval 10s
@@ -47,7 +50,7 @@ jobs:
 
     env:
       # Connexion EF Core/Npgsql vers le service Postgres ci-dessus.
-      ConnectionStrings__Atlas: "Host=localhost;Port=5432;Database=atlas;Username=atlas;Password=atlas"
+      ConnectionStrings__Atlas: "Host=localhost;Port=5433;Database=atlas;Username=atlas;Password=atlas"
       # Dev environment requis pour exposer `/dev/verification-token` (étape 2 du flow).
       DOTNET_ENVIRONMENT: Development
       ASPNETCORE_ENVIRONMENT: Development

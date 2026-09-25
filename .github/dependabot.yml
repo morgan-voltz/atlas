@@ -1,0 +1,41 @@
+# Dependabot « version updates » (docs/05 §3.1, docs/04 A06).
+# Le restore NuGet audite déjà les advisories en Warning-As-Error (Directory.Build.props) : ce fichier
+# fait arriver le correctif sous forme de PR au lieu d'une CI rouge à découvrir. Les « security
+# updates » (PR immédiate sur advisory) sont un réglage du dépôt, à activer à part
+# (Settings → Code security and analysis → Dependabot alerts + security updates).
+version: 2
+updates:
+  # NuGet : Dependabot part d'Atlas.slnx et couvre tous les projets — CPM racine
+  # (Directory.Packages.props), CPM isolé d'Atlas.App (src/Atlas.App/Directory.Packages.props)
+  # et le pin Uno.Sdk de global.json (msbuild-sdks). Une seule entrée suffit.
+  - package-ecosystem: nuget
+    directory: "/"
+    schedule:
+      interval: weekly
+      day: monday
+      time: "07:00"
+      timezone: "Europe/Paris"
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: "chore(deps)"
+    groups:
+      # Uno.Sdk isolé : une montée d'Uno se valide à part (uno.yml, QA visuelle), jamais mélangée
+      # aux paquets backend.
+      uno-sdk:
+        patterns: ["Uno.Sdk"]
+      # Une seule PR pour les montées mineures/patch ; les majeures restent isolées.
+      nuget-minor-patch:
+        patterns: ["*"]
+        exclude-patterns: ["Uno.Sdk"]
+        update-types: ["minor", "patch"]
+
+  # Actions GitHub (checkout, setup-dotnet, upload-artifact…).
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: weekly
+      day: monday
+      time: "07:00"
+      timezone: "Europe/Paris"
+    commit-message:
+      prefix: "chore(ci)"
