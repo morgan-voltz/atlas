@@ -405,6 +405,10 @@ FodyWeavers.xsd
 # JetBrains Rider
 *.sln.iml
 .idea/
+# JetBrains Junie (config MCP locale générée par l'outil)
+.junie/
+# Claude Code : réglages personnels du projet (le settings.json partagé, s'il existe un jour, se versionne)
+.claude/settings.local.json
 
 ##
 ## Visual studio for Mac

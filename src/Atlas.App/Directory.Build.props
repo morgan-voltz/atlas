@@ -19,6 +19,9 @@
          CA1001 : Page avec un CancellationTokenSource (search-as-you-type) — disposer un CTS lié à
                   une requête en vol est risqué ; cycle de vie géré par la navigation. -->
     <NoWarn>$(NoWarn);NU1507;NETSDK1201;PRI257;CA1010;CA1852;CA1001;CA1805</NoWarn>
+    <!-- Audit NuGet (advisories) bloquant malgré TreatWarningsAsErrors=false : même règle que le backend.
+         NU1901–NU1904 = vulnérabilité faible / modérée / élevée / critique. -->
+    <WarningsAsErrors>$(WarningsAsErrors);NU1901;NU1902;NU1903;NU1904</WarningsAsErrors>
   </PropertyGroup>
 
 </Project>

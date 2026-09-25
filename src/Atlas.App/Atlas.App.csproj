@@ -61,6 +61,9 @@
        fournit via ce package (namespace Uno.WebAssembly.Net.Http). Cf. BrowserAuthCredentialsHandler. -->
   <ItemGroup Condition="'$(TargetFramework)' == 'net10.0-browserwasm'">
     <PackageReference Include="Uno.Wasm.HttpRequestMessageExtensions" />
+    <!-- Override de sécurité (NuGet Audit) : force la version patchée du transitif tiré par
+         Microsoft.Windows.Compatibility sur cette tête. Aucun usage direct dans le code. -->
+    <PackageReference Include="System.Security.Cryptography.Xml" />
   </ItemGroup>
 
   <!-- Polices bundlées (doc 16) : référencées via ms-appx dans Styles/Theme.xaml, toutes têtes. -->

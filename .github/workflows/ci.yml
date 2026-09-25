@@ -5,12 +5,19 @@ on:
     branches: [main]
   pull_request:
     branches: [main]
+  # Run hebdomadaire : le restore NuGet audite les dépendances (NU1902/NU1903 en Warning-As-Error).
+  # Une advisory publiée entre deux pushs ne se voit sinon qu'au push suivant (vécu : CI rouge
+  # du 10/09/2026 sur des advisories publiées de fin juin à mi-septembre). Lundi 06:00 UTC.
+  schedule:
+    - cron: '0 6 * * 1'
+  workflow_dispatch:
 
 permissions:
   contents: read
 
 concurrency:
-  group: ci-${{ github.ref }}
+  # Un groupe par (ref, événement) : un push sur main n'annule pas le run planifié, et inversement.
+  group: ci-${{ github.ref }}-${{ github.event_name }}
   cancel-in-progress: true
 
 jobs:
@@ -23,8 +30,8 @@ jobs:
         with:
           dotnet-version: '10.0.x'
 
-      # Backend uniquement : on n'embarque pas les têtes MAUI (workload mobile +
-      # CA1711 iOS/MacCatalyst en warnings-as-errors, cf. docs/audit/07-maui.md).
+      # Backend uniquement : les têtes clientes ont leur propre workflow (Atlas.App → uno.yml ;
+      # Atlas.Maui abandonné par ADR-029, jamais construit ici : workload mobile requis).
       # Atlas.Api tire transitivement Domain, Application, Shared et tous les Infrastructure.*.
       - name: Build backend (Release)
         run: dotnet build src/Atlas.Api/Atlas.Api.csproj -c Release
@@ -44,6 +51,10 @@ jobs:
           dotnet test tests/Atlas.Infrastructure.Security.UnitTests/Atlas.Infrastructure.Security.UnitTests.csproj -c Release \
             --collect:"XPlat Code Coverage" --results-directory TestResults
           dotnet test tests/Atlas.Infrastructure.Messaging.UnitTests/Atlas.Infrastructure.Messaging.UnitTests.csproj -c Release \
+            --collect:"XPlat Code Coverage" --results-directory TestResults
+          dotnet test tests/Atlas.Shared.UnitTests/Atlas.Shared.UnitTests.csproj -c Release \
+            --collect:"XPlat Code Coverage" --results-directory TestResults
+          dotnet test tests/Atlas.Infrastructure.Storage.UnitTests/Atlas.Infrastructure.Storage.UnitTests.csproj -c Release \
             --collect:"XPlat Code Coverage" --results-directory TestResults
           dotnet test tests/Atlas.Architecture.Tests/Atlas.Architecture.Tests.csproj -c Release
 
