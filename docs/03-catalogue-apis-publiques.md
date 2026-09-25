@@ -84,7 +84,7 @@ Chaque API est documentée selon un template uniforme :
 | Pertinence | ⭐⭐⭐⭐⭐ |
 | Complexité | ★★★★ (auth complexe) |
 | Cas d'usage | Recherche marques, brevets, D&M français |
-| Notes | Auth la plus tordue de l'écosystème INPI, à isoler dans un adapter solide dès le début |
+| Notes | Auth la plus tordue de l'écosystème INPI, à isoler dans un adapter solide dès le début. ⚠️ **25/09/2026** : depuis le redéploiement de la passerelle (29/06), `POST auth/login` refuse les comptes web (401) ; le portail se connecte via `data.inpi.fr/login` derrière un challenge Cloudflare (injouable côté serveur) ; l'accès API PI du compte (Marques / Brevets / Dessins et modèles), actif en mai, n'apparaît plus comme accordé. **Accès API PI à redemander à l'INPI** (page « Mes accès APIs PI » ou `licences@inpi.fr`) — cf. F-006. Prévoir des identifiants PI distincts du RNE (F-003). |
 
 ### 1.3 API Guichet Unique
 
