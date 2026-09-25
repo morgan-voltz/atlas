@@ -11,8 +11,8 @@
   </ItemGroup>
 
   <ItemGroup Label="Validation">
-    <PackageVersion Include="FluentValidation" Version="12.0.0" />
-    <PackageVersion Include="FluentValidation.DependencyInjectionExtensions" Version="12.0.0" />
+    <PackageVersion Include="FluentValidation" Version="12.1.1" />
+    <PackageVersion Include="FluentValidation.DependencyInjectionExtensions" Version="12.1.1" />
   </ItemGroup>
 
   <ItemGroup Label="Mapping">
@@ -50,24 +50,24 @@
   </ItemGroup>
 
   <ItemGroup Label="Hosting et DI">
-    <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="10.0.8" />
-    <PackageVersion Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.8" />
+    <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="10.0.12" />
+    <PackageVersion Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.12" />
     <PackageVersion Include="Microsoft.Extensions.Hosting.Abstractions" Version="10.0.0" />
-    <PackageVersion Include="Microsoft.Extensions.Configuration" Version="10.0.8" />
-    <PackageVersion Include="Microsoft.Extensions.Http" Version="10.0.0" />
-    <PackageVersion Include="Microsoft.Extensions.Configuration.Abstractions" Version="10.0.8" />
-    <PackageVersion Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="10.0.8" />
-    <PackageVersion Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.8" />
+    <PackageVersion Include="Microsoft.Extensions.Configuration" Version="10.0.12" />
+    <PackageVersion Include="Microsoft.Extensions.Http" Version="10.0.12" />
+    <PackageVersion Include="Microsoft.Extensions.Configuration.Abstractions" Version="10.0.12" />
+    <PackageVersion Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="10.0.12" />
+    <PackageVersion Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.12" />
   </ItemGroup>
 
   <ItemGroup Label="Securite et Cryptographie">
     <PackageVersion Include="Konscious.Security.Cryptography.Argon2" Version="1.3.1" />
-    <PackageVersion Include="Otp.NET" Version="1.4.0" />
+    <PackageVersion Include="Otp.NET" Version="1.4.1" />
     <PackageVersion Include="Azure.Security.KeyVault.Keys" Version="4.7.0" />
     <PackageVersion Include="VaultSharp" Version="1.17.5" />
     <!-- Alignées sur la version transitive tirée par Microsoft.AspNetCore.Authentication.JwtBearer 10.0.0 -->
     <PackageVersion Include="Microsoft.IdentityModel.JsonWebTokens" Version="8.0.1" />
-    <PackageVersion Include="Microsoft.IdentityModel.Tokens" Version="8.0.1" />
+    <PackageVersion Include="Microsoft.IdentityModel.Tokens" Version="8.23.0" />
   </ItemGroup>
 
   <ItemGroup Label="Résilience">
@@ -79,7 +79,7 @@
   <ItemGroup Label="Logging et Observabilite">
     <PackageVersion Include="Serilog" Version="4.2.0" />
     <PackageVersion Include="Serilog.AspNetCore" Version="9.0.0" />
-    <PackageVersion Include="Serilog.Sinks.Console" Version="6.0.0" />
+    <PackageVersion Include="Serilog.Sinks.Console" Version="6.1.1" />
     <PackageVersion Include="OpenTelemetry.Extensions.Hosting" Version="1.15.3" />
     <PackageVersion Include="OpenTelemetry.Instrumentation.AspNetCore" Version="1.15.2" />
     <PackageVersion Include="OpenTelemetry.Instrumentation.Http" Version="1.15.1" />
@@ -93,7 +93,7 @@
   <ItemGroup Label="Jobs en arrière-plan (Hangfire)">
     <PackageVersion Include="Hangfire.Core" Version="1.8.18" />
     <PackageVersion Include="Hangfire.AspNetCore" Version="1.8.18" />
-    <PackageVersion Include="Hangfire.PostgreSql" Version="1.20.10" />
+    <PackageVersion Include="Hangfire.PostgreSql" Version="1.21.1" />
   </ItemGroup>
 
   <ItemGroup Label="Cache">
@@ -113,9 +113,9 @@
 
   <ItemGroup Label="Tests">
     <PackageVersion Include="xunit" Version="2.9.3" />
-    <PackageVersion Include="xunit.runner.visualstudio" Version="3.1.4" />
+    <PackageVersion Include="xunit.runner.visualstudio" Version="3.1.5" />
     <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
-    <PackageVersion Include="FluentAssertions" Version="7.0.0" />
+    <PackageVersion Include="FluentAssertions" Version="7.2.2" />
     <PackageVersion Include="NSubstitute" Version="5.3.0" />
     <PackageVersion Include="Bogus" Version="35.6.5" />
     <!-- ≥ 2.12 : tire Scriban.Signed 7.2.5 (7.2.0 vulnérable, GHSA-6q7j-xr26-3h2c / GHSA-q6rr-fm2g-g5x8). -->
@@ -129,12 +129,12 @@
   </ItemGroup>
 
   <ItemGroup Label="MAUI">
-    <PackageVersion Include="Microsoft.Maui.Controls" Version="10.0.0" />
+    <PackageVersion Include="Microsoft.Maui.Controls" Version="10.0.110" />
     <PackageVersion Include="Microsoft.Maui.Controls.Compatibility" Version="10.0.0" />
     <PackageVersion Include="CommunityToolkit.Maui" Version="11.0.0" />
     <PackageVersion Include="CommunityToolkit.Mvvm" Version="8.4.2" />
     <PackageVersion Include="sqlite-net-pcl" Version="1.10.0" />
-    <PackageVersion Include="Microsoft.Extensions.Logging.Debug" Version="10.0.0" />
+    <PackageVersion Include="Microsoft.Extensions.Logging.Debug" Version="10.0.12" />
   </ItemGroup>
 
   <ItemGroup Label="Reports">
