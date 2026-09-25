@@ -35,9 +35,11 @@ vertes). La **PI** (marques F-006/F-007, brevets F-015/F-016) reste **🟡 / blo
 a changé de nature : en mai, `search` répondait `405` (auth OK) ; depuis le **redéploiement de la
 passerelle `api-gateway.inpi.fr` le 29 juin**, **`auth/login` refuse le compte web** (`401 Invalid
 credentials`) alors que le même compte passe sur le RNE et sur le portail, dont le login est
-désormais derrière un challenge Cloudflare. L'**accès API PI du compte** (Marques / Brevets /
-Dessins et modèles), actif en mai, **n'apparaît plus comme accordé** → **nouvelle demande d'accès
-API PI à l'INPI** (détail dans F-006). Les autres 🟡 : clients MAUI compilés non QA (F-009/F-010), contenu légal UI
+désormais derrière un challenge Cloudflare. L'**accès API PI du compte** (Marques / Brevets / Dessins et modèles) est bien **accordé**
+(vérifié le 25/09 sur « Mes accès APIs / SFTP » ; seul le FTP PI manque) : le blocage vient de la
+passerelle 1.2.0, qui a désormais **son propre magasin d'identifiants** (login
+`api-gateway.inpi.fr/login`, reset de mot de passe dédié) → **réinitialiser le mot de passe côté
+passerelle** puis rejouer (détail dans F-006). Les autres 🟡 : clients MAUI compilés non QA (F-009/F-010), contenu légal UI
 du RGPD (F-012). Détail dans chaque fiche.
 
 > **Transition UI (ADR-029, 30 mai 2026)** : les clients livrés ou amorcés ci-dessus (MAUI mobile/desktop F-009/F-010, web Blazor) sont **en transition vers Uno Platform** — une UI unique `Atlas.App` pour 6 surfaces (WebAssembly + desktop Win/macOS/Linux + iOS/Android). Les statuts ci-dessus reflètent l'état des clients **actuels** (qui restent en vigueur jusqu'au spike Uno concluant) ; la doctrine UX (`docs/12`) est préservée, agnostique de la techno.
