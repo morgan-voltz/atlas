@@ -6,7 +6,7 @@
   </PropertyGroup>
 
   <ItemGroup Label="MediatR and CQRS">
-    <PackageVersion Include="MediatR" Version="13.0.0" />
+    <PackageVersion Include="MediatR" Version="14.2.0" />
     <PackageVersion Include="MediatR.Contracts" Version="2.0.1" />
   </ItemGroup>
 
